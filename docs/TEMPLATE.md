@@ -10,5 +10,5 @@ Content here
     height="600px"/>
  
 <p align="center" style="font-size: 0.85em; color: gray;">
-    Written by @Weicao-CatilGrass
+    Written by @Your-Name
 </p>
