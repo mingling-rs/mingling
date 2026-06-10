@@ -9,7 +9,7 @@
 
 因为这是一个早期框架，所以尚不成熟。
 
-若您在使用过程中遇到任何问题，欢迎提交 [Issue](https://github.com/catilgrass/mingling/issues)，我们乐意解决。
+若您在使用过程中遇到任何问题，欢迎提交 [Issue](https://github.com/mingling-rs/mingling/issues)，我们乐意解决。
 
 ## Mingling 是什么？
 

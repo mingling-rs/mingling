@@ -1,6 +1,6 @@
 <p align="center">
-    <a href="https://github.com/catilgrass/mingling">
-        <img alt="Mingling" src="https://github.com/catilgrass/mingling/raw/main/docs/res/pixel_icon_o_1024.png" width="30%">
+    <a href="https://github.com/mingling-rs/mingling">
+        <img alt="Mingling" src="https://github.com/mingling-rs/mingling/raw/main/docs/res/pixel_icon_o_1024.png" width="30%">
     </a>
 </p>
 <h1 align="center">Mìng Lìng - 命令</h1>
@@ -9,14 +9,14 @@
     Macro magician in your CLI.
 </p>
 <p align="center">
-	<img src="https://img.shields.io/github/stars/catilgrass/mingling?style=flat"> 
+	<img src="https://img.shields.io/github/stars/mingling-rs/mingling?style=flat"> 
 	<a href="https://crates.io/crates/mingling">
 	    <img src="https://img.shields.io/crates/v/mingling?style=flat">
 	</a>
 	<a href="https://docs.rs/mingling/latest/mingling/">
 	    <img src="https://img.shields.io/docsrs/mingling?style=flat">
 	</a>	
-	<a href="https://catilgrass.github.io/mingling/">
+	<a href="https://mingling-rs.github.io/mingling/">
 	    <img src="https://img.shields.io/badge/helpdoc-rewriting-yellow?style=flat">
 	</a>
 </p>
@@ -30,22 +30,22 @@
   🤔 What is Mingling? 🤔 
 </h1>
 
-[`Mingling`](https://github.com/catilgrass/mingling) is a **proc-macro and type system-based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
+[`Mingling`](https://github.com/mingling-rs/mingling) is a **proc-macro and type system-based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
 
 > **BTW:** Its name comes from the Chinese Pinyin **"Mìng Lìng"**, meaning **"Command"**. 😄
 
 ### Mingling's Core Capabilities
 
 1. **Separation of Concerns, Clear Logic**: Mingling decouples logic by responsibility, helping you organize your CLI program more clearly.
-   See example: [Example](https://github.com/catilgrass/mingling/blob/main/examples/example-basic/src/main.rs)
+   See example: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-basic/src/main.rs)
 2. **"All Logic is Functions"**: Execution logic, rendering logic, completion logic, help logic — everything is a function. Just attach the corresponding attribute macro to bind them to your program.
 3. **Fully Dynamic Completion System**: With the `comp` feature, you can flexibly implement dynamic completion logic for any subcommand.
-   See examples: [Example](https://github.com/catilgrass/mingling/blob/main/examples/example-completion/src/main.rs)
+   See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-completion/src/main.rs)
 4. **Lightning-Fast Subcommand Dispatch**: With the `dispatch_tree` feature, Mingling hardens the subcommand structure into a prefix tree at **compile time**, enabling blazing-fast subcommand lookup.
-   See examples: [Example](https://github.com/catilgrass/mingling/blob/main/examples/example-dispatch-tree/src/main.rs)
+   See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-dispatch-tree/src/main.rs)
 5. **Lightweight Dependencies, On-Demand Importing**: Minimal core dependencies keep builds fast; enhanced features are imported on demand through fine-grained feature flags.
 6. **Structured Output**: Enabling the `general_renderer` feature adds support for flags like `--json` and `--yaml`, providing structured output capabilities.
-   See examples: [Example](https://github.com/catilgrass/mingling/blob/main/examples/example-general-renderer/src/main.rs)
+   See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-general-renderer/src/main.rs)
 
 <h1 align="center">
     ✍️ Writing with Mingling ✍️
@@ -810,15 +810,15 @@ Add Mingling to your `Cargo.toml`:
 mingling = "0.2.0"
 ```
 
-Or use the [template project](https://github.com/catilgrass/mingling-template):
+Or use the [template project](https://github.com/mingling-rs/mingling-template):
 
 ```bash
-cargo generate --git catilgrass/mingling-template
+cargo generate --git mingling-rs/mingling-template
 ```
 
 Then check out:
 
-- 📖 [Mingling Helpdoc](https://catilgrass.github.io/mingling/)
+- 📖 [Mingling Helpdoc](https://mingling-rs.github.io/mingling/)
 - 📖 [Examples on docs.rs](https://docs.rs/mingling/latest/mingling/_mingling_examples/index.html)
 - 📖 [Full API docs](https://docs.rs/mingling/latest/mingling/)
 

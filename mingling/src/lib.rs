@@ -1,7 +1,7 @@
 //! Mingling
 //!
 //! # Intro
-//! [`Mingling`](https://github.com/catilgrass/mingling) is a **proc-macro and type system-based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
+//! [`Mingling`](https://github.com/mingling-rs/mingling) is a **proc-macro and type system-based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
 //!
 //! # Use
 //! Here is a basic project written using **Mingling**:
