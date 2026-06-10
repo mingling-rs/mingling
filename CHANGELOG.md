@@ -2,6 +2,13 @@
 
 ### Release 0.2.0 (Unreleased)
 
+> [!IMPORTANT]
+> Starting from 0.2.0, Mingling's GitHub repository has been migrated from [catilgrass/mingling](https://github.com/catilgrass/mingling) to [mingling-rs/mingling](https://github.com/mingling-rs/mingling).
+>
+> Please note the change in repository address;
+>
+> the old address is no longer maintained, and all new Issues, PRs, and Releases will be conducted in the new repository.
+
 #### Tests:
 
 1. **\[core\] Added complete unit test coverage**, adding `#[cfg(test)]` test modules for 23 modules in `mingling_core` that previously lacked tests, covering:
