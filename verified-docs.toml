@@ -1,0 +1,7 @@
+# Files marked in the following document,
+# all rust code blocks inside will be verified in CI to ensure they can compile
+
+[verified]
+readme = "./README.md"
+documents_en_us = "./docs/pages/**"
+documents_zh_cn = "./docs/_zh_CN/pages/**"

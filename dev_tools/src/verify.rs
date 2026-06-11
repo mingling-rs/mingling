@@ -1,106 +1,39 @@
-use colored::Colorize;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use tools::{eprintln_cargo_style, println_cargo_style, run_cmd_and_capture_stderr};
+use crate::{println_cargo_style, run_cmd_and_capture_stderr};
 
-/// Represents a parsed code block from README.md
-struct CodeBlock {
-    /// The line number in README.md where this block starts
-    line: usize,
+/// Represents a parsed code block from a markdown file
+#[derive(Debug, Clone)]
+pub struct CodeBlock {
+    /// Source file path (for reporting)
+    pub source_file: String,
+    /// The line number in source file where this block starts
+    pub line: usize,
     /// The raw Rust source code
-    code: String,
+    pub code: String,
     /// Feature flags extracted from `// Features: [...]` comment
-    features: Vec<String>,
+    pub features: Vec<String>,
+    /// Whether the block had an explicit `// Features:` header
+    pub has_features_header: bool,
+    /// Whether the block has `// NOT VERIFIED` to opt out of testing
+    pub not_verified: bool,
     /// External dependencies extracted from `// Dependencies:` comments
-    external_deps: Vec<(String, String)>,
+    pub external_deps: Vec<(String, String)>,
     /// Whether this block has a `fn main` entry point
-    has_main: bool,
+    pub has_main: bool,
     /// Whether this block has `gen_program!()` call
-    has_gen_program: bool,
+    pub has_gen_program: bool,
 }
 
-fn main() {
-    #[cfg(windows)]
-    let _ = colored::control::set_virtual_terminal(true);
-
-    let readme_path = PathBuf::from("README.md");
-    if !readme_path.exists() {
-        eprintln_cargo_style!("README.md not found in current directory");
-        std::process::exit(1);
-    }
-
-    let content = std::fs::read_to_string(&readme_path).unwrap_or_else(|e| {
-        eprintln_cargo_style!("Failed to read README.md: {}", e);
-        std::process::exit(1);
-    });
-
-    let blocks = parse_code_blocks(&content);
-    if blocks.is_empty() {
-        eprintln_cargo_style!("No Rust code blocks found in README.md");
-        std::process::exit(1);
-    }
-
-    println_cargo_style!("Test: found {} Rust code blocks in README.md", blocks.len());
-
-    // Ensure temp directory exists
-    let temp_dir = PathBuf::from(".temp/readme-test");
-    let _ = std::fs::remove_dir_all(&temp_dir);
-    std::fs::create_dir_all(temp_dir.join("src")).unwrap_or_else(|e| {
-        eprintln_cargo_style!("Failed to create temp directory: {}", e);
-        std::process::exit(1);
-    });
-
-    let mut passed = 0usize;
-    let mut failed = 0usize;
-    let mut results: Vec<(usize, bool, String)> = Vec::new();
-
-    for (i, block) in blocks.iter().enumerate() {
-        let label = format!("Block {} (line {})", i + 1, block.line);
-        print!("  {label} ... ");
-
-        let (ok, err) = build_block(&temp_dir, block);
-        if ok {
-            println!("{}", "passed".bold().bright_green());
-            passed += 1;
-            results.push((block.line, true, String::new()));
-        } else {
-            println!("{}", "failed".bold().bright_red());
-            failed += 1;
-            results.push((block.line, false, err.clone()));
-            eprintln_cargo_style!("  {} FAILED:\n{}", label, err);
-        }
-    }
-
-    println_cargo_style!(
-        "Result: {passed}/{total} blocks passed",
-        total = blocks.len()
-    );
-
-    write_summary_report(
-        Path::new(".temp/README-TEST-RESULT.md"),
-        &results,
-        blocks.len(),
-        passed,
-        failed,
-    );
-
-    if failed > 0 {
-        eprintln_cargo_style!("{failed} block(s) failed to build");
-        std::process::exit(1);
-    }
-
-    println_cargo_style!("Done: All README code blocks build successfully!");
-}
-
-/// Parse all ```rust code blocks from README content
-fn parse_code_blocks(content: &str) -> Vec<CodeBlock> {
+/// Parse all ```rust code blocks from markdown content
+pub fn parse_code_blocks(content: &str, source_file: &str) -> Vec<CodeBlock> {
     let mut blocks = Vec::new();
     let lines: Vec<&str> = content.lines().collect();
     let mut i = 0;
 
     while i < lines.len() {
         if lines[i].trim() == "```rust" {
-            if let Some(block) = parse_single_block(&lines, i) {
+            if let Some(block) = parse_single_block(&lines, i, source_file) {
                 blocks.push(block);
             }
             i += 1;
@@ -115,11 +48,13 @@ fn parse_code_blocks(content: &str) -> Vec<CodeBlock> {
 }
 
 /// Parse a single code block starting at the ```rust line
-fn parse_single_block(lines: &[&str], start: usize) -> Option<CodeBlock> {
+fn parse_single_block(lines: &[&str], start: usize, source_file: &str) -> Option<CodeBlock> {
     let line_num = start + 1; // 1-based line number
 
     let mut code_lines: Vec<String> = Vec::new();
     let mut features: Vec<String> = Vec::new();
+    let mut has_features_header = false;
+    let mut not_verified = false;
     let mut external_deps: Vec<(String, String)> = Vec::new();
     let mut has_main = false;
     let mut has_gen_program = false;
@@ -136,8 +71,16 @@ fn parse_single_block(lines: &[&str], start: usize) -> Option<CodeBlock> {
         }
 
         // Parse header comments
+        // Check for NOT VERIFIED marker
+        if in_header && trimmed == "// NOT VERIFIED" {
+            not_verified = true;
+            idx += 1;
+            continue;
+        }
+
         if in_header && trimmed.starts_with("// ") {
             if trimmed.starts_with("// Features:") {
+                has_features_header = true;
                 let feat_str = trimmed.trim_start_matches("// Features:").trim();
                 if feat_str.starts_with('[') && feat_str.ends_with(']') {
                     let inner = &feat_str[1..feat_str.len() - 1];
@@ -195,9 +138,12 @@ fn parse_single_block(lines: &[&str], start: usize) -> Option<CodeBlock> {
     }
 
     Some(CodeBlock {
+        source_file: source_file.to_string(),
         line: line_num,
         code: code_lines.join("\n"),
         features,
+        has_features_header,
+        not_verified,
         external_deps,
         has_main,
         has_gen_program,
@@ -205,7 +151,7 @@ fn parse_single_block(lines: &[&str], start: usize) -> Option<CodeBlock> {
 }
 
 /// Generate a Cargo.toml for a block
-fn generate_cargo_toml(block: &CodeBlock) -> String {
+pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str) -> String {
     let features_str = if !block.features.is_empty() {
         let feats: Vec<String> = block.features.iter().map(|f| format!("\"{f}\"")).collect();
         format!("features = [{}]", feats.join(", "))
@@ -231,16 +177,20 @@ fn generate_cargo_toml(block: &CodeBlock) -> String {
     }
 
     let deps_section = if features_str.is_empty() {
-        format!("[dependencies]\nmingling = {{ path = \"../../mingling\" }}\n{extra_deps}")
+        format!(
+            "[dependencies]\nmingling = {{ path = \"{}\" }}\n{extra_deps}",
+            find_mingling_relative_path()
+        )
     } else {
         format!(
-            "[dependencies]\nmingling = {{ path = \"../../mingling\", {features_str} }}\n{extra_deps}"
+            "[dependencies]\nmingling = {{ path = \"{}\", {features_str} }}\n{extra_deps}",
+            find_mingling_relative_path()
         )
     };
 
     format!(
         r#"[package]
-name = "readme-test-block"
+name = "{package_name}"
 version = "0.0.0"
 edition = "2024"
 
@@ -250,8 +200,14 @@ edition = "2024"
     )
 }
 
+/// Find the relative path from the temp test directory to mingling crate
+fn find_mingling_relative_path() -> &'static str {
+    // Tests run from project root, temp is under .temp/
+    "../../mingling"
+}
+
 /// Generate main.rs for a block
-fn generate_main_rs(block: &CodeBlock) -> String {
+pub fn generate_main_rs(block: &CodeBlock) -> String {
     let mut output = String::from("#![allow(dead_code)]\n\n");
 
     output.push_str(&block.code);
@@ -269,28 +225,28 @@ fn generate_main_rs(block: &CodeBlock) -> String {
 }
 
 /// Build a single code block as a Cargo project.
-/// Always writes to `{temp_dir}/Cargo.toml` and `{temp_dir}/src/main.rs`.
 /// Returns (success, error_message).
-fn build_block(temp_dir: &Path, block: &CodeBlock) -> (bool, String) {
-    let src_dir = temp_dir.join("src");
-    if let Err(e) = std::fs::create_dir_all(&src_dir) {
+pub fn build_block(
+    src_dir: &Path,
+    manifest_path: &Path,
+    cargo_toml: &str,
+    main_rs: &str,
+) -> (bool, String) {
+    if let Err(e) = std::fs::create_dir_all(src_dir) {
         return (false, format!("mkdir: {e}"));
     }
 
     // Write Cargo.toml
-    let cargo_toml = generate_cargo_toml(block);
-    if let Err(e) = std::fs::write(temp_dir.join("Cargo.toml"), &cargo_toml) {
+    if let Err(e) = std::fs::write(manifest_path, cargo_toml) {
         return (false, format!("write Cargo.toml: {e}"));
     }
 
     // Write main.rs
-    let main_rs = generate_main_rs(block);
-    if let Err(e) = std::fs::write(src_dir.join("main.rs"), &main_rs) {
+    if let Err(e) = std::fs::write(src_dir.join("main.rs"), main_rs) {
         return (false, format!("write main.rs: {e}"));
     }
 
-    // Build with release (single run via shared macro)
-    let manifest_path = temp_dir.join("Cargo.toml");
+    // Build with release
     match run_cmd_and_capture_stderr!(
         "cargo build --release --manifest-path {}",
         manifest_path.to_string_lossy()
@@ -305,36 +261,50 @@ fn build_block(temp_dir: &Path, block: &CodeBlock) -> (bool, String) {
     }
 }
 
-/// Write the .temp/README-TEST-RESULT.md summary report
-fn write_summary_report(
+/// Determine if a block should be treated as a test candidate.
+/// A block is NOT testable only if it has `// NOT VERIFIED` marker.
+pub fn is_block_testable(block: &CodeBlock) -> bool {
+    !block.not_verified
+}
+
+/// Write a summary report
+pub fn write_summary_report(
     path: &Path,
-    results: &[(usize, bool, String)],
+    title: &str,
+    results: &[(String, usize, bool, String)],
     total: usize,
     passed: usize,
     failed: usize,
 ) {
     let mut content = String::new();
-    content.push_str("# README Code Block Test Report\n\n");
+    content.push_str(&format!("# {title}\n\n"));
     content.push_str(&format!(
         "Tested **{total}** code blocks: **{passed}** passed, **{failed}** failed.\n\n"
     ));
     content.push_str("## Results\n\n");
-    content.push_str("| Block | Line | Status |\n");
-    content.push_str("|-------|------|--------|\n");
+    content.push_str("| Block | File | Line | Status |\n");
+    content.push_str("|-------|------|------|--------|\n");
 
-    for (i, (line, ok, _)) in results.iter().enumerate() {
+    for (i, (file, line, ok, _)) in results.iter().enumerate() {
         let status = if *ok { "PASS" } else { "FAIL" };
-        content.push_str(&format!("| {} | {} | {status} |\n", i + 1, line));
+        let short_file = file.rsplit('/').next().unwrap_or(file);
+        content.push_str(&format!(
+            "| {} | {} | {} | {status} |\n",
+            i + 1,
+            short_file,
+            line
+        ));
     }
 
-    let has_failures = results.iter().any(|(_, ok, _)| !ok);
+    let has_failures = results.iter().any(|(_, _, ok, _)| !ok);
     if has_failures {
         content.push_str("\n## Failed Blocks\n\n");
-        for (i, (line, ok, err)) in results.iter().enumerate() {
+        for (i, (file, line, ok, err)) in results.iter().enumerate() {
             if !ok {
                 content.push_str(&format!(
-                    "### Block {} (line {})\n\n```\n{err}\n```\n\n",
+                    "### Block {} (`{}`, line {})\n\n```\n{err}\n```\n\n",
                     i + 1,
+                    file,
                     line
                 ));
             }

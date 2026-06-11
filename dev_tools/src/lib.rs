@@ -1,3 +1,5 @@
+pub mod verify;
+
 use colored::Colorize;
 
 #[macro_export]
