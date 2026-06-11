@@ -44,6 +44,16 @@ macro_rules! eprintln_cargo_style {
     };
 }
 
+#[macro_export]
+macro_rules! wprintln_cargo_style {
+    ($fmt:literal, $($arg:tt)*) => {
+        $crate::wprintln_cargo_style(format!($fmt, $($arg)*))
+    };
+    ($cmd:expr) => {
+        $crate::wprintln_cargo_style($cmd)
+    };
+}
+
 /// Print a message in cargo style format, with bold green prefix.
 ///
 /// # Panics
@@ -79,6 +89,39 @@ pub fn println_cargo_style(str: impl Into<String>) {
 
 pub fn eprintln_cargo_style(str: impl Into<String>) {
     println!("{}: {}", "error".bold().bright_red(), str.into());
+}
+
+/// Print a message in cargo style format, with bold yellow prefix (warning style).
+///
+/// # Panics
+///
+/// Panics if the prefix (text before the first `:`) exceeds 12 characters.
+pub fn wprintln_cargo_style(str: impl Into<String>) {
+    let s = str.into();
+    let (prefix, content) = if let Some(pos) = s.find(':') {
+        (
+            s[..pos].trim().to_string(),
+            s[pos + 1..].trim_start().to_string(),
+        )
+    } else {
+        (String::new(), s.trim().to_string())
+    };
+
+    assert!(
+        prefix.len() <= 12,
+        "prefix length exceeds 12: '{}' has length {}",
+        prefix,
+        prefix.len()
+    );
+
+    let padding = " ".repeat(12 - prefix.len());
+
+    println!(
+        "{}{} {}",
+        padding,
+        prefix.bold().bright_yellow(),
+        content.trim()
+    );
 }
 
 /// Run a shell command and return its exit status.

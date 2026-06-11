@@ -1,7 +1,13 @@
 use std::io::Write as _;
 use std::process::exit;
 
-use tools::{cargo_tomls, eprintln_cargo_style, println_cargo_style, run_cmd};
+use tools::{
+    cargo_tomls, eprintln_cargo_style, println_cargo_style, run_cmd, wprintln_cargo_style,
+};
+
+fn get_ignore_dirs() -> Vec<String> {
+    vec![".temp".to_string()]
+}
 
 fn main() {
     #[cfg(windows)]
@@ -92,8 +98,15 @@ fn test_docs_code_blocks() -> Result<(), i32> {
 }
 
 fn build_all() -> Result<(), i32> {
+    let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
     for cargo_toml in cargo_tomls {
+        let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
+        let path_str = path.to_string_lossy();
+        if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
+            wprintln_cargo_style!("Skipping: {} (ignored dir)", cargo_toml.to_string_lossy());
+            continue;
+        }
         println_cargo_style!("Build: {}", cargo_toml.to_string_lossy());
         run_cmd!(
             "cargo build --manifest-path {}",
@@ -105,8 +118,15 @@ fn build_all() -> Result<(), i32> {
 }
 
 fn clippy_all() -> Result<(), i32> {
+    let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
     for cargo_toml in cargo_tomls {
+        let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
+        let path_str = path.to_string_lossy();
+        if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
+            println_cargo_style!("Skipping: {} (ignored dir)", cargo_toml.to_string_lossy());
+            continue;
+        }
         println_cargo_style!("Clippy: {}", cargo_toml.to_string_lossy());
         run_cmd!(
             "cargo clippy --manifest-path {} -- -D warnings",
@@ -118,8 +138,15 @@ fn clippy_all() -> Result<(), i32> {
 }
 
 fn test_all() -> Result<(), i32> {
+    let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
     for cargo_toml in cargo_tomls {
+        let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
+        let path_str = path.to_string_lossy();
+        if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
+            println_cargo_style!("Skipping: {} (ignored dir)", cargo_toml.to_string_lossy());
+            continue;
+        }
         println_cargo_style!("Testing: {}", cargo_toml.to_string_lossy());
         run_cmd!(
             "cargo test --manifest-path {}",
