@@ -10,3 +10,5 @@ features = [
     "comp",
     "parser"
 ]
+
+[workspace]

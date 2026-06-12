@@ -14,3 +14,5 @@ panic = "unwind"
 # Enable panic unwinding in dev builds
 [profile.dev]
 panic = "unwind"
+
+[workspace]

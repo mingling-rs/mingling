@@ -14,3 +14,5 @@ features = [
     "extra_macros",
     "general_renderer",
 ]
+
+[workspace]

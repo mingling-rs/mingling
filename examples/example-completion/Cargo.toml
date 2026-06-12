@@ -23,3 +23,5 @@ features = [
     # enable `builds` features
     "builds",
 ]
+
+[workspace]

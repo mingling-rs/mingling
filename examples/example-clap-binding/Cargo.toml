@@ -17,3 +17,5 @@ features = [
     # Enable `color` feature to support ANSI colors
     "color",
 ]
+
+[workspace]

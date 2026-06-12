@@ -9,3 +9,5 @@ features = ["repl", "parser", "extra_macros"]
 
 [dependencies]
 just_fmt = "0.1.2"
+
+[workspace]

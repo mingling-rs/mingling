@@ -9,3 +9,5 @@ path = "../../mingling"
 features = [
     "dispatch_tree",
 ]
+
+[workspace]

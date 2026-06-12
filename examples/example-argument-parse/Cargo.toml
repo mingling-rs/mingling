@@ -8,3 +8,5 @@ path = "../../mingling"
 
 # Enable `parser` features
 features = ["parser", "extra_macros"]
+
+[workspace]

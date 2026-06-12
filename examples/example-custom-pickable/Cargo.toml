@@ -7,3 +7,5 @@ edition = "2024"
 path = "../../mingling"
 
 features = ["parser", "extra_macros"]
+
+[workspace]

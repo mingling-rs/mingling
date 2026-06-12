@@ -3,42 +3,16 @@ resolver = "2"
 members = ["mingling", "mingling_core", "mingling_macros", "mling"]
 exclude = [
     # README-Tests
-    "./temp/readme-test",
+    "./temp/*",
 
     # Examples
-    "examples/example-argument-parse",
-    "examples/example-async-support",
-    "examples/example-basic",
-    "examples/example-clap-binding",
-    "examples/example-completion",
-    "examples/example-custom-pickable",
-    "examples/example-dispatch-tree",
-    "examples/example-enum-tag",
-    "examples/example-error-handling",
-    "examples/example-exitcode",
-    "examples/example-general-renderer",
-    "examples/example-help",
-    "examples/example-hook",
-    "examples/example-implicit-dispatcher",
-    "examples/example-lazy-resources",
-    "examples/example-panic-unwind",
-    "examples/example-repl-basic",
-    "examples/example-resources",
-    "examples/example-setup",
-    "examples/example-unit-test",
-    "examples/full-todolist",
+    "examples/*",
 
     # Dev Tools
     "dev_tools",
 
     # Tests
-    "mingling_core/tests/test-basic",
-    "mingling_core/tests/test-comp",
-    "mingling_core/tests/test-general-renderer",
-    "mingling_core/tests/test-repl",
-    "mingling_core/tests/test-dispatch-tree",
-    "mingling_core/tests/test-async",
-    "mingling_core/tests/test-all",
+    "mingling_core/tests/*",
 ]
 
 [workspace.dependencies]

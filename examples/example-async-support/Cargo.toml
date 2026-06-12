@@ -13,3 +13,5 @@ features = ["async", "parser"]
 [dependencies.tokio]
 version = "1.52.3"
 features = ["macros", "rt", "rt-multi-thread", "time"]
+
+[workspace]
