@@ -1,0 +1,47 @@
+/* Prev/Next page navigation
+   Light theme — matches docs/css/light.css cover buttons */
+.page-nav {
+    display: flex;
+    margin-top: 0;
+    gap: 0;
+}
+.page-nav a {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    border: 1px solid #b8943e;
+    border-radius: 2px;
+    text-decoration: none;
+    color: #b8943e;
+    font-size: 15px;
+    background: transparent;
+    transition: all 0.15s ease;
+    flex: 1 1 50%;
+    max-width: 50%;
+    box-sizing: border-box;
+}
+.page-nav a:hover {
+    background: rgba(184, 148, 62, 0.1);
+}
+.page-nav .nav-prev {
+    justify-content: flex-start;
+    margin-right: 8px;
+}
+.page-nav .nav-next {
+    justify-content: flex-end;
+    margin-left: auto;
+}
+.page-nav a:only-child {
+    max-width: 50%;
+}
+.page-nav .nav-label {
+    font-size: 12px;
+    opacity: 0.6;
+}
+.page-nav .nav-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

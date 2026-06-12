@@ -915,3 +915,13 @@ section.cover blockquote > p > a {
 section.cover blockquote > p > a:hover {
     color: #d4a84b;
 }
+
+/* ── Prev/Next page navigation (dark) ── */
+.page-nav a {
+    border-color: #d4a84b;
+    color: #d4a84b;
+    background: transparent;
+}
+.page-nav a:hover {
+    background: rgba(212, 168, 75, 0.08);
+}
