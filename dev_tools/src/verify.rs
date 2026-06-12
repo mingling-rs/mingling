@@ -1,6 +1,7 @@
+use std::io::Write;
 use std::path::Path;
 
-use crate::{println_cargo_style, run_cmd_and_capture_stderr};
+use crate::println_cargo_style;
 
 /// Represents a parsed code block from a markdown file
 #[derive(Debug, Clone)]
@@ -224,8 +225,14 @@ fn find_mingling_relative_path(manifest_path: &Path) -> String {
 }
 
 /// Generate main.rs for a block
+///
+/// Automatically prepends `use mingling::prelude::*;` if the block doesn't already have it.
 pub fn generate_main_rs(block: &CodeBlock) -> String {
     let mut output = String::from("#![allow(dead_code)]\n\n");
+
+    if !block.code.contains("use mingling::prelude::*;") {
+        output.push_str("use mingling::prelude::*;\n\n");
+    }
 
     output.push_str(&block.code);
     output.push('\n');
@@ -263,18 +270,55 @@ pub fn build_block(
         return (false, format!("write main.rs: {e}"));
     }
 
-    // Build with release
-    match run_cmd_and_capture_stderr!(
-        "cargo build --release --manifest-path {}",
+    // Build with release — inherit stderr so cargo output is real-time and colored
+    let shell = if cfg!(target_os = "windows") {
+        "powershell"
+    } else {
+        "sh"
+    };
+    let cmd = format!(
+        "cargo build --release --color=always --manifest-path {}",
         manifest_path.to_string_lossy()
-    ) {
-        Ok(_) => (true, String::new()),
-        Err((code, log)) => {
-            let mut last_lines: Vec<&str> = log.lines().rev().take(20).collect();
-            last_lines.reverse();
-            let detail = last_lines.join("\n");
-            (false, format!("exit code {code}\n{detail}"))
+    );
+
+    let mut child = match std::process::Command::new(shell)
+        .arg("-c")
+        .arg(&cmd)
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::piped())
+        .current_dir(std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")))
+        .spawn()
+    {
+        Ok(c) => c,
+        Err(e) => return (false, format!("spawn: {e}")),
+    };
+
+    // Read stderr while it streams
+    use std::io::BufRead;
+    let stderr_handle = child.stderr.take().unwrap();
+    let reader = std::io::BufReader::new(stderr_handle);
+    let mut captured = String::new();
+    for line in reader.lines() {
+        match line {
+            Ok(l) => {
+                let _ = writeln!(std::io::stderr(), "{l}");
+                captured.push_str(&l);
+                captured.push('\n');
+            }
+            Err(_) => break,
         }
+    }
+
+    let status = child.wait().unwrap_or_else(|_| std::process::exit(1));
+    let exit_code = status.code().unwrap_or(1);
+
+    if exit_code == 0 {
+        (true, String::new())
+    } else {
+        let mut last_lines: Vec<&str> = captured.lines().rev().take(20).collect();
+        last_lines.reverse();
+        let detail = last_lines.join("\n");
+        (false, format!("exit code {exit_code}\n{detail}"))
     }
 }
 
