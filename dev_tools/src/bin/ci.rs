@@ -9,13 +9,38 @@ fn get_ignore_dirs() -> Vec<String> {
     vec![".temp".to_string()]
 }
 
+fn print_help() {
+    println!("Usage: ci [options]");
+    println!();
+    println!("Options:");
+    println!("  -h, --help          Print this help message");
+    println!("  -y                  Auto-confirm temporary commits");
+    println!("  --test-docs         Run documentation tests (build, clippy, test)");
+    println!("  --refresh-docs      Refresh documentation");
+    println!("  --test-codes        Test examples and documentation code blocks");
+    println!();
+    println!("If no specific options are given, all checks are run.");
+}
+
 fn main() {
     #[cfg(windows)]
     let _ = colored::control::set_virtual_terminal(true);
     println!("{}", include_str!("../../../docs/res/ci_banner.txt"));
 
     let args: Vec<String> = std::env::args().collect();
+
+    if args.iter().any(|a| a == "-h" || a == "--help") {
+        print_help();
+        return;
+    }
+
     let auto_yes = args.iter().any(|a| a == "-y");
+
+    let test_docs = args.iter().any(|a| a == "--test-docs");
+    let refresh_docs = args.iter().any(|a| a == "--refresh-docs");
+    let test_codes = args.iter().any(|a| a == "--test-codes");
+    let any_specified = test_docs || refresh_docs || test_codes;
+    let run_all = !any_specified;
 
     let needs_commit_temp = !{ run_cmd!("git diff-index --quiet HEAD --").is_ok() };
 
@@ -39,7 +64,7 @@ fn main() {
         }
     }
 
-    if let Err(exit_code) = ci() {
+    if let Err(exit_code) = ci(test_docs, refresh_docs, test_codes, run_all) {
         restore_workspace(needs_commit_temp).unwrap();
         exit(exit_code)
     }
@@ -74,15 +99,23 @@ fn restore_workspace(undo_commit: bool) -> Result<(), i32> {
     Ok(())
 }
 
-fn ci() -> Result<(), i32> {
-    build_all()?;
-    clippy_all()?;
-    test_all()?;
-    test_examples()?;
-    test_docs_code_blocks()?;
-    docs_refresh()?;
+fn ci(test_docs: bool, refresh_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
+    if run_all || test_docs {
+        build_all()?;
+        clippy_all()?;
+        test_all()?;
+    }
+    if run_all || test_codes {
+        test_examples()?;
+        test_docs_code_blocks()?;
+    }
+    if run_all || refresh_docs {
+        docs_refresh()?;
+    }
 
-    run_cmd!("git add --renormalize .")?;
+    if run_all {
+        run_cmd!("git add --renormalize .")?;
+    }
 
     Ok(())
 }
