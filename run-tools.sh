@@ -34,6 +34,7 @@ if [ $# -eq 0 ]; then
 fi
 
 target_bin="$1"
+shift  # Remove the first argument (tool name), keep the rest as tool arguments
 
 # Check if input is a number
 if [[ "$target_bin" =~ ^[0-9]+$ ]]; then
@@ -52,11 +53,11 @@ target_file="dev_tools/src/bin/${target_bin}.rs"
 
 if [ -f "$target_script" ]; then
     chmod +x "$target_script"
-    "$target_script"
+    "$target_script" "$@"
 elif [ -f "$target_python" ]; then
-    python "$target_python"
+    python "$target_python" "$@"
 elif [ -f "$target_file" ]; then
-    cargo run --manifest-path dev_tools/Cargo.toml --bin "$target_bin" --quiet
+    cargo run --manifest-path dev_tools/Cargo.toml --bin "$target_bin" --quiet -- "$@"
 else
     echo "Error: target '$target_bin' does not exist"
     exit 1
