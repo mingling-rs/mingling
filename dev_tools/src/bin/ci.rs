@@ -16,7 +16,6 @@ fn print_help() {
     println!("  -h, --help          Print this help message");
     println!("  -y                  Auto-confirm temporary commits");
     println!("  --test-docs         Run documentation tests (build, clippy, test)");
-    println!("  --refresh-docs      Refresh documentation");
     println!("  --test-codes        Test examples and documentation code blocks");
     println!();
     println!("If no specific options are given, all checks are run.");
@@ -64,7 +63,7 @@ fn main() {
         }
     }
 
-    if let Err(exit_code) = ci(test_docs, refresh_docs, test_codes, run_all) {
+    if let Err(exit_code) = ci(test_docs, test_codes, run_all) {
         restore_workspace(needs_commit_temp).unwrap();
         exit(exit_code)
     }
@@ -99,23 +98,30 @@ fn restore_workspace(undo_commit: bool) -> Result<(), i32> {
     Ok(())
 }
 
-fn ci(test_docs: bool, refresh_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
-    if run_all || test_docs {
+fn ci(test_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
+    if run_all || test_codes {
+        println_cargo_style!("Phase: Scan and build all crates");
         build_all()?;
+
+        println_cargo_style!("Phase: Run clippy for all crates");
         clippy_all()?;
+
+        println_cargo_style!("Phase: Test all crates");
         test_all()?;
     }
-    if run_all || test_codes {
+
+    if run_all || test_docs {
+        println_cargo_style!("Phase: Test all examples");
         test_examples()?;
+
+        println_cargo_style!("Phase: Verify all *.md document code blocks are compilable");
         test_docs_code_blocks()?;
-    }
-    if run_all || refresh_docs {
+
+        println_cargo_style!("Phase: Check all documentation is up to date");
         docs_refresh()?;
     }
 
-    if run_all {
-        run_cmd!("git add --renormalize .")?;
-    }
+    run_cmd!("git add --renormalize .")?;
 
     Ok(())
 }
