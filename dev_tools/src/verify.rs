@@ -228,10 +228,10 @@ fn find_mingling_relative_path(manifest_path: &Path) -> String {
 ///
 /// Automatically prepends `use mingling::prelude::*;` if the block doesn't already have it.
 pub fn generate_main_rs(block: &CodeBlock) -> String {
-    let mut output = String::from("#![allow(dead_code)]\n\n");
+    let mut output = String::from("#![allow(dead_code)]\n#![allow(unused)]\n");
 
     if !block.code.contains("use mingling::prelude::*;") {
-        output.push_str("use mingling::prelude::*;\n\n");
+        output.push_str("#[allow(unused_imports)]\nuse mingling::prelude::*;\n\n");
     }
 
     output.push_str(&block.code);
