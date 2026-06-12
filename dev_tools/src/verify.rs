@@ -151,7 +151,10 @@ fn parse_single_block(lines: &[&str], start: usize, source_file: &str) -> Option
 }
 
 /// Generate a Cargo.toml for a block
-pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str) -> String {
+///
+/// `manifest_path` is the full path to the Cargo.toml file being written; it is used to
+/// compute the relative path to the `mingling` crate.
+pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str, manifest_path: &Path) -> String {
     let features_str = if !block.features.is_empty() {
         let feats: Vec<String> = block.features.iter().map(|f| format!("\"{f}\"")).collect();
         format!("features = [{}]", feats.join(", "))
@@ -176,15 +179,13 @@ pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str) -> String {
         }
     }
 
+    let mingling_path = find_mingling_relative_path(manifest_path);
+
     let deps_section = if features_str.is_empty() {
-        format!(
-            "[dependencies]\nmingling = {{ path = \"{}\" }}\n{extra_deps}",
-            find_mingling_relative_path()
-        )
+        format!("[dependencies]\nmingling = {{ path = \"{mingling_path}\" }}\n{extra_deps}",)
     } else {
         format!(
-            "[dependencies]\nmingling = {{ path = \"{}\", {features_str} }}\n{extra_deps}",
-            find_mingling_relative_path()
+            "[dependencies]\nmingling = {{ path = \"{mingling_path}\", {features_str} }}\n{extra_deps}",
         )
     };
 
@@ -200,10 +201,26 @@ edition = "2024"
     )
 }
 
-/// Find the relative path from the temp test directory to mingling crate
-fn find_mingling_relative_path() -> &'static str {
-    // Tests run from project root, temp is under .temp/
-    "../../mingling"
+/// Compute the relative path from a Cargo.toml's parent directory to the `mingling` crate.
+///
+/// The process current directory is expected to be the project root (where `mingling/` lives).
+/// Returns a forward-slash path safe for embedding in TOML strings.
+fn find_mingling_relative_path(manifest_path: &Path) -> String {
+    let manifest_dir = manifest_path
+        .parent()
+        .expect("manifest_path has no parent directory");
+    let cwd = std::env::current_dir().expect("failed to get current directory");
+
+    // Strip cwd prefix to get the relative components of the manifest directory
+    let relative_to_root = manifest_dir.strip_prefix(&cwd).unwrap_or(manifest_dir);
+    let depth = relative_to_root.components().count();
+
+    let mut result = String::new();
+    for _ in 0..depth {
+        result.push_str("../");
+    }
+    result.push_str("mingling");
+    result
 }
 
 /// Generate main.rs for a block
@@ -259,6 +276,57 @@ pub fn build_block(
             (false, format!("exit code {code}\n{detail}"))
         }
     }
+}
+
+/// Compute a stable hash for a code block based on its dependency configuration.
+///
+/// Blocks with the same features and external dependencies produce the same hash,
+/// allowing them to share a compiled crate and avoid redundant recompilation.
+///
+/// Hash input (all sorted for stability):
+/// - Sorted mingling feature strings
+/// - Sorted external dependency names
+/// - Sorted external dependency versions
+/// - Sorted external deps as `name=version` pairs
+pub fn compute_block_hash(block: &CodeBlock) -> String {
+    let mut features: Vec<&str> = block.features.iter().map(|s| s.as_str()).collect();
+    features.sort();
+    let features_str = features.join(",");
+
+    let mut dep_names: Vec<&str> = block
+        .external_deps
+        .iter()
+        .map(|(n, _)| n.as_str())
+        .collect();
+    dep_names.sort();
+    let dep_names_str = dep_names.join(",");
+
+    let mut dep_versions: Vec<&str> = block
+        .external_deps
+        .iter()
+        .map(|(_, v)| v.as_str())
+        .collect();
+    dep_versions.sort();
+    let dep_versions_str = dep_versions.join(",");
+
+    let mut deps: Vec<String> = block
+        .external_deps
+        .iter()
+        .map(|(n, v)| format!("{n}={v}"))
+        .collect();
+    deps.sort();
+    let deps_str = deps.join(",");
+
+    let canonical = format!("{features_str}\n{dep_names_str}\n{dep_versions_str}\n{deps_str}");
+
+    // FNV-1a 64-bit hash — stable across runs (no random seed)
+    let mut hash: u64 = 0xcbf29ce484222325;
+    for &byte in canonical.as_bytes() {
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+
+    format!("{:016x}", hash)
 }
 
 /// Determine if a block should be treated as a test candidate.

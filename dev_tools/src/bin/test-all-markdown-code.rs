@@ -1,9 +1,10 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 use tools::verify::{
-    build_block, generate_cargo_toml, generate_main_rs, is_block_testable, parse_code_blocks,
-    write_summary_report,
+    build_block, compute_block_hash, generate_cargo_toml, generate_main_rs, is_block_testable,
+    parse_code_blocks, write_summary_report,
 };
 use tools::{eprintln_cargo_style, println_cargo_style};
 
@@ -78,11 +79,8 @@ fn main() {
         std::process::exit(1);
     }
 
-    // Ensure temp directory exists
-    let temp_dir = PathBuf::from(".temp/docs-test");
-    let _ = std::fs::remove_dir_all(&temp_dir);
-
-    let mut all_blocks: Vec<(String, Vec<tools::verify::CodeBlock>)> = Vec::new();
+    // Parse all code blocks into a flat list with global indices
+    let mut flat_blocks: Vec<(usize, tools::verify::CodeBlock)> = Vec::new();
 
     for (label, path) in &files {
         let content = std::fs::read_to_string(path).unwrap_or_else(|e| {
@@ -92,12 +90,13 @@ fn main() {
         let source_file = format!("{label}/{}", path.file_name().unwrap().to_string_lossy());
         let blocks = parse_code_blocks(&content, &source_file);
         let testable: Vec<_> = blocks.into_iter().filter(is_block_testable).collect();
-        if !testable.is_empty() {
-            all_blocks.push((label.clone(), testable));
+        for block in testable {
+            let idx = flat_blocks.len() + 1; // 1-based global index
+            flat_blocks.push((idx, block));
         }
     }
 
-    let total_testable: usize = all_blocks.iter().map(|(_, b)| b.len()).sum();
+    let total_testable = flat_blocks.len();
 
     if total_testable == 0 {
         println_cargo_style!("No testable code blocks found");
@@ -106,32 +105,47 @@ fn main() {
 
     println_cargo_style!(
         "Test: found {total_testable} testable code blocks across {} files",
-        all_blocks.len()
+        files.len()
     );
 
-    // Build each block
-    let mut block_index = 0usize;
+    // Group blocks by dependency hash
+    let mut groups: HashMap<String, Vec<(usize, tools::verify::CodeBlock)>> = HashMap::new();
+    for (idx, block) in flat_blocks {
+        let hash = compute_block_hash(&block);
+        groups.entry(hash).or_default().push((idx, block));
+    }
+
+    println_cargo_style!(
+        "Cache: grouped into {} unique dependency configurations",
+        groups.len()
+    );
+
+    let temp_base = PathBuf::from(".temp/doc-test");
+
+    // Build groups — same hash reuses the same Cargo.toml
+    let mut results: Vec<(String, usize, bool, String)> = Vec::new();
     let mut passed = 0usize;
     let mut failed = 0usize;
-    let mut results: Vec<(String, usize, bool, String)> = Vec::new();
 
-    for (_label, blocks) in &all_blocks {
-        for block in blocks {
-            block_index += 1;
+    // Sort groups by hash for deterministic output order
+    let mut group_keys: Vec<&String> = groups.keys().collect();
+    group_keys.sort();
 
-            let block_label = format!(
-                "Block {} ({}:{})",
-                block_index, block.source_file, block.line
-            );
+    for hash in group_keys {
+        let blocks = &groups[hash];
+        let crate_dir = temp_base.join(hash);
+        let src_dir = crate_dir.join("src");
+        let manifest_path = crate_dir.join("Cargo.toml");
+
+        // Generate a single Cargo.toml for the whole group (all blocks share same deps)
+        let first_block = &blocks[0].1;
+        let cargo_toml = generate_cargo_toml(first_block, "test-doc", &manifest_path);
+
+        for (block_idx, block) in blocks {
+            let block_label = format!("Block {block_idx} ({}:{})", block.source_file, block.line);
             print!("  Testing {block_label} ... ");
 
-            let package_name = format!("test-block-{block_index}");
-
-            let cargo_toml = generate_cargo_toml(block, &package_name);
             let main_rs = generate_main_rs(block);
-            let src_dir = temp_dir.join("src");
-            let manifest_path = temp_dir.join("Cargo.toml");
-
             let (ok, err) = build_block(&src_dir, &manifest_path, &cargo_toml, &main_rs);
             if ok {
                 println!("{}", "passed".bold().bright_green());
