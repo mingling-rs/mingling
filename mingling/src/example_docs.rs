@@ -32,6 +32,8 @@
 ///
 /// # Enable `parser` features
 /// features = ["parser", "extra_macros"]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -158,6 +160,8 @@ pub mod example_argument_parse {}
 /// [dependencies.tokio]
 /// version = "1.52.3"
 /// features = ["macros", "rt", "rt-multi-thread", "time"]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -230,6 +234,8 @@ pub mod example_async_support {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling" }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -354,6 +360,8 @@ pub mod example_basic {}
 ///     # Enable `color` feature to support ANSI colors
 ///     "color",
 /// ]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -505,6 +513,8 @@ pub mod example_clap_binding {}
 ///     # enable `builds` features
 ///     "builds",
 /// ]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -622,6 +632,8 @@ pub mod example_completion {}
 /// path = "../../mingling"
 ///
 /// features = ["parser", "extra_macros"]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -773,6 +785,8 @@ pub mod example_custom_pickable {}
 /// features = [
 ///     "dispatch_tree",
 /// ]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -848,6 +862,8 @@ pub mod example_dispatch_tree {}
 ///     "comp",
 ///     "parser"
 /// ]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -973,6 +989,8 @@ pub mod example_enum_tag {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling" }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1084,6 +1102,8 @@ pub mod example_error_handling {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling" }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1173,6 +1193,8 @@ pub mod example_exitcode {}
 ///     "general_renderer",
 ///     "parser",
 /// ]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1254,6 +1276,8 @@ pub mod example_general_renderer {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling" }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1317,6 +1341,8 @@ pub mod example_help {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling" }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1387,6 +1413,8 @@ pub mod example_hook {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = ["extra_macros"]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1445,6 +1473,8 @@ pub mod example_implicit_dispatcher {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = []
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1555,6 +1585,8 @@ pub mod example_lazy_resources {}
 /// # Enable panic unwinding in dev builds
 /// [profile.dev]
 /// panic = "unwind"
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1622,6 +1654,8 @@ pub mod example_panic_unwind {}
 ///
 /// [dependencies]
 /// just_fmt = "0.1.2"
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1820,6 +1854,8 @@ pub mod example_repl_basic {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = ["parser"]
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1888,6 +1924,8 @@ pub mod example_resources {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling", features = ["extra_macros"] }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)
@@ -1940,6 +1978,8 @@ pub mod example_setup {}
 ///
 /// [dependencies]
 /// mingling = { path = "../../mingling", features = ["extra_macros"] }
+///
+/// [workspace]
 /// ```
 ///
 /// Source code (./src/main.rs)

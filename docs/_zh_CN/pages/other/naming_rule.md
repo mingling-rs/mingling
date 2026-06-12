@@ -19,11 +19,11 @@
 Res + 名称
 ```
  
-| 示例 | 说明 |
-|------|------|
+| 示例            | 说明         |
+| --------------- | ------------ |
 | `ResCurrentDir` | 当前工作目录 |
-| `ResExitCode` | 进程退出码 |
-| `ResREPL` | REPL 状态 |
+| `ResExitCode`   | 进程退出码   |
+| `ResREPL`       | REPL 状态    |
 
 ### 构建
 
@@ -33,10 +33,10 @@ Res + 名称
 名称 + Setup
 ```
  
-| 示例 | 说明 |
-|------|------|
-| `BasicSetup` | 基础初始化（`--quiet`、`--help`、`--confirm`） |
-| `GeneralRendererSetup` | 通用渲染器初始化（`--json`、`--yaml` 等） |
+| 示例                   | 说明                                           |
+| ---------------------- | ---------------------------------------------- |
+| `BasicSetup`           | 基础初始化（`--quiet`、`--help`、`--confirm`） |
+| `GeneralRendererSetup` | 通用渲染器初始化（`--json`、`--yaml` 等）      |
 
 ### 分发器
 
@@ -46,11 +46,11 @@ Res + 名称
 CMD + 命令层级
 ```
  
-| 节点 | 分发器 |
-|------|--------|
-| `greet` | `CMDGreet` |
-| `remote.add` | `CMDRemoteAdd` |
-| `remote.rm` | `CMDRemoteRemove` |
+| 节点         | 分发器            |
+| ------------ | ----------------- |
+| `greet`      | `CMDGreet`        |
+| `remote.add` | `CMDRemoteAdd`    |
+| `remote.rm`  | `CMDRemoteRemove` |
 
 即使节点是缩写，分发器的名称也要写全名。例如节点是 `remote.rm`，分发器是 `CMDRemoteRemove`，不是 `CMDRemoteRm`。
 
@@ -62,10 +62,10 @@ CMD + 命令层级
 Entry + 命令层级
 ```
  
-| 分发器 | 入口 |
-|--------|------|
-| `CMDGreet` | `EntryGreet` |
-| `CMDRemoteAdd` | `EntryRemoteAdd` |
+| 分发器            | 入口                |
+| ----------------- | ------------------- |
+| `CMDGreet`        | `EntryGreet`        |
+| `CMDRemoteAdd`    | `EntryRemoteAdd`    |
 | `CMDRemoteRemove` | `EntryRemoteRemove` |
 
 ### 状态
@@ -76,10 +76,10 @@ Entry + 命令层级
 State + 描述
 ```
  
-| 示例 | 说明 |
-|------|------|
+| 示例                    | 说明                 |
+| ----------------------- | -------------------- |
 | `StateOperationRemotes` | 正在操作远程仓库列表 |
-| `StateCheckRepository` | 正在检查仓库状态 |
+| `StateCheckRepository`  | 正在检查仓库状态     |
 
 典型的管线链：`EntryRemoteAdd → StateOperationRemotes → StateCheckRepository`
 
@@ -91,10 +91,10 @@ State + 描述
 Result + 内容
 ```
  
-| 示例 | 说明 |
-|------|------|
-| `ResultGreetSomeone` | 问候结果 |
-| `ResultFruitList` | 水果列表结果 |
+| 示例                 | 说明         |
+| -------------------- | ------------ |
+| `ResultGreetSomeone` | 问候结果     |
+| `ResultFruitList`    | 水果列表结果 |
 
 结果结构体期望被 Renderer 消费，内部结构应该为了渲染美观而设计。一般用 `#[derive(Groupped)]` 代替 `pack!()` 包装，以获得更灵活的字段控制。
 
@@ -106,33 +106,31 @@ Result + 内容
 Error + 描述
 ```
  
-| 示例 | 说明 |
-|------|------|
+| 示例                      | 说明       |
+| ------------------------- | ---------- |
 | `ErrorRepositoryNotFound` | 仓库未找到 |
 
 `StateOperationRemotes → ErrorRepositoryNotFound`
-
-
 
 ## 函数命名
 
 ### Chain 函数
 
-| 处理类型 | 命名模式 | 示例 |
-|----------|----------|------|
-| Entry | `handle_` + entry 名（snake_case） | `handle_remote_add(prev: EntryRemoteAdd)` |
-| State | `handle_state_` + state 名（snake_case） | `handle_state_operation_remotes(prev: StateOperationRemotes)` |
-| Error | `handle_error_` + error 名（snake_case） | `handle_error_repository_not_found(prev: ErrorRepositoryNotFound)` |
-| Result | ❌ 不要为 Result 写 chain | — |
+| 处理类型 | 命名模式                                 | 示例                                                               |
+| -------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| Entry    | `handle_` + entry 名（snake_case）       | `handle_remote_add(prev: EntryRemoteAdd)`                          |
+| State    | `handle_state_` + state 名（snake_case） | `handle_state_operation_remotes(prev: StateOperationRemotes)`      |
+| Error    | `handle_error_` + error 名（snake_case） | `handle_error_repository_not_found(prev: ErrorRepositoryNotFound)` |
+| Result   | ❌ 不要为 Result 写 chain                | —                                                                  |
 
 ### Renderer 函数
 
-| 处理类型 | 命名模式 | 示例 |
-|----------|----------|------|
-| Entry | `render_entry_` + entry 名 | `render_entry_remote_add(prev: EntryRemoteAdd)` |
-| State | ❌ 不要为 State 写 renderer | — |
-| Error | `render_error_` + error 名 | `render_error_repository_not_found(prev: ErrorRepositoryNotFound)` |
-| Result | `render_` + result 名 | `render_greet_someone(prev: ResultGreetSomeone)` |
+| 处理类型 | 命名模式                    | 示例                                                               |
+| -------- | --------------------------- | ------------------------------------------------------------------ |
+| Entry    | `render_entry_` + entry 名  | `render_entry_remote_add(prev: EntryRemoteAdd)`                    |
+| State    | ❌ 不要为 State 写 renderer | —                                                                  |
+| Error    | `render_error_` + error 名  | `render_error_repository_not_found(prev: ErrorRepositoryNotFound)` |
+| Result   | `render_` + result 名       | `render_greet_someone(prev: ResultGreetSomeone)`                   |
 
 **原则**：不要为不会被用户看到或不需要独立渲染的中间类型写 renderer。
 
@@ -140,16 +138,17 @@ Error + 描述
 
 ## 函数签名参数命名
 
-| 类型 | 推荐参数名 |
-|------|------------|
-| Entry | `args` |
-| State | `prev`（或具名如 `remotes`） |
-| Result | `result`（或具名如 `fruits`） |
-| Error | `err` |
-| 资源（不可变） | `cwd`、`db`、`config` 等 |
-| 资源（可变） | `counter`、`cache`、`session` 等 |
+| 类型           | 推荐参数名                       |
+| -------------- | -------------------------------- |
+| Entry          | `args`                           |
+| State          | `prev`（或具名如 `remotes`）     |
+| Result         | `result`（或具名如 `fruits`）    |
+| Error          | `err`                            |
+| 资源（不可变） | `cwd`、`db`、`config` 等         |
+| 资源（可变）   | `counter`、`cache`、`session` 等 |
 
 ```rust
+// NOT VERIFIED
 #[chain]
 fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResDatabase) -> Next {
     // args: 入口数据
@@ -163,6 +162,7 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 ## 完整示例
 
 ```rust
+// NOT VERIFIED
 // 分发器
 dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
  
