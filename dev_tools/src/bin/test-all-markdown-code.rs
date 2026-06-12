@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::env;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
@@ -44,6 +45,22 @@ fn main() {
         })
     };
 
+    // Parse optional path argument from env args
+    let single_file: Option<PathBuf> = {
+        let args: Vec<String> = env::args().collect();
+        if args.len() > 1 {
+            let p = PathBuf::from(&args[1]);
+            if p.exists() {
+                Some(p)
+            } else {
+                eprintln_cargo_style!("error: specified file '{}' does not exist", args[1]);
+                std::process::exit(1);
+            }
+        } else {
+            None
+        }
+    };
+
     // Collect all markdown files from config
     let mut files: Vec<(String, PathBuf)> = Vec::new();
 
@@ -72,6 +89,25 @@ fn main() {
             collect_md_files(&dir, &mut files, "zh_CN");
             println_cargo_style!("Source: found docs/_zh_CN/pages/");
         }
+    }
+
+    // If a single file was specified, filter the list to only that file
+    if let Some(ref target) = single_file {
+        // Canonicalize to compare paths reliably
+        let target_canon = std::fs::canonicalize(target).unwrap_or_else(|_| target.clone());
+        files.retain(|(_, path)| {
+            std::fs::canonicalize(path)
+                .map(|p| p == target_canon)
+                .unwrap_or(false)
+        });
+        if files.is_empty() {
+            eprintln_cargo_style!(
+                "error: specified file '{}' is not among the configured documentation files",
+                target.display()
+            );
+            std::process::exit(1);
+        }
+        println_cargo_style!("Source: testing only file '{}'", target.display());
     }
 
     if files.is_empty() {
