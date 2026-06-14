@@ -4,7 +4,7 @@ name = "Lazy Resources"
 icon = "💤️"
 category = "advanced"
 desc = """
-Example Lazy Resources
+Demonstrates how to use `LazyRes<T>` for lazily initialized resources that only allocate when first accessed.
 """
 tags = ["LazyRes<Res>"]
 files = ["src/main.rs", "Cargo.toml"]

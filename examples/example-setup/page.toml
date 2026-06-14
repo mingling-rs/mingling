@@ -4,7 +4,7 @@ name = "Setup"
 icon = "🏗️"
 category = "core"
 desc = """
-Example Setup
+Demonstrates how to build a custom `ProgramSetup` with `#[program_setup]` for modular configuration of program behaviour.
 """
 tags = ["#[setup]", "extra_macros"]
 files = ["src/main.rs", "Cargo.toml"]

@@ -4,7 +4,7 @@ name = "Panic Unwind"
 icon = "💥"
 category = "runtime"
 desc = """
-Example Panic Unwind
+Shows how to catch panics during program execution and display friendly error messages instead of a raw panic trace.
 """
 tags = ["panic_unwind"]
 files = ["src/main.rs", "Cargo.toml"]

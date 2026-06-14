@@ -4,7 +4,7 @@ name = "Hook"
 icon = "🪝"
 category = "runtime"
 desc = """
-Example Hook
+Demonstrates how to use Mingling's `ProgramHook` system to observe and debug every stage of the execution pipeline.
 """
 tags = ["ProgramHook"]
 files = ["src/main.rs", "Cargo.toml"]

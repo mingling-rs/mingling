@@ -4,7 +4,7 @@ name = "Async Support"
 icon = "⚡"
 category = "runtime"
 desc = """
-Example Async Runtime Support
+Shows how to drive an async runtime with Mingling using the `async` feature, enabling `async fn` in `#[chain]` with tokio.
 """
 tags = ["async", "await", "#[chain]"]
 files = ["src/main.rs", "Cargo.toml"]

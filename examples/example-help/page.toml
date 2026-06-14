@@ -4,7 +4,7 @@ name = "Help"
 icon = "💡"
 category = "ux"
 desc = """
-Example Help
+Shows how to use the `#[help]` attribute to provide custom per-command help text that activates when the user passes `--help`.
 """
 tags = ["#[help]"]
 files = ["src/main.rs", "Cargo.toml"]

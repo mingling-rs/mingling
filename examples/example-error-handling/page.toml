@@ -4,7 +4,7 @@ name = "Error Handling"
 icon = "⚠️"
 category = "runtime"
 desc = """
-Example Error Handling
+Demonstrates how to define custom error types with `pack!` and route them to dedicated `#[renderer]` functions for user-friendly output.
 """
 tags = ["Result"]
 files = ["src/main.rs", "Cargo.toml"]

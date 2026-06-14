@@ -4,7 +4,7 @@ name = "Argument Parse"
 icon = "📋"
 category = "parsing"
 desc = """
-Example Argument Parse
+Shows how to use Mingling's `parser` feature with a `Picker` to extract and validate typed arguments from the command line.
 """
 tags = ["pick", "Pickable"]
 files = ["src/main.rs", "Cargo.toml"]

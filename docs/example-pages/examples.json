@@ -4,7 +4,7 @@
     "name": "Basic",
     "icon": "🚀",
     "category": "core",
-    "desc": "Example The Basic Usage of Mingling\n",
+    "desc": "Demonstrates the basic usage of Mingling with a simple `greet` subcommand that takes a name and prints a greeting.\n",
     "tags": [
       "dispatcher!",
       "#[chain]",
@@ -20,7 +20,7 @@
     "name": "Argument Parse",
     "icon": "📋",
     "category": "parsing",
-    "desc": "Example Argument Parse\n",
+    "desc": "Shows how to use Mingling's `parser` feature with a `Picker` to extract and validate typed arguments from the command line.\n",
     "tags": [
       "pick",
       "Pickable"
@@ -35,7 +35,7 @@
     "name": "Async Support",
     "icon": "⚡",
     "category": "runtime",
-    "desc": "Example Async Runtime Support\n",
+    "desc": "Shows how to drive an async runtime with Mingling using the `async` feature, enabling `async fn` in `#[chain]` with tokio.\n",
     "tags": [
       "async",
       "await",
@@ -51,7 +51,7 @@
     "name": "Clap Binding",
     "icon": "🔗",
     "category": "parsing",
-    "desc": "Example Clap Binding\n",
+    "desc": "Demonstrates how to bind a `clap::Parser` derive struct to Mingling using `#[dispatcher_clap]` for advanced argument parsing.\n",
     "tags": [
       "clap"
     ],
@@ -65,7 +65,7 @@
     "name": "Completion",
     "icon": "🔄",
     "category": "ux",
-    "desc": "Example Completion\n",
+    "desc": "Demonstrates how to implement dynamic shell completion with `#[completion]` and generate scripts for bash, zsh, fish, and pwsh.\n",
     "tags": [
       "comp"
     ],
@@ -80,7 +80,7 @@
     "name": "Custom Pickable",
     "icon": "🎯",
     "category": "parsing",
-    "desc": "Example Custom Pickable\n",
+    "desc": "Shows how to implement the `Pickable` trait on custom types for seamless extraction from CLI arguments via Picker.\n",
     "tags": [
       "Pickable",
       "custom"
@@ -95,7 +95,7 @@
     "name": "Dispatch Tree",
     "icon": "🌳",
     "category": "dispatch",
-    "desc": "Example Dispatch Tree\n",
+    "desc": "Introduces the `dispatch_tree` feature that converts the subcommand list into a compile-time prefix trie for O(n) command lookup.\n",
     "tags": [
       "dispatch_tree"
     ],
@@ -109,7 +109,7 @@
     "name": "Enum Tag",
     "icon": "🏷️",
     "category": "parsing",
-    "desc": "Example Enum Tag\n",
+    "desc": "Shows how to derive `EnumTag` on enums for parsing variants from CLI strings with renames and descriptions.\n",
     "tags": [
       "enum_tag",
       "Pickable"
@@ -124,7 +124,7 @@
     "name": "Error Handling",
     "icon": "⚠️",
     "category": "runtime",
-    "desc": "Example Error Handling\n",
+    "desc": "Demonstrates how to define custom error types with `pack!` and route them to dedicated `#[renderer]` functions for user-friendly output.\n",
     "tags": [
       "Result"
     ],
@@ -138,7 +138,7 @@
     "name": "Exitcode",
     "icon": "🚪",
     "category": "runtime",
-    "desc": "Example Error Handling\n",
+    "desc": "Shows how to set custom exit codes using `ExitCodeSetup` and the `finish` hook to signal success or failure to the shell.\n",
     "tags": [
       "ExitCode"
     ],
@@ -152,7 +152,7 @@
     "name": "General Renderer",
     "icon": "📤",
     "category": "output",
-    "desc": "Example General Renderer\n",
+    "desc": "Demonstrates how to render structured output in JSON or YAML using `GeneralRendererSetup` and the `general_renderer` feature.\n",
     "tags": [
       "general_renderer",
       "--json",
@@ -168,7 +168,7 @@
     "name": "Help",
     "icon": "💡",
     "category": "ux",
-    "desc": "Example Help\n",
+    "desc": "Shows how to use the `#[help]` attribute to provide custom per-command help text that activates when the user passes `--help`.\n",
     "tags": [
       "#[help]"
     ],
@@ -182,7 +182,7 @@
     "name": "Hook",
     "icon": "🪝",
     "category": "runtime",
-    "desc": "Example Hook\n",
+    "desc": "Demonstrates how to use Mingling's `ProgramHook` system to observe and debug every stage of the execution pipeline.\n",
     "tags": [
       "ProgramHook"
     ],
@@ -196,7 +196,7 @@
     "name": "Implicit Dispatcher",
     "icon": "🫥",
     "category": "dispatch",
-    "desc": "Example Implicit Dispatcher\n",
+    "desc": "Shows the abbreviated `dispatcher!(\"cmd.path\")` syntax from `extra_macros` that auto-derives struct names from the command path.\n",
     "tags": [
       "implicit"
     ],
@@ -210,7 +210,7 @@
     "name": "Lazy Resources",
     "icon": "💤️",
     "category": "advanced",
-    "desc": "Example Lazy Resources\n",
+    "desc": "Demonstrates how to use `LazyRes<T>` for lazily initialized resources that only allocate when first accessed.\n",
     "tags": [
       "LazyRes<Res>"
     ],
@@ -224,7 +224,7 @@
     "name": "Panic Unwind",
     "icon": "💥",
     "category": "runtime",
-    "desc": "Example Panic Unwind\n",
+    "desc": "Shows how to catch panics during program execution and display friendly error messages instead of a raw panic trace.\n",
     "tags": [
       "panic_unwind"
     ],
@@ -238,7 +238,7 @@
     "name": "REPL Basic",
     "icon": "🔁",
     "category": "repl",
-    "desc": "Example REPL Basic\n",
+    "desc": "Demonstrates how to build an interactive REPL shell with Mingling using `exec_repl()`, custom prompts, and built-in setups.\n",
     "tags": [
       "repl"
     ],
@@ -252,7 +252,7 @@
     "name": "Resources",
     "icon": "📦",
     "category": "advanced",
-    "desc": "Example Resource Injection\n",
+    "desc": "Shows how to share global state across commands using `with_resource()` and inject `&T` or `&mut T` into chain and renderer functions.\n",
     "tags": [
       "Resources",
       "injection"
@@ -268,7 +268,7 @@
     "name": "Setup",
     "icon": "🏗️",
     "category": "core",
-    "desc": "Example Setup\n",
+    "desc": "Demonstrates how to build a custom `ProgramSetup` with `#[program_setup]` for modular configuration of program behaviour.\n",
     "tags": [
       "#[setup]",
       "extra_macros"
@@ -283,7 +283,7 @@
     "name": "Unit Test",
     "icon": "🧪",
     "category": "testing",
-    "desc": "Example Unit Test\n",
+    "desc": "Shows how to write unit tests for Chain and Renderer functions using the `entry!` macro and assertion helpers.\n",
     "tags": [
       "testing",
       "extra_macros"

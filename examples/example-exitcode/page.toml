@@ -4,7 +4,7 @@ name = "Exitcode"
 icon = "🚪"
 category = "runtime"
 desc = """
-Example Error Handling
+Shows how to set custom exit codes using `ExitCodeSetup` and the `finish` hook to signal success or failure to the shell.
 """
 tags = ["ExitCode"]
 files = ["src/main.rs", "Cargo.toml"]

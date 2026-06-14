@@ -4,7 +4,7 @@ name = "Resources"
 icon = "📦"
 category = "advanced"
 desc = """
-Example Resource Injection
+Shows how to share global state across commands using `with_resource()` and inject `&T` or `&mut T` into chain and renderer functions.
 """
 tags = ["Resources", "injection"]
 files = ["Cargo.toml", "src/main.rs", "src/lib.rs"]

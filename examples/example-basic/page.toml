@@ -4,7 +4,7 @@ name = "Basic"
 icon = "🚀"
 category = "core"
 desc = """
-Example The Basic Usage of Mingling
+Demonstrates the basic usage of Mingling with a simple `greet` subcommand that takes a name and prints a greeting.
 """
 tags = ["dispatcher!", "#[chain]", "#[renderer]"]
 files = ["src/main.rs", "Cargo.toml"]

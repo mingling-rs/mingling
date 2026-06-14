@@ -4,7 +4,7 @@ name = "Clap Binding"
 icon = "🔗"
 category = "parsing"
 desc = """
-Example Clap Binding
+Demonstrates how to bind a `clap::Parser` derive struct to Mingling using `#[dispatcher_clap]` for advanced argument parsing.
 """
 tags = ["clap"]
 files = ["src/main.rs", "Cargo.toml"]

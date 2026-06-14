@@ -4,7 +4,7 @@ name = "Enum Tag"
 icon = "🏷️"
 category = "parsing"
 desc = """
-Example Enum Tag
+Shows how to derive `EnumTag` on enums for parsing variants from CLI strings with renames and descriptions.
 """
 tags = ["enum_tag", "Pickable"]
 files = ["src/main.rs", "Cargo.toml"]

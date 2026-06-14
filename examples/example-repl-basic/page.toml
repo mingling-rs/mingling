@@ -4,7 +4,7 @@ name = "REPL Basic"
 icon = "🔁"
 category = "repl"
 desc = """
-Example REPL Basic
+Demonstrates how to build an interactive REPL shell with Mingling using `exec_repl()`, custom prompts, and built-in setups.
 """
 tags = ["repl"]
 files = ["src/main.rs", "Cargo.toml"]

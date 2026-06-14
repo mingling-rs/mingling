@@ -4,7 +4,7 @@ name = "Custom Pickable"
 icon = "🎯"
 category = "parsing"
 desc = """
-Example Custom Pickable
+Shows how to implement the `Pickable` trait on custom types for seamless extraction from CLI arguments via Picker.
 """
 tags = ["Pickable", "custom"]
 files = ["src/main.rs", "Cargo.toml"]

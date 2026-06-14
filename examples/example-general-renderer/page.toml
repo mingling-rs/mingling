@@ -4,7 +4,7 @@ name = "General Renderer"
 icon = "📤"
 category = "output"
 desc = """
-Example General Renderer
+Demonstrates how to render structured output in JSON or YAML using `GeneralRendererSetup` and the `general_renderer` feature.
 """
 tags = ["general_renderer", "--json", "--yaml"]
 files = ["src/main.rs", "Cargo.toml"]

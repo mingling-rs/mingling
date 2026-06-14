@@ -4,7 +4,7 @@ name = "Dispatch Tree"
 icon = "🌳"
 category = "dispatch"
 desc = """
-Example Dispatch Tree
+Introduces the `dispatch_tree` feature that converts the subcommand list into a compile-time prefix trie for O(n) command lookup.
 """
 tags = ["dispatch_tree"]
 files = ["src/main.rs", "Cargo.toml"]
