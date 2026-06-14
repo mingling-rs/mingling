@@ -6,6 +6,10 @@
 <h1 align="center">Mìng Lìng - 命令</h1>
 
 <p align="center">
+    <b>/mɪŋ lɪŋ/</b>
+</p>
+
+<p align="center">
     Macro magician in your CLI.
 </p>
 <p align="center">
