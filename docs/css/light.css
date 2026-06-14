@@ -439,6 +439,8 @@ body.sticky .sidebar-toggle {
     background-color: #f0e8d8;
     border-radius: 2px;
     padding: 0.15em 0.4em;
+    font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+    font-variant-ligatures: contextual;
 }
 .markdown-section pre {
     background-color: #f0e8d8;
@@ -446,11 +448,14 @@ body.sticky .sidebar-toggle {
     border-radius: 2px;
     padding: 1rem;
     overflow-x: auto;
+    font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+    font-variant-ligatures: contextual;
 }
 .markdown-section pre > code {
     background: transparent;
     padding: 0;
     color: #3a2a1a;
+    font-family: inherit;
 }
 .markdown-section blockquote {
     border-left: 3px solid #b8352d;

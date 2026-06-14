@@ -8,7 +8,7 @@
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
             rel="stylesheet"
         />
         <link rel="stylesheet" href="scripts/highlight/github-dark.min.css" />
@@ -143,7 +143,8 @@
                 color: #9a8a7a;
                 padding: 0.4rem 1rem;
                 font-size: 0.82rem;
-                font-family: "Cascadia Code", "Fira Code", monospace;
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-variant-ligatures: contextual;
                 cursor: pointer;
                 transition: all 0.2s;
                 border-radius: 2px 2px 0 0;
@@ -171,13 +172,16 @@
                 margin: 0;
                 padding: 1.25rem;
                 overflow-x: auto;
-                font-family: "Cascadia Code", "Fira Code", monospace;
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-variant-ligatures: contextual;
                 font-size: 0.85rem;
                 line-height: 1.65;
             }
             .code-frame pre code.hljs {
                 background: transparent;
                 padding: 0;
+                font-family: inherit;
+                font-variant-ligatures: inherit;
             }
 
             .doc-box {
@@ -214,8 +218,10 @@
                 padding: 0.12em 0.4em;
                 border-radius: 2px;
                 font-size: 0.85em;
-                font-family: "Cascadia Code", "Fira Code", monospace;
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-variant-ligatures: contextual;
             }
+
             .doc-box strong {
                 color: #e8ddd0;
             }
@@ -386,7 +392,7 @@
                             i++; // skip closing ```
                             var codeText = escapeHtml(codeLines.join("\n"));
                             html +=
-                                '<pre style="background:#1a1410;border:1px solid #3a2e24;border-radius:2px;padding:0.75rem;margin:0.5rem 0;overflow-x:auto;font-size:0.8rem;line-height:1.5"><code>' +
+                                "<pre style=\"background:#1a1410;border:1px solid #3a2e24;border-radius:2px;padding:0.75rem;margin:0.5rem 0;overflow-x:auto;font-size:0.8rem;line-height:1.5;font-family:'JetBrains Mono','Noto Serif SC',monospace;font-variant-ligatures:contextual\"><code>" +
                                 codeText +
                                 "</code></pre>";
                             continue;
