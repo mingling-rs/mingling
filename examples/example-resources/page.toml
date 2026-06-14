@@ -7,4 +7,4 @@ desc = """
 Shows how to share global state across commands using `with_resource()` and inject `&T` or `&mut T` into chain and renderer functions.
 """
 tags = ["Resources", "injection"]
-files = ["Cargo.toml", "src/main.rs", "src/lib.rs"]
+files = ["src/main.rs", "Cargo.toml"]

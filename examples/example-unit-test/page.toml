@@ -7,4 +7,4 @@ desc = """
 Shows how to write unit tests for Chain and Renderer functions using the `entry!` macro and assertion helpers.
 """
 tags = ["testing", "extra_macros"]
-files = ["Cargo.toml", "src/main.rs"]
+files = ["src/main.rs", "Cargo.toml"]
