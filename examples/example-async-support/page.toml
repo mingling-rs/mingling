@@ -6,5 +6,5 @@ category = "runtime"
 desc = """
 Example Async Runtime Support
 """
-tags = ["async", "tokio"]
+tags = ["async", "await", "#[chain]"]
 files = ["src/main.rs", "Cargo.toml"]

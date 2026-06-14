@@ -38,7 +38,8 @@
     "desc": "Example Async Runtime Support\n",
     "tags": [
       "async",
-      "tokio"
+      "await",
+      "#[chain]"
     ],
     "files": [
       "src/main.rs",
@@ -169,7 +170,7 @@
     "category": "ux",
     "desc": "Example Help\n",
     "tags": [
-      "#[helper]"
+      "#[help]"
     ],
     "files": [
       "src/main.rs",
@@ -300,7 +301,8 @@
     "desc": "This is a complete example project that demonstrates how to develop a todo list application using Mingling\n",
     "tags": [
       "todolist",
-      "CRUD"
+      "CRUD",
+      "cliché example"
     ],
     "files": [
       "src/main.rs",

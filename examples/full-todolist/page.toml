@@ -6,5 +6,5 @@ category = "full"
 desc = """
 This is a complete example project that demonstrates how to develop a todo list application using Mingling
 """
-tags = ["todolist", "CRUD"]
+tags = ["todolist", "CRUD", "cliché example"]
 files = ["src/main.rs", "src/todolist.rs", "src/help.rs", "Cargo.toml"]

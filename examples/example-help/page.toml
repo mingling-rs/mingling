@@ -6,5 +6,5 @@ category = "ux"
 desc = """
 Example Help
 """
-tags = ["#[helper]"]
+tags = ["#[help]"]
 files = ["src/main.rs", "Cargo.toml"]
