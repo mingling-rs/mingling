@@ -19,15 +19,15 @@ Enables async runtime support, allowing `#[chain]` to bind `async` functions, e.
 
 ```rust
 // Features: ["async"]
-
+ 
 pack!(StateFoo = ());
-
+ 
 #[chain]
 async fn handle_state_foo(foo: StateFoo) -> Next {
     StateFoo::new(())
 } 
 ```
-
+ 
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-async-support)
 
 ## Feature `builds`
@@ -41,13 +41,13 @@ Enables scripts needed for use in `build.rs`, currently including:
 ```rust
 // Features: ["builds", "comp"]
 use mingling::build::build_comp_scripts;
-
+ 
 fn main() {
     // Generate completion scripts for `myprogram`
     build_comp_scripts("myprogram").unwrap();
 }
 ```
-
+ 
 ## Feature `clap`
 
 **Description:**
@@ -106,17 +106,17 @@ For example, allows the shorthand form `dispatcher!("greet")`, which auto-genera
 
 ```rust
 // Features: ["extra_macros"]
-
+ 
 pack!(StatePrev1 = ());
 pack!(StatePrev2 = ());
-
+ 
 pack!(StateNext = ());
-
+ 
 #[chain]
 fn handle_state_prev2(_p: StatePrev1) {
     // A #[chain] with no return type can simply omit the return value
 }
-
+ 
 #[chain]
 fn handle_state_prev1(_p: StatePrev1) -> Next {
     let foo = 1;
@@ -129,19 +129,19 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
     }
 }
 ```
-
+ 
 ### `#[program_setup]`
 
 ```rust
 // Features: ["extra_macros"]
 use mingling::{macros::program_setup, Program};
-
+ 
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(NoErrorSetup);
     program.exec_and_exit();
 }
-
+ 
 #[program_setup]
 fn no_error_setup(program: &mut Program<ThisProgram>) {
     program.global_flag(["--no-error"], |program| {
@@ -149,24 +149,24 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
     });
 }
 ```
-
+ 
 ### `entry!`
 
 ```rust
 // Features: ["extra_macros"]
 use mingling::macros::entry;
-
+ 
 pack!(EntryHello = Vec<String>);
-
+ 
 fn main() {
     let result = handle_hello(entry!("--name", "Bob")).into();
     // ... assertion logic here
 }
-
+ 
 #[chain]
 fn handle_hello(args: EntryHello) {}
 ```
-
+ 
 </details>
 
 ## Feature `general_renderer`

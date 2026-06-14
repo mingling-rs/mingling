@@ -6,7 +6,7 @@
 cargo new my-cli
 cd my-cli
 ```
-
+ 
 ## 添加依赖
 
 在 `Cargo.toml` 写入如下内容
@@ -16,7 +16,7 @@ cd my-cli
 version = "0.2"
 features = []
 ```
-
+ 
 ## 启用特性
 
 **Mingling** 默认所有特性关闭，且不提供类似 `full` 的全开特性。
@@ -31,7 +31,7 @@ features = [
     "comp",
 ]
 ```
-
+ 
 > [!NOTE]
 > 请前往 [docs.rs](https://docs.rs/mingling/latest/mingling/feature/index.html) 或 [特性](pages/other/features) 以了解所有特性
 
@@ -41,22 +41,22 @@ features = [
 
 ```rust
 use mingling::prelude::*;
-
+ 
 fn main() {
     let mut program = ThisProgram::new();
     
     program.exec_and_exit();
 }
-
+ 
 gen_program!();
 ```
-
+ 
 ## 编译验证
 
 ```plaintext
 ~# cargo check
 ```
-
+ 
 ---
 
 一切无误后，开始写点什么吧！
