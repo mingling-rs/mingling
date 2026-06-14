@@ -1,0 +1,246 @@
+<h1 align="center">Features</h1>
+<p align="center">
+    <b>Mingling</b>'s complete feature list
+</p>
+
+## Feature `all_serde_fmt`
+
+**Description:**
+
+Enables serde formatting support for all serialization formats (JSON, RON, TOML, YAML) in `general_renderer`.
+
+Enabling this feature will automatically enable the four sub-features: `json_serde_fmt`, `ron_serde_fmt`, `toml_serde_fmt`, `yaml_serde_fmt`.
+
+## Feature `async`
+
+**Description:**
+
+Enables async runtime support, allowing `#[chain]` to bind `async` functions, e.g.:
+
+```rust
+// Features: ["async"]
+
+pack!(StateFoo = ());
+
+#[chain]
+async fn handle_state_foo(foo: StateFoo) -> Next {
+    StateFoo::new(())
+} 
+```
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-async-support)
+
+## Feature `builds`
+
+**Description:**
+
+Enables scripts needed for use in `build.rs`, currently including:
+
+1. Completion script generation under the `comp` feature:
+
+```rust
+// Features: ["builds", "comp"]
+use mingling::build::build_comp_scripts;
+
+fn main() {
+    // Generate completion scripts for `myprogram`
+    build_comp_scripts("myprogram").unwrap();
+}
+```
+
+## Feature `clap`
+
+**Description:**
+
+Enables integration with the [clap](https://crates.io/crates/clap) command-line argument parsing library, making it easy to build CLI apps.
+
+With this feature enabled, you can use the `#[dispatcher_clap]` attribute macro to generate a dispatcher from a `clap::Parser` struct.
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-clap-binding)
+
+## Feature `comp`
+
+**Description:**
+
+Enables code completion functionality, providing auto-completion support for interactive environments.
+
+When enabled, you can use the `#[completion]` attribute macro to define dynamic completion logic, and generate completion scripts for shells such as bash, zsh, fish, and pwsh.
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-completion)
+
+## Feature `debug`
+
+**Description:**
+
+Enables debugging-related features, providing more detailed error info and diagnostic output.
+
+## Feature `dispatch_tree`
+
+**Description:**
+
+Enables the dispatch tree mechanism, supporting conditional dispatch and routing.
+
+When enabled, Mingling **at compile time** hard-codes the subcommand structure as a prefix tree (Trie), achieving extremely fast subcommand lookup. Lookup complexity is **O(n)**, where _n_ is the input length, not the number of commands.
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-dispatch-tree)
+
+## Feature `extra_macros`
+
+**Description:**
+
+Enables an additional set of macros, providing more convenient syntactic sugar and metaprogramming capabilities.
+
+For example, allows the shorthand form `dispatcher!("greet")`, which auto-generates `CMDGreet` / `EntryGreet`.
+
+| Macro | Description |
+|---|---|
+| `empty_result!()` | Shorthand for returning an empty result early in a chain |
+| `entry!(Type, ["a", "b"])` | Construct test data for an entry type |
+| `#[program_setup]` | Declare a program initialization function |
+| `dispatcher!("cmd.path")` **shorthand** | Omit `CMDStruct => EntryStruct`, names are auto-derived |
+
+<details>
+<summary> Details </summary>
+
+### `empty_result!()`
+
+```rust
+// Features: ["extra_macros"]
+
+pack!(StatePrev1 = ());
+pack!(StatePrev2 = ());
+
+pack!(StateNext = ());
+
+#[chain]
+fn handle_state_prev2(_p: StatePrev1) {
+    // A #[chain] with no return type can simply omit the return value
+}
+
+#[chain]
+fn handle_state_prev1(_p: StatePrev1) -> Next {
+    let foo = 1;
+    let bar = 2;
+    if foo != bar {
+        // When Next is needed but no return value is required, use this
+        empty_result!()
+    } else {
+        StateNext::new(()).into()
+    }
+}
+```
+
+### `#[program_setup]`
+
+```rust
+// Features: ["extra_macros"]
+use mingling::{macros::program_setup, Program};
+
+fn main() {
+    let mut program = ThisProgram::new();
+    program.with_setup(NoErrorSetup);
+    program.exec_and_exit();
+}
+
+#[program_setup]
+fn no_error_setup(program: &mut Program<ThisProgram>) {
+    program.global_flag(["--no-error"], |program| {
+        program.stdout_setting.error_output = false;
+    });
+}
+```
+
+### `entry!`
+
+```rust
+// Features: ["extra_macros"]
+use mingling::macros::entry;
+
+pack!(EntryHello = Vec<String>);
+
+fn main() {
+    let result = handle_hello(entry!("--name", "Bob")).into();
+    // ... assertion logic here
+}
+
+#[chain]
+fn handle_hello(args: EntryHello) {}
+```
+
+</details>
+
+## Feature `general_renderer`
+
+**Description:**
+
+Enables the general renderer, providing basic content rendering capabilities. Enabling this feature will automatically enable `json_serde_fmt`.
+
+When enabled, users can get structured output via flags like `--json` or `--yaml`.
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-general-renderer)
+
+## Feature `general_renderer_empty`
+
+**Description:**
+
+Enables an empty implementation of the general renderer, suitable for scenarios where no actual rendering is needed. This feature does not enable any serde formatting backend.
+
+## Feature `general_renderer_full`
+
+**Description:**
+
+Enables the full implementation of the general renderer, including all rendering capabilities and serialization format support. Enabling this feature will automatically enable `all_serde_fmt`.
+
+## Feature `json_serde_fmt`
+
+**Description:**
+
+Enables JSON serde serialization/deserialization formatting support.
+
+## Feature `nightly`
+
+**Description:**
+
+Enables experimental features only available in the Nightly Rust compiler.
+
+## Feature `parser`
+
+**Description:**
+
+Enables the parser module, providing text parsing and analysis capabilities.
+
+When enabled, you can use `Picker` for zero-cost argument extraction, supporting methods like `pick()` and `pick_or()`.
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-argument-parse)
+
+## Feature `repl`
+
+**Description:**
+
+Enables interactive REPL (Read-Eval-Print Loop) environment support.
+
+When enabled, you can turn your CLI into an interactive shell via `program.exec_repl()`.
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-repl-basic)
+
+## Feature `ron_serde_fmt`
+
+**Description:**
+
+Enables RON (Rusty Object Notation) serde serialization/deserialization formatting support.
+
+## Feature `toml_serde_fmt`
+
+**Description:**
+
+Enables TOML serde serialization/deserialization formatting support.
+
+## Feature `yaml_serde_fmt`
+
+**Description:**
+
+Enables YAML serde serialization/deserialization formatting support.
+
+<p align="center" style="font-size: 0.85em; color: gray;">
+    Written by @Weicao-CatilGrass
+</p>
