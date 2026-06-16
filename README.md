@@ -810,8 +810,18 @@ Hello, Alice!
 Add Mingling to your `Cargo.toml`:
 
 ```toml
-[dependencies]
-mingling = "0.2.0"
+[dependencies.mingling]
+version = "0.2.0"
+features = []
+```
+
+Or use the github version
+
+```toml
+[dependencies.mingling]
+git = "https://github.com/mingling-rs/mingling.git"
+tag = "unreleased"
+features = []
 ```
 
 Or use the [template project](https://github.com/mingling-rs/mingling-template):
