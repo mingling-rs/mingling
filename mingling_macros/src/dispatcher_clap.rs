@@ -232,6 +232,9 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         None
     };
 
+    let dispatch_tree_entry =
+        get_dispatch_tree_entry(&command_name_str, &dispatcher_struct, &struct_name);
+
     let expanded = quote! {
         // Keep the original struct definition
         #input_struct
@@ -242,9 +245,13 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         // Generate the help block if enabled
         #help_gen
 
+        // Dispatch tree registration (if feature enabled)
+        #dispatch_tree_entry
+
         // Generate the dispatcher struct
         #[doc(hidden)]
-        struct #dispatcher_struct;
+        #[derive(Default)]
+        pub struct #dispatcher_struct;
 
         impl ::mingling::Dispatcher<#program_path> for #dispatcher_struct {
             fn node(&self) -> ::mingling::Node {
@@ -272,4 +279,25 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
     };
 
     expanded.into()
+}
+
+#[cfg(feature = "dispatch_tree")]
+fn get_dispatch_tree_entry(
+    command_name_str: &str,
+    dispatcher_struct: &Ident,
+    entry_name: &Ident,
+) -> proc_macro2::TokenStream {
+    let node_name_lit = syn::LitStr::new(command_name_str, proc_macro2::Span::call_site());
+    quote! {
+        ::mingling::macros::register_dispatcher!(#node_name_lit, #dispatcher_struct, #entry_name);
+    }
+}
+
+#[cfg(not(feature = "dispatch_tree"))]
+fn get_dispatch_tree_entry(
+    _command_name_str: &str,
+    _dispatcher_struct: &Ident,
+    _entry_name: &Ident,
+) -> proc_macro2::TokenStream {
+    quote! {}
 }

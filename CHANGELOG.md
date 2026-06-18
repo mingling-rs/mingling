@@ -57,6 +57,8 @@
    - Allows the program instance to be **taken** (moved out) via an `unsafe fn take()` after execution completes, enabling proper cleanup before `std::process::exit()` in `exec_and_exit`
    - Is paired with corresponding simplifications in `once_exec.rs` and `repl_exec.rs` that switch from `THIS_PROGRAM.get().unwrap().as_ref()` to `THIS_PROGRAM.get_raw().unwrap()`
 
+4. **\[macros:dispatcher_clap\]** Added `dispatch_tree` feature integration for `#[dispatcher_clap]`. When the `dispatch_tree` feature is enabled, `#[dispatcher_clap]` will now automatically register the dispatcher and entry in the dispatch tree via `register_dispatcher!`, matching the behavior already present in the `dispatcher!` macro. When the feature is disabled, no additional code is generated.
+
 #### Optimizations:
 
 1. **\[core:flag\]** Refactored the `special_argument!` and `special_arguments!` macros to replace index‑based `while` loops with iterator `position` and `drain`, improving both performance and readability.
