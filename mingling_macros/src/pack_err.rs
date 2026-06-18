@@ -81,7 +81,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
                 #derive
                 pub struct #type_name {
                     /// The snake_case name of this error, automatically set at compile time.
-                    name: String,
+                    pub name: String,
                 }
 
                 impl ::std::default::Default for #type_name {
@@ -118,9 +118,9 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
                 #derive
                 pub struct #type_name {
                     /// The snake_case name of this error, automatically set at compile time.
-                    name: String,
+                    pub name: String,
                     /// Additional context info for this error.
-                    info: #inner_type,
+                    pub info: #inner_type,
                 }
 
                 impl #type_name {
