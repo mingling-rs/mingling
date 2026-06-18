@@ -99,6 +99,9 @@ pub mod macros {
     pub use mingling_macros::node;
     /// Used to create a wrapper type for use with `Chain` and `Renderer`
     pub use mingling_macros::pack;
+    /// Used to create an error struct with automatic `name` field
+    #[cfg(feature = "extra_macros")]
+    pub use mingling_macros::pack_err;
     #[cfg(feature = "comp")]
     /// Internal macro for '`gen_program`' used to finally generate the completion structure
     pub use mingling_macros::program_comp_gen;
@@ -192,6 +195,9 @@ pub mod prelude {
     pub use crate::macros::gen_program;
     /// Re-export of the `pack` macro for creating wrapper types.
     pub use crate::macros::pack;
+    /// Re-export of the `pack_err` macro for creating error types.
+    #[cfg(feature = "extra_macros")]
+    pub use crate::macros::pack_err;
     /// Re-export of the `r_print` macro for printing within a renderer context.
     pub use crate::macros::r_print;
     /// Re-export of the `r_println` macro for printing with a newline within a renderer

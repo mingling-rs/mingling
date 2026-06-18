@@ -158,6 +158,8 @@ mod help;
 mod node;
 mod pack;
 #[cfg(feature = "extra_macros")]
+mod pack_err;
+#[cfg(feature = "extra_macros")]
 mod program_setup;
 mod render;
 mod renderer;
@@ -317,6 +319,74 @@ pub fn node(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn pack(input: TokenStream) -> TokenStream {
     pack::pack(input)
+}
+
+/// Creates an error struct with a `name: String` field and optional `info: Type` field.
+///
+/// This macro provides a concise way to define error types that implement `Groupped`
+/// and are registered for inclusion in the program enum.
+///
+/// The `name` field is automatically set to the snake_case version of the struct name
+/// at compile time.
+///
+/// # Syntax
+///
+/// Two forms are supported:
+///
+/// ```rust,ignore
+/// // Simple form — generates a struct with only `name: String` and a `Default` impl:
+/// pack_err!(ErrorNotFound);
+///
+/// // Typed form — generates a struct with `name: String` + `info: Type` and a `new(info)` constructor:
+/// pack_err!(ErrorNotDir = PathBuf);
+/// ```
+///
+/// # Generated code
+///
+/// For `pack_err!(ErrorNotFound)`:
+///
+/// ```rust,ignore
+/// #[derive(::mingling::Groupped)]
+/// pub struct ErrorNotFound {
+///     name: String,
+/// }
+///
+/// impl Default for ErrorNotFound {
+///     fn default() -> Self {
+///         Self {
+///             name: "error_not_found".into(),
+///         }
+///     }
+/// }
+/// ```
+///
+/// For `pack_err!(ErrorNotDir = PathBuf)`:
+///
+/// ```rust,ignore
+/// #[derive(::mingling::Groupped)]
+/// pub struct ErrorNotDir {
+///     name: String,
+///     info: PathBuf,
+/// }
+///
+/// impl ErrorNotDir {
+///     pub fn new(info: PathBuf) -> Self {
+///         Self {
+///             name: "error_not_dir".into(),
+///             info,
+///         }
+///     }
+/// }
+/// ```
+///
+/// When the `general_renderer` feature is enabled, the struct also gets
+/// `#[derive(serde::Serialize)]`.
+///
+/// This macro is only available with the `extra_macros` feature.
+#[cfg(feature = "extra_macros")]
+#[proc_macro]
+pub fn pack_err(input: TokenStream) -> TokenStream {
+    pack_err::pack_err(input)
 }
 
 /// Early-returns an error from a `Result`, converting the `Ok` branch to a

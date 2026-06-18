@@ -124,6 +124,58 @@ fn render_entry_show(_args: EntryShow, res: &mut LazyRes<ResLargeData>) {
 
 7. **\[core:comp\]** Added `Program::is_completing()` method to check whether the program is currently running in completion mode. This provides a convenient way to conditionally skip certain logic during completion generation, where those operations may be unnecessary or undesirable.
 
+8. **\[macros\]** Added the `pack_err!` macro for creating error structs with automatic `name` field.
+
+The `pack_err!` macro provides a concise way to define error types that implement `Groupped` and are automatically registered for inclusion in the program enum. The `name` field is automatically set to the snake_case version of the struct name at compile time.
+
+Two forms are supported:
+
+```rust
+// Simple form — generates a struct with only `name: String` and a `Default` impl:
+pack_err!(ErrorNotFound);
+
+// Typed form — generates a struct with `name: String` + `info: Type` and a `new(info)` constructor:
+pack_err!(ErrorNotDir = PathBuf);
+```
+
+For `pack_err!(ErrorNotFound)`, the generated code is:
+
+```rust
+#[derive(::mingling::Groupped)]
+pub struct ErrorNotFound {
+    name: String,
+}
+
+impl Default for ErrorNotFound {
+    fn default() -> Self {
+        Self {
+            name: "error_not_found".into(),
+        }
+    }
+}
+```
+
+For `pack_err!(ErrorNotDir = PathBuf)`:
+
+```rust
+#[derive(::mingling::Groupped)]
+pub struct ErrorNotDir {
+    name: String,
+    info: PathBuf,
+}
+
+impl ErrorNotDir {
+    pub fn new(info: PathBuf) -> Self {
+        Self {
+            name: "error_not_dir".into(),
+            info,
+        }
+    }
+}
+```
+
+This macro is only available with the `extra_macros` feature.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **\[core\]** Changed the signature of `ProgramSetup::setup` from `fn setup(&mut self, program: &mut Program<C>) -> S` to `fn setup(self, program: &mut Program<C>)`, consuming `self` instead of taking a mutable reference. Correspondingly, `Program::with_setup` now accepts `S` by value (`&mut self, setup: S`) instead of by mutable reference (`&mut self, setup: &mut S`).

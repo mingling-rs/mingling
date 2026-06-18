@@ -220,6 +220,23 @@
     ]
   },
   {
+    "id": "example-pack-err",
+    "name": "pack_err!",
+    "icon": "🛑",
+    "category": "macros",
+    "desc": "Demonstrates how to use the `pack_err!` macro to define error types with automatic `name` field (snake_case at compile time) and optional `info` field. Also shows `--json` serialization when `general_renderer` is enabled.\n",
+    "tags": [
+      "pack_err!",
+      "extra_macros",
+      "general_renderer",
+      "--json"
+    ],
+    "files": [
+      "src/main.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
     "id": "example-panic-unwind",
     "name": "Panic Unwind",
     "icon": "💥",
@@ -258,9 +275,8 @@
       "injection"
     ],
     "files": [
-      "Cargo.toml",
       "src/main.rs",
-      "src/lib.rs"
+      "Cargo.toml"
     ]
   },
   {
@@ -289,8 +305,8 @@
       "extra_macros"
     ],
     "files": [
-      "Cargo.toml",
-      "src/main.rs"
+      "src/main.rs",
+      "Cargo.toml"
     ]
   },
   {
