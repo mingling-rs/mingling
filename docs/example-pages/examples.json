@@ -220,8 +220,23 @@
     ]
   },
   {
+    "id": "example-outside-type",
+    "name": "Outside Type",
+    "icon": "🆕",
+    "category": "advanced",
+    "desc": "Demonstrates how to use the `group!()` macro to convert an external type into a type recognizable by Mingling\n",
+    "tags": [
+      "group!",
+      "extra_macros"
+    ],
+    "files": [
+      "src/main.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
     "id": "example-pack-err",
-    "name": "pack_err!",
+    "name": "Pack an Error",
     "icon": "🛑",
     "category": "macros",
     "desc": "Demonstrates how to use the `pack_err!` macro to define error types with automatic `name` field (snake_case at compile time) and optional `info` field. Also shows `--json` serialization when `general_renderer` is enabled.\n",
