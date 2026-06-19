@@ -96,6 +96,8 @@ fn main() {
 |---|---|
 | `empty_result!()` | 链中提前返回空结果的简写 |
 | `entry!(Type, ["a", "b"])` | 构造入口类型的测试数据 |
+| `group!(Type)` | 将外部类型注册为组成员，无需修改其定义 |
+| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | 创建带自动 `name` 字段的错误类型 |
 | `#[program_setup]` | 声明程序初始化函数 |
 | `dispatcher!("cmd.path")` **缩写形式** | 省略 `CMDStruct => EntryStruct`，名字自动推导 |
 
@@ -165,6 +167,43 @@ fn main() {
  
 #[chain]
 fn handle_hello(args: EntryHello) {}
+```
+ 
+### `group!`
+
+将外部类型注册为程序组成员，无需修改原始类型的定义。
+类型名会直接作为枚举变体，与 `pack!` 或 `#[derive(Groupped)]` 一致。
+
+```rust
+// Features: ["extra_macros"]
+use mingling::macros::group;
+use std::num::ParseIntError;
+ 
+// 将 std::num::ParseIntError 注册为组成员。
+// 注册后，ParseIntError 可用于 #[chain] 和 #[renderer] 函数中。
+group!(std::num::ParseIntError);
+```
+ 
+### `pack_err!`
+
+创建带自动 `name: String` 字段的错误结构体，字段值自动设为结构体名的蛇形命名。
+可选择包裹一个内部类型以携带额外上下文。
+
+```rust
+// Features: ["extra_macros"]
+use std::path::PathBuf;
+ 
+// 简单形式——仅包含 name 字段：
+pack_err!(ErrorNotFound);
+// 生成：
+//   struct ErrorNotFound { pub name: String }
+//   impl Default for ErrorNotFound { ... }
+ 
+// 带类型的形式——包含额外的 info 字段：
+pack_err!(ErrorNotDir = PathBuf);
+// 生成：
+//   struct ErrorNotDir { pub name: String, pub info: PathBuf }
+//   impl ErrorNotDir { pub fn new(info: PathBuf) -> Self { ... } }
 ```
  
 </details>

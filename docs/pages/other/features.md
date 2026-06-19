@@ -96,6 +96,8 @@ For example, allows the shorthand form `dispatcher!("greet")`, which auto-genera
 |---|---|
 | `empty_result!()` | Shorthand for returning an empty result early in a chain |
 | `entry!(Type, ["a", "b"])` | Construct test data for an entry type |
+| `group!(Type)` | Register external types as group members without modifying them |
+| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | Create error types with an automatic `name` field |
 | `#[program_setup]` | Declare a program initialization function |
 | `dispatcher!("cmd.path")` **shorthand** | Omit `CMDStruct => EntryStruct`, names are auto-derived |
 
@@ -165,6 +167,43 @@ fn main() {
  
 #[chain]
 fn handle_hello(args: EntryHello) {}
+```
+ 
+### `group!`
+
+Registers an external type as a member of the program group without modifying its definition.
+The type's simple name is used as the enum variant, just like `pack!` or `#[derive(Groupped)]`.
+
+```rust
+// Features: ["extra_macros"]
+use mingling::macros::group;
+use std::num::ParseIntError;
+ 
+// Register std::num::ParseIntError as a group member.
+// After this, ParseIntError can be used in #[chain] and #[renderer] functions.
+group!(std::num::ParseIntError);
+```
+ 
+### `pack_err!`
+
+Creates an error struct with an automatic `name: String` field set to the snake_case
+of the struct name. Optionally wraps an inner type for additional context.
+
+```rust
+// Features: ["extra_macros"]
+use std::path::PathBuf;
+ 
+// Simple form — only a name field:
+pack_err!(ErrorNotFound);
+// Generates:
+//   struct ErrorNotFound { pub name: String }
+//   impl Default for ErrorNotFound { ... }
+ 
+// Typed form — with additional info field:
+pack_err!(ErrorNotDir = PathBuf);
+// Generates:
+//   struct ErrorNotDir { pub name: String, pub info: PathBuf }
+//   impl ErrorNotDir { pub fn new(info: PathBuf) -> Self { ... } }
 ```
  
 </details>
