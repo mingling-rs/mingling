@@ -93,6 +93,9 @@ pub mod macros {
     pub use mingling_macros::entry;
     /// Used to collect data and create a command-line context
     pub use mingling_macros::gen_program;
+    /// Used to register an external type as a group member
+    #[cfg(feature = "extra_macros")]
+    pub use mingling_macros::group;
     /// Used to generate a struct implementing the `HelpRequest` trait via a method
     pub use mingling_macros::help;
     /// Used to create a `Node` struct via a literal

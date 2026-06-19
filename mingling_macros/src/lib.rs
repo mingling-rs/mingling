@@ -153,6 +153,8 @@ mod dispatcher_clap;
 #[cfg(feature = "extra_macros")]
 mod entry;
 mod enum_tag;
+#[cfg(feature = "extra_macros")]
+mod group_impl;
 mod groupped;
 mod help;
 mod node;
@@ -228,6 +230,56 @@ pub(crate) fn check_single_segment_type(
     } else {
         None
     }
+}
+
+/// Registers an outside-type as a member of a program group without modifying its definition.
+///
+/// This macro allows you to use outside-types from external crates (like `std::io::Error`)
+/// within the Mingling framework by generating a `Groupped` implementation and registering
+/// the type's simple name as an enum variant.
+///
+/// # Syntax
+///
+/// Two forms are supported:
+///
+/// ```rust,ignore
+/// // Explicit mode — specify both program path and outside-type:
+/// group!(crate::ThisProgram, std::io::Error);
+///
+/// // Implicit mode — uses default `crate::ThisProgram` as the program:
+/// group!(std::io::Error);
+/// ```
+///
+/// # How it works
+///
+/// The macro generates a module containing:
+/// - A `use` import for the program path and the outside-type
+/// - An `impl Groupped<Program>` for the outside-type
+/// - A `register_type!` call with the type's simple name
+///
+/// The type's simple name (e.g. `Error`) is used as the enum variant in the generated
+/// program enum, just like `#[derive(Groupped)]` or `pack!`.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::macros::group;
+///
+/// // Register std::io::Error as a group member
+/// group!(std::io::Error);
+///
+/// // With explicit program path:
+/// group!(crate::MyProgram, serde_json::Error);
+/// ```
+///
+/// After expansion, the type can be used in chains and renderers like any
+/// `#[derive(Groupped)]` type.
+///
+/// This macro is only available with the `extra_macros` feature.
+#[cfg(feature = "extra_macros")]
+#[proc_macro]
+pub fn group(input: TokenStream) -> TokenStream {
+    group_impl::group_macro(input)
 }
 
 /// Creates a `Node` from a dot-separated path string.
@@ -1801,6 +1853,7 @@ pub fn program_final_gen(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #[derive(Debug, PartialEq, Eq, Clone)]
         #[repr(#repr_type)]
+        #[allow(nonstandard_style)]
         pub enum #name {
             #(#packed_types),*
         }

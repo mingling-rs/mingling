@@ -1,0 +1,12 @@
+[package]
+name = "example-outside-type"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies.mingling]
+path = "../../mingling"
+features = [
+    "extra_macros",
+]
+
+[workspace]

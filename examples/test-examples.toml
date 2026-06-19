@@ -1,3 +1,13 @@
+[[test.example-outside-type]]
+command = "parse 42"
+expect.exit-code = 0
+expect.result = "Parsed number: 42"
+
+[[test.example-outside-type]]
+command = "parse hello"
+expect.exit-code = 0
+expect.result = "Parse error: invalid digit found in string"
+
 [[test.example-lazy-resources]]
 command = "none"
 expect.exit-code = 0
