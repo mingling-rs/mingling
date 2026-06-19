@@ -13,6 +13,7 @@ use syn::{Ident, Path, Result as SynResult, Token, TypePath};
 ///
 /// // Implicit mode: only type path, uses default `crate::ThisProgram` as program
 /// group!(std::io::Error);
+/// group!(ParseIntError);
 /// ```
 enum GroupInput {
     Explicit {
@@ -78,6 +79,21 @@ fn type_simple_name(type_path: &TypePath) -> Ident {
         .clone()
 }
 
+/// Generate the `use` token for the type path inside the generated module.
+///
+/// - Multi-segment path (e.g. `std::num::ParseIntError`): `use std::num::ParseIntError;`
+/// - Single-segment path (e.g. `ParseIntError`): `use super::ParseIntError;`
+fn gen_type_use(type_path: &TypePath) -> proc_macro2::TokenStream {
+    if type_path.path.segments.len() > 1 {
+        // Full path: use it directly
+        quote! { use #type_path; }
+    } else {
+        // Single ident: import from parent scope
+        let ident = type_simple_name(type_path);
+        quote! { use super::#ident; }
+    }
+}
+
 pub fn group_macro(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as GroupInput);
 
@@ -93,13 +109,15 @@ pub fn group_macro(input: TokenStream) -> TokenStream {
     let type_name = type_simple_name(&type_path);
     // Create a unique module name from the full type path
     let module_name = module_name_from_type(&type_path);
+    // Generate the appropriate `use` statement for the type
+    let type_use = gen_type_use(&type_path);
 
     // Generate the module with the Groupped implementation
     let expanded = quote! {
         #[allow(non_camel_case_types)]
         mod #module_name {
             use #program_path as __MinglingProgram;
-            use #type_path;
+            #type_use
 
             impl ::mingling::Groupped<__MinglingProgram> for #type_name {
                 fn member_id() -> __MinglingProgram {
