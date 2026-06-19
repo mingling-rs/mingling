@@ -106,11 +106,11 @@ pub mod macros {
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::pack_err;
     #[cfg(feature = "comp")]
-    /// Internal macro for '`gen_program`' used to finally generate the completion structure
+    #[doc(hidden)]
     pub use mingling_macros::program_comp_gen;
-    /// Internal macro for '`gen_program`' used to finally generate the fallback
+    #[doc(hidden)]
     pub use mingling_macros::program_fallback_gen;
-    /// Internal macro for '`gen_program`' used to finally generate the program
+    #[doc(hidden)]
     pub use mingling_macros::program_final_gen;
     /// Used to generate program setup
     #[cfg(feature = "extra_macros")]
@@ -119,15 +119,15 @@ pub mod macros {
     pub use mingling_macros::r_print;
     /// Used to print content with a newline within a `Renderer` context
     pub use mingling_macros::r_println;
-    /// Used to register a chain
+    #[doc(hidden)]
     pub use mingling_macros::register_chain;
-    /// Used to register a dispatcher for `dispatch_tree` feature
+    #[doc(hidden)]
     pub use mingling_macros::register_dispatcher;
-    /// Used to register a help
+    #[doc(hidden)]
     pub use mingling_macros::register_help;
-    /// Used to register a renderer
+    #[doc(hidden)]
     pub use mingling_macros::register_renderer;
-    /// Used to register a type into the context
+    #[doc(hidden)]
     pub use mingling_macros::register_type;
     /// Used to generate a struct implementing the `Renderer` trait via a method
     pub use mingling_macros::renderer;

@@ -1,52 +1,25 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse::{Parse, ParseStream};
-use syn::{Ident, Path, Result as SynResult, Token, TypePath};
+use syn::{Ident, Result as SynResult, TypePath};
 
 /// Input for the `group!` macro
 ///
 /// # Syntax
 ///
 /// ```rust,ignore
-/// // Explicit mode: specify both program path and type path
-/// group!(crate::ThisProgram, std::io::Error);
-///
-/// // Implicit mode: only type path, uses default `crate::ThisProgram` as program
+/// /// Only a type path — uses default `crate::ThisProgram` as program
 /// group!(std::io::Error);
 /// group!(ParseIntError);
 /// ```
-enum GroupInput {
-    Explicit {
-        program_path: Path,
-        type_path: TypePath,
-    },
-    Implicit {
-        type_path: TypePath,
-    },
+struct GroupInput {
+    type_path: TypePath,
 }
 
 impl Parse for GroupInput {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        // Parse the first path (could be program path or type path)
-        let first_path: Path = input.parse()?;
-
-        // If followed by a comma, it's explicit mode: Path, TypePath
-        if input.peek(Token![,]) {
-            input.parse::<Token![,]>()?;
-            let type_path: TypePath = input.parse()?;
-            Ok(GroupInput::Explicit {
-                program_path: first_path,
-                type_path,
-            })
-        } else {
-            // Otherwise it's implicit mode: just a type path
-            Ok(GroupInput::Implicit {
-                type_path: TypePath {
-                    qself: None,
-                    path: first_path,
-                },
-            })
-        }
+        let type_path: TypePath = input.parse()?;
+        Ok(GroupInput { type_path })
     }
 }
 
@@ -96,14 +69,9 @@ fn gen_type_use(type_path: &TypePath) -> proc_macro2::TokenStream {
 
 pub fn group_macro(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as GroupInput);
+    let type_path = input.type_path;
 
-    let (program_path, type_path) = match input {
-        GroupInput::Explicit {
-            program_path,
-            type_path,
-        } => (quote! { #program_path }, type_path),
-        GroupInput::Implicit { type_path } => (crate::default_program_path(), type_path),
-    };
+    let program_path = crate::default_program_path();
 
     // Use the type's simple name as the enum variant identifier
     let type_name = type_simple_name(&type_path);

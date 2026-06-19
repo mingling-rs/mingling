@@ -48,14 +48,9 @@ fn extract_return_type(sig: &Signature) -> syn::Result<()> {
 }
 
 pub fn setup_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse the attribute arguments (e.g., MyProgram from #[program_setup(MyProgram)])
-    // If no argument is provided, use ThisProgram
-    let (program_name, use_crate_prefix) = if attr.is_empty() {
-        (crate::default_program_path(), true)
-    } else {
-        let path: syn::Path = parse_macro_input!(attr as syn::Path);
-        (quote! { #path }, false)
-    };
+    // #[program_setup] takes no arguments; always use the default program path
+    let _ = attr;
+    let program_path = crate::default_program_path();
 
     // Parse the function item
     let input_fn = parse_macro_input!(item as ItemFn);
@@ -98,42 +93,22 @@ pub fn setup_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let struct_name = Ident::new(&pascal_case_name, fn_name.span());
 
     // Generate the struct and implementation
-    let expanded = if use_crate_prefix {
-        quote! {
-            #(#fn_attrs)*
-            #[doc(hidden)]
-            #vis struct #struct_name;
+    let expanded = quote! {
+        #(#fn_attrs)*
+        #[doc(hidden)]
+        #vis struct #struct_name;
 
-            impl ::mingling::setup::ProgramSetup<#program_name> for #struct_name {
-                fn setup(self, program: &mut ::mingling::Program<#program_name>) {
-                    // Call the original function with the actual Program type
-                    #fn_name(program);
-                }
-            }
-
-            // Keep the original function for internal use
-            #(#fn_attrs)*
-            #vis fn #fn_name(#program_param: #program_type) {
-                #fn_body
+        impl ::mingling::setup::ProgramSetup<#program_path> for #struct_name {
+            fn setup(self, program: &mut ::mingling::Program<#program_path>) {
+                // Call the original function with the actual Program type
+                #fn_name(program);
             }
         }
-    } else {
-        quote! {
-            #(#fn_attrs)*
-            #vis struct #struct_name;
 
-            impl ::mingling::setup::ProgramSetup<#program_name> for #struct_name {
-                fn setup(&mut self, program: &mut ::mingling::Program<#program_name>) {
-                    // Call the original function with the actual Program type
-                    #fn_name(program);
-                }
-            }
-
-            // Keep the original function for internal use
-            #(#fn_attrs)*
-            #vis fn #fn_name(#program_param: #program_type) {
-                #fn_body
-            }
+        // Keep the original function for internal use
+        #(#fn_attrs)*
+        #vis fn #fn_name(#program_param: #program_type) {
+            #fn_body
         }
     };
 

@@ -23,8 +23,9 @@ fn extract_return_type(sig: &Signature) -> Option<syn::Type> {
 
 #[allow(clippy::too_many_lines)]
 pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse attribute arguments for program path (e.g. #[renderer(my_crate::Program)])
-    let (program_path, _use_crate_prefix) = parse_renderer_attr_args(attr);
+    // #[renderer] takes no arguments; always use the default program path
+    let _ = attr;
+    let program_path = crate::default_program_path();
     let program_type = &program_path;
 
     // Parse the function item
@@ -166,15 +167,6 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     expanded.into()
-}
-fn parse_renderer_attr_args(attr: TokenStream) -> (proc_macro2::TokenStream, bool) {
-    if attr.is_empty() {
-        (crate::default_program_path(), true)
-    } else {
-        let path: syn::Path =
-            syn::parse(attr).expect("Expected a path argument for #[renderer(path)]");
-        (quote! { #path }, false)
-    }
 }
 
 /// Builds the renderer entry for the global renderers list

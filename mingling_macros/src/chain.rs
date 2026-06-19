@@ -9,20 +9,6 @@ use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
 use syn::{Ident, ItemFn, Pat, ReturnType, Signature, Type, TypePath, parse_macro_input};
 
-/// Parses the `#[chain(...)]` attribute arguments.
-///
-/// Returns:
-/// - `program_path`: the token stream representing the program type
-/// - `use_crate_prefix`: whether to use the default crate-defined program path
-fn parse_chain_attr_args(attr: TokenStream) -> (proc_macro2::TokenStream, bool) {
-    if attr.is_empty() {
-        (crate::default_program_path(), true)
-    } else {
-        let path: syn::Path = syn::parse(attr).expect("#[chain(..)] argument must be a path");
-        (quote! { #path }, false)
-    }
-}
-
 /// Validates that the return type of the function is `Next`.
 /// Checks whether the return type is `()` (unit).
 fn is_unit_return_type(sig: &Signature) -> bool {
@@ -226,18 +212,10 @@ fn generate_struct_and_impl(
     struct_name: &Ident,
     previous_type: &TypePath,
     previous_type_str: &proc_macro2::TokenStream,
-    group_name: &proc_macro2::TokenStream,
     program_type: &proc_macro2::TokenStream,
-    use_crate_prefix: bool,
     proc_fn: &proc_macro2::TokenStream,
     origin_proc_fn: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-    let chain_type = if use_crate_prefix {
-        program_type
-    } else {
-        group_name
-    };
-
     quote! {
         #(#fn_attrs)*
         #[doc(hidden)]
@@ -246,7 +224,7 @@ fn generate_struct_and_impl(
 
         ::mingling::macros::register_chain!(#previous_type_str, #struct_name);
 
-        impl ::mingling::Chain<#chain_type> for #struct_name {
+        impl ::mingling::Chain<#program_type> for #struct_name {
             type Previous = #previous_type;
 
             #proc_fn
@@ -284,8 +262,15 @@ fn reject_mut_in_async(resources: &[ResourceInjection]) -> Result<(), proc_macro
 }
 
 pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse attribute arguments
-    let (group_name, use_crate_prefix) = parse_chain_attr_args(attr);
+    // Reject non-empty attribute arguments; #[chain] must be bare
+    if !attr.is_empty() {
+        return syn::Error::new(
+            attr.into_iter().next().unwrap().span().into(),
+            "#[chain] does not accept arguments",
+        )
+        .to_compile_error()
+        .into();
+    }
 
     // Parse the function item
     let input_fn = parse_macro_input!(item as ItemFn);
@@ -340,12 +325,8 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     );
     let struct_name = Ident::new(&internal_name, fn_name.span());
 
-    // Determine the program type for the return type
-    let program_type = if use_crate_prefix {
-        crate::default_program_path()
-    } else {
-        group_name.clone()
-    };
+    // Always use the default crate-defined program path
+    let program_type = crate::default_program_path();
 
     // Generate the `proc` function
     let proc_fn = generate_proc_fn(
@@ -386,9 +367,7 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         &struct_name,
         &previous_type,
         &previous_type_str,
-        &group_name,
         &program_type,
-        use_crate_prefix,
         &proc_fn,
         &origin_proc_fn,
     );

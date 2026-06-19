@@ -135,7 +135,6 @@
 //! ```
 
 use proc_macro::TokenStream;
-use proc_macro2::Ident;
 use quote::quote;
 use std::collections::BTreeSet;
 use std::sync::Mutex;
@@ -168,13 +167,6 @@ mod renderer;
 mod res_injection;
 #[cfg(feature = "comp")]
 mod suggest;
-
-pub(crate) const DEFAULT_PROGRAM_NAME: &str = "ThisProgram";
-
-#[allow(dead_code)]
-pub(crate) fn default_program_ident() -> Ident {
-    Ident::new(DEFAULT_PROGRAM_NAME, proc_macro2::Span::call_site())
-}
 
 pub(crate) fn default_program_path() -> proc_macro2::TokenStream {
     quote::quote! { crate::ThisProgram }
@@ -240,15 +232,12 @@ pub(crate) fn check_single_segment_type(
 ///
 /// # Syntax
 ///
-/// Two forms are supported:
-///
 /// ```rust,ignore
-/// // Explicit mode — specify both program path and outside-type:
-/// group!(crate::ThisProgram, std::io::Error);
-///
-/// // Implicit mode — uses default `crate::ThisProgram` as the program:
 /// group!(std::io::Error);
+/// group!(ParseIntError);
 /// ```
+///
+/// The type is registered under the default program (`crate::ThisProgram`).
 ///
 /// # How it works
 ///
@@ -267,9 +256,6 @@ pub(crate) fn check_single_segment_type(
 ///
 /// // Register std::io::Error as a group member
 /// group!(std::io::Error);
-///
-/// // With explicit program path:
-/// group!(crate::MyProgram, serde_json::Error);
 /// ```
 ///
 /// After expansion, the type can be used in chains and renderers like any
@@ -722,17 +708,10 @@ pub fn r_println(input: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// // Default program (ThisProgram):
 /// #[chain]
 /// fn my_step(prev: InputType) -> Next {
 ///     // transform `prev`...
 ///     OutputType::new(result)
-/// }
-///
-/// // Explicit program name:
-/// #[chain(MyProgram)]
-/// fn my_step(prev: InputType) -> Next {
-///     // ...
 /// }
 /// ```
 ///
@@ -891,7 +870,6 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// // Default program (ThisProgram):
 /// #[renderer]
 /// fn render_my_type(prev: MyType) {
 ///     r_println!("Output: {:?}", *prev);
@@ -1004,16 +982,9 @@ pub fn completion(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// // Default program (ThisProgram):
 /// #[program_setup]
 /// fn setup_my_program(program: &mut Program<ThisProgram>) {
 ///     program.stdout_setting.render_output = false;
-/// }
-///
-/// // Explicit program name:
-/// #[program_setup(MyProgram)]
-/// fn setup_my_program(program: &mut Program<MyProgram>) {
-///     // ...
 /// }
 /// ```
 ///
@@ -1062,11 +1033,6 @@ pub fn program_setup(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// // With explicit error type and help:
 /// #[derive(clap::Parser)]
 /// #[dispatcher_clap("cmd", Disp, error = ParseError, help = true)]
-/// struct CmdEntry { /* ... */ }
-///
-/// // With explicit program name:
-/// #[derive(clap::Parser)]
-/// #[dispatcher_clap(MyProgram, "cmd", Disp)]
 /// struct CmdEntry { /* ... */ }
 /// ```
 ///
@@ -1257,7 +1223,7 @@ pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// Derive macro for automatically implementing the `Groupped` trait on a struct.
 ///
 /// The `#[derive(Groupped)]` macro:
-/// 1. Implements `Groupped<Group>` where the group is specified via `#[group(GroupName)]`.
+/// 1. Implements `Groupped<crate::ThisProgram>`.
 /// 2. Registers the type via `register_type!` so it's included in the program enum.
 /// 3. Generates `Into<AnyOutput<Group>>` and `Into<ChainProcess<Group>>` conversions.
 /// 4. Adds `to_chain()` and `to_render()` methods to the struct.
@@ -1266,19 +1232,17 @@ pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// #[derive(Groupped)]
-/// #[group(MyProgram)]   // optional; defaults to `ThisProgram`
 /// struct MyStruct {
-///     field: String,
+///     // ...
 /// }
 /// ```
 ///
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::{Groupped, macros::{chain, gen_program, renderer, r_println}};
+/// use mingling::macros::Groupped;
 ///
 /// #[derive(Groupped)]
-/// #[group(ThisProgram)]
 /// struct Greeting {
 ///     name: String,
 /// }
@@ -1345,7 +1309,6 @@ pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// #[derive(GrouppedSerialize)]
-/// #[group(MyProgram)]
 /// struct Info {
 ///     name: String,
 ///     age: i32,
@@ -1379,11 +1342,7 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// // Default program name (uses `ThisProgram`):
 /// gen_program!();
-///
-/// // Explicit program name:
-/// gen_program!(MyProgram);
 /// ```
 ///
 /// # What it generates
@@ -1420,26 +1379,21 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
 /// gen_program!();
 /// ```
 #[proc_macro]
-pub fn gen_program(input: TokenStream) -> TokenStream {
-    let name = read_name(&input);
-
+pub fn gen_program(_input: TokenStream) -> TokenStream {
     #[cfg(feature = "comp")]
     let comp_gen = quote! {
-        ::mingling::macros::program_comp_gen!(#name);
+        ::mingling::macros::program_comp_gen!();
     };
 
     #[cfg(not(feature = "comp"))]
     let comp_gen = quote! {};
 
     TokenStream::from(quote! {
-        // Shit, this feature is unstable
-        // TODO :: This logic will be implemented when Rust's Impl In Type Alias feature becomes stable
-        // pub type Next = impl Into<::mingling::ChainProcess<#name>>;
-        pub type Next = ::mingling::ChainProcess<#name>;
+        pub type Next = ::mingling::ChainProcess<crate::ThisProgram>;
 
         #comp_gen
-        ::mingling::macros::program_fallback_gen!(#name);
-        ::mingling::macros::program_final_gen!(#name);
+        ::mingling::macros::program_fallback_gen!();
+        ::mingling::macros::program_final_gen!();
     })
 }
 
@@ -1457,20 +1411,18 @@ pub fn gen_program(input: TokenStream) -> TokenStream {
 /// - A `__render_completion` renderer that outputs completion suggestions
 #[proc_macro]
 #[cfg(feature = "comp")]
-pub fn program_comp_gen(input: TokenStream) -> TokenStream {
-    let name = read_name(&input);
-
+pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
     #[cfg(feature = "async")]
     let fn_exec_comp = quote! {
         #[doc(hidden)]
-        #[::mingling::macros::chain(#name)]
+        #[::mingling::macros::chain]
         pub async fn __exec_completion(prev: CompletionContext) -> Next {
             use ::mingling::Groupped;
 
             let read_ctx = ::mingling::ShellContext::try_from(prev.inner);
             match read_ctx {
                 Ok(ctx) => {
-                    let suggest = ::mingling::CompletionHelper::exec_completion::<#name>(&ctx);
+                    let suggest = ::mingling::CompletionHelper::exec_completion::<crate::ThisProgram>(&ctx);
                     crate::CompletionSuggest::new((ctx, suggest)).to_render()
                 }
                 Err(_) => std::process::exit(1),
@@ -1481,14 +1433,14 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
     #[cfg(not(feature = "async"))]
     let fn_exec_comp = quote! {
         #[doc(hidden)]
-        #[::mingling::macros::chain(#name)]
+        #[::mingling::macros::chain]
         pub fn __exec_completion(prev: CompletionContext) -> Next {
             use ::mingling::Groupped;
 
             let read_ctx = ::mingling::ShellContext::try_from(prev.inner);
             match read_ctx {
                 Ok(ctx) => {
-                    let suggest = ::mingling::CompletionHelper::exec_completion::<#name>(&ctx);
+                    let suggest = ::mingling::CompletionHelper::exec_completion::<crate::ThisProgram>(&ctx);
                     crate::CompletionSuggest::new((ctx, suggest)).to_render()
                 }
                 Err(_) => std::process::exit(1),
@@ -1507,11 +1459,9 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
     let comp_dispatcher = quote! {
         #[doc(hidden)]
         mod __internal_completion_mod {
-            use super::#name;
             use ::mingling::Groupped;
-            ::mingling::macros::dispatcher!(#name, "__comp", CMDCompletion => CompletionContext);
+            ::mingling::macros::dispatcher!("__comp", CMDCompletion => CompletionContext);
             ::mingling::macros::pack!(
-                #name,
                 CompletionSuggest = (::mingling::ShellContext, ::mingling::Suggest)
             );
         }
@@ -1526,10 +1476,10 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
 
         #[allow(unused)]
         #[doc(hidden)]
-        #[::mingling::macros::renderer(#name)]
+        #[::mingling::macros::renderer]
         pub fn __render_completion(prev: CompletionSuggest) {
             let (ctx, suggest) = prev.inner;
-            ::mingling::CompletionHelper::render_suggest::<#name>(ctx, suggest);
+            ::mingling::CompletionHelper::render_suggest::<crate::ThisProgram>(ctx, suggest);
         }
     };
 
@@ -1630,25 +1580,22 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// // Called internally by gen_program!:
-/// program_fallback_gen!(ThisProgram);
-/// program_fallback_gen!(MyProgram);
+/// program_fallback_gen!();
 /// ```
 ///
 /// # Generated code equivalent
 ///
 /// ```rust,ignore
-/// pack!(ProgramName, ErrorRendererNotFound = String);
-/// pack!(ProgramName, ErrorDispatcherNotFound = Vec<String>);
-/// pack!(ProgramName, ResultEmpty = ());
+/// pack!(ErrorRendererNotFound = String);
+/// pack!(ErrorDispatcherNotFound = Vec<String>);
+/// pack!(ResultEmpty = ());
 /// ```
 #[proc_macro]
-pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
-    let name = read_name(&input);
-
+pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
-        ::mingling::macros::pack!(#name, ErrorRendererNotFound = String);
-        ::mingling::macros::pack!(#name, ErrorDispatcherNotFound = Vec<String>);
-        ::mingling::macros::pack!(#name, ResultEmpty = ());
+        ::mingling::macros::pack!(ErrorRendererNotFound = String);
+        ::mingling::macros::pack!(ErrorDispatcherNotFound = Vec<String>);
+        ::mingling::macros::pack!(ResultEmpty = ());
     };
     TokenStream::from(expanded)
 }
@@ -1673,15 +1620,14 @@ pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// program_final_gen!(ThisProgram);
-/// program_final_gen!(MyProgram);
+/// program_final_gen!();
 /// ```
 ///
 /// # Generated code structure
 ///
 /// ```rust,ignore
 /// #[repr(u8)]
-/// pub enum MyProgram {
+/// pub enum ThisProgram {
 ///     TypeA,
 ///     TypeB,
 ///     // ...
@@ -1710,8 +1656,8 @@ pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
 /// are poisoned.
 #[proc_macro]
 #[allow(clippy::too_many_lines)]
-pub fn program_final_gen(input: TokenStream) -> TokenStream {
-    let name = read_name(&input);
+pub fn program_final_gen(_input: TokenStream) -> TokenStream {
+    let name = syn::Ident::new("ThisProgram", proc_macro2::Span::call_site());
 
     let packed_types = get_global_set(&PACKED_TYPES).lock().unwrap().clone();
 
@@ -2044,12 +1990,4 @@ pub fn suggest(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn suggest_enum(input: TokenStream) -> TokenStream {
     suggest::suggest_enum(input)
-}
-
-fn read_name(input: &TokenStream) -> Ident {
-    if input.is_empty() {
-        Ident::new(DEFAULT_PROGRAM_NAME, proc_macro2::Span::call_site())
-    } else {
-        syn::parse(input.clone()).unwrap()
-    }
 }

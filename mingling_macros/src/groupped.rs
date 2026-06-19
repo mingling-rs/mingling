@@ -1,29 +1,13 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Attribute, DeriveInput, Ident, parse_macro_input};
-
-/// Parses the `#[group(...)]` attribute to extract the group type
-fn parse_group_attribute(attrs: &[Attribute]) -> Option<Ident> {
-    for attr in attrs {
-        if attr.path().is_ident("group")
-            && let Ok(meta) = attr.parse_args::<syn::Meta>()
-            && let syn::Meta::Path(path) = meta
-            && let Some(segment) = path.segments.last()
-        {
-            return Some(segment.ident.clone());
-        }
-    }
-    None
-}
+use syn::{DeriveInput, Ident, parse_macro_input};
 
 pub fn derive_groupped(input: TokenStream) -> TokenStream {
     // Parse the input struct/enum
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;
 
-    // Parse attributes to find #[group(...)]
-    let group_ident: proc_macro2::TokenStream = parse_group_attribute(&input.attrs)
-        .map_or_else(crate::default_program_path, |ident| quote! { #ident });
+    let group_ident: proc_macro2::TokenStream = crate::default_program_path();
 
     let any_output_convert_impls =
         proc_macro2::TokenStream::from(build_any_output_convert_impls(&struct_name, &group_ident));
@@ -50,9 +34,7 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
     let input_parsed = parse_macro_input!(input as DeriveInput);
     let struct_name = input_parsed.ident.clone();
 
-    // Parse attributes to find #[group(...)]
-    let group_ident: proc_macro2::TokenStream = parse_group_attribute(&input_parsed.attrs)
-        .map_or_else(crate::default_program_path, |ident| quote! { #ident });
+    let group_ident: proc_macro2::TokenStream = crate::default_program_path();
 
     let any_output_convert_impls =
         proc_macro2::TokenStream::from(build_any_output_convert_impls(&struct_name, &group_ident));

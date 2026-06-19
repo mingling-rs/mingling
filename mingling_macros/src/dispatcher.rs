@@ -8,14 +8,6 @@ use syn::{Attribute, Ident, LitStr, Result as SynResult, Token};
 use crate::COMPILE_TIME_DISPATCHERS;
 
 enum DispatcherChainInput {
-    Explicit {
-        cmd_attrs: Vec<Attribute>,
-        entry_attrs: Vec<Attribute>,
-        group_name: syn::Path,
-        command_name: syn::LitStr,
-        command_struct: Ident,
-        pack: Ident,
-    },
     Default {
         cmd_attrs: Vec<Attribute>,
         entry_attrs: Vec<Attribute>,
@@ -35,27 +27,7 @@ impl Parse for DispatcherChainInput {
         // Collect outer attributes for the CMD struct
         let cmd_attrs = input.call(Attribute::parse_outer)?;
 
-        if (input.peek(Ident) || input.peek(Token![crate]))
-            && (input.peek2(Token![::]) || input.peek2(Token![,]))
-        {
-            let group_name = input.parse::<syn::Path>()?;
-            input.parse::<Token![,]>()?;
-            let command_name = input.parse()?;
-            input.parse::<Token![,]>()?;
-            let command_struct = input.parse()?;
-            input.parse::<Token![=>]>()?;
-            let entry_attrs = input.call(Attribute::parse_outer)?;
-            let pack = input.parse()?;
-
-            Ok(DispatcherChainInput::Explicit {
-                cmd_attrs,
-                entry_attrs,
-                group_name,
-                command_name,
-                command_struct,
-                pack,
-            })
-        } else if input.peek(syn::LitStr) {
+        if input.peek(syn::LitStr) {
             // Parse the command name string first
             let command_name: LitStr = input.parse()?;
 
@@ -97,12 +69,8 @@ impl Parse for DispatcherChainInput {
     }
 }
 
-// NOTICE: This implementation contains significant code duplication between the explicit
-// and default cases in both `dispatcher_chain` and `dispatcher_render` functions.
-// The logic for handling default vs explicit group names and generating the appropriate
-// code should be extracted into common helper functions to reduce redundancy.
-// Additionally, the token stream generation patterns are nearly identical between
-// the two main functions and could benefit from refactoring.
+// NOTICE: The token stream generation patterns in `dispatcher_chain` and `dispatcher_render`
+// are nearly identical and could benefit from refactoring into common helper functions.
 
 #[allow(clippy::too_many_lines)]
 pub fn dispatcher(input: TokenStream) -> TokenStream {
@@ -110,94 +78,36 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
     let dispatcher_input = syn::parse_macro_input!(input as DispatcherChainInput);
 
     #[cfg(not(feature = "extra_macros"))]
-    let (command_name, command_struct, pack, cmd_attrs, entry_attrs, _use_default, group_path) =
-        match dispatcher_input {
-            DispatcherChainInput::Explicit {
-                cmd_attrs,
-                entry_attrs,
-                group_name,
-                command_name,
-                command_struct,
-                pack,
-            } => (
-                command_name,
-                command_struct,
-                pack,
-                cmd_attrs,
-                entry_attrs,
-                false,
-                quote! { #group_name },
-            ),
-            DispatcherChainInput::Default {
-                cmd_attrs,
-                entry_attrs,
-                command_name,
-                command_struct,
-                pack,
-            } => (
-                command_name,
-                command_struct,
-                pack,
-                cmd_attrs,
-                entry_attrs,
-                true,
-                crate::default_program_path(),
-            ),
-        };
+    let (command_name, command_struct, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
+        DispatcherChainInput::Default {
+            cmd_attrs,
+            entry_attrs,
+            command_name,
+            command_struct,
+            pack,
+        } => (command_name, command_struct, pack, cmd_attrs, entry_attrs),
+    };
 
     #[cfg(feature = "extra_macros")]
-    let (command_name, command_struct, pack, cmd_attrs, entry_attrs, _use_default, group_path) =
-        match dispatcher_input {
-            DispatcherChainInput::Explicit {
-                cmd_attrs,
-                entry_attrs,
-                group_name,
-                command_name,
-                command_struct,
-                pack,
-            } => (
-                command_name,
-                command_struct,
-                pack,
-                cmd_attrs,
-                entry_attrs,
-                false,
-                quote! { #group_name },
-            ),
-            DispatcherChainInput::Default {
-                cmd_attrs,
-                entry_attrs,
-                command_name,
-                command_struct,
-                pack,
-            } => (
-                command_name,
-                command_struct,
-                pack,
-                cmd_attrs,
-                entry_attrs,
-                true,
-                crate::default_program_path(),
-            ),
-            DispatcherChainInput::Auto {
-                cmd_attrs,
-                command_name,
-            } => {
-                let command_name_str = command_name.value();
-                let pascal = dotted_to_pascal_case(&command_name_str);
-                let command_struct = Ident::new(&format!("CMD{pascal}"), command_name.span());
-                let pack = Ident::new(&format!("Entry{pascal}"), command_name.span());
-                (
-                    command_name,
-                    command_struct,
-                    pack,
-                    cmd_attrs,
-                    Vec::new(),
-                    true,
-                    crate::default_program_path(),
-                )
-            }
-        };
+    let (command_name, command_struct, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
+        DispatcherChainInput::Default {
+            cmd_attrs,
+            entry_attrs,
+            command_name,
+            command_struct,
+            pack,
+        } => (command_name, command_struct, pack, cmd_attrs, entry_attrs),
+        DispatcherChainInput::Auto {
+            cmd_attrs,
+            command_name,
+        } => {
+            let command_name_str = command_name.value();
+            let pascal = dotted_to_pascal_case(&command_name_str);
+            let command_struct = Ident::new(&format!("CMD{pascal}"), command_name.span());
+            let pack = Ident::new(&format!("Entry{pascal}"), command_name.span());
+            (command_name, command_struct, pack, cmd_attrs, Vec::new())
+        }
+    };
 
     let command_name_str = command_name.value();
 
@@ -205,30 +115,28 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
 
     let dispatch_tree_entry = get_dispatch_tree_entry(&command_name_str, &command_struct, &pack);
 
-    let expanded = {
-        let program_path = group_path;
+    let program_type = crate::default_program_path();
 
-        quote! {
-            #(#cmd_attrs)*
-            #[derive(Debug, Default)]
-            pub struct #command_struct;
+    let expanded = quote! {
+        #(#cmd_attrs)*
+        #[derive(Debug, Default)]
+        pub struct #command_struct;
 
-            ::mingling::macros::pack!(#(#entry_attrs)* #program_path, #pack = Vec<String>);
+        ::mingling::macros::pack!(#(#entry_attrs)* #pack = Vec<String>);
 
-            #comp_entry
-            #dispatch_tree_entry
+        #comp_entry
+        #dispatch_tree_entry
 
-            impl ::mingling::Dispatcher<#program_path> for #command_struct {
-                fn node(&self) -> ::mingling::Node {
-                    ::mingling::macros::node!(#command_name_str)
-                }
-                fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_path> {
-                    use ::mingling::Groupped;
-                    #pack::new(args).to_chain()
-                }
-                fn clone_dispatcher(&self) -> Box<dyn ::mingling::Dispatcher<#program_path>> {
-                    Box::new(#command_struct)
-                }
+        impl ::mingling::Dispatcher<#program_type> for #command_struct {
+            fn node(&self) -> ::mingling::Node {
+                ::mingling::macros::node!(#command_name_str)
+            }
+            fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
+                use ::mingling::Groupped;
+                #pack::new(args).to_chain()
+            }
+            fn clone_dispatcher(&self) -> Box<dyn ::mingling::Dispatcher<#program_type>> {
+                Box::new(#command_struct)
             }
         }
     };

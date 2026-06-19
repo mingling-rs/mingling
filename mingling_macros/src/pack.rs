@@ -3,86 +3,35 @@ use quote::quote;
 use syn::parse::{Parse, ParseStream};
 use syn::{Attribute, Ident, Result as SynResult, Token, Type};
 
-enum PackInput {
-    Explicit {
-        attrs: Vec<Attribute>,
-        group_name: syn::Path,
-        type_name: Ident,
-        inner_type: Type,
-    },
-    Default {
-        attrs: Vec<Attribute>,
-        type_name: Ident,
-        inner_type: Type,
-    },
+struct PackInput {
+    attrs: Vec<Attribute>,
+    type_name: Ident,
+    inner_type: Type,
 }
 
 impl Parse for PackInput {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        // First, collect any outer attributes (`#[...]` and `///...`) before the main syntax.
         let attrs = input.call(Attribute::parse_outer)?;
+        let type_name: Ident = input.parse()?;
+        input.parse::<Token![=]>()?;
+        let inner_type: Type = input.parse()?;
 
-        // Now determine the format:
-        //   - `Path, TypeName = InnerType`  → Explicit
-        //   - `TypeName = InnerType`          → Default
-
-        if (input.peek(Ident) || input.peek(Token![crate]))
-            && (input.peek2(Token![,]) || input.peek2(Token![::]))
-        {
-            // Explicit format: Path, TypeName = InnerType
-            let group_name = input.parse::<syn::Path>()?;
-            input.parse::<Token![,]>()?;
-            let type_name = input.parse()?;
-            input.parse::<Token![=]>()?;
-            let inner_type = input.parse()?;
-
-            Ok(PackInput::Explicit {
-                attrs,
-                group_name,
-                type_name,
-                inner_type,
-            })
-        } else if input.peek(Ident) && input.peek2(Token![=]) {
-            // Default format: TypeName = InnerType
-            let type_name = input.parse()?;
-            input.parse::<Token![=]>()?;
-            let inner_type = input.parse()?;
-
-            Ok(PackInput::Default {
-                attrs,
-                type_name,
-                inner_type,
-            })
-        } else {
-            Err(input.lookahead1().error())
-        }
+        Ok(PackInput {
+            attrs,
+            type_name,
+            inner_type,
+        })
     }
 }
 
 #[allow(clippy::too_many_lines)]
 pub fn pack(input: TokenStream) -> TokenStream {
-    // Parse the input
     let pack_input = syn::parse_macro_input!(input as PackInput);
 
-    let (group_name, type_name, inner_type, attrs, use_default) = match pack_input {
-        PackInput::Explicit {
-            attrs,
-            group_name,
-            type_name,
-            inner_type,
-        } => (quote! { #group_name }, type_name, inner_type, attrs, false),
-        PackInput::Default {
-            attrs,
-            type_name,
-            inner_type,
-        } => (
-            crate::default_program_path(),
-            type_name,
-            inner_type,
-            attrs,
-            true,
-        ),
-    };
+    let group_name = crate::default_program_path();
+    let type_name = pack_input.type_name;
+    let inner_type = pack_input.inner_type;
+    let attrs = pack_input.attrs;
 
     // Generate the struct definition
     #[cfg(not(feature = "general_renderer"))]
@@ -175,7 +124,16 @@ pub fn pack(input: TokenStream) -> TokenStream {
         ::mingling::macros::register_type!(#type_name);
     };
 
-    let any_out_impl = quote! {
+    let expanded = quote! {
+        #struct_def
+
+        #new_impl
+        #from_into_impl
+        #as_ref_impl
+        #deref_impl
+        #default_impl
+        #register_impl
+
         impl Into<mingling::AnyOutput<#group_name>> for #type_name {
             fn into(self) -> mingling::AnyOutput<#group_name> {
                 mingling::AnyOutput::new(self)
@@ -187,61 +145,11 @@ pub fn pack(input: TokenStream) -> TokenStream {
                 mingling::AnyOutput::new(self).route_chain()
             }
         }
-    };
 
-    let group_impl = quote! {
         impl ::mingling::Groupped<#group_name> for #type_name {
             fn member_id() -> #group_name {
                 #group_name::#type_name
             }
-        }
-    };
-
-    // Combine all implementations
-    let expanded = if use_default {
-        // For default case, use ThisProgram
-        quote! {
-            #struct_def
-
-            #new_impl
-            #from_into_impl
-            #as_ref_impl
-            #deref_impl
-            #default_impl
-            #register_impl
-
-            impl Into<mingling::AnyOutput<#group_name>> for #type_name {
-                fn into(self) -> mingling::AnyOutput<#group_name> {
-                    mingling::AnyOutput::new(self)
-                }
-            }
-
-            impl From<#type_name> for mingling::ChainProcess<#group_name> {
-                fn from(value: #type_name) -> Self {
-                    mingling::AnyOutput::new(value).route_chain()
-                }
-            }
-
-            impl ::mingling::Groupped<#group_name> for #type_name {
-                fn member_id() -> #group_name {
-                    #group_name::#type_name
-                }
-            }
-        }
-    } else {
-        // For explicit case, use the provided group_name
-        quote! {
-            #struct_def
-
-            #new_impl
-            #from_into_impl
-            #as_ref_impl
-            #deref_impl
-            #default_impl
-            #register_impl
-
-            #any_out_impl
-            #group_impl
         }
     };
 

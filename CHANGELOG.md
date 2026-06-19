@@ -190,6 +190,30 @@ This macro is only available with the `extra_macros` feature.
 
 #### **BREAKING CHANGES** (API CHANGES):
 
+---
+
+**IMPORTANT**: **Breaking: Remove All Explicit Program Name Modes**
+
+**All macros no longer accept a custom program path.** The program name is now always `crate::ThisProgram`, determined by `gen_program!()`.
+
+The following explicit syntaxes are **removed**:
+
+| Macro | Removed syntax |
+|---|---|
+| `pack!` | `pack!(MyProgram, Type = Inner)` → only `pack!(Type = Inner)` |
+| `group!` | `group!(MyProgram, Type)` → only `group!(Type)` |
+| `#[derive(Groupped)]` | `#[group(MyProgram)]` attribute |
+| `#[chain]` | `#[chain(MyProgram)]` argument |
+| `#[renderer]` | `#[renderer(MyProgram)]` argument |
+| `dispatcher!` | `dispatcher!(MyProgram, "cmd", CMD => Entry)` |
+| `#[dispatcher_clap]` | `#[dispatcher_clap(MyProgram, "cmd", Disp)]` |
+| `#[program_setup]` | `#[program_setup(MyProgram)]` argument |
+| `gen_program!` | `gen_program!(MyProgram)` → only `gen_program!()` |
+
+> **Tradeoff Rationale** — Removing explicit program names is a sacrifice of flexibility in exchange for reduced development and maintenance complexity. In practice, no use case has emerged that genuinely requires a custom program name — all real-world programs can be expressed with the default `ThisProgram`. Keeping the parameter in every macro would add ongoing documentation, testing, and cognitive overhead that is not justified by current needs.
+
+---
+
 1. **\[core\]** Changed the signature of `ProgramSetup::setup` from `fn setup(&mut self, program: &mut Program<C>) -> S` to `fn setup(self, program: &mut Program<C>)`, consuming `self` instead of taking a mutable reference. Correspondingly, `Program::with_setup` now accepts `S` by value (`&mut self, setup: S`) instead of by mutable reference (`&mut self, setup: &mut S`).
 
 2. **\[core\]** Consolidated resource naming for `ExitCode` and `REPL`:
@@ -219,7 +243,7 @@ use mingling::{res::ResExitCode, res::ResREPL};
            AnyOutput::new(self).route_renderer()
        }
    }
-
+   
    // After (provided by Groupped trait default methods):
    // just ensure Groupped is implemented — to_chain() and to_render()
    // are automatically available
