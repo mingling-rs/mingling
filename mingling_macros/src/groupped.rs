@@ -92,18 +92,6 @@ fn build_any_output_convert_impls(
                 ::mingling::AnyOutput::new(self).route_chain()
             }
         }
-
-        impl #struct_name {
-            /// Converts the wrapper type into a `ChainProcess` for chaining operations.
-            pub fn to_chain(self) -> ::mingling::ChainProcess<#group_ident> {
-                ::mingling::AnyOutput::new(self).route_chain()
-            }
-
-            /// Converts the wrapper type into a `ChainProcess` for rendering operations.
-            pub fn to_render(self) -> ::mingling::ChainProcess<#group_ident> {
-                ::mingling::AnyOutput::new(self).route_renderer()
-            }
-        }
     }
     .into()
 }

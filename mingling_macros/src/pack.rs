@@ -187,18 +187,6 @@ pub fn pack(input: TokenStream) -> TokenStream {
                 mingling::AnyOutput::new(self).route_chain()
             }
         }
-
-        impl #type_name {
-            /// Converts the wrapper type into a `ChainProcess` for chaining operations.
-            pub fn to_chain(self) -> mingling::ChainProcess<#group_name> {
-                mingling::AnyOutput::new(self).route_chain()
-            }
-
-            /// Converts the wrapper type into a `ChainProcess` for rendering operations.
-            pub fn to_render(self) -> mingling::ChainProcess<#group_name> {
-                mingling::AnyOutput::new(self).route_renderer()
-            }
-        }
     };
 
     let group_impl = quote! {
@@ -231,18 +219,6 @@ pub fn pack(input: TokenStream) -> TokenStream {
             impl From<#type_name> for mingling::ChainProcess<#group_name> {
                 fn from(value: #type_name) -> Self {
                     mingling::AnyOutput::new(value).route_chain()
-                }
-            }
-
-            impl #type_name {
-                /// Converts the wrapper type into a `ChainProcess` for chaining operations.
-                pub fn to_chain(self) -> mingling::ChainProcess<#group_name> {
-                    mingling::AnyOutput::new(self).route_chain()
-                }
-
-                /// Converts the wrapper type into a `ChainProcess` for rendering operations.
-                pub fn to_render(self) -> mingling::ChainProcess<#group_name> {
-                    mingling::AnyOutput::new(self).route_renderer()
                 }
             }
 
