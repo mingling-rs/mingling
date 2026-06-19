@@ -184,6 +184,8 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
+    /// Re-export of the `Groupped` derive macro for grouping types.
+    pub use crate::Groupped;
     /// Re-export of the `chain` macro for defining a chain of commands.
     pub use crate::macros::chain;
     /// Re-export of the `dispatcher` macro for routing commands.
