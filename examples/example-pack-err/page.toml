@@ -1,6 +1,6 @@
 [example]
 id = "example-pack-err"
-name = "pack_err!"
+name = "Pack an Error"
 icon = "🛑"
 category = "macros"
 desc = """

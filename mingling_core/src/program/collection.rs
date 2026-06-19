@@ -12,6 +12,9 @@ use crate::{GeneralRendererSetting, error::GeneralRendererSerializeError};
 #[cfg(feature = "comp")]
 use crate::{ShellContext, Suggest};
 
+mod mock;
+pub use mock::*;
+
 /// Collected program context
 ///
 /// Note: It is recommended to use the `gen_program!()` macro from [mingling_macros](https://crates.io/crates/mingling_macros) to automatically create this type

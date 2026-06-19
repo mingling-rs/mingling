@@ -480,7 +480,7 @@ pub fn route(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn empty_result(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
-        crate::ResultEmpty::new(()).to_chain()
+        <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty::new(()))
     };
     TokenStream::from(expanded)
 }
@@ -1413,6 +1413,8 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
         #[doc(hidden)]
         #[::mingling::macros::chain(#name)]
         pub async fn __exec_completion(prev: CompletionContext) -> Next {
+            use ::mingling::Groupped;
+
             let read_ctx = ::mingling::ShellContext::try_from(prev.inner);
             match read_ctx {
                 Ok(ctx) => {
@@ -1429,6 +1431,8 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
         #[doc(hidden)]
         #[::mingling::macros::chain(#name)]
         pub fn __exec_completion(prev: CompletionContext) -> Next {
+            use ::mingling::Groupped;
+
             let read_ctx = ::mingling::ShellContext::try_from(prev.inner);
             match read_ctx {
                 Ok(ctx) => {
@@ -1452,6 +1456,7 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
         #[doc(hidden)]
         mod __internal_completion_mod {
             use super::#name;
+            use ::mingling::Groupped;
             ::mingling::macros::dispatcher!(#name, "__comp", CMDCompletion => CompletionContext);
             ::mingling::macros::pack!(
                 #name,

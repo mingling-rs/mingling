@@ -1,54 +1,6 @@
-use mingling::Groupped;
+use mingling::MockProgramCollect;
 use mingling::Program;
-use mingling::ProgramCollect;
-use mingling::RenderResult;
 use mingling::comp::{ShellContext, ShellFlag, Suggest, SuggestItem};
-
-/// Minimal mock collector that satisfies `C: ProgramCollect<Enum = C>`
-/// by setting `Enum = Self`.
-#[derive(Debug, Clone, PartialEq)]
-struct MockCollect;
-
-impl Groupped<MockCollect> for MockCollect {
-    fn member_id() -> MockCollect {
-        MockCollect
-    }
-}
-
-impl ProgramCollect for MockCollect {
-    type Enum = MockCollect;
-    type ErrorDispatcherNotFound = MockCollect;
-    type ErrorRendererNotFound = MockCollect;
-    type ResultEmpty = MockCollect;
-
-    fn build_renderer_not_found(_member_id: MockCollect) -> mingling::AnyOutput<MockCollect> {
-        unimplemented!()
-    }
-    fn build_dispatcher_not_found(_args: Vec<String>) -> mingling::AnyOutput<MockCollect> {
-        unimplemented!()
-    }
-    fn build_empty_result() -> mingling::AnyOutput<MockCollect> {
-        unimplemented!()
-    }
-    fn render(_any: mingling::AnyOutput<MockCollect>, _r: &mut RenderResult) {
-        unimplemented!()
-    }
-    fn render_help(_any: mingling::AnyOutput<MockCollect>, _r: &mut RenderResult) {
-        unimplemented!()
-    }
-    fn do_chain(_any: mingling::AnyOutput<MockCollect>) -> mingling::ChainProcess<MockCollect> {
-        unimplemented!()
-    }
-    fn do_comp(_any: &mingling::AnyOutput<MockCollect>, _ctx: &ShellContext) -> Suggest {
-        unimplemented!()
-    }
-    fn has_renderer(_any: &mingling::AnyOutput<MockCollect>) -> bool {
-        unimplemented!()
-    }
-    fn has_chain(_any: &mingling::AnyOutput<MockCollect>) -> bool {
-        unimplemented!()
-    }
-}
 
 #[test]
 fn test_shell_context_parsing_full() {
@@ -112,12 +64,13 @@ fn test_suggest_item_with_description() {
 
 #[test]
 fn test_program_is_completing() {
-    let program: Program<MockCollect> = Program::new_with_args(["myapp", "__comp", "hello", ""]);
+    let program: Program<MockProgramCollect> =
+        Program::new_with_args(["myapp", "__comp", "hello", ""]);
     assert!(program.is_completing());
 }
 
 #[test]
 fn test_program_is_not_completing() {
-    let program: Program<MockCollect> = Program::new_with_args(["myapp", "hello"]);
+    let program: Program<MockProgramCollect> = Program::new_with_args(["myapp", "hello"]);
     assert!(!program.is_completing());
 }

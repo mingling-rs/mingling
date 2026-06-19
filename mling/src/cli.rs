@@ -8,7 +8,7 @@ use crate::{
 };
 use colored::Colorize;
 use mingling::{
-    Program,
+    Groupped, Program,
     hook::ProgramHook,
     macros::{chain, help, pack, program_setup, r_println, renderer},
     res::ResExitCode,

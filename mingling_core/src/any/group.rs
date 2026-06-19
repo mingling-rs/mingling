@@ -1,21 +1,74 @@
-use crate::{AnyOutput, ChainProcess};
+#[cfg(feature = "general_renderer")]
+pub use general_renderer_groupped::*;
 
-/// Used to mark a type with a unique enum ID, assisting dynamic dispatch
-pub trait Groupped<Group> {
-    /// Returns the specific enum value representing its ID within that enum
-    fn member_id() -> Group;
+#[cfg(not(feature = "general_renderer"))]
+pub use groupped::*;
 
-    /// Converts the grouped item into a `ChainProcess` directed to the chain route.
-    ///
-    /// This wraps the item into an `AnyOutput` and routes it to the chain processing pipeline.
-    fn to_chain(self) -> ChainProcess<Group> {
-        AnyOutput::new(self).route_chain()
+#[cfg(feature = "general_renderer")]
+mod general_renderer_groupped {
+    use serde::Serialize;
+
+    use crate::{AnyOutput, ChainProcess};
+    /// Used to mark a type with a unique enum ID, assisting dynamic dispatch
+    pub trait Groupped<Group>
+    where
+        Self: Sized + Serialize + 'static,
+    {
+        /// Returns the specific enum value representing its ID within that enum
+        fn member_id() -> Group;
+
+        /// Converts the grouped item into a `ChainProcess` directed to the chain route.
+        ///
+        /// This wraps the item into an `AnyOutput` and routes it to the chain processing pipeline.
+        fn to_chain(self) -> ChainProcess<Group>
+        where
+            Self: Send + Serialize,
+        {
+            AnyOutput::new(self).route_chain()
+        }
+
+        /// Converts the grouped item into a `ChainProcess` directed to the render route.
+        ///
+        /// This wraps the item into an `AnyOutput` and routes it to the render processing pipeline.
+        fn to_render(self) -> ChainProcess<Group>
+        where
+            Self: Send + Serialize,
+        {
+            AnyOutput::new(self).route_renderer()
+        }
     }
+}
 
-    /// Converts the grouped item into a `ChainProcess` directed to the render route.
-    ///
-    /// This wraps the item into an `AnyOutput` and routes it to the render processing pipeline.
-    fn to_render(self) -> ChainProcess<Group> {
-        AnyOutput::new(self).route_renderer()
+#[cfg(not(feature = "general_renderer"))]
+mod groupped {
+    use crate::{AnyOutput, ChainProcess};
+
+    /// Used to mark a type with a unique enum ID, assisting dynamic dispatch
+    pub trait Groupped<Group>
+    where
+        Self: Sized + 'static,
+    {
+        /// Returns the specific enum value representing its ID within that enum
+        fn member_id() -> Group;
+
+        /// Converts the grouped item into a `ChainProcess` directed to the chain route.
+        ///
+        /// This wraps the item into an `AnyOutput` and routes it to the chain processing pipeline.
+        fn to_chain(self) -> ChainProcess<Group>
+        where
+            Self: Send,
+        {
+            AnyOutput::new(self).route_chain()
+        }
+
+        /// Converts the grouped item into a `ChainProcess` directed to the render route.
+        ///
+        /// This wraps the item into an `AnyOutput` and routes it to the render processing pipeline.
+        fn to_render(self) -> ChainProcess<Group>
+        where
+            Self: Send,
+        {
+            AnyOutput::new(self).route_renderer()
+        }
     }
 }
