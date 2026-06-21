@@ -51,6 +51,13 @@ fn main() {
 gen_program!();
 ```
  
+> [!IMPORTANT]
+> Almost all Rust code blocks in the documentation have been compiled through the CI pipeline and are guaranteed to be usable.
+>
+> However, code blocks starting with `// NOT VERIFIED` have **not been verified**.
+>
+> Want to know which `*.md` files have been compiled? Check [`verified-docs.toml`](https://github.com/mingling-rs/mingling/blob/main/verified-docs.toml)
+
 ## Verify Compilation
 
 ```plaintext

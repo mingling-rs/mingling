@@ -44,13 +44,20 @@ use mingling::prelude::*;
  
 fn main() {
     let mut program = ThisProgram::new();
-    
+ 
     program.exec_and_exit();
 }
  
 gen_program!();
 ```
  
+> [!IMPORTANT]
+> 文档中几乎所有 Rust 代码块都已在 CI 流程中编译通过，可以保证可用性。
+>
+> 但以 `// NOT VERIFIED` 开头的代码块 **未被验证**。
+>
+> 想确认哪些 `*.md` 文件被编译过？请看 [`verified-docs.toml`](https://github.com/mingling-rs/mingling/blob/main/verified-docs.toml)
+
 ## 编译验证
 
 ```plaintext
