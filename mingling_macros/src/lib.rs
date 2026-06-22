@@ -195,35 +195,6 @@ pub(crate) static CHAINS_EXIST: Registry = OnceLock::new();
 pub(crate) static RENDERERS_EXIST: Registry = OnceLock::new();
 pub(crate) static HELP_REQUESTS: Registry = OnceLock::new();
 
-/// Checks that a `TypePath` is a simple single-segment identifier (no `::` in the path).
-///
-/// This is used by `#[renderer]`, `#[help]`, `#[chain]`, and `#[completion]` attribute macros
-/// to ensure that the type in the function signature is a bare identifier like `Empty`,
-/// not a qualified path like `other::Empty`.
-///
-/// Returns `None` if the type is valid, or a `compile_error!` token stream if it contains `::`.
-pub(crate) fn check_single_segment_type(
-    type_path: &syn::TypePath,
-    attr_name: &str,
-) -> Option<proc_macro2::TokenStream> {
-    if type_path.path.segments.len() > 1 {
-        let type_str = quote! { #type_path };
-        Some(quote! {
-            compile_error!(concat!(
-                "The type `",
-                #type_str,
-                "` in ",
-                #attr_name,
-                " function must be a simple single-segment type, ",
-                "e.g. `Empty` instead of `other::Empty`. ",
-                "Qualified paths with `::` are not allowed here."
-            ));
-        })
-    } else {
-        None
-    }
-}
-
 /// Registers an outside-type as a member of a program group without modifying its definition.
 ///
 /// This macro allows you to use outside-types from external crates (like `std::io::Error`)

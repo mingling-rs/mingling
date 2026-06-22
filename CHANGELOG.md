@@ -59,6 +59,13 @@
 
 4. **\[macros:dispatcher_clap\]** Added `dispatch_tree` feature integration for `#[dispatcher_clap]`. When the `dispatch_tree` feature is enabled, `#[dispatcher_clap]` will now automatically register the dispatcher and entry in the dispatch tree via `register_dispatcher!`, matching the behavior already present in the `dispatcher!` macro. When the feature is disabled, no additional code is generated.
 
+5. **\[macros\]** The four macros `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` now support using fully qualified type paths with `::` (e.g. `crate::EntryFine`) as type inputs. Previously, these macros required types to be bare single-segment idents (e.g. `EntryFine`), rejecting reasonable paths like `crate::EntryFine`. Specific changes:
+
+   - `res_injection::extract_args_info` (shared by `#[chain]` and `#[renderer]`): Removed the single-segment validation for the first parameter type
+   - `#[renderer]` / `#[help]`: Removed respective `check_single_segment_type` calls
+   - `#[completion]`: Attribute parameter parsing changed from `Ident` to `TypePath`, supporting `#[completion(crate::EntryFine)]`
+   - Fixed code generation in `build_chain_arm`, `build_chain_exist_arm`, `build_renderer_entry`, `build_renderer_exist_entry`, `build_general_renderer_entry`, and completion entry: `Self::#variant` match arms now only take the last segment ident of the type path (e.g. `Self::EntryFine`), rather than concatenating the full path directly (which would generate invalid syntax like `Self::crate::EntryFine`), while `downcast::<T>()` and `type Previous = T` still use the full path to ensure correct type resolution
+
 #### Optimizations:
 
 1. **\[core:flag\]** Refactored the `special_argument!` and `special_arguments!` macros to replace index‑based `while` loops with iterator `position` and `drain`, improving both performance and readability.
@@ -198,17 +205,17 @@ This macro is only available with the `extra_macros` feature.
 
 The following explicit syntaxes are **removed**:
 
-| Macro | Removed syntax |
-|---|---|
-| `pack!` | `pack!(MyProgram, Type = Inner)` → only `pack!(Type = Inner)` |
-| `group!` | `group!(MyProgram, Type)` → only `group!(Type)` |
-| `#[derive(Groupped)]` | `#[group(MyProgram)]` attribute |
-| `#[chain]` | `#[chain(MyProgram)]` argument |
-| `#[renderer]` | `#[renderer(MyProgram)]` argument |
-| `dispatcher!` | `dispatcher!(MyProgram, "cmd", CMD => Entry)` |
-| `#[dispatcher_clap]` | `#[dispatcher_clap(MyProgram, "cmd", Disp)]` |
-| `#[program_setup]` | `#[program_setup(MyProgram)]` argument |
-| `gen_program!` | `gen_program!(MyProgram)` → only `gen_program!()` |
+| Macro                 | Removed syntax                                                |
+| --------------------- | ------------------------------------------------------------- |
+| `pack!`               | `pack!(MyProgram, Type = Inner)` → only `pack!(Type = Inner)` |
+| `group!`              | `group!(MyProgram, Type)` → only `group!(Type)`               |
+| `#[derive(Groupped)]` | `#[group(MyProgram)]` attribute                               |
+| `#[chain]`            | `#[chain(MyProgram)]` argument                                |
+| `#[renderer]`         | `#[renderer(MyProgram)]` argument                             |
+| `dispatcher!`         | `dispatcher!(MyProgram, "cmd", CMD => Entry)`                 |
+| `#[dispatcher_clap]`  | `#[dispatcher_clap(MyProgram, "cmd", Disp)]`                  |
+| `#[program_setup]`    | `#[program_setup(MyProgram)]` argument                        |
+| `gen_program!`        | `gen_program!(MyProgram)` → only `gen_program!()`             |
 
 > **Tradeoff Rationale** — Removing explicit program names is a sacrifice of flexibility in exchange for reduced development and maintenance complexity. In practice, no use case has emerged that genuinely requires a custom program name — all real-world programs can be expressed with the default `ThisProgram`. Keeping the parameter in every macro would add ongoing documentation, testing, and cognitive overhead that is not justified by current needs.
 
@@ -243,7 +250,7 @@ use mingling::{res::ResExitCode, res::ResREPL};
            AnyOutput::new(self).route_renderer()
        }
    }
-   
+
    // After (provided by Groupped trait default methods):
    // just ensure Groupped is implemented — to_chain() and to_render()
    // are automatically available

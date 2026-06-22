@@ -44,11 +44,6 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
     };
 
-    // Check that the previous type is a single-segment type (no `::`)
-    if let Some(err_tokens) = crate::check_single_segment_type(&previous_type, "#[renderer]") {
-        return err_tokens.into();
-    }
-
     // Validate return type – now returns Some(type) if custom type, None if ()
     let return_type = extract_return_type(&input_fn.sig);
 
@@ -174,23 +169,26 @@ pub fn build_renderer_entry(
     struct_name: &syn::Ident,
     previous_type: &TypePath,
 ) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
-        #struct_name => #previous_type,
+        #struct_name => #enum_variant,
     }
 }
 
 /// Builds the renderer existence check entry
 pub fn build_renderer_exist_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
-        Self::#previous_type => true,
+        Self::#enum_variant => true,
     }
 }
 
 /// Builds the general renderer entry
 #[cfg(feature = "general_renderer")]
 pub fn build_general_renderer_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
-        Self::#previous_type => {
+        Self::#enum_variant => {
             // SAFETY: Only types that match will enter this branch for forced conversion,
             // and `AnyOutput::new` ensures the type implements serde::Serialize
             let raw = unsafe { any.restore::<#previous_type>().unwrap_unchecked() };

@@ -377,15 +377,17 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 /// Builds a match arm for chain mapping
 pub fn build_chain_arm(struct_name: &Ident, previous_type: &TypePath) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
-        #struct_name => #previous_type,
+        #struct_name => #enum_variant,
     }
 }
 
 /// Builds a match arm for chain existence check
 pub fn build_chain_exist_arm(previous_type: &TypePath) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
-        Self::#previous_type => true,
+        Self::#enum_variant => true,
     }
 }
 

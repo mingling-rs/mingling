@@ -1,14 +1,13 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::spanned::Spanned;
-use syn::{FnArg, Ident, ItemFn, PatType, Type, parse_macro_input};
+use syn::{Ident, ItemFn, TypePath, parse_macro_input};
 
 #[cfg(feature = "comp")]
 pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse the attribute arguments (e.g., HelloEntry from #[completion(HelloEntry)])
+    // Parse the attribute arguments (e.g., HelloEntry or crate::EntryFine from #[completion(crate::EntryFine)])
 
     use crate::get_global_set;
-    let previous_type_ident = if attr.is_empty() {
+    let previous_type_path: TypePath = if attr.is_empty() {
         return syn::Error::new(
             proc_macro2::Span::call_site(),
             "completion attribute requires a previous type argument, e.g. #[completion(HelloEntry)]",
@@ -16,8 +15,9 @@ pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         .to_compile_error()
         .into();
     } else {
-        parse_macro_input!(attr as Ident)
+        parse_macro_input!(attr as TypePath)
     };
+    let previous_type_ident = &previous_type_path.path.segments.last().unwrap().ident;
 
     // Parse the function item
     let input_fn = parse_macro_input!(item as ItemFn);
@@ -48,23 +48,6 @@ pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         .into();
     }
 
-    // Check that the function parameter type is a single-segment type path (no `::`)
-    if let Some(arg) = inputs.first()
-        && let FnArg::Typed(PatType { ty, .. }) = arg
-        && let Type::Path(type_path) = &**ty
-        && type_path.path.segments.len() > 1
-    {
-        return syn::Error::new(
-                        type_path.span(),
-                        format!(
-                            "The type `{}` in #[completion] function must be a simple single-segment type, e.g. `HelloEntry` instead of `other::HelloEntry`. Qualified paths with `::` are not allowed here.",
-                            quote! { #type_path }
-                        ),
-                    )
-                    .to_compile_error()
-                    .into();
-    }
-
     // Get the function body
     let fn_body = &input_fn.block;
 
@@ -93,7 +76,7 @@ pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         #vis struct #struct_name;
 
         impl ::mingling::Completion for #struct_name {
-            type Previous = #previous_type_ident;
+            type Previous = #previous_type_path;
 
             fn comp(#inputs) #output {
                 #fn_body

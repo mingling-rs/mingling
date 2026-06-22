@@ -13,10 +13,11 @@ fn print_help() {
     println!("Usage: ci [options]");
     println!();
     println!("Options:");
-    println!("  -h, --help          Print this help message");
-    println!("  -y                  Auto-confirm temporary commits");
-    println!("  --test-docs         Run documentation tests (build, clippy, test)");
-    println!("  --test-codes        Test examples and documentation code blocks");
+    println!("  -h, --help              Print this help message");
+    println!("  -y                      Auto-confirm temporary commits");
+    println!("  --refresh-docs          Refresh documentation files");
+    println!("  --test-docs             Run documentation tests (build, clippy, test)");
+    println!("  --test-codes            Test examples and documentation code blocks");
     println!();
     println!("If no specific options are given, all checks are run.");
 }
