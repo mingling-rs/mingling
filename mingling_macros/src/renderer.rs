@@ -252,6 +252,7 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
         let renderers = get_global_set(&crate::RENDERERS).lock().unwrap();
         if let Err(err) = crate::check_duplicate_variant(
             &renderers,
+            &renderer_entry_str,
             &variant_name,
             "renderer",
             previous_type.span(),

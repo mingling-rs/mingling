@@ -110,9 +110,13 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
     let variant_name = entry_type.path.segments.last().unwrap().ident.to_string();
     {
         let helps = get_global_set(&crate::HELP_REQUESTS).lock().unwrap();
-        if let Err(err) =
-            crate::check_duplicate_variant(&helps, &variant_name, "help", entry_type.span())
-        {
+        if let Err(err) = crate::check_duplicate_variant(
+            &helps,
+            &entry_str,
+            &variant_name,
+            "help",
+            entry_type.span(),
+        ) {
             return err.into();
         }
     }
@@ -208,7 +212,7 @@ pub fn register_help(input: TokenStream) -> TokenStream {
     // Check for duplicate variant (different struct, same type)
     let variant_name = entry_type.path.segments.last().unwrap().ident.to_string();
     if let Err(err) =
-        crate::check_duplicate_variant(&helps, &variant_name, "help", entry_type.span())
+        crate::check_duplicate_variant(&helps, &entry_str, &variant_name, "help", entry_type.span())
     {
         return err.into();
     }

@@ -440,9 +440,13 @@ pub fn register_chain(input: TokenStream) -> TokenStream {
         .unwrap()
         .ident
         .to_string();
-    if let Err(err) =
-        crate::check_duplicate_variant(&chains, &variant_name, "chain", previous_type.span())
-    {
+    if let Err(err) = crate::check_duplicate_variant(
+        &chains,
+        &chain_entry_str,
+        &variant_name,
+        "chain",
+        previous_type.span(),
+    ) {
         return err.into();
     }
 

@@ -158,6 +158,7 @@ pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let variant_name = previous_type_ident.to_string();
     if let Err(err) = crate::check_duplicate_variant(
         &completions,
+        &completion_str,
         &variant_name,
         "completion",
         previous_type_path.span(),

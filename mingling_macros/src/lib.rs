@@ -199,11 +199,16 @@ pub(crate) static HELP_REQUESTS: Registry = OnceLock::new();
 /// Returns a `compile_error` token stream if a duplicate is found.
 pub(crate) fn check_duplicate_variant(
     set: &std::collections::BTreeSet<String>,
+    entry_str: &str,
     variant_name: &str,
     kind: &str,
     error_span: proc_macro2::Span,
 ) -> Result<(), proc_macro2::TokenStream> {
     for existing in set.iter() {
+        if existing == entry_str {
+            // Exact same entry - re-registration from RA re-analysis, skip
+            continue;
+        }
         if entry_has_variant(existing, variant_name) {
             return Err(syn::Error::new(
                 error_span,
@@ -1971,6 +1976,23 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
             }
         }
     };
+
+    // Clear all global registries to prevent stale state in Rust Analyzer
+    get_global_set(&PACKED_TYPES).lock().unwrap().clear();
+    get_global_set(&CHAINS).lock().unwrap().clear();
+    get_global_set(&CHAINS_EXIST).lock().unwrap().clear();
+    get_global_set(&RENDERERS).lock().unwrap().clear();
+    get_global_set(&RENDERERS_EXIST).lock().unwrap().clear();
+    get_global_set(&HELP_REQUESTS).lock().unwrap().clear();
+    #[cfg(feature = "comp")]
+    get_global_set(&COMPLETIONS).lock().unwrap().clear();
+    #[cfg(feature = "dispatch_tree")]
+    get_global_set(&COMPILE_TIME_DISPATCHERS)
+        .lock()
+        .unwrap()
+        .clear();
+    #[cfg(feature = "general_renderer")]
+    get_global_set(&GENERAL_RENDERERS).lock().unwrap().clear();
 
     TokenStream::from(expanded)
 }
