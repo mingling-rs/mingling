@@ -195,6 +195,26 @@ group!(std::io::Error);
 
 This macro is only available with the `extra_macros` feature.
 
+11. **\[macros\]** `#[help]` and `#[completion]` now support resource injection parameters, consistent with `#[chain]` and `#[renderer]`. Specific changes:
+
+- `#[help]`: Removed the restriction of "must have exactly one parameter". The first parameter still serves as the entry type, while subsequent parameters are treated as resource injections. The internal implementation was changed from a nested `help_wrapper` function to an inline body (consistent with the renderer), making resource variables visible within the scope.
+- `#[completion]`: Removed the restriction of "must have exactly one parameter". The first parameter `ctx: &ShellContext` is used for the `Completion::comp` trait method signature, while subsequent parameters are treated as resource injections. Within the `comp` method body, resource bindings are injected via `::mingling::this::<P>().res_or_default::<T>()` and `modify_res`.
+
+```rust
+#[help]
+fn help_my_entry(prev: EntryMyEntry, res: &ResA) {
+    r_println!("res: {:?}", *res);
+}
+
+#[completion(EntryMyEntry)]
+fn comp_my_entry(ctx: &ShellContext, res: &mut ResA) -> Suggest {
+    // res is injected from the program's global resources
+    suggest! {}
+}
+```
+
+For mutable resources (`&mut T`), both macros use `Program::modify_res` (with constraint `Return: Default`) instead of `#[chain]`'s dedicated `__modify_res_and_return_route` (with constraint `Return: Into<ChainProcess>`), because the return types of help/completion are `()` and `Suggest` respectively.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 ---
