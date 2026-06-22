@@ -197,10 +197,19 @@ This macro is only available with the `extra_macros` feature.
 
 9. **\[mingling\]** Added `Groupped` trait to the `mingling::prelude` module, so it can now be imported via `use mingling::prelude::*` without needing to separately import the trait from the `mingling` crate root.
 
-10. **\[macros\]** Added the `group!` macro for registering outside-types from external crates as group members without modifying their definitions. This macro generates a `Groupped` implementation and registers the type's simple name as an enum variant.
+10. **\[macros:group\]** Added the `group!` macro for registering outside-types from external crates as group members without modifying their definitions. This macro generates a `Groupped` implementation and registers the type's simple name as an enum variant.
+
+Uses the type's last path segment as the enum variant name:
 
 ```rust,ignore
-group!(std::io::Error);
+group!(std::io::Error); // registers as `Error` variant
+```
+
+An aliased syntax is also supported for descriptive variant naming:
+
+```rust,ignore
+// registers as `IoError` variant, creates `pub type IoError = std::io::Error;`
+group!(IoError = std::io::Error);
 ```
 
 This macro is only available with the `extra_macros` feature.

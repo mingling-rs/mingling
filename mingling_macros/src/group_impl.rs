@@ -11,15 +11,33 @@ use syn::{Ident, Result as SynResult, TypePath};
 /// /// Only a type path — uses default `crate::ThisProgram` as program
 /// group!(std::io::Error);
 /// group!(ParseIntError);
+///
+/// /// With an alias — creates a `pub type Alias = Path;` and uses `Alias` as variant name
+/// group!(IoError = std::io::Error);
 /// ```
-struct GroupInput {
-    type_path: TypePath,
+enum GroupInput {
+    /// `group!(TypePath)` — variant name is the last path segment
+    Plain(TypePath),
+
+    /// `group!(Alias = TypePath)` — variant name is `Alias`, also generates `pub type Alias = TypePath;`
+    Aliased { alias: Ident, type_path: TypePath },
 }
 
 impl Parse for GroupInput {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        let type_path: TypePath = input.parse()?;
-        Ok(GroupInput { type_path })
+        // Peek ahead: if the second token is `=`, parse as aliased form
+        let fork = input.fork();
+        let _first: Ident = fork.parse()?;
+        if fork.peek(syn::Token![=]) {
+            // Consume the ident and `=` from the real input
+            let alias: Ident = input.parse()?;
+            let _eq: syn::Token![=] = input.parse()?;
+            let type_path: TypePath = input.parse()?;
+            Ok(GroupInput::Aliased { alias, type_path })
+        } else {
+            let type_path: TypePath = input.parse()?;
+            Ok(GroupInput::Plain(type_path))
+        }
     }
 }
 
@@ -59,33 +77,61 @@ fn type_simple_name(type_path: &TypePath) -> Ident {
 fn gen_type_use(type_path: &TypePath) -> proc_macro2::TokenStream {
     if type_path.path.segments.len() > 1 {
         // Full path: use it directly
-        quote! { use #type_path; }
+        quote! {
+            #[allow(unused_imports)]
+            use #type_path;
+        }
     } else {
         // Single ident: import from parent scope
         let ident = type_simple_name(type_path);
-        quote! { use super::#ident; }
+        quote! {
+            #[allow(unused_imports)]
+            use super::#ident;
+        }
     }
 }
 
 pub fn group_macro(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as GroupInput);
-    let type_path = input.type_path;
+
+    let is_aliased = matches!(input, GroupInput::Aliased { .. });
+
+    let (type_path, type_name, alias_stmt) = match input {
+        GroupInput::Plain(type_path) => {
+            let type_name = type_simple_name(&type_path);
+            (type_path, type_name, quote! {})
+        }
+        GroupInput::Aliased { alias, type_path } => {
+            let type_name = alias.clone();
+            let alias_stmt = quote! {
+                pub type #alias = #type_path;
+            };
+            (type_path, type_name, alias_stmt)
+        }
+    };
 
     let program_path = crate::default_program_path();
 
-    // Use the type's simple name as the enum variant identifier
-    let type_name = type_simple_name(&type_path);
-    // Create a unique module name from the full type path
+    // Create a unique module name from the type path (use alias name for aliased form)
     let module_name = module_name_from_type(&type_path);
     // Generate the appropriate `use` statement for the type
     let type_use = gen_type_use(&type_path);
 
+    // For aliased form, also import the alias from parent scope
+    let alias_use = if is_aliased {
+        quote! { use super::#type_name; }
+    } else {
+        quote! {}
+    };
+
     // Generate the module with the Groupped implementation
     let expanded = quote! {
+        #alias_stmt
         #[allow(non_camel_case_types)]
         mod #module_name {
             use #program_path as __MinglingProgram;
             #type_use
+            #alias_use
 
             impl ::mingling::Groupped<__MinglingProgram> for #type_name {
                 fn member_id() -> __MinglingProgram {
