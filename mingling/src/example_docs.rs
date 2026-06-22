@@ -79,7 +79,7 @@
 ///             .pick::<bool>(["--dir", "-D"])
 ///             .pick_or::<usize>("--size", 1024 * 1024_usize)
 ///             // Finally parse the positional argument; if not found, route to `ErrorNoNameProvided`
-///             .pick_or_route::<String, _>((), ErrorNoNameProvided::default().to_chain())
+///             .pick_or_route::<String, _>((), ErrorNoNameProvided::default())
 ///             .after(|str| str.trim().replace(' ', ""))
 ///             .unpack()
 ///     }
@@ -670,7 +670,7 @@ pub mod example_completion {}
 /// #[chain]
 /// fn handle_connect(prev: EntryConnect) -> Next {
 ///     let connect: Address =
-///         route! { prev.pick_or_route((), ErrorParseAddressFailed::default().to_chain()).unpack() };
+///         route! { prev.pick_or_route((), ErrorParseAddressFailed::default()).unpack() };
 ///     connect.to_chain()
 /// }
 ///

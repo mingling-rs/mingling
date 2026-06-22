@@ -278,6 +278,16 @@ use mingling::{res::ResExitCode, res::ResREPL};
 
    Removed the per-type inherent method generation from both `groupped.rs` and `pack.rs` in `mingling_macros`.
 
+4. **\[macros\]** Changed the `route!()` macro's error branch from `return e` to `return ::mingling::Groupped::to_chain(e)`, so that the error type no longer needs to be pre-converted to `ChainProcess` via `.to_chain()` or `.to_render()`. The macro now accepts any type implementing `Groupped` in the error position and automatically converts it.
+
+```rust
+// Before
+let value = route!(prev.pick_or_route((), Error::default().to_chain()).unpack());
+
+// After
+let value = route!(prev.pick_or_route((), Error::default()).unpack());
+```
+
 ### Release 0.1.9 (2026-05-29)
 
 #### Fixes:

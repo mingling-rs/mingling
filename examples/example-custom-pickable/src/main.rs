@@ -46,7 +46,7 @@ pack!(ErrorParseAddressFailed = ());
 #[chain]
 fn handle_connect(prev: EntryConnect) -> Next {
     let connect: Address =
-        route! { prev.pick_or_route((), ErrorParseAddressFailed::default().to_chain()).unpack() };
+        route! { prev.pick_or_route((), ErrorParseAddressFailed::default()).unpack() };
     connect.to_chain()
 }
 

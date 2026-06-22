@@ -405,12 +405,13 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// match expr {
 ///     Ok(r) => r,
-///     Err(e) => return e,
+///     Err(e) => return ::mingling::Groupped::to_chain(e),
 /// }
 /// ```
 ///
-/// It is useful inside chain functions where you have a `Result<ChainProcess<G>, ChainProcess<G>>`
-/// and want to propagate the error case as an early return.
+/// It is useful inside chain functions where you have a `Result<SomeType, SomeType>`
+/// where both types implement `Groupped` and want to propagate the error case
+/// as an early return via `Groupped::to_chain()`.
 ///
 /// # Example
 ///
@@ -419,9 +420,9 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
 ///
 /// #[chain]
 /// fn process(prev: SomeEntry) -> ChainProcess<ThisProgram> {
-///     let value = route!(try_something().ok_or(ErrorEntry::new("failed".into()).to_render()));
-///     // value is the Ok(ChainProcess) from try_something()
-///     value
+///     let value = route!(current_dir().map_err(|e| ErrorEntry::new(e.to_string_lossy().to_string())));
+///     // value is the PathBuf from current_dir()
+///     value.to_chain()
 /// }
 /// ```
 #[cfg(feature = "extra_macros")]
@@ -431,7 +432,7 @@ pub fn route(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         match #expr {
             Ok(r) => r,
-            Err(e) => return e,
+            Err(e) => return ::mingling::Groupped::to_chain(e),
         }
     };
     TokenStream::from(expanded)
