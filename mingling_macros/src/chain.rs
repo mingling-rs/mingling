@@ -81,7 +81,10 @@ fn generate_proc_fn(
     let body_stmts: &[syn::Stmt] = if is_unit_return && has_resources {
         let mut stmts = fn_body_stmts.to_vec();
         stmts.push(syn::Stmt::Expr(
-            syn::parse_quote! { crate::ResultEmpty::new(()).to_chain() },
+            syn::parse_quote! {
+                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
+                ::to_chain(crate::ResultEmpty::new(()))
+            },
             None,
         ));
         // Box::leak to get a &'static [syn::Stmt]
@@ -107,7 +110,8 @@ fn generate_proc_fn(
             };
             quote! {
                 #call
-                crate::ResultEmpty::new(()).to_chain()
+                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
+                ::to_chain(crate::ResultEmpty::new(()))
             }
         }
     } else if has_resources {
@@ -165,7 +169,7 @@ fn generate_original_fn(
         quote! {
             {
                 #fn_body
-                crate::ResultEmpty::new(()).to_chain()
+                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty::new(()))
             }
         }
     } else {
