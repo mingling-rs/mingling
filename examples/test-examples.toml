@@ -38,6 +38,11 @@ command = "hello"
 expect.exit-code = 1
 expect.result = "No name provided (with exit code 1)"
 
+[[test.example-exitcode]]
+command = "hello --help"
+expect.exit-code = 2
+expect.result = "Usage: hello <NAME>"
+
 [[test.example-error-handling]]
 command = "hello"
 expect.exit-code = 0

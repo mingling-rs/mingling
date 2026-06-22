@@ -14,10 +14,16 @@
 //! No name provided (with exit code 1)
 //! ```
 
-use mingling::{prelude::*, res::ResExitCode, setup::ExitCodeSetup};
+use mingling::{
+    macros::help,
+    prelude::*,
+    res::ResExitCode,
+    setup::{BasicProgramSetup, ExitCodeSetup},
+};
 
 fn main() {
     let mut program = ThisProgram::new();
+    program.with_setup(BasicProgramSetup);
 
     // --------- IMPORTANT ---------
     // Register `ExitCodeSetup` for the program to enable exit codes
@@ -48,6 +54,12 @@ fn handle_hello(args: EntryHello) -> Next {
 #[renderer]
 fn render_result_name(name: ResultName) {
     r_println!("Hello, {}", *name);
+}
+
+#[help]
+fn help_hello(_p: EntryHello, ec: &mut ResExitCode) {
+    r_println!("Usage: hello <NAME>");
+    ec.exit_code = 2;
 }
 
 // Define renderer, render error message                      _______________ Inject exit code resource
