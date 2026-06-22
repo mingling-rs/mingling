@@ -92,14 +92,14 @@ Enables an additional set of macros, providing more convenient syntactic sugar a
 
 For example, allows the shorthand form `dispatcher!("greet")`, which auto-generates `CMDGreet` / `EntryGreet`.
 
-| Macro | Description |
-|---|---|
-| `empty_result!()` | Shorthand for returning an empty result early in a chain |
-| `entry!(Type, ["a", "b"])` | Construct test data for an entry type |
-| `group!(Type)` | Register external types as group members without modifying them |
-| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | Create error types with an automatic `name` field |
-| `#[program_setup]` | Declare a program initialization function |
-| `dispatcher!("cmd.path")` **shorthand** | Omit `CMDStruct => EntryStruct`, names are auto-derived |
+| Macro                                                   | Description                                                     |
+| ------------------------------------------------------- | --------------------------------------------------------------- |
+| `empty_result!()`                                       | Shorthand for returning an empty result early in a chain        |
+| `entry!(Type, ["a", "b"])`                              | Construct test data for an entry type                           |
+| `group!(Type)`                                          | Register external types as group members without modifying them |
+| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | Create error types with an automatic `name` field               |
+| `#[program_setup]`                                      | Declare a program initialization function                       |
+| `dispatcher!("cmd.path")` **shorthand**                 | Omit `CMDStruct => EntryStruct`, names are auto-derived         |
 
 <details>
 <summary> Details </summary>
@@ -115,7 +115,7 @@ pack!(StatePrev2 = ());
 pack!(StateNext = ());
  
 #[chain]
-fn handle_state_prev2(_p: StatePrev1) {
+fn handle_state_prev2(_p: StatePrev2) {
     // A #[chain] with no return type can simply omit the return value
 }
  

@@ -153,6 +153,18 @@ pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let mut completions = get_global_set(&crate::COMPLETIONS).lock().unwrap();
     let completion_str = completion_entry.to_string();
+
+    // Check for duplicate variant before inserting
+    let variant_name = previous_type_ident.to_string();
+    if let Err(err) = crate::check_duplicate_variant(
+        &completions,
+        &variant_name,
+        "completion",
+        previous_type_path.span(),
+    ) {
+        return err.into();
+    }
+
     completions.insert(completion_str);
 
     expanded.into()

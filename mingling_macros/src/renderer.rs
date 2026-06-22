@@ -234,17 +234,37 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
     #[cfg(feature = "general_renderer")]
     let general_renderer_entry = build_general_renderer_entry(&previous_type);
 
-    let mut renderers = get_global_set(&crate::RENDERERS).lock().unwrap();
-    let mut renderer_exist = get_global_set(&crate::RENDERERS_EXIST).lock().unwrap();
-
-    #[cfg(feature = "general_renderer")]
-    let mut general_renderers = get_global_set(&crate::GENERAL_RENDERERS).lock().unwrap();
-
     let renderer_entry_str = renderer_entry.to_string();
     let renderer_exist_entry_str = renderer_exist_entry.to_string();
 
     #[cfg(feature = "general_renderer")]
     let general_renderer_entry_str = general_renderer_entry.to_string();
+
+    // Check for duplicate variant before acquiring other locks
+    let variant_name = previous_type
+        .path
+        .segments
+        .last()
+        .unwrap()
+        .ident
+        .to_string();
+    {
+        let renderers = get_global_set(&crate::RENDERERS).lock().unwrap();
+        if let Err(err) = crate::check_duplicate_variant(
+            &renderers,
+            &variant_name,
+            "renderer",
+            previous_type.span(),
+        ) {
+            return err.into();
+        }
+    } // renderers lock released here
+
+    let mut renderers = get_global_set(&crate::RENDERERS).lock().unwrap();
+    let mut renderer_exist = get_global_set(&crate::RENDERERS_EXIST).lock().unwrap();
+
+    #[cfg(feature = "general_renderer")]
+    let mut general_renderers = get_global_set(&crate::GENERAL_RENDERERS).lock().unwrap();
 
     renderers.insert(renderer_entry_str);
     renderer_exist.insert(renderer_exist_entry_str);

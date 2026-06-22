@@ -195,6 +195,37 @@ pub(crate) static CHAINS_EXIST: Registry = OnceLock::new();
 pub(crate) static RENDERERS_EXIST: Registry = OnceLock::new();
 pub(crate) static HELP_REQUESTS: Registry = OnceLock::new();
 
+/// Checks if a variant name already exists in a registered set.
+/// Returns a `compile_error` token stream if a duplicate is found.
+pub(crate) fn check_duplicate_variant(
+    set: &std::collections::BTreeSet<String>,
+    variant_name: &str,
+    kind: &str,
+    error_span: proc_macro2::Span,
+) -> Result<(), proc_macro2::TokenStream> {
+    for existing in set.iter() {
+        if entry_has_variant(existing, variant_name) {
+            return Err(syn::Error::new(
+                error_span,
+                format!(
+                    "duplicate {kind} registration for `{variant_name}`: a {kind} with this type already exists"
+                ),
+            )
+            .to_compile_error());
+        }
+    }
+    Ok(())
+}
+
+/// Checks if a stored entry string contains the given variant name.
+/// Handles both "StructName => Variant," and "Self::Variant => ..." formats.
+fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
+    entry.contains(&format!("=> {variant_name},"))
+        || entry.contains(&format!("=> {variant_name} "))
+        || entry.contains(&format!("=> {variant_name}"))
+        || entry.contains(&format!(":: {variant_name} =>"))
+}
+
 /// Registers an outside-type as a member of a program group without modifying its definition.
 ///
 /// This macro allows you to use outside-types from external crates (like `std::io::Error`)

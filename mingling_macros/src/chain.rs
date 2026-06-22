@@ -432,6 +432,20 @@ pub fn register_chain(input: TokenStream) -> TokenStream {
     let chain_entry_str = chain_entry.to_string();
     let chain_exist_entry_str = chain_exist_entry.to_string();
 
+    // Check for duplicate variant before inserting
+    let variant_name = previous_type
+        .path
+        .segments
+        .last()
+        .unwrap()
+        .ident
+        .to_string();
+    if let Err(err) =
+        crate::check_duplicate_variant(&chains, &variant_name, "chain", previous_type.span())
+    {
+        return err.into();
+    }
+
     chains.insert(chain_entry_str);
     chain_exist.insert(chain_exist_entry_str);
 

@@ -66,6 +66,14 @@
    - `#[completion]`: Attribute parameter parsing changed from `Ident` to `TypePath`, supporting `#[completion(crate::EntryFine)]`
    - Fixed code generation in `build_chain_arm`, `build_chain_exist_arm`, `build_renderer_entry`, `build_renderer_exist_entry`, `build_general_renderer_entry`, and completion entry: `Self::#variant` match arms now only take the last segment ident of the type path (e.g. `Self::EntryFine`), rather than concatenating the full path directly (which would generate invalid syntax like `Self::crate::EntryFine`), while `downcast::<T>()` and `type Previous = T` still use the full path to ensure correct type resolution
 
+6. **\[macros:register\]** Added compile-time duplicate variant detection for chain, renderer, help, and completion registrations. When two `#[chain]` (or `#[renderer]`, `#[help]`, `#[completion]`) functions register the same type variant, the compiler now emits a clear error at the registration site (e.g. `fn handle_state_prev1(_p: StatePrev1)`) instead of silently producing an unreachable match arm that only manifests as dead code in the generated `do_chain()`/`render()` dispatch.
+
+   Affected registration points:
+   - `register_chain` — checks `CHAINS` set for existing entries with the same variant
+   - `register_renderer` — checks `RENDERERS` set
+   - `help_attr` (via `#[help]`) + `register_help` — checks `HELP_REQUESTS`; `register_help` also serves as a public escape hatch for manual help registration, automatically skipping the duplicate check when the exact same entry was pre-inserted by `#[help]`
+   - `completion_attr` (via `#[completion]`) — checks `COMPLETIONS` set
+
 #### Optimizations:
 
 1. **\[core:flag\]** Refactored the `special_argument!` and `special_arguments!` macros to replace index‑based `while` loops with iterator `position` and `drain`, improving both performance and readability.

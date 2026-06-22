@@ -105,6 +105,18 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
     // Register the help request mapping
     let help_entry = build_help_entry(&struct_name, &entry_type);
     let entry_str = help_entry.to_string();
+
+    // Check for duplicate variant before inserting
+    let variant_name = entry_type.path.segments.last().unwrap().ident.to_string();
+    {
+        let helps = get_global_set(&crate::HELP_REQUESTS).lock().unwrap();
+        if let Err(err) =
+            crate::check_duplicate_variant(&helps, &variant_name, "help", entry_type.span())
+        {
+            return err.into();
+        }
+    }
+
     get_global_set(&crate::HELP_REQUESTS)
         .lock()
         .unwrap()
@@ -185,10 +197,23 @@ pub fn register_help(input: TokenStream) -> TokenStream {
     // Register the help request mapping
     let help_entry = build_help_entry(&struct_name, &entry_type);
     let entry_str = help_entry.to_string();
-    get_global_set(&crate::HELP_REQUESTS)
-        .lock()
-        .unwrap()
-        .insert(entry_str);
+
+    // Check if entry was already pre-inserted by `#[help]` attribute
+    let mut helps = get_global_set(&crate::HELP_REQUESTS).lock().unwrap();
+    if helps.contains(&entry_str) {
+        // Already registered by `#[help]`, no duplicate check needed
+        return quote! {}.into();
+    }
+
+    // Check for duplicate variant (different struct, same type)
+    let variant_name = entry_type.path.segments.last().unwrap().ident.to_string();
+    if let Err(err) =
+        crate::check_duplicate_variant(&helps, &variant_name, "help", entry_type.span())
+    {
+        return err.into();
+    }
+
+    helps.insert(entry_str);
 
     quote! {}.into()
 }
