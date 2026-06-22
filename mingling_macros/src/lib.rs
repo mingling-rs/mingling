@@ -1673,7 +1673,7 @@ fn parse_entry_pair(entry: &proc_macro2::TokenStream) -> (proc_macro2::Ident, pr
         .find("=>")
         .unwrap_or_else(|| panic!("Entry missing '=>': {s}"));
     let struct_str = s[..arrow_idx].trim();
-    let variant_str = s[arrow_idx + 2..].trim().trim_end_matches(',');
+    let variant_str = s[arrow_idx + 2..].trim().trim_end_matches(',').trim();
     let struct_ident = proc_macro2::Ident::new(struct_str, proc_macro2::Span::call_site());
     let variant_ident = proc_macro2::Ident::new(variant_str, proc_macro2::Span::call_site());
     (struct_ident, variant_ident)
