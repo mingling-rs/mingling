@@ -72,6 +72,8 @@
 
 2. **\[core:comp\]** Changed the completion system's node filtering to exclude all hidden nodes (names starting with `_`) instead of only the specific `__comp` node. This makes the completion script generation more general — any node prefixed with an underscore is now treated as internal/hidden and excluded from suggestions.
 
+3. **\[macros\]** Consolidated `__dispatch_program_renderers!` and `__dispatch_program_chains!` from `macro_rules!` into the `program_final_gen` proc-macro (`mingling_macros/src/lib.rs`), removing them from `mingling_core/src/program.rs`. The `render()` and `do_chain()` match dispatch is now generated directly by the proc-macro, using a compile-time `ASYNC_ENABLED` constant (via `#[cfg(feature = "async")]`) to select the correct sync/async signature at proc-macro compilation time, replacing the previous `#[cfg]`-gated `macro_rules!` dispatch that relied on per-crate feature resolution.
+
 #### Features:
 
 1. **\[core\]** Added the `unpack_chain_process!` macro for ergonomically extracting the inner value from a `ChainProcess` result.

@@ -1624,6 +1624,25 @@ pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
 ///
 /// # Panics
 ///
+// Feature detection: baked into the proc-macro binary at compile time
+#[cfg(feature = "async")]
+const ASYNC_ENABLED: bool = true;
+#[cfg(not(feature = "async"))]
+const ASYNC_ENABLED: bool = false;
+
+/// Parses an entry of the format `StructName => EnumVariant,` into a pair of idents.
+fn parse_entry_pair(entry: &proc_macro2::TokenStream) -> (proc_macro2::Ident, proc_macro2::Ident) {
+    let s = entry.to_string();
+    let arrow_idx = s
+        .find("=>")
+        .unwrap_or_else(|| panic!("Entry missing '=>': {s}"));
+    let struct_str = s[..arrow_idx].trim();
+    let variant_str = s[arrow_idx + 2..].trim().trim_end_matches(',');
+    let struct_ident = proc_macro2::Ident::new(struct_str, proc_macro2::Span::call_site());
+    let variant_ident = proc_macro2::Ident::new(variant_str, proc_macro2::Span::call_site());
+    (struct_ident, variant_ident)
+}
+
 /// Panics if any of the global registries (`PACKED_TYPES`, `RENDERERS`, `CHAINS`, etc.)
 /// are poisoned.
 #[proc_macro]
@@ -1749,6 +1768,92 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     #[cfg(not(feature = "comp"))]
     let comp = quote! {};
 
+    // Build render function arms from stored entries
+    let render_fn = if renderer_tokens.is_empty() {
+        quote! {
+            fn render(_any: ::mingling::AnyOutput<Self::Enum>, _renderer_inner_result: &mut ::mingling::RenderResult) {}
+        }
+    } else {
+        let render_arms: Vec<_> = renderer_tokens.iter().map(|entry| {
+            let (struct_ident, variant_ident) = parse_entry_pair(entry);
+            quote! {
+                Self::#variant_ident => {
+                    // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
+                    // so downcasting to `#variant_ident` is safe.
+                    let value = unsafe { any.downcast::<#variant_ident>().unwrap_unchecked() };
+                    <#struct_ident as ::mingling::Renderer>::render(value, __renderer_inner_result);
+                }
+            }
+        }).collect();
+        quote! {
+            fn render(any: ::mingling::AnyOutput<Self::Enum>, __renderer_inner_result: &mut ::mingling::RenderResult) {
+                match any.member_id {
+                    #(#render_arms)*
+                    _ => (),
+                }
+            }
+        }
+    };
+
+    // Build do_chain function (async and sync versions)
+    let chain_arms_async: Vec<_> = chain_tokens.iter().map(|entry| {
+        let (struct_ident, variant_ident) = parse_entry_pair(entry);
+        quote! {
+            Self::#variant_ident => {
+                // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
+                // so downcasting to `#variant_ident` is safe.
+                let value = unsafe { any.downcast::<#variant_ident>().unwrap_unchecked() };
+                let fut = async { <#struct_ident as ::mingling::Chain<Self::Enum>>::proc(value).await };
+                ::std::boxed::Box::pin(fut)
+            }
+        }
+    }).collect();
+
+    let chain_arms_sync: Vec<_> = chain_tokens
+        .iter()
+        .map(|entry| {
+            let (struct_ident, variant_ident) = parse_entry_pair(entry);
+            quote! {
+                Self::#variant_ident => {
+                    // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
+                    // so downcasting to `#variant_ident` is safe.
+                    let value = unsafe { any.downcast::<#variant_ident>().unwrap_unchecked() };
+                    <#struct_ident as ::mingling::Chain<Self::Enum>>::proc(value)
+                }
+            }
+        })
+        .collect();
+
+    let do_chain_fn = if chain_tokens.is_empty() {
+        quote! {
+            fn do_chain(_any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::ChainProcess<Self::Enum> {
+                ::core::panic!("No chain found for type id")
+            }
+        }
+    } else if ASYNC_ENABLED {
+        quote! {
+            fn do_chain(
+                any: ::mingling::AnyOutput<Self::Enum>,
+            ) -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ::mingling::ChainProcess<Self::Enum>> + ::std::marker::Send>> {
+                match any.member_id {
+                    #(#chain_arms_async)*
+                    _ => ::core::panic!("No chain found for type id: {:?}", any.type_id),
+                }
+            }
+        }
+    } else {
+        quote! {
+            fn do_chain(
+                any: ::mingling::AnyOutput<Self::Enum>,
+            ) -> ::mingling::ChainProcess<Self::Enum> {
+                match any.member_id {
+                    #(#chain_arms_sync)*
+                    _ => ::core::panic!("No chain found for type id: {:?}", any.type_id),
+                }
+            }
+        }
+    };
+
     let help_tokens: Vec<proc_macro2::TokenStream> = get_global_set(&HELP_REQUESTS)
         .lock()
         .unwrap()
@@ -1798,12 +1903,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
             fn build_empty_result() -> ::mingling::AnyOutput<Self::Enum> {
                 ::mingling::AnyOutput::new(ResultEmpty::new(()))
             }
-            ::mingling::__dispatch_program_renderers!(
-                #(#renderer_tokens)*
-            );
-            ::mingling::__dispatch_program_chains!(
-                #(#chain_tokens)*
-            );
+            #render_fn
+            #do_chain_fn
             fn render_help(any: ::mingling::AnyOutput<Self::Enum>, __renderer_inner_result: &mut ::mingling::RenderResult) {
                 match any.member_id {
                     #(#help_tokens)*
