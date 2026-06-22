@@ -8,6 +8,11 @@ command = "parse hello"
 expect.exit-code = 0
 expect.result = "Parse error: invalid digit found in string"
 
+[[test.example-outside-type]]
+command = "error"
+expect.exit-code = 0
+expect.result = "IO_ERROR: Error"
+
 [[test.example-lazy-resources]]
 command = "none"
 expect.exit-code = 0

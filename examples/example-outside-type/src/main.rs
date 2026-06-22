@@ -8,18 +8,26 @@
 //! ```bash
 //! cargo run --manifest-path examples/example-outside-type/Cargo.toml --quiet -- parse 42
 //! cargo run --manifest-path examples/example-outside-type/Cargo.toml --quiet -- parse hello
+//! cargo run --manifest-path examples/example-outside-type/Cargo.toml --quiet -- error
 //! ```
 //!
 //! Output:
 //! ```plaintext
 //! Parsed number: 42
 //! Parse error: invalid digit found in string
+//! IO_ERROR: Error
 //! ```
 
 use mingling::{macros::group, prelude::*};
-use std::num::ParseIntError;
+use std::{io::ErrorKind::Other, num::ParseIntError};
 
 dispatcher!("parse");
+dispatcher!("error");
+
+#[chain]
+fn handle_entry_error(_args: EntryError) -> Next {
+    std::io::Error::new(Other, "Error").to_render()
+}
 
 // --------- IMPORTANT ---------
 // You can directly use the `group!` macro to define outside types as types
@@ -28,6 +36,10 @@ dispatcher!("parse");
 //     /
 //     vvvvvvvvvvvvv
 group!(ParseIntError);
+group!(ErrorIo = std::io::Error);
+//     ^^^^^^^^^^^^^^^^^^^^^^^^
+//     \_____________ For types whose names may cause ambiguity,
+//                      you can use this syntax to create an alias simultaneously
 // --------- IMPORTANT ---------
 
 pack!(ParsedNumber = i32);
@@ -62,9 +74,18 @@ fn render_parse_error(err: ParseIntError) {
     r_println!("Parse error: {}", err);
 }
 
+/// Renderer for IO errors — using `std::io::Error` registered as `ErrorIo`.
+//                       ________ Must use alias `ErrorIo` here, not bare `std::io::Error`
+//                      /
+#[renderer] //          vvvvvvv
+fn render_error_io(err: ErrorIo) {
+    r_println!("IO_ERROR: {}", err.to_string());
+}
+
 fn main() {
     let mut program = ThisProgram::new();
     program.with_dispatcher(CMDParse);
+    program.with_dispatcher(CMDError);
     program.exec_and_exit();
 }
 
