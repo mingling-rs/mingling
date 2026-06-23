@@ -270,14 +270,14 @@ pub fn build_block(
         return (false, format!("write main.rs: {e}"));
     }
 
-    // Build with release — inherit stderr so cargo output is real-time and colored
+    // Check code — inherit stderr so cargo output is real-time and colored
     let shell = if cfg!(target_os = "windows") {
         "powershell"
     } else {
         "sh"
     };
     let cmd = format!(
-        "cargo build --release --color=always --manifest-path {}",
+        "cargo check --color=always --manifest-path {}",
         manifest_path.to_string_lossy()
     );
 
