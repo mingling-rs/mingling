@@ -307,7 +307,7 @@ mod tests {
     fn test_try_from_flag_without_value() {
         let args = vec!["-F".to_string()];
         let context = ShellContext::try_from(args).unwrap();
-        assert!(matches!(context.shell_flag, ShellFlag::Other(ref s) if s == ""));
+        assert!(matches!(context.shell_flag, ShellFlag::Other(ref s) if s.is_empty()));
     }
 
     #[test]

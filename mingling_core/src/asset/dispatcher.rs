@@ -356,7 +356,7 @@ mod tests {
     fn test_dispatchers_deref() {
         let disp = MockDispatcher { name: "test" };
         let dispatchers: Dispatchers<MockG> = Dispatchers::from((disp,));
-        let inner: &Vec<Box<dyn Dispatcher<MockG> + Send + Sync + 'static>> = &*dispatchers;
+        let inner: &Vec<Box<dyn Dispatcher<MockG> + Send + Sync + 'static>> = &dispatchers;
         assert_eq!(inner.len(), 1);
     }
 

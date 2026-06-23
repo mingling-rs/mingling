@@ -367,10 +367,11 @@ fn test_picker_pick_i32_default_zero() {
 
 #[test]
 fn test_picker_pick_f64() {
-    let result: f64 = Picker::new(vec!["--ratio", "3.14"])
+    let result: f64 = Picker::new(vec!["--ratio", "5.16"])
         .pick("--ratio")
         .unpack();
-    assert!((result - 3.14).abs() < 1e-10);
+    let expected: f64 = 5.16;
+    assert!((result - expected).abs() < 1e-10);
 }
 
 #[test]
@@ -721,7 +722,7 @@ fn test_picker_operate_args_transform() {
         .operate_args(|mut args| {
             // Add an extra file
             args.push("d.txt".to_string());
-            args.into()
+            args
         })
         .pick::<Vec<String>>("--files")
         .unpack();

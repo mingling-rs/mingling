@@ -243,7 +243,7 @@ mod tests {
     #[test]
     fn test_deref_suggest() {
         let s: Suggest = ["hello"].into();
-        let set: &BTreeSet<SuggestItem> = &*s;
+        let set: &BTreeSet<SuggestItem> = &s;
         assert_eq!(set.len(), 1);
     }
 
@@ -354,7 +354,7 @@ mod tests {
 
     #[test]
     fn test_ord_by_suggest_text() {
-        let mut items = vec![
+        let mut items = [
             SuggestItem::new("z".to_string()),
             SuggestItem::new("a".to_string()),
             SuggestItem::new("m".to_string()),
@@ -367,7 +367,7 @@ mod tests {
 
     #[test]
     fn test_ord_with_description() {
-        let mut items = vec![
+        let mut items = [
             SuggestItem::new_with_desc("z".to_string(), "zzz".to_string()),
             SuggestItem::new("a".to_string()),
             SuggestItem::new_with_desc("m".to_string(), "mmm".to_string()),

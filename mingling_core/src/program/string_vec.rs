@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn test_string_vec_deref() {
         let sv = StringVec::from(["alpha", "beta"]);
-        let inner: &Vec<String> = &*sv;
+        let inner: &Vec<String> = &sv;
         assert_eq!(inner.len(), 2);
         assert_eq!(inner[0], "alpha");
     }

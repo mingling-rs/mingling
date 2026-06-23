@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn deref_accesses_inner_error_string() {
         let err = GeneralRendererSerializeError::new("inner message".to_string());
-        let derefed: &String = &*err;
+        let derefed: &String = &err;
         assert_eq!(derefed, "inner message");
     }
 
