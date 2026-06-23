@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::path::Path;
 
 use crate::println_cargo_style;
@@ -293,7 +292,7 @@ pub fn build_block(
         Err(e) => return (false, format!("spawn: {e}")),
     };
 
-    // Read stderr while it streams
+    // Read stderr (buffered, not forwarded — groups print their own output contiguously)
     use std::io::BufRead;
     let stderr_handle = child.stderr.take().unwrap();
     let reader = std::io::BufReader::new(stderr_handle);
@@ -301,7 +300,6 @@ pub fn build_block(
     for line in reader.lines() {
         match line {
             Ok(l) => {
-                let _ = writeln!(std::io::stderr(), "{l}");
                 captured.push_str(&l);
                 captured.push('\n');
             }

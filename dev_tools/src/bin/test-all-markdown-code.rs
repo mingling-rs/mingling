@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::env;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
@@ -24,7 +25,8 @@ struct VerifiedPaths {
     documents_zh_cn: Option<String>,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     #[cfg(windows)]
     let _ = colored::control::set_virtual_terminal(true);
 
@@ -158,40 +160,76 @@ fn main() {
 
     let temp_base = PathBuf::from(".temp/doc-test");
 
-    // Build groups — same hash reuses the same Cargo.toml
+    // Sort groups by hash for deterministic output order
+    let mut group_vec: Vec<(String, Vec<(usize, tools::verify::CodeBlock)>)> =
+        groups.into_iter().collect();
+    group_vec.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Spawn a blocking task per group — groups run in parallel, blocks within a group are serial
+    let mut handles = Vec::new();
+    for (hash, blocks) in group_vec {
+        let temp_base = temp_base.clone();
+        let handle = tokio::task::spawn_blocking(move || {
+            let crate_dir = temp_base.join(&hash);
+            let src_dir = crate_dir.join("src");
+            let manifest_path = crate_dir.join("Cargo.toml");
+
+            // Buffer all output for this group so it prints contiguously
+            let mut output = String::new();
+
+            // Generate a single Cargo.toml for the whole group (all blocks share same deps)
+            let first_block = &blocks[0].1;
+            let cargo_toml = generate_cargo_toml(first_block, "test-doc", &manifest_path);
+
+            let mut group_results: Vec<(String, usize, bool, String)> = Vec::new();
+            for (block_idx, block) in &blocks {
+                let block_label =
+                    format!("Block {block_idx} ({}:{})", block.source_file, block.line);
+
+                let main_rs = generate_main_rs(block);
+                let (ok, err) = build_block(&src_dir, &manifest_path, &cargo_toml, &main_rs);
+                if ok {
+                    output.push_str(&format!(
+                        "  Testing {block_label} ... {}\n",
+                        "passed".bold().bright_green()
+                    ));
+                } else {
+                    output.push_str(&format!(
+                        "  Testing {block_label} ... {}\n",
+                        "failed".bold().bright_red()
+                    ));
+                    output.push_str(&format!("  {block_label} FAILED:\n{err}\n"));
+                }
+                group_results.push((block.source_file.clone(), block.line, ok, err));
+            }
+            (output, group_results)
+        });
+        handles.push(handle);
+    }
+
+    // Collect results from all groups
     let mut results: Vec<(String, usize, bool, String)> = Vec::new();
     let mut passed = 0usize;
     let mut failed = 0usize;
 
-    // Sort groups by hash for deterministic output order
-    let mut group_keys: Vec<&String> = groups.keys().collect();
-    group_keys.sort();
-
-    for hash in group_keys {
-        let blocks = &groups[hash];
-        let crate_dir = temp_base.join(hash);
-        let src_dir = crate_dir.join("src");
-        let manifest_path = crate_dir.join("Cargo.toml");
-
-        // Generate a single Cargo.toml for the whole group (all blocks share same deps)
-        let first_block = &blocks[0].1;
-        let cargo_toml = generate_cargo_toml(first_block, "test-doc", &manifest_path);
-
-        for (block_idx, block) in blocks {
-            let block_label = format!("Block {block_idx} ({}:{})", block.source_file, block.line);
-            print!("  Testing {block_label} ... ");
-
-            let main_rs = generate_main_rs(block);
-            let (ok, err) = build_block(&src_dir, &manifest_path, &cargo_toml, &main_rs);
-            if ok {
-                println!("{}", "passed".bold().bright_green());
-                passed += 1;
-                results.push((block.source_file.clone(), block.line, true, String::new()));
-            } else {
-                println!("{}", "failed".bold().bright_red());
-                failed += 1;
-                results.push((block.source_file.clone(), block.line, false, err.clone()));
-                eprintln_cargo_style!(format!("  {block_label} FAILED:\n{err}"));
+    for handle in handles {
+        match handle.await {
+            Ok((output, group_results)) => {
+                // Print entire group output at once, avoiding interleaving
+                print!("{output}");
+                let _ = std::io::stdout().flush();
+                for (file, line, ok, err) in group_results {
+                    if ok {
+                        passed += 1;
+                    } else {
+                        failed += 1;
+                    }
+                    results.push((file, line, ok, err));
+                }
+            }
+            Err(e) => {
+                eprintln_cargo_style!("Task panicked: {}", e);
+                std::process::exit(1);
             }
         }
     }
