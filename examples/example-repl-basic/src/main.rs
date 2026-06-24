@@ -65,7 +65,7 @@ fn main() {
     }));
 
     // Add hooks to handle REPL-related events
-    program.with_hook(ProgramHook::empty().on_repl_begin(|| {
+    program.with_hook(ProgramHook::empty().on_repl_begin(|_| {
         // Print welcome message
         println!("Welcome!");
     }));

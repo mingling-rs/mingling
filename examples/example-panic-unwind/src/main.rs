@@ -29,7 +29,10 @@ fn main() {
     program.stdout_setting.silence_panic = true;
 
     // Define a hook to output &ProgramPanic when a Panic occurs
-    program.with_hook(ProgramHook::empty().on_exec_panic(|info| println!("Program panic: {info}")));
+    program.with_hook(
+        ProgramHook::empty()
+            .on_exec_panic::<_, ()>(|info| println!("Program panic: {}", info.panic)),
+    );
     // --------- IMPORTANT ---------
 
     let _ = program.exec();

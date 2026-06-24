@@ -33,7 +33,7 @@ async fn main() {
     program.with_dispatcher(CMDDownload);
 
     // Add a hook to display when the download begins
-    program.with_hook(ProgramHook::empty().on_begin(|| println!("Download begin")));
+    program.with_hook(ProgramHook::empty().on_begin::<_, ()>(|_| println!("Download begin")));
 
     // --------- IMPORTANT ---------
     // The return values of `exec_*()` related functions have been replaced with Futures

@@ -31,6 +31,14 @@ pub trait ProgramCollect {
         raw: &[String],
     ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError>;
 
+    #[cfg(not(feature = "dispatch_tree"))]
+    /// Use a prefix tree to quickly match arguments and dispatch to an Entry
+    fn dispatch_args_trie(
+        _raw: &[String],
+    ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError> {
+        unreachable!()
+    }
+
     /// Get all registered dispatcher names from the program
     #[cfg(feature = "dispatch_tree")]
     fn get_nodes() -> Vec<(String, &'static (dyn Dispatcher<Self::Enum> + Send + Sync))>;

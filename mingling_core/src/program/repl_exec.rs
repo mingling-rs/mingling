@@ -26,34 +26,42 @@ where
         // Inject default REPL resource
         self.with_resource(ResREPL::default());
 
-        self.run_hook_repl_on_begin();
+        self.run_hook_repl_on_begin(crate::hook::HookREPLBeginInfo {});
 
         self.exec_wrapper(|p| -> () {
             loop {
-                p.run_hook_repl_pre_readline();
-                let mut readline = p.run_hook_repl_readline().unwrap_or_default();
-                p.run_hook_repl_post_readline(&mut readline);
+                p.run_hook_repl_pre_readline(crate::hook::HookREPLPreReadlineInfo {});
+                let mut readline = p
+                    .run_hook_repl_readline(crate::hook::HookREPLReadlineInfo {})
+                    .unwrap_or_default();
+                p.run_hook_repl_post_readline(crate::hook::HookREPLPostReadlineInfo {
+                    line: &mut readline,
+                });
 
                 let args = split_input_string(readline.clone());
 
-                p.run_hook_repl_pre_exec(&args);
+                p.run_hook_repl_pre_exec(crate::hook::HookREPLPreExecInfo { args: &args });
                 match exec_once(p, args) {
                     Ok(r) => {
-                        p.run_hook_repl_on_receive_result(&r);
+                        p.run_hook_repl_on_receive_result(
+                            crate::hook::HookREPLOnReceiveResultInfo { result: &r },
+                        );
                     }
                     Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
-                        p.run_hook_repl_on_panic(&panic);
+                        p.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo {
+                            panic: &panic,
+                        });
                     }
                     _ => {}
                 }
-                p.run_hook_repl_post_exec();
+                p.run_hook_repl_post_exec(crate::hook::HookREPLPostExecInfo {});
 
                 if this::<C>().res::<ResREPL>().unwrap().exit {
-                    p.run_hook_repl_exit();
+                    p.run_hook_repl_exit(crate::hook::HookREPLExitInfo {});
                     break;
                 }
 
-                p.run_hook_repl_loop_once();
+                p.run_hook_repl_loop_once(crate::hook::HookREPLLoopOnceInfo {});
             }
         });
     }
@@ -75,31 +83,42 @@ where
         // Inject default REPL resource
         self.with_resource(ResREPL::default());
 
-        self.run_hook_repl_on_begin();
+        self.run_hook_repl_on_begin(crate::hook::HookREPLBeginInfo {});
 
         self.exec_wrapper(async |p| -> () {
             loop {
-                p.run_hook_repl_pre_readline();
-                let mut readline = p.run_hook_repl_readline().unwrap_or_default();
-                p.run_hook_repl_post_readline(&mut readline);
+                p.run_hook_repl_pre_readline(crate::hook::HookREPLPreReadlineInfo {});
+                let mut readline = p
+                    .run_hook_repl_readline(crate::hook::HookREPLReadlineInfo {})
+                    .unwrap_or_default();
+                p.run_hook_repl_post_readline(crate::hook::HookREPLPostReadlineInfo {
+                    line: &mut readline,
+                });
 
                 let args = split_input_string(readline.clone());
 
-                p.run_hook_repl_pre_exec(&args);
+                p.run_hook_repl_pre_exec(crate::hook::HookREPLPreExecInfo { args: &args });
                 match exec_once(p, args).await {
                     Ok(r) => {
-                        p.run_hook_repl_on_receive_result(&r);
+                        p.run_hook_repl_on_receive_result(
+                            crate::hook::HookREPLOnReceiveResultInfo { result: &r },
+                        );
+                    }
+                    Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
+                        p.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo {
+                            panic: &panic,
+                        });
                     }
                     _ => {}
                 }
-                p.run_hook_repl_post_exec();
+                p.run_hook_repl_post_exec(crate::hook::HookREPLPostExecInfo {});
 
                 if this::<C>().res::<ResREPL>().unwrap().exit {
-                    p.run_hook_repl_exit();
+                    p.run_hook_repl_exit(crate::hook::HookREPLExitInfo {});
                     break;
                 }
 
-                p.run_hook_repl_loop_once();
+                p.run_hook_repl_loop_once(crate::hook::HookREPLLoopOnceInfo {});
             }
         })
         .await;
@@ -133,7 +152,9 @@ where
                     .unwrap()
                     .downcast_ref::<Program<C>>()
                     .unwrap();
-                program.run_hook_repl_on_panic(&panic_payload);
+                program.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo {
+                    panic: &panic_payload,
+                });
                 Err(ProgramInternalExecuteError::REPLPanic(panic_payload))
             }
             Ok(r) => r,

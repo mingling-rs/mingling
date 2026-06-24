@@ -309,6 +309,46 @@ let value = route!(prev.pick_or_route((), Error::default().to_chain()).unpack())
 let value = route!(prev.pick_or_route((), Error::default()).unpack());
 ```
 
+5. **\[core\]** **\[hook\]** Refactored the hook system to use structured info types and return `ProgramControls<C>` instead of raw values.
+
+   The hook system has been redesigned for better type safety, extensibility, and control flow management:
+
+   - **All hook callbacks now receive structured info types** (e.g., `&HookPreDispatchInfo`, `&HookPostChainInfo<C>`) instead of raw tuples or bare values. Each hook event has a dedicated info struct with named fields, making hook signatures self-documenting and easier to evolve.
+
+   - **Hook signatures changed from `fn(...)` to `Box<dyn Fn(&InfoType) -> R>**`, with `R: Into<ProgramControls<C>>`. Closures that return `()`are automatically converted to`ProgramControls::Empty`via the`From<()>` impl.
+
+     ```rust
+     // Before
+     .on_begin(|| println!("Program started"))
+     .on_pre_dispatch(|args| println!("Dispatching: {args:?}"))
+     .on_finish(|| 0)  // returns i32 as exit code
+
+     // After
+     .on_begin::<_, ()>(|_| println!("Program started"))
+     .on_pre_dispatch(|info| println!("Dispatching: {}", info.arguments.join(" ")))
+     .on_finish(|_| ProgramControlUnit::OverrideExitCode(0))
+     ```
+
+   - **Added `ProgramControls<C>` and `ProgramControlUnit<C>`** — a new control flow system that replaces the previous approach where only the `finish` hook could return a value (exit code). Now any hook can issue control instructions:
+     - `ProgramControlUnit::OverrideExitCode(i32)` — override the program's exit code
+     - `ProgramControlUnit::RouteToChain(AnyOutput<C>)` — route to another chain processor
+     - `ProgramControlUnit::RouteToRender(AnyOutput<C>)` — route directly to the renderer
+     - `ProgramControlUnit::RouteToHelp(AnyOutput<C>)` — route to help display
+
+   - **Added `handle_program_control` function** in `exec.rs` that processes `ProgramControls` returned by hooks, updating the current execution state (exit code, current `AnyOutput`) or triggering early returns (e.g., routing to render/help).
+
+   - **`ExitCodeSetup` updated** — its `on_finish` hook now returns `ProgramControlUnit::OverrideExitCode(this.exit_code)` instead of just `this.exit_code`.
+
+   - **`HookPostReadlineInfo` now wraps `line: &mut String`** — the `repl_post_readline` hook receives a structured info object instead of a raw `&mut String`.
+
+   - **`HookOnReceiveResultInfo` now wraps `result: &RenderResult`** — the `repl_on_receive_result` hook receives the result through an info struct with a `.result` field instead of directly.
+
+   - **`hook` module made public** — moved from `#[doc(hidden)]` to a documented public module (`pub mod hook`), along with all associated info types and control unit types.
+
+   - **Added `dispatch_args_trie` default method** on `ProgramCollect` (behind `#[cfg(not(feature = "dispatch_tree"))]`) that calls `unreachable!()` by default, avoiding `#[cfg]` gymnastics in `exec.rs`.
+
+   - **Examples and internal callers updated** throughout the codebase to use the new hook API patterns.
+
 ### Release 0.1.9 (2026-05-29)
 
 #### Fixes:

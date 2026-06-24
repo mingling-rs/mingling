@@ -140,12 +140,12 @@ fn test_is_not_completing() {
 fn test_hook_setup() {
     static CALLED: AtomicBool = AtomicBool::new(false);
 
-    let hook = ProgramHook::<MockProgramCollect>::empty().on_begin(|| {
+    let hook = ProgramHook::<MockProgramCollect>::empty().on_begin::<_, ()>(|_| {
         CALLED.store(true, Ordering::SeqCst);
     });
 
     assert!(hook.begin.is_some());
-    (hook.begin.unwrap())();
+    (hook.begin.unwrap())(&mingling::hook::HookBeginInfo {});
     assert!(CALLED.load(Ordering::SeqCst));
 }
 

@@ -15,9 +15,9 @@ pub mod error;
 #[doc(hidden)]
 pub mod exec;
 #[doc(hidden)]
-pub mod hook;
-#[doc(hidden)]
 pub mod setup;
+
+pub mod hook;
 
 mod collection;
 pub use collection::*;

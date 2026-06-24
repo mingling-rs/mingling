@@ -39,7 +39,8 @@ pub fn run() {
     });
 
     // Intercept Help
-    program.with_hook(ProgramHook::empty().on_post_dispatch(|c| match c {
+    program.with_hook(
+        ProgramHook::empty().on_post_dispatch(|info| match info.entry {
         // When dispatcher is not found
         ThisProgram::ErrorDispatcherNotFound
             // And user requests Help
@@ -49,7 +50,8 @@ pub fn run() {
                 exit(0)
             }
         _ => {}
-    }));
+    }),
+    );
 
     // Commands
     program.with_dispatcher(CMDCompletion);

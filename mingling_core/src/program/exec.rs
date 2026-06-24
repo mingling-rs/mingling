@@ -2,7 +2,7 @@
 
 use crate::{
     AnyOutput, ChainProcess, Dispatcher, NextProcess, Program, ProgramCollect, RenderResult,
-    error::ProgramInternalExecuteError,
+    error::ProgramInternalExecuteError, hook::ProgramControls,
 };
 
 #[doc(hidden)]
@@ -34,17 +34,37 @@ pub async fn exec_with_args<C>(
 where
     C: ProgramCollect<Enum = C>,
 {
+    // Exit code
+    let mut exit_code: i32 = 0;
+
+    // Current
+    let mut current = C::build_dispatcher_not_found(vec![]);
+
+    macro_rules! control {
+        ($hook_call:expr) => {
+            let __ccc = $hook_call;
+            if let Some(r) = handle_program_control(program, __ccc, &mut current, &mut exit_code) {
+                return Ok(r);
+            }
+        };
+    }
+
     // Run hooks
-    program.run_hook_pre_dispatch(args);
+    control!(program.run_hook_pre_dispatch(crate::hook::HookPreDispatchInfo { arguments: args }));
 
-    #[cfg(not(feature = "dispatch_tree"))]
-    let mut current = dispatch_args_dynamic(program, args)?;
-
-    #[cfg(feature = "dispatch_tree")]
-    let mut current = C::dispatch_args_trie(args)?;
+    // Dispatch args - either via dynamic dispatch or trie dispatch based on feature flag
+    let mut current = if cfg!(not(feature = "dispatch_tree")) {
+        dispatch_args_dynamic(program, args)?
+    } else {
+        C::dispatch_args_trie(args)?
+    };
 
     // Run hook
-    program.run_hook_post_dispatch(&current.member_id);
+    control!(
+        program.run_hook_post_dispatch(crate::hook::HookPostDispatchInfo {
+            entry: &current.member_id,
+        })
+    );
 
     let mut stop_next = false;
 
@@ -53,60 +73,76 @@ where
         let mut render_result = render_help::<C>(program, current);
 
         // Run hook
-        render_result.exit_code = program.run_hook_finish();
-
+        control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+        render_result.exit_code = exit_code;
         return Ok(render_result);
     }
 
     loop {
         let final_exec = stop_next;
 
-        current = {
-            // If a chain exists, execute as a chain
-            if C::has_chain(&current) {
-                // Run hook
-                program.run_hook_pre_chain(&current.member_id, current.inner.as_ref());
+        current =
+            {
+                // If a chain exists, execute as a chain
+                if C::has_chain(&current) {
+                    // Run hook
+                    control!(program.run_hook_pre_chain(crate::hook::HookPreChainInfo {
+                        input: &current.member_id,
+                        raw: current.inner.as_ref(),
+                    }));
 
-                match C::do_chain(current).await {
-                    ChainProcess::Ok((any, NextProcess::Renderer)) => {
-                        let mut render_result = render::<C>(program, any);
+                    match C::do_chain(current).await {
+                        ChainProcess::Ok((any, NextProcess::Renderer)) => {
+                            {
+                                let mut render_result = render::<C>(program, any);
 
-                        // Run hook
-                        render_result.exit_code = program.run_hook_finish();
-
-                        return Ok(render_result);
-                    }
-                    ChainProcess::Ok((any, NextProcess::Chain)) => {
-                        // Run hook
-                        program.run_hook_post_chain(&any);
-                        any
-                    }
-                    ChainProcess::Err(e) => {
-                        // Run hook
-                        program.run_hook_finish();
-                        return Err(e.into());
+                                // Run hook
+                                control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                                render_result.exit_code = exit_code;
+                                return Ok(render_result);
+                            };
+                        }
+                        ChainProcess::Ok((any, NextProcess::Chain)) => {
+                            // Run hook
+                            control!(program.run_hook_post_chain(crate::hook::HookPostChainInfo {
+                                output: &any
+                            }));
+                            any
+                        }
+                        ChainProcess::Err(e) => {
+                            // Run hook
+                            control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                            return Err(e.into());
+                        }
                     }
                 }
-            }
-            // If no chain exists, attempt to render
-            else if C::has_renderer(&current) {
-                // Run hook
-                program.run_hook_pre_render(&current.member_id, current.inner.as_ref());
+                // If no chain exists, attempt to render
+                else if C::has_renderer(&current) {
+                    // Run hook
+                    control!(program.run_hook_pre_render(crate::hook::HookPreRenderInfo {
+                        input: &current.member_id,
+                        raw: current.inner.as_ref(),
+                    }));
 
-                let mut render_result = render::<C>(program, current);
+                    let mut render_result = render::<C>(program, current);
 
-                // Run hooks
-                program.run_hook_post_render(&render_result);
-                render_result.exit_code = program.run_hook_finish();
+                    // Run hooks
+                    control!(
+                        program.run_hook_post_render(crate::hook::HookPostRenderInfo {
+                            result: &render_result,
+                        })
+                    );
 
-                return Ok(render_result);
-            }
-            // No renderer exists
-            else {
-                stop_next = true;
-                C::build_renderer_not_found(current.member_id)
-            }
-        };
+                    control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                    render_result.exit_code = exit_code;
+                    return Ok(render_result);
+                }
+                // No renderer exists
+                else {
+                    stop_next = true;
+                    C::build_renderer_not_found(current.member_id)
+                }
+            };
 
         if final_exec && stop_next {
             break;
@@ -115,8 +151,8 @@ where
     let mut render_result = RenderResult::default();
 
     // Run hook
-    render_result.exit_code = program.run_hook_finish();
-
+    control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+    render_result.exit_code = exit_code;
     Ok(render_result)
 }
 
@@ -128,17 +164,37 @@ pub fn exec_with_args<C>(
 where
     C: ProgramCollect<Enum = C>,
 {
+    // Exit code
+    let mut exit_code: i32 = 0;
+
+    // Current
+    let mut current = C::build_dispatcher_not_found(vec![]);
+
+    macro_rules! control {
+        ($hook_call:expr) => {
+            let __ccc = $hook_call;
+            if let Some(r) = handle_program_control(program, __ccc, &mut current, &mut exit_code) {
+                return Ok(r);
+            }
+        };
+    }
+
     // Run hooks
-    program.run_hook_pre_dispatch(args);
+    control!(program.run_hook_pre_dispatch(crate::hook::HookPreDispatchInfo { arguments: args }));
 
-    #[cfg(not(feature = "dispatch_tree"))]
-    let mut current = dispatch_args_dynamic(program, args)?;
-
-    #[cfg(feature = "dispatch_tree")]
-    let mut current = C::dispatch_args_trie(args)?;
+    // Dispatch args - either via dynamic dispatch or trie dispatch based on feature flag
+    let mut current = if cfg!(not(feature = "dispatch_tree")) {
+        dispatch_args_dynamic(program, args)?
+    } else {
+        C::dispatch_args_trie(args)?
+    };
 
     // Run hook
-    program.run_hook_post_dispatch(&current.member_id);
+    control!(
+        program.run_hook_post_dispatch(crate::hook::HookPostDispatchInfo {
+            entry: &current.member_id,
+        })
+    );
 
     let mut stop_next = false;
 
@@ -147,62 +203,76 @@ where
         let mut render_result = render_help::<C>(program, current);
 
         // Run hook
-        render_result.exit_code = program.run_hook_finish();
-
+        control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+        render_result.exit_code = exit_code;
         return Ok(render_result);
     }
 
     loop {
         let final_exec = stop_next;
 
-        current = {
-            // If a chain exists, execute as a chain
-            if C::has_chain(&current) {
-                // Run hook
-                program.run_hook_pre_chain(&current.member_id, current.inner.as_ref());
+        current =
+            {
+                // If a chain exists, execute as a chain
+                if C::has_chain(&current) {
+                    // Run hook
+                    control!(program.run_hook_pre_chain(crate::hook::HookPreChainInfo {
+                        input: &current.member_id,
+                        raw: current.inner.as_ref(),
+                    }));
 
-                match C::do_chain(current) {
-                    ChainProcess::Ok((any, NextProcess::Renderer)) => {
-                        {
-                            let mut render_result = render::<C>(program, any);
+                    match C::do_chain(current) {
+                        ChainProcess::Ok((any, NextProcess::Renderer)) => {
+                            {
+                                let mut render_result = render::<C>(program, any);
 
+                                // Run hook
+                                control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                                render_result.exit_code = exit_code;
+                                return Ok(render_result);
+                            };
+                        }
+                        ChainProcess::Ok((any, NextProcess::Chain)) => {
                             // Run hook
-                            render_result.exit_code = program.run_hook_finish();
-
-                            return Ok(render_result);
-                        };
-                    }
-                    ChainProcess::Ok((any, NextProcess::Chain)) => {
-                        // Run hook
-                        program.run_hook_post_chain(&any);
-                        any
-                    }
-                    ChainProcess::Err(e) => {
-                        // Run hook
-                        program.run_hook_finish();
-                        return Err(e.into());
+                            control!(program.run_hook_post_chain(crate::hook::HookPostChainInfo {
+                                output: &any
+                            }));
+                            any
+                        }
+                        ChainProcess::Err(e) => {
+                            // Run hook
+                            control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                            return Err(e.into());
+                        }
                     }
                 }
-            }
-            // If no chain exists, attempt to render
-            else if C::has_renderer(&current) {
-                // Run hook
-                program.run_hook_pre_render(&current.member_id, current.inner.as_ref());
+                // If no chain exists, attempt to render
+                else if C::has_renderer(&current) {
+                    // Run hook
+                    control!(program.run_hook_pre_render(crate::hook::HookPreRenderInfo {
+                        input: &current.member_id,
+                        raw: current.inner.as_ref(),
+                    }));
 
-                let mut render_result = render::<C>(program, current);
+                    let mut render_result = render::<C>(program, current);
 
-                // Run hooks
-                program.run_hook_post_render(&render_result);
-                render_result.exit_code = program.run_hook_finish();
+                    // Run hooks
+                    control!(
+                        program.run_hook_post_render(crate::hook::HookPostRenderInfo {
+                            result: &render_result,
+                        })
+                    );
 
-                return Ok(render_result);
-            }
-            // No renderer exists
-            else {
-                stop_next = true;
-                C::build_renderer_not_found(current.member_id)
-            }
-        };
+                    control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                    render_result.exit_code = exit_code;
+                    return Ok(render_result);
+                }
+                // No renderer exists
+                else {
+                    stop_next = true;
+                    C::build_renderer_not_found(current.member_id)
+                }
+            };
 
         if final_exec && stop_next {
             break;
@@ -211,8 +281,8 @@ where
     let mut render_result = RenderResult::default();
 
     // Run hook
-    render_result.exit_code = program.run_hook_finish();
-
+    control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+    render_result.exit_code = exit_code;
     Ok(render_result)
 }
 
@@ -284,6 +354,32 @@ where
             Ok((matched_prefix.1, trimmed_args))
         }
     }
+}
+
+#[inline]
+pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
+    program: &Program<C>,
+    controls: ProgramControls<C>,
+    current: &mut AnyOutput<C>,
+    exit_code: &mut i32,
+) -> Option<RenderResult> {
+    for unit in controls.into_iter() {
+        match unit {
+            super::hook::ProgramControlUnit::OverrideExitCode(c) => *exit_code = c,
+            super::hook::ProgramControlUnit::RouteToChain(any_output) => *current = any_output,
+            super::hook::ProgramControlUnit::RouteToRender(any_output) => {
+                let mut r = render::<C>(program, any_output);
+                r.exit_code = *exit_code;
+                return Some(r);
+            }
+            super::hook::ProgramControlUnit::RouteToHelp(any_output) => {
+                let mut r = render_help::<C>(program, any_output);
+                r.exit_code = *exit_code;
+                return Some(r);
+            }
+        }
+    }
+    None
 }
 
 #[inline]

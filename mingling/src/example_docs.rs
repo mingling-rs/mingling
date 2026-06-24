@@ -175,7 +175,7 @@ pub mod example_argument_parse {}
 ///     program.with_dispatcher(CMDDownload);
 ///
 ///     // Add a hook to display when the download begins
-///     program.with_hook(ProgramHook::empty().on_begin(|| println!("Download begin")));
+///     program.with_hook(ProgramHook::empty().on_begin::<_, ()>(|_| println!("Download begin")));
 ///
 ///     // --------- IMPORTANT ---------
 ///     // The return values of `exec_*()` related functions have been replaced with Futures
@@ -1359,7 +1359,10 @@ pub mod example_help {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::{hook::ProgramHook, prelude::*};
+/// use mingling::{
+///     hook::{ProgramControlUnit, ProgramHook},
+///     prelude::*,
+/// };
 ///
 /// dispatcher!("greet", CMDGreet => EntryGreet);
 ///
@@ -1369,18 +1372,18 @@ pub mod example_help {}
 ///     // --------- IMPORTANT ---------
 ///     program.with_hook(
 ///         ProgramHook::<ThisProgram>::empty()
-///             .on_begin(|| println!("[DEBUG] Program is begin"))
-///             .on_pre_dispatch(|args| println!("[DEBUG] Pre dispatch: {args:?}"))
-///             .on_post_dispatch(|c: &_| println!("[DEBUG] Post dispatch: {c:?}"))
-///             .on_pre_chain(|c: &_, _| {
-///                 println!("[DEBUG] Pre chain: {c}");
+///             .on_begin::<_, ()>(|_| println!("[DEBUG] Program is begin"))
+///             .on_pre_dispatch(|info| println!("[DEBUG] Pre dispatch: {}", info.arguments.join(" ")))
+///             .on_post_dispatch(|info| println!("[DEBUG] Post dispatch: {}", info.entry))
+///             .on_pre_chain(|info| {
+///                 println!("[DEBUG] Pre chain: {}", info.input);
 ///             })
-///             .on_post_chain(|any_output| println!("[DEBUG] Post chain: {}", any_output.member_id))
-///             .on_finish(|| {
+///             .on_post_chain(|info| println!("[DEBUG] Post chain: {}", info.output.member_id))
+///             .on_finish(|_| {
 ///                 println!("[DEBUG] Loop end");
-///                 0 // Override exit code
+///                 ProgramControlUnit::OverrideExitCode(0) // Override exit code
 ///             })
-///             .on_pre_render(|c: &_, _| println!("[DEBUG] Pre render: {c}"))
+///             .on_pre_render(|info| println!("[DEBUG] Pre render: {}", info.input))
 ///             .on_post_render(|_| println!("[DEBUG] Post render")),
 ///     );
 ///     // --------- IMPORTANT ---------
@@ -1854,7 +1857,10 @@ pub mod example_pack_err {}
 ///     program.stdout_setting.silence_panic = true;
 ///
 ///     // Define a hook to output &ProgramPanic when a Panic occurs
-///     program.with_hook(ProgramHook::empty().on_exec_panic(|info| println!("Program panic: {info}")));
+///     program.with_hook(
+///         ProgramHook::empty()
+///             .on_exec_panic::<_, ()>(|info| println!("Program panic: {}", info.panic)),
+///     );
 ///     // --------- IMPORTANT ---------
 ///
 ///     let _ = program.exec();
@@ -1967,7 +1973,7 @@ pub mod example_panic_unwind {}
 ///     }));
 ///
 ///     // Add hooks to handle REPL-related events
-///     program.with_hook(ProgramHook::empty().on_repl_begin(|| {
+///     program.with_hook(ProgramHook::empty().on_repl_begin(|_| {
 ///         // Print welcome message
 ///         println!("Welcome!");
 ///     }));

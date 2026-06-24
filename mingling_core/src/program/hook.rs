@@ -1,84 +1,96 @@
 #![allow(dead_code)]
 
-use std::any::Any;
+use crate::{Program, ProgramCollect};
 
-use crate::{AnyOutput, Program, ProgramCollect, RenderResult};
+mod hook_info;
+pub use hook_info::*;
 
-#[cfg(not(feature = "async"))]
-use crate::error::ProgramPanic;
+mod control_unit;
+pub use control_unit::*;
 
 #[derive(Default)]
+#[allow(clippy::type_complexity)] // Shutup!
 pub struct ProgramHook<C>
 where
     C: ProgramCollect<Enum = C>,
 {
     /// Executes when the program starts running
-    pub begin: Option<fn()>,
+    pub begin: Option<Box<dyn Fn(&HookBeginInfo) + Send + Sync>>,
 
     /// Executes before the program dispatches
-    pub pre_dispatch: Option<fn(args: &[String])>,
+    pub pre_dispatch:
+        Option<Box<dyn for<'a> Fn(&HookPreDispatchInfo<'a>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes after the program dispatches
-    pub post_dispatch: Option<fn(entry: &C)>,
+    pub post_dispatch: Option<
+        Box<dyn for<'a> Fn(&HookPostDispatchInfo<'a, C>) -> ProgramControls<C> + Send + Sync>,
+    >,
 
     /// Executes before the type enters the chain
-    pub pre_chain: Option<fn(input: &C, raw: &dyn Any)>,
+    pub pre_chain:
+        Option<Box<dyn for<'a> Fn(&HookPreChainInfo<'a, C>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes after the chain processing for the type ends
-    pub post_chain: Option<fn(output: &AnyOutput<C>)>,
+    pub post_chain:
+        Option<Box<dyn for<'a> Fn(&HookPostChainInfo<'a, C>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes before the type enters the renderer
-    pub pre_render: Option<fn(input: &C, raw: &dyn Any)>,
+    pub pre_render:
+        Option<Box<dyn for<'a> Fn(&HookPreRenderInfo<'a, C>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes after the type enters the renderer
-    pub post_render: Option<fn(result: &RenderResult)>,
+    pub post_render:
+        Option<Box<dyn for<'a> Fn(&HookPostRenderInfo<'a>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes before the program ends
-    pub finish: Option<fn() -> i32>,
+    pub finish: Option<Box<dyn Fn(&HookFinishInfo) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes when the program panics
     #[cfg(not(feature = "async"))]
-    pub exec_panic: Option<fn(&ProgramPanic)>,
+    pub exec_panic: Option<Box<dyn for<'a> Fn(&HookPanicInfo<'a>) + Send + Sync>>,
 
     /// Executes when the REPL starts (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_on_begin: Option<fn()>,
+    pub repl_on_begin: Option<Box<dyn Fn(&HookREPLBeginInfo) + Send + Sync>>,
 
     /// Executes before reading the next REPL line (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_pre_readline: Option<fn()>,
+    pub repl_pre_readline: Option<Box<dyn Fn(&HookREPLPreReadlineInfo) + Send + Sync>>,
 
     /// Custom REPL line reader (only available with `repl` feature)
+    /// Returns `Some(line)` to provide a custom input line.
     #[cfg(feature = "repl")]
-    pub repl_readline: Option<fn() -> Option<String>>,
+    pub repl_readline: Option<Box<dyn Fn(&HookREPLReadlineInfo) -> Option<String> + Send + Sync>>,
 
     /// Executes after reading a REPL line (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_post_readline: Option<fn(line: &mut String)>,
+    pub repl_post_readline:
+        Option<Box<dyn for<'a> Fn(&HookREPLPostReadlineInfo<'a>) + Send + Sync>>,
 
     /// Executes before executing a REPL command (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_pre_exec: Option<fn(args: &[String])>,
+    pub repl_pre_exec: Option<Box<dyn for<'a> Fn(&HookREPLPreExecInfo<'a>) + Send + Sync>>,
 
     /// Executes after executing a REPL command (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_post_exec: Option<fn()>,
+    pub repl_post_exec: Option<Box<dyn Fn(&HookREPLPostExecInfo) + Send + Sync>>,
 
     /// Executes when the REPL receives a render result (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_on_receive_result: Option<fn(&RenderResult)>,
+    pub repl_on_receive_result:
+        Option<Box<dyn for<'a> Fn(&HookREPLOnReceiveResultInfo<'a>) + Send + Sync>>,
 
     /// Executes when the REPL panics (only available with `repl` feature)
     #[cfg(all(feature = "repl", not(feature = "async")))]
-    pub repl_on_panic: Option<fn(&ProgramPanic)>,
+    pub repl_on_panic: Option<Box<dyn for<'a> Fn(&HookREPLOnPanicInfo<'a>) + Send + Sync>>,
 
     /// Executes when the REPL exits (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_exit: Option<fn()>,
+    pub repl_exit: Option<Box<dyn Fn(&HookREPLExitInfo) + Send + Sync>>,
 
     /// Executes after each REPL loop iteration (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub repl_loop_once: Option<fn()>,
+    pub repl_loop_once: Option<Box<dyn Fn(&HookREPLLoopOnceInfo) + Send + Sync>>,
 }
 
 impl<C> Program<C>
@@ -91,145 +103,157 @@ where
         self.hooks.push(hook);
     }
 
-    pub(crate) fn run_hook_on_begin(&self) {
+    pub(crate) fn run_hook_on_begin(&self, info: HookBeginInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(begin) = hook.begin {
-                begin();
+            if let Some(ref begin) = hook.begin {
+                begin(&info);
             }
         }
     }
 
-    pub(crate) fn run_hook_pre_dispatch(&self, args: &[String]) {
+    pub(crate) fn run_hook_pre_dispatch(&self, info: HookPreDispatchInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return;
+            return ProgramControls::Empty;
         }
 
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(pre_dispatch) = hook.pre_dispatch {
-                pre_dispatch(args);
+            if let Some(ref pre_dispatch) = hook.pre_dispatch {
+                controls = pre_dispatch(&info);
             }
         }
+        controls
     }
 
-    pub(crate) fn run_hook_post_dispatch(&self, entry: &C) {
+    pub(crate) fn run_hook_post_dispatch(
+        &self,
+        info: HookPostDispatchInfo<C>,
+    ) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return;
+            return ProgramControls::Empty;
         }
 
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(post_dispatch) = hook.post_dispatch {
-                post_dispatch(entry);
+            if let Some(ref post_dispatch) = hook.post_dispatch {
+                controls = post_dispatch(&info);
             }
         }
+        controls
     }
 
-    pub(crate) fn run_hook_pre_chain(&self, input: &C, raw: &dyn Any) {
+    pub(crate) fn run_hook_pre_chain(&self, info: HookPreChainInfo<C>) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return;
+            return ProgramControls::Empty;
         }
 
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(pre_chain) = hook.pre_chain {
-                pre_chain(input, raw);
+            if let Some(ref pre_chain) = hook.pre_chain {
+                controls = pre_chain(&info);
             }
         }
+        controls
     }
 
-    pub(crate) fn run_hook_post_chain(&self, output: &AnyOutput<C>) {
+    pub(crate) fn run_hook_post_chain(&self, info: HookPostChainInfo<C>) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return;
+            return ProgramControls::Empty;
         }
 
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(post_chain) = hook.post_chain {
-                post_chain(output);
+            if let Some(ref post_chain) = hook.post_chain {
+                controls = post_chain(&info);
             }
         }
+        controls
     }
 
-    pub(crate) fn run_hook_pre_render(&self, input: &C, raw: &dyn Any) {
+    pub(crate) fn run_hook_pre_render(&self, info: HookPreRenderInfo<C>) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return;
+            return ProgramControls::Empty;
         }
 
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(pre_render) = hook.pre_render {
-                pre_render(input, raw);
+            if let Some(ref pre_render) = hook.pre_render {
+                controls = pre_render(&info);
             }
         }
+        controls
     }
 
-    pub(crate) fn run_hook_post_render(&self, result: &RenderResult) {
+    pub(crate) fn run_hook_post_render(&self, info: HookPostRenderInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return;
+            return ProgramControls::Empty;
         }
 
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(post_render) = hook.post_render {
-                post_render(result);
+            if let Some(ref post_render) = hook.post_render {
+                controls = post_render(&info);
             }
         }
+        controls
     }
 
     #[allow(dead_code)]
     #[cfg(not(feature = "async"))]
-    pub(crate) fn run_hook_exec_panic(&self, panic_info: &ProgramPanic) {
+    pub(crate) fn run_hook_exec_panic(&self, info: HookPanicInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(exec_panic) = hook.exec_panic {
-                exec_panic(panic_info);
+            if let Some(ref exec_panic) = hook.exec_panic {
+                exec_panic(&info);
             }
         }
     }
 
-    pub(crate) fn run_hook_finish(&self) -> i32 {
+    pub(crate) fn run_hook_finish(&self, info: HookFinishInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
-            return 0;
+            return ProgramControls::Empty;
         }
 
-        let mut exit_code = 0;
+        let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
-            if let Some(finish) = hook.finish {
-                exit_code = finish();
-                if exit_code != 0 {
-                    return exit_code;
-                }
+            if let Some(ref finish) = hook.finish {
+                controls = finish(&info);
             }
         }
-        exit_code
+        controls
     }
 
     /// Runs the REPL begin hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_on_begin(&self) {
+    pub(crate) fn run_hook_repl_on_begin(&self, info: HookREPLBeginInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_on_begin) = hook.repl_on_begin {
-                repl_on_begin()
+            if let Some(ref repl_on_begin) = hook.repl_on_begin {
+                repl_on_begin(&info);
             }
         }
     }
 
     /// Runs the REPL pre-readline hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_pre_readline(&self) {
+    pub(crate) fn run_hook_repl_pre_readline(&self, info: HookREPLPreReadlineInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_pre_readline) = hook.repl_pre_readline {
-                repl_pre_readline()
+            if let Some(ref repl_pre_readline) = hook.repl_pre_readline {
+                repl_pre_readline(&info);
             }
         }
     }
@@ -237,14 +261,14 @@ where
     /// Runs the custom REPL readline hook (only available with `repl` feature)
     /// Returns `Some(line)` if a hook was set and returned Some, otherwise `None`.
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_readline(&self) -> Option<String> {
+    pub(crate) fn run_hook_repl_readline(&self, info: HookREPLReadlineInfo) -> Option<String> {
         if !self.user_context.run_hook {
             return None;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_readline) = hook.repl_readline {
-                return repl_readline();
+            if let Some(ref repl_readline) = hook.repl_readline {
+                return repl_readline(&info);
             }
         }
         None
@@ -252,98 +276,98 @@ where
 
     /// Runs the REPL post-readline hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_post_readline(&self, line: &mut String) {
+    pub(crate) fn run_hook_repl_post_readline(&self, info: HookREPLPostReadlineInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_post_readline) = hook.repl_post_readline {
-                repl_post_readline(line)
+            if let Some(ref repl_post_readline) = hook.repl_post_readline {
+                repl_post_readline(&info);
             }
         }
     }
 
     /// Runs the REPL pre-exec hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_pre_exec(&self, args: &[String]) {
+    pub(crate) fn run_hook_repl_pre_exec(&self, info: HookREPLPreExecInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_pre_exec) = hook.repl_pre_exec {
-                repl_pre_exec(args)
+            if let Some(ref repl_pre_exec) = hook.repl_pre_exec {
+                repl_pre_exec(&info);
             }
         }
     }
 
     /// Runs the REPL post-exec hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_post_exec(&self) {
+    pub(crate) fn run_hook_repl_post_exec(&self, info: HookREPLPostExecInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_post_exec) = hook.repl_post_exec {
-                repl_post_exec()
+            if let Some(ref repl_post_exec) = hook.repl_post_exec {
+                repl_post_exec(&info);
             }
         }
     }
 
     /// Runs the REPL receive result hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_on_receive_result(&self, result: &RenderResult) {
+    pub(crate) fn run_hook_repl_on_receive_result(&self, info: HookREPLOnReceiveResultInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_on_receive_result) = hook.repl_on_receive_result {
-                repl_on_receive_result(result)
+            if let Some(ref repl_on_receive_result) = hook.repl_on_receive_result {
+                repl_on_receive_result(&info);
             }
         }
     }
 
     /// Runs the REPL panic hooks (only available with `repl` feature)
     #[cfg(all(feature = "repl", not(feature = "async")))]
-    pub(crate) fn run_hook_repl_on_panic(&self, panic_info: &ProgramPanic) {
+    pub(crate) fn run_hook_repl_on_panic(&self, info: HookREPLOnPanicInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_on_panic) = hook.repl_on_panic {
-                repl_on_panic(panic_info)
+            if let Some(ref repl_on_panic) = hook.repl_on_panic {
+                repl_on_panic(&info);
             }
         }
     }
 
     /// Runs the REPL exit hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_exit(&self) {
+    pub(crate) fn run_hook_repl_exit(&self, info: HookREPLExitInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_exit) = hook.repl_exit {
-                repl_exit()
+            if let Some(ref repl_exit) = hook.repl_exit {
+                repl_exit(&info);
             }
         }
     }
 
     /// Runs the REPL loop_once hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_loop_once(&self) {
+    pub(crate) fn run_hook_repl_loop_once(&self, info: HookREPLLoopOnceInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
-            if let Some(repl_loop_once) = hook.repl_loop_once {
-                repl_loop_once()
+            if let Some(ref repl_loop_once) = hook.repl_loop_once {
+                repl_loop_once(&info);
             }
         }
     }
@@ -392,73 +416,110 @@ where
 
     /// Sets the handler for the `begin` event.
     #[must_use]
-    pub fn on_begin(mut self, handler: fn()) -> Self {
-        let _ = self.begin.insert(handler);
+    pub fn on_begin<F, R>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookBeginInfo) + 'static + Send + Sync,
+    {
+        self.begin = Some(Box::new(move |info| handler(info)));
         self
     }
 
     /// Sets the handler for the `pre_dispatch` event.
     #[must_use]
-    pub fn on_pre_dispatch(mut self, handler: fn(args: &[String])) -> Self {
-        let _ = self.pre_dispatch.insert(handler);
+    pub fn on_pre_dispatch<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPreDispatchInfo<'a>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.pre_dispatch = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `post_dispatch` event.
     #[must_use]
-    pub fn on_post_dispatch(mut self, handler: fn(entry: &C)) -> Self {
-        let _ = self.post_dispatch.insert(handler);
+    pub fn on_post_dispatch<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPostDispatchInfo<'a, C>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.post_dispatch = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `pre_chain` event.
     #[must_use]
-    pub fn on_pre_chain(mut self, handler: fn(input: &C, raw: &dyn Any)) -> Self {
-        let _ = self.pre_chain.insert(handler);
+    pub fn on_pre_chain<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPreChainInfo<'a, C>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.pre_chain = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `post_chain` event.
     #[must_use]
-    pub fn on_post_chain(mut self, handler: fn(output: &AnyOutput<C>)) -> Self {
-        let _ = self.post_chain.insert(handler);
+    pub fn on_post_chain<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPostChainInfo<'a, C>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.post_chain = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `pre_render` event.
     #[must_use]
-    pub fn on_pre_render(mut self, handler: fn(input: &C, raw: &dyn Any)) -> Self {
-        let _ = self.pre_render.insert(handler);
+    pub fn on_pre_render<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPreRenderInfo<'a, C>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.pre_render = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `post_render` event.
     #[must_use]
-    pub fn on_post_render(mut self, handler: fn(result: &RenderResult)) -> Self {
-        let _ = self.post_render.insert(handler);
+    pub fn on_post_render<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPostRenderInfo<'a>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.post_render = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `finish` event.
     #[must_use]
-    pub fn on_finish(mut self, handler: fn() -> i32) -> Self {
-        let _ = self.finish.insert(handler);
+    pub fn on_finish<F, R>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookFinishInfo) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.finish = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
     /// Sets the handler for the `exec_panic` event.
     #[cfg(not(feature = "async"))]
     #[must_use]
-    pub fn on_exec_panic(mut self, handler: fn(&ProgramPanic)) -> Self {
-        let _ = self.exec_panic.insert(handler);
+    pub fn on_exec_panic<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookPanicInfo<'a>) + 'static + Send + Sync,
+    {
+        self.exec_panic = Some(Box::new(move |info| handler(info)));
         self
     }
 
     /// Sets the handler for the REPL begin event (only available with `repl` feature).
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_begin(mut self, handler: fn()) -> Self {
-        let _ = self.repl_on_begin.insert(handler);
+    pub fn on_repl_begin<F>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookREPLBeginInfo) + 'static + Send + Sync,
+    {
+        self.repl_on_begin = Some(Box::new(move |info| handler(info)));
         self
     }
 
@@ -466,27 +527,34 @@ where
     /// This hook runs after `on_repl_begin` but before reading the next input line.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_pre_readline(mut self, handler: fn()) -> Self {
-        let _ = self.repl_pre_readline.insert(handler);
+    pub fn on_repl_pre_readline<F>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookREPLPreReadlineInfo) + 'static + Send + Sync,
+    {
+        self.repl_pre_readline = Some(Box::new(move |info| handler(info)));
         self
     }
 
     /// Sets the custom REPL line reader (only available with `repl` feature).
-    /// If set, this function will be called to read a line instead of the default mechanism.
-    /// Returning `None` signals that there is no input (e.g., EOF).
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_readline(mut self, handler: fn() -> Option<String>) -> Self {
-        let _ = self.repl_readline.insert(handler);
+    pub fn on_repl_readline<F>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookREPLReadlineInfo) -> Option<String> + 'static + Send + Sync,
+    {
+        self.repl_readline = Some(Box::new(move |info| handler(info)));
         self
     }
 
     /// Sets the handler for the REPL post-readline event (only available with `repl` feature).
-    /// This hook runs after reading a line of input and receives a mutable reference to the line.
+    /// This hook runs after reading a line of input and receives the read line info.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_post_readline(mut self, handler: fn(line: &mut String)) -> Self {
-        let _ = self.repl_post_readline.insert(handler);
+    pub fn on_repl_post_readline<F>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookREPLPostReadlineInfo<'a>) + 'static + Send + Sync,
+    {
+        self.repl_post_readline = Some(Box::new(move |info| handler(info)));
         self
     }
 
@@ -494,8 +562,11 @@ where
     /// This hook runs before executing a REPL command, receiving the parsed arguments.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_pre_exec(mut self, handler: fn(args: &[String])) -> Self {
-        let _ = self.repl_pre_exec.insert(handler);
+    pub fn on_repl_pre_exec<F>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookREPLPreExecInfo<'a>) + 'static + Send + Sync,
+    {
+        self.repl_pre_exec = Some(Box::new(move |info| handler(info)));
         self
     }
 
@@ -503,8 +574,11 @@ where
     /// This hook runs after executing a REPL command.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_post_exec(mut self, handler: fn()) -> Self {
-        let _ = self.repl_post_exec.insert(handler);
+    pub fn on_repl_post_exec<F>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookREPLPostExecInfo) + 'static + Send + Sync,
+    {
+        self.repl_post_exec = Some(Box::new(move |info| handler(info)));
         self
     }
 
@@ -512,16 +586,22 @@ where
     /// This hook runs after a command is executed, receiving the render result on success.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_receive_result(mut self, handler: fn(result: &RenderResult)) -> Self {
-        let _ = self.repl_on_receive_result.insert(handler);
+    pub fn on_repl_receive_result<F>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookREPLOnReceiveResultInfo<'a>) + 'static + Send + Sync,
+    {
+        self.repl_on_receive_result = Some(Box::new(move |info| handler(info)));
         self
     }
 
     /// Sets the handler for the REPL panic event (only available with `repl` feature).
     #[cfg(all(feature = "repl", not(feature = "async")))]
     #[must_use]
-    pub fn on_repl_panic(mut self, handler: fn(panic: &ProgramPanic)) -> Self {
-        let _ = self.repl_on_panic.insert(handler);
+    pub fn on_repl_panic<F>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&HookREPLOnPanicInfo<'a>) + 'static + Send + Sync,
+    {
+        self.repl_on_panic = Some(Box::new(move |info| handler(info)));
         self
     }
 
@@ -529,8 +609,11 @@ where
     /// This hook runs when the REPL is about to exit.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_exit(mut self, handler: fn()) -> Self {
-        let _ = self.repl_exit.insert(handler);
+    pub fn on_repl_exit<F>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookREPLExitInfo) + 'static + Send + Sync,
+    {
+        self.repl_exit = Some(Box::new(move |info| handler(info)));
         self
     }
 
@@ -538,8 +621,11 @@ where
     /// This hook runs after each REPL loop iteration.
     #[cfg(feature = "repl")]
     #[must_use]
-    pub fn on_repl_loop_once(mut self, handler: fn()) -> Self {
-        let _ = self.repl_loop_once.insert(handler);
+    pub fn on_repl_loop_once<F>(mut self, handler: F) -> Self
+    where
+        F: Fn(&HookREPLLoopOnceInfo) + 'static + Send + Sync,
+    {
+        self.repl_loop_once = Some(Box::new(move |info| handler(info)));
         self
     }
 }
@@ -575,46 +661,49 @@ mod tests {
         type ErrorRendererNotFound = MockHookEnum;
         type ResultEmpty = MockHookEnum;
 
-        fn build_renderer_not_found(_member_id: MockHookEnum) -> AnyOutput<MockHookEnum> {
+        fn build_renderer_not_found(_member_id: MockHookEnum) -> crate::AnyOutput<MockHookEnum> {
             unreachable!()
         }
 
-        fn build_dispatcher_not_found(_args: Vec<String>) -> AnyOutput<MockHookEnum> {
+        fn build_dispatcher_not_found(_args: Vec<String>) -> crate::AnyOutput<MockHookEnum> {
             unreachable!()
         }
 
-        fn build_empty_result() -> AnyOutput<MockHookEnum> {
+        fn build_empty_result() -> crate::AnyOutput<MockHookEnum> {
             unreachable!()
         }
 
-        fn render(_any: AnyOutput<MockHookEnum>, _r: &mut RenderResult) {
+        fn render(_any: crate::AnyOutput<MockHookEnum>, _r: &mut crate::RenderResult) {
             unreachable!()
         }
 
-        fn render_help(_any: AnyOutput<MockHookEnum>, _r: &mut RenderResult) {
+        fn render_help(_any: crate::AnyOutput<MockHookEnum>, _r: &mut crate::RenderResult) {
             unreachable!()
         }
 
-        fn do_chain(_any: AnyOutput<MockHookEnum>) -> crate::ChainProcess<MockHookEnum> {
+        fn do_chain(_any: crate::AnyOutput<MockHookEnum>) -> crate::ChainProcess<MockHookEnum> {
             unreachable!()
         }
 
-        fn has_renderer(_any: &AnyOutput<MockHookEnum>) -> bool {
+        fn has_renderer(_any: &crate::AnyOutput<MockHookEnum>) -> bool {
             unreachable!()
         }
 
-        fn has_chain(_any: &AnyOutput<MockHookEnum>) -> bool {
+        fn has_chain(_any: &crate::AnyOutput<MockHookEnum>) -> bool {
             unreachable!()
         }
 
         #[cfg(feature = "comp")]
-        fn do_comp(_any: &AnyOutput<MockHookEnum>, _ctx: &crate::ShellContext) -> crate::Suggest {
+        fn do_comp(
+            _any: &crate::AnyOutput<MockHookEnum>,
+            _ctx: &crate::ShellContext,
+        ) -> crate::Suggest {
             unreachable!()
         }
 
         #[cfg(feature = "general_renderer")]
         fn general_render(
-            _any: AnyOutput<MockHookEnum>,
+            _any: crate::AnyOutput<MockHookEnum>,
             _setting: &crate::GeneralRendererSetting,
         ) -> Result<crate::RenderResult, crate::error::GeneralRendererSerializeError> {
             unreachable!()
@@ -637,35 +726,42 @@ mod tests {
     #[test]
     fn test_hook_on_begin() {
         static CALLED: AtomicBool = AtomicBool::new(false);
-        let hook = ProgramHook::<MockHookEnum>::empty().on_begin(|| {
+        let hook = ProgramHook::<MockHookEnum>::empty().on_begin::<_, ()>(|_: &HookBeginInfo| {
             CALLED.store(true, Ordering::SeqCst);
         });
         assert!(hook.begin.is_some());
-        (hook.begin.unwrap())();
+        (hook.begin.as_ref().unwrap())(&HookBeginInfo {});
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
     #[test]
     fn test_hook_on_pre_dispatch() {
         static CALLED: AtomicBool = AtomicBool::new(false);
-        let hook = ProgramHook::<MockHookEnum>::empty().on_pre_dispatch(|args| {
-            assert_eq!(args, &["a", "b"]);
-            CALLED.store(true, Ordering::SeqCst);
-        });
+        let hook =
+            ProgramHook::<MockHookEnum>::empty().on_pre_dispatch(|info: &HookPreDispatchInfo| {
+                assert_eq!(info.arguments, &["a", "b"]);
+                CALLED.store(true, Ordering::SeqCst);
+            });
         assert!(hook.pre_dispatch.is_some());
-        (hook.pre_dispatch.unwrap())(&["a".to_string(), "b".to_string()]);
+        (hook.pre_dispatch.as_ref().unwrap())(&HookPreDispatchInfo {
+            arguments: &["a".to_string(), "b".to_string()],
+        });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
     #[test]
     fn test_hook_on_post_dispatch() {
         static CALLED: AtomicBool = AtomicBool::new(false);
-        let hook = ProgramHook::<MockHookEnum>::empty().on_post_dispatch(|entry| {
-            assert_eq!(*entry, MockHookEnum::A);
-            CALLED.store(true, Ordering::SeqCst);
-        });
+        let hook = ProgramHook::<MockHookEnum>::empty().on_post_dispatch(
+            |info: &HookPostDispatchInfo<MockHookEnum>| {
+                assert_eq!(*info.entry, MockHookEnum::A);
+                CALLED.store(true, Ordering::SeqCst);
+            },
+        );
         assert!(hook.post_dispatch.is_some());
-        (hook.post_dispatch.unwrap())(&MockHookEnum::A);
+        (hook.post_dispatch.as_ref().unwrap())(&HookPostDispatchInfo {
+            entry: &MockHookEnum::A,
+        });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
@@ -673,13 +769,16 @@ mod tests {
     fn test_hook_on_pre_chain() {
         static CALLED: AtomicBool = AtomicBool::new(false);
         let hook = ProgramHook::<MockHookEnum>::empty().on_pre_chain(
-            |input: &MockHookEnum, _raw: &dyn Any| {
-                assert_eq!(*input, MockHookEnum::A);
+            |info: &HookPreChainInfo<MockHookEnum>| {
+                assert_eq!(*info.input, MockHookEnum::A);
                 CALLED.store(true, Ordering::SeqCst);
             },
         );
         assert!(hook.pre_chain.is_some());
-        (hook.pre_chain.unwrap())(&MockHookEnum::A, &42);
+        (hook.pre_chain.as_ref().unwrap())(&HookPreChainInfo {
+            input: &MockHookEnum::A,
+            raw: &42,
+        });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
@@ -687,13 +786,13 @@ mod tests {
     fn test_hook_on_post_chain() {
         static CALLED: AtomicBool = AtomicBool::new(false);
         let hook = ProgramHook::<MockHookEnum>::empty().on_post_chain(
-            |_output: &AnyOutput<MockHookEnum>| {
+            |_info: &HookPostChainInfo<MockHookEnum>| {
                 CALLED.store(true, Ordering::SeqCst);
             },
         );
         assert!(hook.post_chain.is_some());
-        let output = AnyOutput::new(MockHookEnum::A);
-        (hook.post_chain.unwrap())(&output);
+        let output = crate::AnyOutput::new(MockHookEnum::A);
+        (hook.post_chain.as_ref().unwrap())(&HookPostChainInfo { output: &output });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
@@ -701,46 +800,59 @@ mod tests {
     fn test_hook_on_pre_render() {
         static CALLED: AtomicBool = AtomicBool::new(false);
         let hook = ProgramHook::<MockHookEnum>::empty().on_pre_render(
-            |input: &MockHookEnum, _raw: &dyn Any| {
-                assert_eq!(*input, MockHookEnum::A);
+            |info: &HookPreRenderInfo<MockHookEnum>| {
+                assert_eq!(*info.input, MockHookEnum::A);
                 CALLED.store(true, Ordering::SeqCst);
             },
         );
         assert!(hook.pre_render.is_some());
-        (hook.pre_render.unwrap())(&MockHookEnum::A, &42);
+        (hook.pre_render.as_ref().unwrap())(&HookPreRenderInfo {
+            input: &MockHookEnum::A,
+            raw: &42,
+        });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
     #[test]
     fn test_hook_on_post_render() {
         static CALLED: AtomicBool = AtomicBool::new(false);
-        let hook = ProgramHook::<MockHookEnum>::empty().on_post_render(|_result: &RenderResult| {
-            CALLED.store(true, Ordering::SeqCst);
-        });
+        let hook =
+            ProgramHook::<MockHookEnum>::empty().on_post_render(|_info: &HookPostRenderInfo| {
+                CALLED.store(true, Ordering::SeqCst);
+            });
         assert!(hook.post_render.is_some());
-        let result = RenderResult::default();
-        (hook.post_render.unwrap())(&result);
+        let result = crate::RenderResult::default();
+        (hook.post_render.as_ref().unwrap())(&HookPostRenderInfo { result: &result });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
     #[test]
     fn test_hook_on_finish() {
-        let hook = ProgramHook::<MockHookEnum>::empty().on_finish(|| 42);
+        let hook = ProgramHook::<MockHookEnum>::empty()
+            .on_finish(|_: &HookFinishInfo| ProgramControlUnit::OverrideExitCode(42));
         assert!(hook.finish.is_some());
-        assert_eq!((hook.finish.unwrap())(), 42);
+        let controls: Vec<ProgramControlUnit<MockHookEnum>> =
+            (hook.finish.as_ref().unwrap())(&HookFinishInfo {})
+                .into_iter()
+                .collect();
+        assert_eq!(controls.len(), 1);
+        match &controls[0] {
+            ProgramControlUnit::OverrideExitCode(code) => assert_eq!(*code, 42),
+            _ => panic!("Unexpected control unit"),
+        }
     }
 
     #[test]
     fn test_hook_builder_chaining() {
         let hook = ProgramHook::<MockHookEnum>::empty()
-            .on_begin(|| {})
-            .on_pre_dispatch(|_| {})
-            .on_post_dispatch(|_| {})
-            .on_pre_chain(|_, _| {})
-            .on_post_chain(|_| {})
-            .on_pre_render(|_, _| {})
-            .on_post_render(|_| {})
-            .on_finish(|| 0);
+            .on_begin::<_, ()>(|_: &HookBeginInfo| ())
+            .on_pre_dispatch(|_: &HookPreDispatchInfo| ())
+            .on_post_dispatch(|_: &HookPostDispatchInfo<MockHookEnum>| ())
+            .on_pre_chain(|_: &HookPreChainInfo<MockHookEnum>| ())
+            .on_post_chain(|_: &HookPostChainInfo<MockHookEnum>| ())
+            .on_pre_render(|_: &HookPreRenderInfo<MockHookEnum>| ())
+            .on_post_render(|_: &HookPostRenderInfo| ())
+            .on_finish(|_: &HookFinishInfo| ProgramControlUnit::OverrideExitCode(0));
         assert!(hook.begin.is_some());
         assert!(hook.pre_dispatch.is_some());
         assert!(hook.post_dispatch.is_some());

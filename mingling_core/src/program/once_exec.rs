@@ -38,7 +38,7 @@ where
         C: 'static + Send + Sync,
     {
         // Run hooks
-        self.run_hook_on_begin();
+        self.run_hook_on_begin(crate::hook::HookBeginInfo {});
 
         self.args = self.args.iter().skip(1).cloned().collect();
 
@@ -148,7 +148,7 @@ where
         C: 'static + Send + Sync,
     {
         // Run hooks
-        self.run_hook_on_begin();
+        self.run_hook_on_begin(crate::hook::HookBeginInfo {});
 
         self.args = self.args.iter().skip(1).cloned().collect();
 
@@ -171,7 +171,10 @@ where
                     .downcast_ref::<Program<C>>()
                     .unwrap();
 
-                program.run_hook_exec_panic(&panic_payload);
+                program.run_hook_exec_panic(crate::hook::HookPanicInfo {
+                    panic: &panic_payload,
+                });
+
                 Err(ProgramExecuteError::Panic(panic_payload))
             }
         }

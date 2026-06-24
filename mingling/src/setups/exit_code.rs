@@ -1,6 +1,11 @@
 use std::marker::PhantomData;
 
-use mingling_core::{ProgramCollect, hook::ProgramHook, setup::ProgramSetup, this};
+use mingling_core::{
+    ProgramCollect,
+    hook::{ProgramControlUnit, ProgramHook},
+    setup::ProgramSetup,
+    this,
+};
 
 use crate::res::ResExitCode;
 
@@ -32,9 +37,9 @@ where
         program.with_resource(ResExitCode { exit_code: 0 });
 
         // Insert hook to override exit code before program ends
-        program.with_hook(ProgramHook::empty().on_finish(|| {
+        program.with_hook(ProgramHook::empty().on_finish(|_| {
             let this = this::<C>().res_or_default::<ResExitCode>();
-            this.exit_code
+            ProgramControlUnit::OverrideExitCode(this.exit_code)
         }));
     }
 }

@@ -9,7 +9,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        program.with_hook(ProgramHook::empty().on_repl_readline(|| readline().ok()));
+        program.with_hook(ProgramHook::empty().on_repl_readline(|_| readline().ok()));
     }
 }
 
@@ -48,7 +48,7 @@ where
                     print!("{}", PROMPT.get().unwrap());
                     let _ = std::io::stdout().flush();
                 }
-                program.with_hook(ProgramHook::empty().on_repl_pre_readline(print_prompt));
+                program.with_hook(ProgramHook::empty().on_repl_pre_readline(|_| print_prompt()));
             }
             BasicREPLPromptSetup::Func(f) => {
                 static FUNC: std::sync::OnceLock<fn() -> String> = std::sync::OnceLock::new();
@@ -57,7 +57,8 @@ where
                     print!("{}", FUNC.get().unwrap()());
                     let _ = std::io::stdout().flush();
                 }
-                program.with_hook(ProgramHook::empty().on_repl_pre_readline(print_func_prompt));
+                program
+                    .with_hook(ProgramHook::empty().on_repl_pre_readline(|_| print_func_prompt()));
             }
         }
     }
@@ -71,8 +72,8 @@ where
 {
     fn setup(self, program: &mut Program<C>) {
         program.with_hook(ProgramHook::empty().on_repl_receive_result(|r| {
-            if !r.is_empty() {
-                println!("{}", r.trim())
+            if !r.result.is_empty() {
+                println!("{}", r.result.trim())
             }
         }));
     }

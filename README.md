@@ -624,28 +624,34 @@ fn handle_exit(_prev: EntryExit, repl: &mut ResREPL) {
 Mingling provides a `ProgramHook` system for observing every stage of the execution pipeline. Useful for debugging, logging, or telemetry.
 
 ```rust
-use mingling::prelude::*;
-use mingling::hook::ProgramHook;
+use mingling::{
+    hook::{ProgramControlUnit, ProgramHook},
+    prelude::*,
+};
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
+
     program.with_hook(
         ProgramHook::<ThisProgram>::empty()
-            .on_begin(|| println!("[DEBUG] Program started"))
-            .on_pre_dispatch(|args| println!("[DEBUG] Dispatching: {args:?}"))
-            .on_post_dispatch(|entry| println!("[DEBUG] Dispatched: {entry:?}"))
-            .on_pre_chain(|entry, _| println!("[DEBUG] Pre chain: {entry}"))
-            .on_post_chain(|output| println!("[DEBUG] Post chain: {}", output.member_id))
-            .on_pre_render(|ty, _| println!("[DEBUG] Pre render: {ty}"))
-            .on_post_render(|_| println!("[DEBUG] Post render"))
-            .on_finish(|| {
-                println!("[DEBUG] Program end");
-                0  // override exit code
-            }),
+            .on_begin::<_, ()>(|_| println!("[DEBUG] Program is begin"))
+            .on_pre_dispatch(|info| println!("[DEBUG] Pre dispatch: {}", info.arguments.join(" ")))
+            .on_post_dispatch(|info| println!("[DEBUG] Post dispatch: {}", info.entry))
+            .on_pre_chain(|info| {
+                println!("[DEBUG] Pre chain: {}", info.input);
+            })
+            .on_post_chain(|info| println!("[DEBUG] Post chain: {}", info.output.member_id))
+            .on_finish(|_| {
+                println!("[DEBUG] Loop end");
+                ProgramControlUnit::OverrideExitCode(0) // Override exit code
+            })
+            .on_pre_render(|info| println!("[DEBUG] Pre render: {}", info.input))
+            .on_post_render(|_| println!("[DEBUG] Post render")),
     );
+
+    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 ```
