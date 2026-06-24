@@ -144,7 +144,7 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         Some(quote! {
             #[allow(non_snake_case)]
             #[::mingling::macros::help]
-            fn #help_fn_name(_prev: #struct_name) {
+            pub fn #help_fn_name(_prev: #struct_name) {
                 use std::io::Write;
                 use clap::ColorChoice;
 
