@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
+use colored::Colorize;
+use indicatif::ProgressBar;
 use serde::Deserialize;
-use tools::{eprintln_cargo_style, println_cargo_style, run_cmd};
+use tools::{eprintln_cargo_style, println_cargo_style};
 
 #[derive(Deserialize)]
 struct TestConfig {
@@ -26,7 +28,24 @@ fn main() {
     let _ = colored::control::set_virtual_terminal(true);
 
     let config = load_config();
-    let (passed, total) = run_all_tests(&config);
+
+    // Count total test cases upfront
+    let total: usize = config.test.values().map(|cases| cases.len()).sum();
+    let bar = ProgressBar::new(total as u64);
+    bar.set_style(
+        indicatif::ProgressStyle::default_bar()
+            .template(&format!(
+                "{} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}",
+                "     Testing".bold().bright_cyan()
+            ))
+            .unwrap()
+            .progress_chars("=> "),
+    );
+    bar.set_message("examples");
+
+    let passed = run_all_tests(&config, &bar);
+
+    bar.finish_and_clear();
 
     println_cargo_style!("Result: {}/{} tests passed", passed, total);
 
@@ -49,38 +68,40 @@ fn load_config() -> TestConfig {
     })
 }
 
-/// Run all example test groups, return (passed, total)
-fn run_all_tests(config: &TestConfig) -> (usize, usize) {
-    let mut total = 0;
+/// Run all example test groups, return number passed
+fn run_all_tests(config: &TestConfig, bar: &ProgressBar) -> usize {
     let mut passed = 0;
 
     for (example_name, test_cases) in &config.test {
-        println_cargo_style!("Test: {}", example_name);
+        bar.set_message(example_name.clone());
 
         if !build_example(example_name) {
-            total += test_cases.len();
+            bar.inc(test_cases.len() as u64);
             continue;
         }
 
         for test_case in test_cases {
-            total += 1;
-            if run_single_test(example_name, test_case) {
+            if run_single_test(example_name, test_case, bar) {
                 passed += 1;
             }
+            bar.inc(1);
         }
     }
 
-    (passed, total)
+    passed
 }
 
 /// Build the example binary, return true on success
 fn build_example(example_name: &str) -> bool {
     let manifest = format!("examples/{example_name}/Cargo.toml");
-    run_cmd!("cargo build --manifest-path {}", manifest).is_ok()
+    tools::run_cmd_capture(&format!(
+        "cargo build --manifest-path {manifest} --color always",
+    ))
+    .is_ok()
 }
 
 /// Run a single test case, return true on pass
-fn run_single_test(example_name: &str, test_case: &TestCase) -> bool {
+fn run_single_test(example_name: &str, test_case: &TestCase, bar: &ProgressBar) -> bool {
     let binary_path = format!(".temp/target/debug/{}", get_binary_name(example_name));
     let args: Vec<&str> = test_case.command.split_whitespace().collect();
 
@@ -90,7 +111,7 @@ fn run_single_test(example_name: &str, test_case: &TestCase) -> bool {
     {
         Ok(o) => o,
         Err(e) => {
-            eprintln_cargo_style!("'{}' - failed to run: {}", test_case.command, e);
+            bar.println(format!("'{}' - failed to run: {}", test_case.command, e));
             return false;
         }
     };
@@ -104,22 +125,20 @@ fn run_single_test(example_name: &str, test_case: &TestCase) -> bool {
         || actual_stdout.contains(&test_case.expect.result);
 
     if exit_ok && result_ok {
-        println_cargo_style!("Passed: '{}'", test_case.command);
         true
     } else {
-        eprintln_cargo_style!("'{}'", test_case.command);
+        bar.println(format!("failed: '{}'", test_case.command));
         if !exit_ok {
-            eprintln_cargo_style!(
-                "Expected exit code: {}, actual: {}",
-                test_case.expect.exit_code,
-                actual_exit_code
-            );
+            bar.println(format!(
+                "  Expected exit code: {}, actual: {}",
+                test_case.expect.exit_code, actual_exit_code
+            ));
         }
         if !result_ok {
-            eprintln_cargo_style!("Expected output: {:?}", test_case.expect.result);
-            eprintln_cargo_style!("Actual stdout: {:?}", actual_stdout);
+            bar.println(format!("  Expected output: {:?}", test_case.expect.result));
+            bar.println(format!("  Actual stdout: {:?}", actual_stdout));
             if !actual_stderr.is_empty() {
-                eprintln_cargo_style!("Actual stderr: {:?}", actual_stderr);
+                bar.println(format!("  Actual stderr: {:?}", actual_stderr));
             }
         }
         false

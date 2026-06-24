@@ -2,7 +2,7 @@ use std::io::Write as _;
 use std::process::exit;
 
 use tools::{
-    cargo_tomls, eprintln_cargo_style, println_cargo_style, run_cmd, wprintln_cargo_style,
+    cargo_tomls, crate_name_from, eprintln_cargo_style, println_cargo_style, run_cmd, run_parallel,
 };
 
 fn get_ignore_dirs() -> Vec<String> {
@@ -128,73 +128,76 @@ fn ci(test_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
 }
 
 fn test_examples() -> Result<(), i32> {
-    println_cargo_style!("Testing: examples");
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin test-examples")
+    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --color always --bin test-examples")
 }
 
 fn test_docs_code_blocks() -> Result<(), i32> {
-    println_cargo_style!("Testing: documentation code blocks");
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin test-all-markdown-code")
+    run_cmd!(
+        "cargo run --manifest-path dev_tools/Cargo.toml --color always --bin test-all-markdown-code"
+    )
 }
 
 fn build_all() -> Result<(), i32> {
     let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
+    let mut tasks = Vec::new();
     for cargo_toml in cargo_tomls {
         let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
         let path_str = path.to_string_lossy();
         if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
-            wprintln_cargo_style!("Skipping: {} (ignored dir)", cargo_toml.to_string_lossy());
             continue;
         }
-        println_cargo_style!("Build: {}", cargo_toml.to_string_lossy());
-        run_cmd!(
-            "cargo build --manifest-path {}",
+        let label = format!("Build: {}", cargo_toml.to_string_lossy());
+        let crate_name = crate_name_from(&cargo_toml);
+        let cmd = format!(
+            "cargo build --manifest-path {} --color always",
             cargo_toml.to_string_lossy()
-        )?;
+        );
+        tasks.push((label, crate_name, cmd));
     }
-
-    Ok(())
+    run_parallel("Building", tasks)
 }
 
 fn clippy_all() -> Result<(), i32> {
     let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
+    let mut tasks = Vec::new();
     for cargo_toml in cargo_tomls {
         let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
         let path_str = path.to_string_lossy();
         if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
-            println_cargo_style!("Skipping: {} (ignored dir)", cargo_toml.to_string_lossy());
             continue;
         }
-        println_cargo_style!("Clippy: {}", cargo_toml.to_string_lossy());
-        run_cmd!(
-            "cargo clippy --manifest-path {} -- -D warnings",
+        let label = format!("Clippy: {}", cargo_toml.to_string_lossy());
+        let crate_name = crate_name_from(&cargo_toml);
+        let cmd = format!(
+            "cargo clippy --manifest-path {} --color always -- -D warnings",
             cargo_toml.to_string_lossy()
-        )?;
+        );
+        tasks.push((label, crate_name, cmd));
     }
-
-    Ok(())
+    run_parallel("Clippy", tasks)
 }
 
 fn test_all() -> Result<(), i32> {
     let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
+    let mut tasks = Vec::new();
     for cargo_toml in cargo_tomls {
         let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
         let path_str = path.to_string_lossy();
         if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
-            println_cargo_style!("Skipping: {} (ignored dir)", cargo_toml.to_string_lossy());
             continue;
         }
-        println_cargo_style!("Testing: {}", cargo_toml.to_string_lossy());
-        run_cmd!(
-            "cargo test --manifest-path {}",
+        let label = format!("Testing: {}", cargo_toml.to_string_lossy());
+        let crate_name = crate_name_from(&cargo_toml);
+        let cmd = format!(
+            "cargo test --manifest-path {} --color always",
             cargo_toml.to_string_lossy()
-        )?;
+        );
+        tasks.push((label, crate_name, cmd));
     }
-
-    Ok(())
+    run_parallel("Testing", tasks)
 }
 
 fn docs_refresh() -> Result<(), i32> {

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 use std::env;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
+use indicatif::ProgressBar;
 use tools::verify::{
     build_block, compute_block_hash, generate_cargo_toml, generate_main_rs, is_block_testable,
     parse_code_blocks, write_summary_report,
@@ -70,7 +70,6 @@ async fn main() {
     let readme_path = PathBuf::from(&config.verified.readme);
     if readme_path.exists() {
         files.push(("README".to_string(), readme_path));
-        println_cargo_style!("Source: found README.md");
     }
 
     // English docs
@@ -79,7 +78,6 @@ async fn main() {
         let dir = PathBuf::from(base);
         if dir.exists() && dir.is_dir() {
             collect_md_files(&dir, &mut files, "en");
-            println_cargo_style!("Source: found docs/pages/");
         }
     }
 
@@ -89,13 +87,11 @@ async fn main() {
         let dir = PathBuf::from(base);
         if dir.exists() && dir.is_dir() {
             collect_md_files(&dir, &mut files, "zh_CN");
-            println_cargo_style!("Source: found docs/_zh_CN/pages/");
         }
     }
 
     // If a single file was specified, filter the list to only that file
     if let Some(ref target) = single_file {
-        // Canonicalize to compare paths reliably
         let target_canon = std::fs::canonicalize(target).unwrap_or_else(|_| target.clone());
         files.retain(|(_, path)| {
             std::fs::canonicalize(path)
@@ -109,7 +105,6 @@ async fn main() {
             );
             std::process::exit(1);
         }
-        println_cargo_style!("Source: testing only file '{}'", target.display());
     }
 
     if files.is_empty() {
@@ -141,10 +136,18 @@ async fn main() {
         return;
     }
 
-    println_cargo_style!(
-        "Test: found {total_testable} testable code blocks across {} files",
-        files.len()
+    // Create a shared progress bar
+    let bar = ProgressBar::new(total_testable as u64);
+    bar.set_style(
+        indicatif::ProgressStyle::default_bar()
+            .template(&format!(
+                "{} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}",
+                "     Testing".bold().bright_cyan()
+            ))
+            .unwrap()
+            .progress_chars("=> "),
     );
+    bar.set_message("blocks");
 
     // Group blocks by dependency hash
     let mut groups: HashMap<String, Vec<(usize, tools::verify::CodeBlock)>> = HashMap::new();
@@ -152,11 +155,6 @@ async fn main() {
         let hash = compute_block_hash(&block);
         groups.entry(hash).or_default().push((idx, block));
     }
-
-    println_cargo_style!(
-        "Cache: grouped into {} unique dependency configurations",
-        groups.len()
-    );
 
     let temp_base = PathBuf::from(".temp/doc-test");
 
@@ -169,13 +167,11 @@ async fn main() {
     let mut handles = Vec::new();
     for (hash, blocks) in group_vec {
         let temp_base = temp_base.clone();
+        let bar = bar.clone(); // clone shares the same underlying progress
         let handle = tokio::task::spawn_blocking(move || {
             let crate_dir = temp_base.join(&hash);
             let src_dir = crate_dir.join("src");
             let manifest_path = crate_dir.join("Cargo.toml");
-
-            // Buffer all output for this group so it prints contiguously
-            let mut output = String::new();
 
             // Generate a single Cargo.toml for the whole group (all blocks share same deps)
             let first_block = &blocks[0].1;
@@ -186,23 +182,23 @@ async fn main() {
                 let block_label =
                     format!("Block {block_idx} ({}:{})", block.source_file, block.line);
 
+                bar.set_message(block_label.clone());
+
                 let main_rs = generate_main_rs(block);
                 let (ok, err) = build_block(&src_dir, &manifest_path, &cargo_toml, &main_rs);
                 if ok {
-                    output.push_str(&format!(
-                        "  Testing {block_label} ... {}\n",
-                        "passed".bold().bright_green()
-                    ));
+                    bar.inc(1);
                 } else {
-                    output.push_str(&format!(
-                        "  Testing {block_label} ... {}\n",
+                    bar.inc(1);
+                    bar.println(format!(
+                        "  {} {block_label}",
                         "failed".bold().bright_red()
                     ));
-                    output.push_str(&format!("  {block_label} FAILED:\n{err}\n"));
+                    bar.println(format!("  {block_label} FAILED:\n{err}"));
                 }
                 group_results.push((block.source_file.clone(), block.line, ok, err));
             }
-            (output, group_results)
+            group_results
         });
         handles.push(handle);
     }
@@ -214,10 +210,7 @@ async fn main() {
 
     for handle in handles {
         match handle.await {
-            Ok((output, group_results)) => {
-                // Print entire group output at once, avoiding interleaving
-                print!("{output}");
-                let _ = std::io::stdout().flush();
+            Ok(group_results) => {
                 for (file, line, ok, err) in group_results {
                     if ok {
                         passed += 1;
@@ -233,6 +226,8 @@ async fn main() {
             }
         }
     }
+
+    bar.finish_and_clear();
 
     let result_msg = format!("Result: {passed}/{total_testable} blocks passed");
     println_cargo_style!(result_msg);

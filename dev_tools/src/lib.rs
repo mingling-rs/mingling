@@ -183,6 +183,128 @@ pub fn run_cmd_capture(cmd: impl Into<String>) -> Result<String, (i32, String)> 
     }
 }
 
+/// Extract a crate-style name from a `Cargo.toml` path.
+///
+/// Examples:
+/// - `mingling_core/Cargo.toml` → `mingling_core`
+/// - `.` → `(root)`
+pub fn crate_name_from(path: &std::path::Path) -> String {
+    path.parent()
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("(root)")
+        .to_string()
+}
+
+/// Run a list of `(label_for_errors, crate_name_for_bar, shell_command)` tuples
+/// in parallel with a progress bar.
+///
+/// - Success: silent, the bar tracks progress:
+///   `  Building [============================] 32/32: mingling_core`
+/// - Failure: `pb.println()` prints the error immediately above the bar.
+pub fn run_parallel(phase: &str, tasks: Vec<(String, String, String)>) -> Result<(), i32> {
+    let n = tasks.len();
+    if n == 0 {
+        return Ok(());
+    }
+
+    // Cargo-style prefix: right-aligned to 12 chars, bold bright cyan
+    let padding = " ".repeat(12 - phase.len());
+    let styled_prefix = format!("{}{}", padding, phase.bold().bright_cyan());
+
+    let pb = indicatif::ProgressBar::new(n as u64);
+    pb.set_style(
+        indicatif::ProgressStyle::default_bar()
+            .template(&format!(
+                "{} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}",
+                styled_prefix
+            ))
+            .unwrap()
+            .progress_chars("=> "),
+    );
+    pb.set_position(0);
+
+    // Pre-extract labels for error messages
+    let labels: Vec<String> = tasks.iter().map(|(l, _, _)| l.clone()).collect();
+
+    let (tx, rx) = std::sync::mpsc::channel::<(usize, String, Result<String, (i32, String)>)>();
+
+    for (i, (_label, crate_name, cmd)) in tasks.into_iter().enumerate() {
+        let tx = tx.clone();
+        std::thread::spawn(move || {
+            let result = run_cmd_capture(&cmd);
+            let _ = tx.send((i, crate_name, result));
+        });
+    }
+    drop(tx);
+
+    let mut first_exit_code = 0;
+
+    while let Ok((i, crate_name, result)) = rx.recv() {
+        pb.inc(1);
+        pb.set_message(crate_name);
+
+        if let Err((code, output)) = result {
+            if first_exit_code == 0 {
+                first_exit_code = code;
+            }
+            pb.println(format!(
+                "{}: {} failed (exit code {})",
+                "error".bright_red().bold(),
+                labels[i],
+                code,
+            ));
+            if !output.is_empty() {
+                pb.println(output.trim_end().to_string());
+            }
+        }
+    }
+
+    pb.finish_and_clear();
+
+    if first_exit_code != 0 {
+        Err(first_exit_code)
+    } else {
+        Ok(())
+    }
+}
+
+/// Run a single shell command with a progress bar, capturing its output.
+///
+/// - Success: bar clears silently.
+/// - Failure: error is printed above the bar, then the bar clears.
+pub fn run_cmd_with_progress(phase: &str, label: &str, cmd: String) -> Result<(), i32> {
+    let padding = " ".repeat(12 - phase.len());
+    let styled_prefix = format!("{}{}", padding, phase.bold().bright_cyan());
+
+    let pb = indicatif::ProgressBar::new(1);
+    pb.set_style(
+        indicatif::ProgressStyle::default_bar()
+            .template(&format!(
+                "{} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}",
+                styled_prefix
+            ))
+            .unwrap()
+            .progress_chars("=> "),
+    );
+    pb.set_message(label.to_owned());
+
+    let result = run_cmd_capture(&cmd);
+    pb.inc(1);
+    pb.finish_and_clear();
+
+    match result {
+        Ok(_) => Ok(()),
+        Err((code, output)) => {
+            eprintln_cargo_style(format!("{} failed (exit code {})", label, code));
+            if !output.is_empty() {
+                println!("{}", output.trim_end());
+            }
+            Err(code)
+        }
+    }
+}
+
 #[must_use]
 pub fn cargo_tomls() -> Vec<std::path::PathBuf> {
     let mut cargo_tomls = Vec::new();
