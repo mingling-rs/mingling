@@ -1,4 +1,4 @@
-use crate::{AnyOutput, ProgramCollect};
+use crate::{AnyOutput, ChainProcess, NextProcess, ProgramCollect};
 
 /// Collection variants for program control instructions.
 ///
@@ -137,4 +137,29 @@ where
     /// Transfers control to the help information display module,
     /// carrying the `AnyOutput<C>` containing help-related content.
     RouteToHelp(AnyOutput<C>),
+}
+
+impl<C> From<ChainProcess<C>> for ProgramControlUnit<C>
+where
+    C: ProgramCollect<Enum = C>,
+{
+    fn from(val: ChainProcess<C>) -> Self {
+        match val {
+            ChainProcess::Ok((any, next)) => match next {
+                NextProcess::Chain => ProgramControlUnit::RouteToChain(any),
+                NextProcess::Renderer => ProgramControlUnit::RouteToRender(any),
+            },
+            ChainProcess::Err(e) => panic!("{}", &e),
+        }
+    }
+}
+
+impl<C> From<ChainProcess<C>> for ProgramControls<C>
+where
+    C: ProgramCollect<Enum = C>,
+{
+    fn from(val: ChainProcess<C>) -> Self {
+        let unit: ProgramControlUnit<C> = val.into();
+        unit.into()
+    }
 }
