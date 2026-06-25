@@ -1838,7 +1838,13 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         ) -> Result<::mingling::RenderResult, ::mingling::error::StructuralRendererSerializeError> {
             match any.member_id {
                 #(#structural_renderer_tokens)*
-                _ => Ok(::mingling::RenderResult::default()),
+                _ => {
+                    // Non-structural types: render ResultEmpty (which implements
+                    // StructuralData + Serialize) instead of producing nothing.
+                    let mut r = ::mingling::RenderResult::default();
+                    ::mingling::StructuralRenderer::render(&ResultEmpty, setting, &mut r)?;
+                    Ok(r)
+                }
             }
         }
     };
