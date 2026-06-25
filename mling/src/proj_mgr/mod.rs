@@ -9,6 +9,9 @@ pub use generator::*;
 
 pub mod metadata;
 
+mod checklist_reader;
+pub use checklist_reader::*;
+
 mod show_binaries;
 pub use show_binaries::*;
 
