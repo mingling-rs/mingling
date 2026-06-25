@@ -19,6 +19,9 @@ pub use pkg_mgr::*;
 mod proj_mgr;
 pub use proj_mgr::*;
 
+mod errors;
+pub use errors::*;
+
 use crate::display::markdown;
 
 gen_program!();
