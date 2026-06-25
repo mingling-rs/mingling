@@ -34,6 +34,7 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 2. **Commit Messages**
    - Clearly and concisely describe the changes, no stringent requirements
    - Provide more detail for complex changes, keep it brief for simple changes
+   - But: if you use [Conventional Commits](https://www.conventionalcommits.org/), it would make me even happier :)
 
 3. **CHANGELOG**
    - If the submission includes functional changes or fixes, **the PR must include modifications to CHANGELOG.md** to describe the changes
