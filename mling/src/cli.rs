@@ -12,7 +12,7 @@ use mingling::{
     hook::ProgramHook,
     macros::{chain, help, pack, program_setup, r_println, renderer},
     res::ResExitCode,
-    setup::{ExitCodeSetup, GeneralRendererSetup, HelpFlagSetup, QuietFlagSetup},
+    setup::{ExitCodeSetup, StructuralRendererSetup, HelpFlagSetup, QuietFlagSetup},
 };
 use std::{env::current_dir, path::PathBuf, process::exit, str::FromStr};
 
@@ -58,7 +58,7 @@ pub fn run() {
 
     // Setups
     program.with_setup(HelpFlagSetup::new(["-h", "--help"]));
-    program.with_setup(GeneralRendererSetup);
+    program.with_setup(StructuralRendererSetup);
     program.with_setup(ExitCodeSetup::default());
 
     program.with_setup(StandardOutputSetup);

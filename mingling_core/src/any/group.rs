@@ -3,7 +3,7 @@ use crate::{AnyOutput, ChainProcess};
 /// Used to mark a type with a unique enum ID, assisting dynamic dispatch
 ///
 /// **Note:** Unlike earlier versions, `Groupped` no longer requires `Serialize`
-/// even when the `general_renderer` feature is enabled. Structured output is
+/// even when the `structural_renderer` feature is enabled. Structured output is
 /// controlled separately via the [`StructalData`] trait.
 pub trait Groupped<Group>
 where

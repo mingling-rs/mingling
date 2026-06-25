@@ -6,16 +6,16 @@ use crate::Dispatcher;
 
 use crate::{AnyOutput, ChainProcess, Groupped, ProgramCollect, RenderResult};
 
-#[cfg(feature = "general_renderer")]
-use crate::{GeneralRendererSetting, error::GeneralRendererSerializeError};
+#[cfg(feature = "structural_renderer")]
+use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
 
 #[cfg(feature = "comp")]
 use crate::{ShellContext, Suggest};
 
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 use serde::Serialize;
 
-#[cfg_attr(feature = "general_renderer", derive(Serialize))]
+#[cfg_attr(feature = "structural_renderer", derive(Serialize))]
 #[allow(unused)]
 pub enum MockProgramCollect {
     Foo,
@@ -91,11 +91,11 @@ impl ProgramCollect for MockProgramCollect {
         unreachable!()
     }
 
-    #[cfg(feature = "general_renderer")]
-    fn general_render(
+    #[cfg(feature = "structural_renderer")]
+    fn structural_render(
         _any: AnyOutput<Self::Enum>,
-        _setting: &GeneralRendererSetting,
-    ) -> Result<RenderResult, GeneralRendererSerializeError> {
+        _setting: &StructuralRendererSetting,
+    ) -> Result<RenderResult, StructuralRendererSerializeError> {
         unreachable!()
     }
 }

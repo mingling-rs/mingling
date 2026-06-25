@@ -36,7 +36,7 @@ Res + 名称
 | 示例                   | 说明                                           |
 | ---------------------- | ---------------------------------------------- |
 | `BasicSetup`           | 基础初始化（`--quiet`、`--help`、`--confirm`） |
-| `GeneralRendererSetup` | 通用渲染器初始化（`--json`、`--yaml` 等）      |
+| `StructuralRendererSetup` | 通用渲染器初始化（`--json`、`--yaml` 等）      |
 
 ### 分发器
 

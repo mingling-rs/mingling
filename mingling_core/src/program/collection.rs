@@ -6,8 +6,8 @@ use crate::Dispatcher;
 
 use crate::{AnyOutput, ChainProcess, Groupped, RenderResult};
 
-#[cfg(feature = "general_renderer")]
-use crate::{GeneralRendererSetting, error::GeneralRendererSerializeError};
+#[cfg(feature = "structural_renderer")]
+use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
 
 #[cfg(feature = "comp")]
 use crate::{ShellContext, Suggest};
@@ -78,15 +78,15 @@ pub trait ProgramCollect {
     /// Whether the program has a chain that can handle the current [`AnyOutput`](./struct.AnyOutput.html)
     fn has_chain(any: &AnyOutput<Self::Enum>) -> bool;
 
-    /// Perform general rendering and presentation of any type
+    /// Perform structural rendering and presentation of any type
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization of the
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization of the
     /// output value fails.
-    #[cfg(feature = "general_renderer")]
-    fn general_render(
+    #[cfg(feature = "structural_renderer")]
+    fn structural_render(
         any: AnyOutput<Self::Enum>,
-        setting: &GeneralRendererSetting,
-    ) -> Result<RenderResult, GeneralRendererSerializeError>;
+        setting: &StructuralRendererSetting,
+    ) -> Result<RenderResult, StructuralRendererSerializeError>;
 }

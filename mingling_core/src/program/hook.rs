@@ -637,7 +637,7 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-    #[cfg_attr(feature = "general_renderer", derive(serde::Serialize))]
+    #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
     enum MockHookEnum {
         A,
         B,
@@ -701,11 +701,11 @@ mod tests {
             unreachable!()
         }
 
-        #[cfg(feature = "general_renderer")]
-        fn general_render(
+        #[cfg(feature = "structural_renderer")]
+        fn structural_render(
             _any: crate::AnyOutput<MockHookEnum>,
-            _setting: &crate::GeneralRendererSetting,
-        ) -> Result<crate::RenderResult, crate::error::GeneralRendererSerializeError> {
+            _setting: &crate::StructuralRendererSetting,
+        ) -> Result<crate::RenderResult, crate::error::StructuralRendererSerializeError> {
             unreachable!()
         }
     }

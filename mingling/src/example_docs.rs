@@ -1170,101 +1170,6 @@ pub mod example_error_handling {}
 /// gen_program!();
 /// ```
 pub mod example_exitcode {}
-/// Example General Renderer
-///
-///  > This example demonstrates how to use the `general_renderer` feature to render data into structures such as json / yaml
-///
-///  Run
-///  ```bash
-///  cargo run --manifest-path examples/example-general-renderer/Cargo.toml --quiet -- render Bob 22
-///  cargo run --manifest-path examples/example-general-renderer/Cargo.toml --quiet -- render Bob 22 --json
-///  cargo run --manifest-path examples/example-general-renderer/Cargo.toml --quiet -- render Bob 22 --yaml
-///  ```
-///
-///  Output:
-///  ```plain
-///  Bob is 22 years old
-///  {"member_name":"Bob","member_age":22}
-///  member_name: Bob
-///  member_age: 22
-///  ```
-///
-/// Source code (./Cargo.toml)
-/// ```toml
-/// [package]
-/// name = "example-general-renderer"
-/// version = "0.1.0"
-/// edition = "2024"
-///
-/// [dependencies]
-/// serde = { version = "1.0.228", features = ["derive"] }
-///
-/// [dependencies.mingling]
-/// path = "../../mingling"
-/// features = [
-///     "general_renderer",
-///     "parser",
-/// ]
-///
-/// [workspace]
-/// ```
-///
-/// Source code (./src/main.rs)
-/// ```ignore
-/// use mingling::prelude::*;
-/// use mingling::{parser::Picker, setup::GeneralRendererSetup, StructuralData, Groupped};
-/// use serde::Serialize;
-///
-/// dispatcher!("render", CMDRender => EntryRender);
-///
-/// fn main() {
-///     let mut program = ThisProgram::new();
-///     // Add `GeneralRendererSetup` to receive user input `--json` `--yaml` parameters
-///     program.with_setup(GeneralRendererSetup);
-///     program.with_dispatcher(CMDRender);
-///     let _ = program.exec();
-/// }
-///
-/// // --------- IMPORTANT ---------
-/// // For beautiful output structure, do not use `pack!` to wrap the types that need to be output.
-/// // Instead, manually implement
-/// //        __________________________________ Mark as structured data so it can be rendered
-/// //       /              ____________________ Implement serde::Serialize
-/// //       |             /           _________ Implement mingling::Groupped
-/// //       |             |          /            to ensure Mingling can recognize the type
-/// //       vvvvvvvvvvvv  vvvvvvvvv  vvvvvvvv
-/// #[derive(StructuralData, Serialize, Groupped)]
-/// struct Info {
-///     #[serde(rename = "member_name")]
-///     name: String,
-///     #[serde(rename = "member_age")]
-///     age: i32,
-/// }
-/// // This will output: {"member_name":"name","member_age":32} structure
-///
-/// // If using pack!(Info = (String, i32));
-/// // Output: {"inner":["name", 32]}
-///
-/// // --------- IMPORTANT ---------
-///
-/// #[chain]
-/// fn parse_render(prev: EntryRender) -> Next {
-///     let (name, age) = Picker::new(prev.inner)
-///         .pick::<String>(())
-///         .pick::<i32>(())
-///         .unpack();
-///     Info { name, age }.to_render()
-/// }
-///
-/// /// Implement default renderer for when general_renderer is not specified
-/// #[renderer]
-/// fn render_info(prev: Info) {
-///     r_println!("{} is {} years old", prev.name, prev.age);
-/// }
-///
-/// gen_program!();
-/// ```
-pub mod example_general_renderer {}
 /// Example Help
 ///
 ///  > This example demonstrates how to use the `#[help]` macro to generate help information,
@@ -1682,7 +1587,7 @@ pub mod example_outside_type {}
 ///
 ///  > This example demonstrates how to use the `pack_err!` macro to define error types
 ///  > with automatic `name` field (set to snake_case at compile time) and optional `info` field.
-///  > Also demonstrates `--json` serialization when `general_renderer` is enabled.
+///  > Also demonstrates `--json` serialization when `structural_renderer` is enabled.
 ///
 ///  Run:
 ///  ```bash
@@ -1719,7 +1624,7 @@ pub mod example_outside_type {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = [
-///     "general_renderer",
+///     "structural_renderer",
 ///     "extra_macros",
 /// ]
 ///
@@ -1729,7 +1634,7 @@ pub mod example_outside_type {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::prelude::*;
-/// use mingling::setup::GeneralRendererSetup;
+/// use mingling::setup::StructuralRendererSetup;
 /// use std::path::PathBuf;
 ///
 /// dispatcher!("find", CMDFind => EntryFind);
@@ -1747,7 +1652,7 @@ pub mod example_outside_type {}
 /// // The typed form additionally generates `pub fn new(info)`.
 /// //   name = "error_not_dir"
 /// //
-/// // When `general_renderer` is enabled, the struct also gets
+/// // When `structural_renderer` is enabled, the struct also gets
 /// // `#[derive(serde::Serialize)]` for --json / --yaml output.
 /// // --------- IMPORTANT ---------
 ///
@@ -1834,8 +1739,8 @@ pub mod example_outside_type {}
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
-///     // Add GeneralRendererSetup to support --json / --yaml flags
-///     program.with_setup(GeneralRendererSetup);
+///     // Add StructuralRendererSetup to support --json / --yaml flags
+///     program.with_setup(StructuralRendererSetup);
 ///     program.with_dispatcher(CMDFind);
 ///     program.with_dispatcher(CMDFindStructural);
 ///     let _ = program.exec();
@@ -2256,6 +2161,101 @@ pub mod example_resources {}
 /// gen_program!();
 /// ```
 pub mod example_setup {}
+/// Example structural renderer
+///
+///  > This example demonstrates how to use the `structural_renderer` feature to render data into structures such as json / yaml
+///
+///  Run
+///  ```bash
+///  cargo run --manifest-path examples/example-structural-renderer/Cargo.toml --quiet -- render Bob 22
+///  cargo run --manifest-path examples/example-structural-renderer/Cargo.toml --quiet -- render Bob 22 --json
+///  cargo run --manifest-path examples/example-structural-renderer/Cargo.toml --quiet -- render Bob 22 --yaml
+///  ```
+///
+///  Output:
+///  ```plain
+///  Bob is 22 years old
+///  {"member_name":"Bob","member_age":22}
+///  member_name: Bob
+///  member_age: 22
+///  ```
+///
+/// Source code (./Cargo.toml)
+/// ```toml
+/// [package]
+/// name = "example-structural-renderer"
+/// version = "0.1.0"
+/// edition = "2024"
+///
+/// [dependencies]
+/// serde = { version = "1.0.228", features = ["derive"] }
+///
+/// [dependencies.mingling]
+/// path = "../../mingling"
+/// features = [
+///     "structural_renderer",
+///     "parser",
+/// ]
+///
+/// [workspace]
+/// ```
+///
+/// Source code (./src/main.rs)
+/// ```ignore
+/// use mingling::prelude::*;
+/// use mingling::{parser::Picker, setup::StructuralRendererSetup, StructuralData, Groupped};
+/// use serde::Serialize;
+///
+/// dispatcher!("render", CMDRender => EntryRender);
+///
+/// fn main() {
+///     let mut program = ThisProgram::new();
+///     // Add `StructuralRendererSetup` to receive user input `--json` `--yaml` parameters
+///     program.with_setup(StructuralRendererSetup);
+///     program.with_dispatcher(CMDRender);
+///     let _ = program.exec();
+/// }
+///
+/// // --------- IMPORTANT ---------
+/// // For beautiful output structure, do not use `pack!` to wrap the types that need to be output.
+/// // Instead, manually implement
+/// //        __________________________________ Mark as structured data so it can be rendered
+/// //       /              ____________________ Implement serde::Serialize
+/// //       |             /           _________ Implement mingling::Groupped
+/// //       |             |          /            to ensure Mingling can recognize the type
+/// //       vvvvvvvvvvvv  vvvvvvvvv  vvvvvvvv
+/// #[derive(StructuralData, Serialize, Groupped)]
+/// struct Info {
+///     #[serde(rename = "member_name")]
+///     name: String,
+///     #[serde(rename = "member_age")]
+///     age: i32,
+/// }
+/// // This will output: {"member_name":"name","member_age":32} structure
+///
+/// // If using pack!(Info = (String, i32));
+/// // Output: {"inner":["name", 32]}
+///
+/// // --------- IMPORTANT ---------
+///
+/// #[chain]
+/// fn parse_render(prev: EntryRender) -> Next {
+///     let (name, age) = Picker::new(prev.inner)
+///         .pick::<String>(())
+///         .pick::<i32>(())
+///         .unpack();
+///     Info { name, age }.to_render()
+/// }
+///
+/// /// Implement default renderer for when structural_renderer is not specified
+/// #[renderer]
+/// fn render_info(prev: Info) {
+///     r_println!("{} is {} years old", prev.name, prev.age);
+/// }
+///
+/// gen_program!();
+/// ```
+pub mod example_structural_renderer {}
 /// Example Unit Test
 ///
 ///  > This example shows how to write unit tests for Chain and Renderer in Mingling

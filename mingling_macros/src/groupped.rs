@@ -28,7 +28,7 @@ pub fn derive_groupped(input: TokenStream) -> TokenStream {
     expanded.into()
 }
 
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
     // Parse the input struct/enum
     let input_parsed = parse_macro_input!(input as DeriveInput);

@@ -210,7 +210,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "test-general-renderer"
+name = "test-structural-renderer"
 version = "0.1.0"
 dependencies = [
  "mingling",

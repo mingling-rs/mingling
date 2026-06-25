@@ -7,7 +7,7 @@
 
 **介绍:**
 
-为 `general_renderer` 启用所有序列化格式（JSON、RON、TOML、YAML）的 serde 格式化支持。
+为 `structural_renderer` 启用所有序列化格式（JSON、RON、TOML、YAML）的 serde 格式化支持。
 
 开启此特性将自动启用 `json_serde_fmt`、`ron_serde_fmt`、`toml_serde_fmt`、`yaml_serde_fmt` 四个子特性。
 
@@ -208,7 +208,7 @@ pack_err!(ErrorNotDir = PathBuf);
  
 </details>
 
-## 特性 `general_renderer`
+## 特性 `structural_renderer`
 
 **介绍:**
 
@@ -216,15 +216,15 @@ pack_err!(ErrorNotDir = PathBuf);
 
 开启后，用户可以通过 `--json` 或 `--yaml` 等标志获取结构化输出。
 
-详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-general-renderer)
+详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-structural-renderer)
 
-## 特性 `general_renderer_empty`
+## 特性 `structural_renderer_empty`
 
 **介绍:**
 
 启用通用渲染器的空实现版本，适用于不需要实际渲染功能的场景。此特性不启用任何 serde 格式化后端。
 
-## 特性 `general_renderer_full`
+## 特性 `structural_renderer_full`
 
 **介绍:**
 

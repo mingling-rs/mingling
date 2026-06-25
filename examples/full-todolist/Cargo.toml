@@ -12,7 +12,7 @@ path = "../../mingling"
 features = [
     "parser",
     "extra_macros",
-    "general_renderer",
+    "structural_renderer",
 ]
 
 [workspace]

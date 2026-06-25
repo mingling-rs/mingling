@@ -148,22 +148,6 @@
     ]
   },
   {
-    "id": "example-general-renderer",
-    "name": "General Renderer",
-    "icon": "📤",
-    "category": "output",
-    "desc": "Demonstrates how to render structured output in JSON or YAML using `GeneralRendererSetup` and the `general_renderer` feature.\n",
-    "tags": [
-      "general_renderer",
-      "--json",
-      "--yaml"
-    ],
-    "files": [
-      "src/main.rs",
-      "Cargo.toml"
-    ]
-  },
-  {
     "id": "example-help",
     "name": "Help",
     "icon": "💡",
@@ -239,11 +223,11 @@
     "name": "Pack an Error",
     "icon": "🛑",
     "category": "macros",
-    "desc": "Demonstrates how to use the `pack_err!` macro to define error types with automatic `name` field (snake_case at compile time) and optional `info` field. Also shows `--json` serialization when `general_renderer` is enabled.\n",
+    "desc": "Demonstrates how to use the `pack_err!` macro to define error types with automatic `name` field (snake_case at compile time) and optional `info` field. Also shows `--json` serialization when `structural_renderer` is enabled.\n",
     "tags": [
       "pack_err!",
       "extra_macros",
-      "general_renderer",
+      "structural_renderer",
       "--json"
     ],
     "files": [
@@ -303,6 +287,22 @@
     "tags": [
       "#[setup]",
       "extra_macros"
+    ],
+    "files": [
+      "src/main.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
+    "id": "example-structural-renderer",
+    "name": "structural renderer",
+    "icon": "📤",
+    "category": "output",
+    "desc": "Demonstrates how to render structured output in JSON or YAML using `StructuralRendererSetup` and the `structural_renderer` feature.\n",
+    "tags": [
+      "structural_renderer",
+      "--json",
+      "--yaml"
     ],
     "files": [
       "src/main.rs",

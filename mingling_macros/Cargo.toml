@@ -21,7 +21,7 @@ async = []
 clap = []
 comp = []
 dispatch_tree = []
-general_renderer = []
+structural_renderer = []
 repl = []
 
 extra_macros = []

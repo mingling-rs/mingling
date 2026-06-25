@@ -97,7 +97,7 @@ pub mod macros {
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::group;
     /// Like `group!` but also marks the type for structured output
-    #[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::group_structural;
     /// Used to generate a struct implementing the `HelpRequest` trait via a method
     pub use mingling_macros::help;
@@ -106,13 +106,13 @@ pub mod macros {
     /// Used to create a wrapper type for use with `Chain` and `Renderer`
     pub use mingling_macros::pack;
     /// Like `pack!` but also marks the type for structured output
-    #[cfg(feature = "general_renderer")]
+    #[cfg(feature = "structural_renderer")]
     pub use mingling_macros::pack_structural;
     /// Used to create an error struct with automatic `name` field
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::pack_err;
     /// Like `pack_err!` but also marks the type for structured output
-    #[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;
     #[cfg(feature = "comp")]
     #[doc(hidden)]
@@ -158,7 +158,7 @@ pub use mingling_macros::EnumTag;
 pub use mingling_macros::Groupped;
 
 /// derive macro `StructuralData` — marks a type as supporting structured output
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 pub use mingling_macros::StructuralData;
 
 /// Example projects for `Mingling`, for learning how to use `Mingling`
@@ -214,13 +214,13 @@ pub mod prelude {
     /// Re-export of the `pack` macro for creating wrapper types.
     pub use crate::macros::pack;
     /// Like `pack!` but also marks the type for structured output
-    #[cfg(feature = "general_renderer")]
+    #[cfg(feature = "structural_renderer")]
     pub use mingling_macros::pack_structural;
     /// Re-export of the `pack_err` macro for creating error types.
     #[cfg(feature = "extra_macros")]
     pub use crate::macros::pack_err;
     /// Like `pack_err!` but also marks the type for structured output
-    #[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;
     /// Re-export of the `r_print` macro for printing within a renderer context.
     pub use crate::macros::r_print;

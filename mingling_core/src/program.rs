@@ -56,8 +56,8 @@ where
     pub stdout_setting: ProgramStdoutSetting,
     pub user_context: ProgramUserContext,
 
-    #[cfg(feature = "general_renderer")]
-    pub general_renderer_name: GeneralRendererSetting,
+    #[cfg(feature = "structural_renderer")]
+    pub structural_renderer_name: StructuralRendererSetting,
 
     pub(crate) hooks: Vec<ProgramHook<C>>,
 
@@ -99,8 +99,8 @@ where
             stdout_setting: ProgramStdoutSetting::default(),
             user_context: ProgramUserContext::default(),
 
-            #[cfg(feature = "general_renderer")]
-            general_renderer_name: GeneralRendererSetting::Disable,
+            #[cfg(feature = "structural_renderer")]
+            structural_renderer_name: StructuralRendererSetting::Disable,
 
             hooks: Vec::new(),
 

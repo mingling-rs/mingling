@@ -17,7 +17,7 @@ async = []
 builds = []
 
 dispatch_tree = []
-general_renderer = ["dep:serde"]
+structural_renderer = ["dep:serde"]
 ron_serde_fmt = ["dep:ron"]
 json_serde_fmt = ["dep:serde_json"]
 yaml_serde_fmt = ["dep:serde_yaml"]
@@ -35,7 +35,7 @@ just_fmt.workspace = true
 # comp
 just_template = { workspace = true, optional = true }
 
-# general_renderer
+# structural_renderer
 serde = { workspace = true, optional = true }
 ron = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }

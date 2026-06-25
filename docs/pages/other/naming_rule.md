@@ -36,7 +36,7 @@ Name + Setup
 | Example                | Description                                                |
 | ---------------------- | ---------------------------------------------------------- |
 | `BasicSetup`           | Basic initialization (`--quiet`, `--help`, `--confirm`)    |
-| `GeneralRendererSetup` | General renderer initialization (`--json`, `--yaml`, etc.) |
+| `StructuralRendererSetup` | structural renderer initialization (`--json`, `--yaml`, etc.) |
 
 ### Dispatcher
 

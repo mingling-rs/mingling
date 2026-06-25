@@ -1,6 +1,6 @@
 use mingling::Flag;
-use mingling::GeneralRenderer;
-use mingling::GeneralRendererSetting;
+use mingling::StructuralRenderer;
+use mingling::StructuralRendererSetting;
 use mingling::MockProgramCollect;
 use mingling::NextProcess;
 use mingling::StructuralData;
@@ -89,7 +89,7 @@ fn test_render_result_print() {
     assert_eq!(&*r, "hello");
 }
 
-// GeneralRenderer
+// StructuralRenderer
 
 #[derive(Debug, Clone, PartialEq, Serialize, StructuralData)]
 struct TestData {
@@ -98,25 +98,25 @@ struct TestData {
 }
 
 #[test]
-fn test_general_renderer_disable() {
+fn test_structural_renderer_disable() {
     let data = TestData {
         name: "test".into(),
         value: 42,
     };
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&data, &GeneralRendererSetting::Disable, &mut r);
+    let result = StructuralRenderer::render(&data, &StructuralRendererSetting::Disable, &mut r);
     assert!(result.is_ok());
     assert!(r.is_empty());
 }
 
 #[test]
-fn test_general_renderer_json() {
+fn test_structural_renderer_json() {
     let data = TestData {
         name: "test".into(),
         value: 42,
     };
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&data, &GeneralRendererSetting::Json, &mut r);
+    let result = StructuralRenderer::render(&data, &StructuralRendererSetting::Json, &mut r);
     assert!(result.is_ok());
     assert!(!r.is_empty());
 }

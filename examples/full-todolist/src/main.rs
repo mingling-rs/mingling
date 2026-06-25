@@ -10,7 +10,7 @@ use mingling::{
     macros::route,
     prelude::*,
     res::ResExitCode,
-    setup::{ExitCodeSetup, GeneralRendererSetup, HelpFlagSetup},
+    setup::{ExitCodeSetup, StructuralRendererSetup, HelpFlagSetup},
     LazyInit, LazyRes,
 };
 
@@ -49,7 +49,7 @@ fn main() {
 
     // Setups
     program.with_setup(ExitCodeSetup::default());
-    program.with_setup(GeneralRendererSetup);
+    program.with_setup(StructuralRendererSetup);
     program.with_setup(HelpFlagSetup::new(["--help", "-h"]));
 
     // Flags

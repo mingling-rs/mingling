@@ -183,9 +183,9 @@ pub fn build_renderer_exist_entry(previous_type: &TypePath) -> proc_macro2::Toke
     }
 }
 
-/// Builds the general renderer entry
-#[cfg(feature = "general_renderer")]
-pub fn build_general_renderer_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
+/// Builds the structural renderer entry
+#[cfg(feature = "structural_renderer")]
+pub fn build_structural_renderer_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
     let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
         Self::#enum_variant => {
@@ -193,7 +193,7 @@ pub fn build_general_renderer_entry(previous_type: &TypePath) -> proc_macro2::To
             // and `AnyOutput::new` ensures the type implements serde::Serialize
             let raw = unsafe { any.restore::<#previous_type>().unwrap_unchecked() };
             let mut __renderer_inner_result = ::mingling::RenderResult::default();
-            ::mingling::GeneralRenderer::render(&raw, setting, &mut __renderer_inner_result)?;
+            ::mingling::StructuralRenderer::render(&raw, setting, &mut __renderer_inner_result)?;
             Ok(__renderer_inner_result)
         }
     }
@@ -231,14 +231,14 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
     // Register the renderer in the global list
     let renderer_entry = build_renderer_entry(&struct_name, &previous_type);
     let renderer_exist_entry = build_renderer_exist_entry(&previous_type);
-    #[cfg(feature = "general_renderer")]
-    let general_renderer_entry = build_general_renderer_entry(&previous_type);
+    #[cfg(feature = "structural_renderer")]
+    let structural_renderer_entry = build_structural_renderer_entry(&previous_type);
 
     let renderer_entry_str = renderer_entry.to_string();
     let renderer_exist_entry_str = renderer_exist_entry.to_string();
 
-    #[cfg(feature = "general_renderer")]
-    let general_renderer_entry_str = general_renderer_entry.to_string();
+    #[cfg(feature = "structural_renderer")]
+    let structural_renderer_entry_str = structural_renderer_entry.to_string();
 
     // Check for duplicate variant before acquiring other locks
     let variant_name = previous_type
@@ -264,21 +264,21 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
     let mut renderers = get_global_set(&crate::RENDERERS).lock().unwrap();
     let mut renderer_exist = get_global_set(&crate::RENDERERS_EXIST).lock().unwrap();
 
-    #[cfg(feature = "general_renderer")]
-    let mut general_renderers = get_global_set(&crate::GENERAL_RENDERERS).lock().unwrap();
+    #[cfg(feature = "structural_renderer")]
+    let mut structural_renderers = get_global_set(&crate::STRUCTURAL_RENDERERS).lock().unwrap();
 
     renderers.insert(renderer_entry_str);
     renderer_exist.insert(renderer_exist_entry_str);
 
-    // Only register general renderer if the type is in STRUCTURED_TYPES
-    #[cfg(feature = "general_renderer")]
+    // Only register structural renderer if the type is in STRUCTURED_TYPES
+    #[cfg(feature = "structural_renderer")]
     {
         let is_structured = get_global_set(&crate::STRUCTURED_TYPES)
             .lock()
             .unwrap()
             .contains(&variant_name);
         if is_structured {
-            general_renderers.insert(general_renderer_entry_str);
+            structural_renderers.insert(structural_renderer_entry_str);
         }
     }
 

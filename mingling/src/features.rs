@@ -97,39 +97,6 @@ pub const MINGLING_EXTRA_MACROS: bool = false;
 #[cfg(feature = "extra_macros")]
 #[allow(unused)]
 pub const MINGLING_EXTRA_MACROS: bool = true;
-/// Whether the `general_renderer` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "general_renderer"))]
-#[allow(unused)]
-pub const MINGLING_GENERAL_RENDERER: bool = false;
-
-/// Whether the `general_renderer` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "general_renderer")]
-#[allow(unused)]
-pub const MINGLING_GENERAL_RENDERER: bool = true;
-/// Whether the `general_renderer_empty` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "general_renderer_empty"))]
-#[allow(unused)]
-pub const MINGLING_GENERAL_RENDERER_EMPTY: bool = false;
-
-/// Whether the `general_renderer_empty` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "general_renderer_empty")]
-#[allow(unused)]
-pub const MINGLING_GENERAL_RENDERER_EMPTY: bool = true;
-/// Whether the `general_renderer_full` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "general_renderer_full"))]
-#[allow(unused)]
-pub const MINGLING_GENERAL_RENDERER_FULL: bool = false;
-
-/// Whether the `general_renderer_full` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "general_renderer_full")]
-#[allow(unused)]
-pub const MINGLING_GENERAL_RENDERER_FULL: bool = true;
 /// Whether the `json_serde_fmt` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "json_serde_fmt"))]
@@ -185,6 +152,39 @@ pub const MINGLING_RON_SERDE_FMT: bool = false;
 #[cfg(feature = "ron_serde_fmt")]
 #[allow(unused)]
 pub const MINGLING_RON_SERDE_FMT: bool = true;
+/// Whether the `structural_renderer` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "structural_renderer"))]
+#[allow(unused)]
+pub const MINGLING_STRUCTURAL_RENDERER: bool = false;
+
+/// Whether the `structural_renderer` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "structural_renderer")]
+#[allow(unused)]
+pub const MINGLING_STRUCTURAL_RENDERER: bool = true;
+/// Whether the `structural_renderer_empty` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "structural_renderer_empty"))]
+#[allow(unused)]
+pub const MINGLING_STRUCTURAL_RENDERER_EMPTY: bool = false;
+
+/// Whether the `structural_renderer_empty` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "structural_renderer_empty")]
+#[allow(unused)]
+pub const MINGLING_STRUCTURAL_RENDERER_EMPTY: bool = true;
+/// Whether the `structural_renderer_full` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "structural_renderer_full"))]
+#[allow(unused)]
+pub const MINGLING_STRUCTURAL_RENDERER_FULL: bool = false;
+
+/// Whether the `structural_renderer_full` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "structural_renderer_full")]
+#[allow(unused)]
+pub const MINGLING_STRUCTURAL_RENDERER_FULL: bool = true;
 /// Whether the `toml_serde_fmt` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "toml_serde_fmt"))]

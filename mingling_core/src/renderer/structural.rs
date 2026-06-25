@@ -1,5 +1,5 @@
 use crate::{
-    GeneralRendererSetting, RenderResult, renderer::general::error::GeneralRendererSerializeError,
+    StructuralRendererSetting, RenderResult, renderer::structural::error::StructuralRendererSerializeError,
 };
 use serde::Serialize;
 
@@ -8,40 +8,40 @@ pub mod structural_data;
 
 use structural_data::StructuralData;
 
-/// A general renderer that supports multiple serialization formats.
+/// A structural renderer that supports multiple serialization formats.
 ///
-/// The `GeneralRenderer` provides methods to serialize data into various formats
+/// The `StructuralRenderer` provides methods to serialize data into various formats
 /// including JSON, YAML, TOML, and RON, with support for both regular and
 /// pretty-printed variants. It is designed to work with types that implement
 /// the [`StructuralData`] trait (which implies `Serialize`).
-pub struct GeneralRenderer;
+pub struct StructuralRenderer;
 
-impl GeneralRenderer {
+impl StructuralRenderer {
     /// Renders data in the specified format to the given `RenderResult`.
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[allow(unused_variables)]
     pub fn render<T: StructuralData + Send>(
         data: &T,
-        setting: &GeneralRendererSetting,
+        setting: &StructuralRendererSetting,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         match setting {
-            GeneralRendererSetting::Disable => Ok(()),
+            StructuralRendererSetting::Disable => Ok(()),
             #[cfg(feature = "json_serde_fmt")]
-            GeneralRendererSetting::Json => Self::render_to_json(data, r),
+            StructuralRendererSetting::Json => Self::render_to_json(data, r),
             #[cfg(feature = "json_serde_fmt")]
-            GeneralRendererSetting::JsonPretty => Self::render_to_json_pretty(data, r),
+            StructuralRendererSetting::JsonPretty => Self::render_to_json_pretty(data, r),
             #[cfg(feature = "yaml_serde_fmt")]
-            GeneralRendererSetting::Yaml => Self::render_to_yaml(data, r),
+            StructuralRendererSetting::Yaml => Self::render_to_yaml(data, r),
             #[cfg(feature = "toml_serde_fmt")]
-            GeneralRendererSetting::Toml => Self::render_to_toml(data, r),
+            StructuralRendererSetting::Toml => Self::render_to_toml(data, r),
             #[cfg(feature = "ron_serde_fmt")]
-            GeneralRendererSetting::Ron => Self::render_to_ron(data, r),
+            StructuralRendererSetting::Ron => Self::render_to_ron(data, r),
             #[cfg(feature = "ron_serde_fmt")]
-            GeneralRendererSetting::RonPretty => Self::render_to_ron_pretty(data, r),
+            StructuralRendererSetting::RonPretty => Self::render_to_ron_pretty(data, r),
         }
     }
 
@@ -49,14 +49,14 @@ impl GeneralRenderer {
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "json_serde_fmt")]
     fn render_to_json<T: Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         let json_string = serde_json::to_string(data)
-            .map_err(|e| GeneralRendererSerializeError::new(e.to_string()))?;
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&json_string);
         Ok(())
     }
@@ -65,14 +65,14 @@ impl GeneralRenderer {
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "json_serde_fmt")]
     fn render_to_json_pretty<T: Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         let json_string = serde_json::to_string_pretty(data)
-            .map_err(|e| GeneralRendererSerializeError::new(e.to_string()))?;
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&json_string);
         Ok(())
     }
@@ -81,14 +81,14 @@ impl GeneralRenderer {
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "ron_serde_fmt")]
     fn render_to_ron<T: Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         let ron_string = ron::ser::to_string(data)
-            .map_err(|e| GeneralRendererSerializeError::new(e.to_string()))?;
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&ron_string);
         Ok(())
     }
@@ -97,18 +97,18 @@ impl GeneralRenderer {
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "ron_serde_fmt")]
     fn render_to_ron_pretty<T: Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         let pretty_config = ron::ser::PrettyConfig::new()
             .new_line("\n")
             .indentor("  ");
 
         let ron_string = ron::ser::to_string_pretty(data, pretty_config)
-            .map_err(|e| GeneralRendererSerializeError::new(e.to_string()))?;
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&ron_string);
         Ok(())
     }
@@ -117,14 +117,14 @@ impl GeneralRenderer {
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "toml_serde_fmt")]
     fn render_to_toml<T: Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         let toml_string =
-            toml::to_string(data).map_err(|e| GeneralRendererSerializeError::new(e.to_string()))?;
+            toml::to_string(data).map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&toml_string);
         Ok(())
     }
@@ -133,14 +133,14 @@ impl GeneralRenderer {
     ///
     /// # Errors
     ///
-    /// Returns `Err(GeneralRendererSerializeError)` if serialization fails.
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "yaml_serde_fmt")]
     fn render_to_yaml<T: Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
-    ) -> Result<(), GeneralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError> {
         let yaml_string = serde_yaml::to_string(data)
-            .map_err(|e| GeneralRendererSerializeError::new(e.to_string()))?;
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&yaml_string);
         Ok(())
     }
@@ -172,7 +172,7 @@ mod tests {
     fn test_render_disable_does_nothing() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Disable, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Disable, &mut r);
         assert!(result.is_ok());
         assert!(r.is_empty());
     }
@@ -182,7 +182,7 @@ mod tests {
     fn test_render_to_json() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Json, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Json, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
         let output: String = r.into();
@@ -197,7 +197,7 @@ mod tests {
     fn test_render_to_json_pretty() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::JsonPretty, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::JsonPretty, &mut r);
         assert!(result.is_ok());
         let output: String = r.into();
         // Pretty JSON has newlines
@@ -209,7 +209,7 @@ mod tests {
     fn test_render_to_yaml() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Yaml, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Yaml, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
     }
@@ -219,7 +219,7 @@ mod tests {
     fn test_render_to_toml() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Toml, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Toml, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
     }
@@ -229,7 +229,7 @@ mod tests {
     fn test_render_to_ron() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Ron, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Ron, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
     }
@@ -239,7 +239,7 @@ mod tests {
     fn test_render_to_ron_pretty() {
         let mut r = RenderResult::default();
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::RonPretty, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::RonPretty, &mut r);
         assert!(result.is_ok());
         let output: String = r.into();
         assert!(output.contains('\n'));
@@ -252,7 +252,7 @@ mod tests {
 
         // Disable
         let result =
-            GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Disable, &mut r);
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Disable, &mut r);
         assert!(result.is_ok());
         assert!(r.is_empty());
     }
@@ -261,7 +261,7 @@ mod tests {
     #[test]
     fn test_render_dispatches_json() {
         let mut r = RenderResult::default();
-        let result = GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Json, &mut r);
+        let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Json, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
     }

@@ -1,0 +1,10 @@
+[example]
+id = "example-structural-renderer"
+name = "structural renderer"
+icon = "📤"
+category = "output"
+desc = """
+Demonstrates how to render structured output in JSON or YAML using `StructuralRendererSetup` and the `structural_renderer` feature.
+"""
+tags = ["structural_renderer", "--json", "--yaml"]
+files = ["src/main.rs", "Cargo.toml"]

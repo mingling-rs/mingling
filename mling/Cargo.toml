@@ -22,7 +22,7 @@ path = "src/bin/mling.rs"
 mingling = { path = "../mingling", features = [
     "parser",
     "comp",
-    "general_renderer",
+    "structural_renderer",
     "extra_macros",
     "yaml_serde_fmt",
 ] }

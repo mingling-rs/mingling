@@ -15,7 +15,7 @@ serde.workspace = true
 tokio.workspace = true
 mingling = { path = ".", features = [
     "comp",
-    "general_renderer",
+    "structural_renderer",
     "parser",
     "repl",
 ] }
@@ -23,7 +23,7 @@ mingling = { path = ".", features = [
 [package.metadata.docs.rs]
 features = [
     "builds",
-    "general_renderer",
+    "structural_renderer",
     "repl",
     "comp",
     "parser",
@@ -45,21 +45,21 @@ repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
 parser = ["dep:size"]
 
-general_renderer = [
-    "mingling_core/general_renderer",
+structural_renderer = [
+    "mingling_core/structural_renderer",
     "dep:serde",
-    "mingling_macros/general_renderer",
+    "mingling_macros/structural_renderer",
     "json_serde_fmt",
 ]
 
-general_renderer_empty = [
-    "mingling_core/general_renderer",
+structural_renderer_empty = [
+    "mingling_core/structural_renderer",
     "dep:serde",
-    "mingling_macros/general_renderer",
+    "mingling_macros/structural_renderer",
 ]
 
-general_renderer_full = [
-    "general_renderer",
+structural_renderer_full = [
+    "structural_renderer",
     "yaml_serde_fmt",
     "toml_serde_fmt",
     "ron_serde_fmt",

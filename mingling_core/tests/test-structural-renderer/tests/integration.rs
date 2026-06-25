@@ -1,4 +1,4 @@
-use mingling::{GeneralRenderer, GeneralRendererSetting, RenderResult, StructuralData};
+use mingling::{StructuralRenderer, StructuralRendererSetting, RenderResult, StructuralData};
 use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq, Serialize, StructuralData)]
@@ -17,7 +17,7 @@ fn test_data() -> TestData {
 #[test]
 fn test_render_disable() {
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Disable, &mut r);
+    let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Disable, &mut r);
     assert!(result.is_ok());
     assert!(r.is_empty());
 }
@@ -25,7 +25,7 @@ fn test_render_disable() {
 #[test]
 fn test_render_json() {
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Json, &mut r);
+    let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Json, &mut r);
     assert!(result.is_ok());
     assert!(!r.is_empty());
     let output: String = r.into();
@@ -38,7 +38,7 @@ fn test_render_json() {
 #[test]
 fn test_render_yaml() {
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Yaml, &mut r);
+    let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Yaml, &mut r);
     assert!(result.is_ok());
     assert!(!r.is_empty());
     let output: String = r.into();
@@ -51,7 +51,7 @@ fn test_render_yaml() {
 #[test]
 fn test_render_toml() {
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Toml, &mut r);
+    let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Toml, &mut r);
     assert!(result.is_ok());
     assert!(!r.is_empty());
     let output: String = r.into();
@@ -64,7 +64,7 @@ fn test_render_toml() {
 #[test]
 fn test_render_ron() {
     let mut r = RenderResult::default();
-    let result = GeneralRenderer::render(&test_data(), &GeneralRendererSetting::Ron, &mut r);
+    let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Ron, &mut r);
     assert!(result.is_ok());
     assert!(!r.is_empty());
     let output: String = r.into();

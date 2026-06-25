@@ -10,6 +10,6 @@ use serde::Serialize;
 /// - `group_structural!`
 ///
 /// These entry points also register the type in the global `STRUCTURED_TYPES`
-/// registry, which is required for the `general_render` match arm to be generated.
+/// registry, which is required for the `structural_render` match arm to be generated.
 #[doc(hidden)]
 pub trait StructuralData: Serialize + crate::__private::StructuralDataSealed {}

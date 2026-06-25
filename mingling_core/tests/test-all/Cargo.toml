@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 mingling = { path = "../../../mingling", features = [
-    "general_renderer_full",
+    "structural_renderer_full",
     "comp",
     "builds",
     "repl",

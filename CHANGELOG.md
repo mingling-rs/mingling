@@ -19,12 +19,12 @@
    - **Global resource** (`global_resource.rs`): `GlobalResource` new, Deref, AsRef; three default implementations of `ResourceMarker`
    - **Lazy resource** (`lazy_resource.rs`): Coverage of all 18+ methods of `LazyRes`, including initialization triggering, get_ref/get_mut/get_clone, into_inner/unwrap, Drop callback, `ResourceMarker` integration
    - **Error types** (`chain/error.rs`, `program/error.rs`): All Display, Error source, From conversions
-   - **Configuration structs** (`config.rs`): Default values for `ProgramStdoutSetting`, `ProgramUserContext`; FromStr parsing and Display output of `GeneralRendererSetting` (feature-gated)
+   - **Configuration structs** (`config.rs`): Default values for `ProgramStdoutSetting`, `ProgramUserContext`; FromStr parsing and Display output of `StructuralRendererSetting` (feature-gated)
    - **Flag system** (`flag.rs`): Added 8 From conversions, Deref, AsRef for `Flag`
    - **String wrapper** (`string_vec.rs`): 6 From conversions, Deref, Into\<Vec\>
    - **Render result** (`render_result.rs`): print/println/clear/is_empty, Write trait, Display, Deref, From conversions
-   - **Render error** (`general/error.rs`): Construction, From, Deref, Into\<String\>
-   - **General renderer** (`general.rs`): Rendering in Disable/JSON/YAML/TOML/RON formats (feature-gated)
+   - **Render error** (`structural/error.rs`): Construction, From, Deref, Into\<String\>
+   - **Structural renderer** (`structural.rs`): Rendering in Disable/JSON/YAML/TOML/RON formats (feature-gated)
    - **Completion suggestions** (`suggest.rs`): All construction, access, modification, sorting, and conversion methods for `Suggest` and `SuggestItem`
    - **Shell context** (`shell_ctx.rs`): Added `filling_argument`, `filling_argument_first`, `typing_argument`, `strip_typed_argument`, `get_typed_arguments`
    - **Hook system** (`hook.rs`): `ProgramHook::empty` and all 8 builder methods
@@ -37,10 +37,10 @@
 
    - `test-basic`: Basic type tests with default features (Node, Flag, RenderResult, NextProcess, StringVec)
    - `test-comp`: ShellContext, Suggest, SuggestItem, is_completing with `comp + builds` features
-   - `test-general-renderer`: GeneralRenderer output in various formats with `general_renderer_full + parser` features
+   - `test-structural-renderer`: StructuralRenderer output in various formats with `structural_renderer_full + parser` features
    - `test-repl`: ResREPL and basic types with `repl + extra_macros` features
    - `test-dispatch-tree`: Basic types with `dispatch_tree` feature
-   - `test-all`: Comprehensive testing with all feature combinations (ShellContext, Suggest, ResREPL, GeneralRenderer, Hooks, basic types, etc.)
+   - `test-all`: Comprehensive testing with all feature combinations (ShellContext, Suggest, ResREPL, StructuralRenderer, Hooks, basic types, etc.)
 
    These crates are located in `mingling_core/tests/test-*/`, each marked as an independent workspace via `[workspace]`, isolated from the main workspace.
 
@@ -264,9 +264,28 @@ The following explicit syntaxes are **removed**:
 
 ---
 
-1. **\[core\]** Changed the signature of `ProgramSetup::setup` from `fn setup(&mut self, program: &mut Program<C>) -> S` to `fn setup(self, program: &mut Program<C>)`, consuming `self` instead of taking a mutable reference. Correspondingly, `Program::with_setup` now accepts `S` by value (`&mut self, setup: S`) instead of by mutable reference (`&mut self, setup: &mut S`).
+1. **\[core\]** **\[structural_renderer\]** Renamed the `general_renderer` feature to `structural_renderer`. All associated types, structs, and APIs have been renamed accordingly:
 
-2. **\[core\]** Consolidated resource naming for `ExitCode` and `REPL`:
+   - Feature flag: `general_renderer` → `structural_renderer`
+   - Setup struct: `GeneralRendererSetup` → `StructuralRendererSetup`
+   - Simple setup struct: `GeneralRendererSimpleSetup` → `StructuralRendererSimpleSetup`
+   - Renderer type: `GeneralRenderer` → `StructuralRenderer`
+   - Setting enum: `GeneralRendererSetting` → `StructuralRendererSetting`
+   - Error type: `GeneralRendererSerializeError` → `StructuralRendererSerializeError`
+   - Field name: `program.general_renderer_name` → `program.structural_renderer_name`
+   - Trait method: `ProgramCollect::general_render()` → `ProgramCollect::structural_render()`
+   - Internal module: `mingling_core::renderer::general` → `mingling::renderer::structural`
+   - Internal static: `GENERAL_RENDERERS` → `STRUCTURAL_RENDERERS`
+   - Feature gate attributes: `#[cfg(feature = "general_renderer")]` → `#[cfg(feature = "structural_renderer")]`
+   - Sub-features: `general_renderer_empty` → `structural_renderer_empty`, `general_renderer_full` → `structural_renderer_full`
+   - Runtime feature constant: `MINGLING_GENERAL_RENDERER` → `MINGLING_STRUCTURAL_RENDERER` (and similarly for `_EMPTY` and `_FULL`)
+   - Derive macro feature gate: `#[cfg(feature = "general_renderer")]` on `#[derive(StructuralData)]` and `#[derive(GrouppedSerialize)]` → `#[cfg(feature = "structural_renderer")]`
+   - Example project: `example-general-renderer` renamed to `example-structural-renderer`
+   - Test crate: `test-general-renderer` renamed to `test-structural-renderer`
+
+2. **\[core\]** Changed the signature of `ProgramSetup::setup` from `fn setup(&mut self, program: &mut Program<C>) -> S` to `fn setup(self, program: &mut Program<C>)`, consuming `self` instead of taking a mutable reference. Correspondingly, `Program::with_setup` now accepts `S` by value (`&mut self, setup: S`) instead of by mutable reference (`&mut self, setup: &mut S`).
+
+3. **\[core\]** Consolidated resource naming for `ExitCode` and `REPL`:
    - Renamed `ExitCode` to `ResExitCode` and moved `ResREPL` from the `mingling` root to `mingling::res::ResREPL` (the `mingling::ResREPL` re-export is removed).
    - This aligns with the naming convention where resources are prefixed with `Res`.
    - The corresponding setup `ExitCodeSetup` and resource injection remain unchanged.
@@ -279,7 +298,7 @@ use mingling::{res::ExitCode, REPL};
 use mingling::{res::ResExitCode, res::ResREPL};
 ```
 
-3. **\[core\]** **\[macros\]** Migrated `to_chain()` and `to_render()` methods from being generated individually per type by `#[derive(Groupped)]` and `pack!` macros, to being provided as default trait methods on the `Groupped` trait itself.
+4. **\[core\]** **\[macros\]** Migrated `to_chain()` and `to_render()` methods from being generated individually per type by `#[derive(Groupped)]` and `pack!` macros, to being provided as default trait methods on the `Groupped` trait itself.
 
    Previously, each packed or derived type had its own inherent `to_chain()` and `to_render()` methods generated by the macros. Now, these methods are defined on the `Groupped<Group>` trait with default implementations, making them available to all types that implement the trait without redundant code generation.
 
@@ -301,7 +320,7 @@ use mingling::{res::ResExitCode, res::ResREPL};
 
    Removed the per-type inherent method generation from both `groupped.rs` and `pack.rs` in `mingling_macros`.
 
-4. **\[macros\]** Changed the `route!()` macro's error branch from `return e` to `return ::mingling::Groupped::to_chain(e)`, so that the error type no longer needs to be pre-converted to `ChainProcess` via `.to_chain()` or `.to_render()`. The macro now accepts any type implementing `Groupped` in the error position and automatically converts it.
+5. **\[macros\]** Changed the `route!()` macro's error branch from `return e` to `return ::mingling::Groupped::to_chain(e)`, so that the error type no longer needs to be pre-converted to `ChainProcess` via `.to_chain()` or `.to_render()`. The macro now accepts any type implementing `Groupped` in the error position and automatically converts it.
 
 ```rust
 // Before
@@ -311,7 +330,7 @@ let value = route!(prev.pick_or_route((), Error::default().to_chain()).unpack())
 let value = route!(prev.pick_or_route((), Error::default()).unpack());
 ```
 
-5. **\[core\]** **\[hook\]** Refactored the hook system to use structured info types and return `ProgramControls<C>` instead of raw values.
+6. **\[core\]** **\[hook\]** Refactored the hook system to use structured info types and return `ProgramControls<C>` instead of raw values.
 
    The hook system has been redesigned for better type safety, extensibility, and control flow management:
 
@@ -351,15 +370,15 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 
    - **Examples and internal callers updated** throughout the codebase to use the new hook API patterns.
 
-6. **\[core\]** **\[general_renderer\]** Added the `pack_err_structural!`, `pack_structural!`, and `group_structural!` macros for creating types that support structured output (JSON/YAML/TOML/RON). These are like `pack_err!`, `pack!`, and `group!` respectively, but also mark the type with the `StructuralData` trait, enabling the `GeneralRenderer` to serialize them.
+7. **\[core\]** **\[structural_renderer\]** Added the `pack_err_structural!`, `pack_structural!`, and `group_structural!` macros for creating types that support structured output (JSON/YAML/TOML/RON). These are like `pack_err!`, `pack!`, and `group!` respectively, but also mark the type with the `StructuralData` trait, enabling the `StructuralRenderer` to serialize them.
 
-7. **\[core\]** **\[general_renderer\]** Added the `StructuralData` derive macro and sealed trait, decoupling structured output from `Groupped`. Previously, under the `general_renderer` feature, all `pack!` and `pack_err!` types automatically derived `Serialize`. Now, structured output is an opt-in property controlled by `StructuralData`:
-  - `pack!` / `pack_err!` / `group!` no longer derive `Serialize` even when `general_renderer` is enabled.
+8. **\[core\]** **\[structural_renderer\]** Added the `StructuralData` derive macro and sealed trait, decoupling structured output from `Groupped`. Previously, under the `structural_renderer` feature, all `pack!` and `pack_err!` types automatically derived `Serialize`. Now, structured output is an opt-in property controlled by `StructuralData`:
+  - `pack!` / `pack_err!` / `group!` no longer derive `Serialize` even when `structural_renderer` is enabled.
   - To enable structured output, use `pack_structural!` / `pack_err_structural!` / `group_structural!` or the `#[derive(StructuralData)]` marker.
   - The `Groupped` trait no longer requires `Serialize` bounds, and `AnyOutput::new` no longer requires `Serialize`.
-  - `GeneralRenderer::render` now accepts `T: StructuralData + Send` instead of `T: Serialize + Send`, and the individual format methods (`render_to_json`, etc.) are now private.
+  - `StructuralRenderer::render` now accepts `T: StructuralData + Send` instead of `T: Serialize + Send`, and the individual format methods (`render_to_json`, etc.) are now private.
 
-8. **\[core\]** **\[general_renderer\]** Added `mingling::__private::StructuralDataSealed` and `mingling::__private::StructuralData` (re-exported from `mingling_core::renderer::general::structural_data`) to support the sealed trait pattern. The `StructuralData` trait is only implementable via the derive macro or the `_structural` macro variants.
+9. **\[core\]** **\[structural_renderer\]** Added `mingling::__private::StructuralDataSealed` and `mingling::__private::StructuralData` (re-exported from `mingling_core::renderer::structural::structural_data`) to support the sealed trait pattern. The `StructuralData` trait is only implementable via the derive macro or the `_structural` macro variants.
 
 ### Release 0.1.9 (2026-05-29)
 

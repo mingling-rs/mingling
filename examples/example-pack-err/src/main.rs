@@ -2,7 +2,7 @@
 //!
 //! > This example demonstrates how to use the `pack_err!` macro to define error types
 //! > with automatic `name` field (set to snake_case at compile time) and optional `info` field.
-//! > Also demonstrates `--json` serialization when `general_renderer` is enabled.
+//! > Also demonstrates `--json` serialization when `structural_renderer` is enabled.
 //!
 //! Run:
 //! ```bash
@@ -27,7 +27,7 @@
 //! ```
 
 use mingling::prelude::*;
-use mingling::setup::GeneralRendererSetup;
+use mingling::setup::StructuralRendererSetup;
 use std::path::PathBuf;
 
 dispatcher!("find", CMDFind => EntryFind);
@@ -45,7 +45,7 @@ dispatcher!("find-structural", CMDFindStructural => EntryFindStructural);
 // The typed form additionally generates `pub fn new(info)`.
 //   name = "error_not_dir"
 //
-// When `general_renderer` is enabled, the struct also gets
+// When `structural_renderer` is enabled, the struct also gets
 // `#[derive(serde::Serialize)]` for --json / --yaml output.
 // --------- IMPORTANT ---------
 
@@ -132,8 +132,8 @@ gen_program!();
 
 fn main() {
     let mut program = ThisProgram::new();
-    // Add GeneralRendererSetup to support --json / --yaml flags
-    program.with_setup(GeneralRendererSetup);
+    // Add StructuralRendererSetup to support --json / --yaml flags
+    program.with_setup(StructuralRendererSetup);
     program.with_dispatcher(CMDFind);
     program.with_dispatcher(CMDFindStructural);
     let _ = program.exec();

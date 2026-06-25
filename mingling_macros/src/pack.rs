@@ -34,7 +34,7 @@ pub fn pack(input: TokenStream) -> TokenStream {
     let attrs = pack_input.attrs;
 
     // Generate the struct definition
-    // Note: No longer derives Serialize under general_renderer.
+    // Note: No longer derives Serialize under structural_renderer.
     // Use pack_structual! for structured output support.
     let struct_def = quote! {
         #(#attrs)*

@@ -1,12 +1,12 @@
-//! Example General Renderer
+//! Example structural renderer
 //!
-//! > This example demonstrates how to use the `general_renderer` feature to render data into structures such as json / yaml
+//! > This example demonstrates how to use the `structural_renderer` feature to render data into structures such as json / yaml
 //!
 //! Run
 //! ```bash
-//! cargo run --manifest-path examples/example-general-renderer/Cargo.toml --quiet -- render Bob 22
-//! cargo run --manifest-path examples/example-general-renderer/Cargo.toml --quiet -- render Bob 22 --json
-//! cargo run --manifest-path examples/example-general-renderer/Cargo.toml --quiet -- render Bob 22 --yaml
+//! cargo run --manifest-path examples/example-structural-renderer/Cargo.toml --quiet -- render Bob 22
+//! cargo run --manifest-path examples/example-structural-renderer/Cargo.toml --quiet -- render Bob 22 --json
+//! cargo run --manifest-path examples/example-structural-renderer/Cargo.toml --quiet -- render Bob 22 --yaml
 //! ```
 //!
 //! Output:
@@ -18,15 +18,15 @@
 //! ```
 
 use mingling::prelude::*;
-use mingling::{parser::Picker, setup::GeneralRendererSetup, StructuralData, Groupped};
+use mingling::{parser::Picker, setup::StructuralRendererSetup, StructuralData, Groupped};
 use serde::Serialize;
 
 dispatcher!("render", CMDRender => EntryRender);
 
 fn main() {
     let mut program = ThisProgram::new();
-    // Add `GeneralRendererSetup` to receive user input `--json` `--yaml` parameters
-    program.with_setup(GeneralRendererSetup);
+    // Add `StructuralRendererSetup` to receive user input `--json` `--yaml` parameters
+    program.with_setup(StructuralRendererSetup);
     program.with_dispatcher(CMDRender);
     let _ = program.exec();
 }
@@ -62,7 +62,7 @@ fn parse_render(prev: EntryRender) -> Next {
     Info { name, age }.to_render()
 }
 
-/// Implement default renderer for when general_renderer is not specified
+/// Implement default renderer for when structural_renderer is not specified
 #[renderer]
 fn render_info(prev: Info) {
     r_println!("{} is {} years old", prev.name, prev.age);

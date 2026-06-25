@@ -4,11 +4,11 @@ pub use basic::*;
 mod exit_code;
 pub use exit_code::*;
 
-#[cfg(feature = "general_renderer")]
-mod general_renderer;
+#[cfg(feature = "structural_renderer")]
+mod structural_renderer;
 
-#[cfg(feature = "general_renderer")]
-pub use general_renderer::*;
+#[cfg(feature = "structural_renderer")]
+pub use structural_renderer::*;
 
 #[cfg(feature = "repl")]
 mod repl_basic;

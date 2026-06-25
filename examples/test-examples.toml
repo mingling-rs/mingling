@@ -138,12 +138,12 @@ command = "lang-select OCaml"
 expect.exit-code = 0
 expect.result = "Selected: OCaml"
 
-[[test.example-general-renderer]]
+[[test.example-structural-renderer]]
 command = "render Bob 22"
 expect.exit-code = 0
 expect.result = "Bob is 22 years old"
 
-[[test.example-general-renderer]]
+[[test.example-structural-renderer]]
 command = "render Bob 22 --json"
 expect.exit-code = 0
 expect.result = "{\"member_name\":\"Bob\",\"member_age\":22}"

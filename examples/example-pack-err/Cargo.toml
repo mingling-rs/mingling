@@ -9,7 +9,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 [dependencies.mingling]
 path = "../../mingling"
 features = [
-    "general_renderer",
+    "structural_renderer",
     "extra_macros",
 ]
 

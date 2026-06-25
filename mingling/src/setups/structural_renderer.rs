@@ -1,22 +1,22 @@
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
-/// Sets up the general renderer for the program:
+/// Sets up the structural renderer for the program:
 ///
 /// - Adds a `--renderer` global argument to specify the renderer type
-pub struct GeneralRendererSimpleSetup;
+pub struct StructuralRendererSimpleSetup;
 
-impl<C> ProgramSetup<C> for GeneralRendererSimpleSetup
+impl<C> ProgramSetup<C> for StructuralRendererSimpleSetup
 where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
         program.global_argument("--renderer", |p, renderer| {
-            p.general_renderer_name = renderer.into();
+            p.structural_renderer_name = renderer.into();
         });
     }
 }
 
-/// Sets up the general renderer for the program:
+/// Sets up the structural renderer for the program:
 ///
 /// - Adds global flags to specify the renderer type:
 ///   * `--json` for JSON output
@@ -25,9 +25,9 @@ where
 ///   * `--toml` for TOML output
 ///   * `--ron` for RON output
 ///   * `--ron-pretty` for pretty-printed RON output
-pub struct GeneralRendererSetup;
+pub struct StructuralRendererSetup;
 
-impl<C> ProgramSetup<C> for GeneralRendererSetup
+impl<C> ProgramSetup<C> for StructuralRendererSetup
 where
     C: ProgramCollect<Enum = C>,
 {
@@ -35,27 +35,27 @@ where
     fn setup(self, program: &mut Program<C>) {
         #[cfg(feature = "json_serde_fmt")]
         program.global_flag("--json", |p| {
-            p.general_renderer_name = crate::GeneralRendererSetting::Json;
+            p.structural_renderer_name = crate::StructuralRendererSetting::Json;
         });
         #[cfg(feature = "json_serde_fmt")]
         program.global_flag("--json-pretty", |p| {
-            p.general_renderer_name = crate::GeneralRendererSetting::JsonPretty;
+            p.structural_renderer_name = crate::StructuralRendererSetting::JsonPretty;
         });
         #[cfg(feature = "yaml_serde_fmt")]
         program.global_flag("--yaml", |p| {
-            p.general_renderer_name = crate::GeneralRendererSetting::Yaml;
+            p.structural_renderer_name = crate::StructuralRendererSetting::Yaml;
         });
         #[cfg(feature = "toml_serde_fmt")]
         program.global_flag("--toml", |p| {
-            p.general_renderer_name = crate::GeneralRendererSetting::Toml;
+            p.structural_renderer_name = crate::StructuralRendererSetting::Toml;
         });
         #[cfg(feature = "ron_serde_fmt")]
         program.global_flag("--ron", |p| {
-            p.general_renderer_name = crate::GeneralRendererSetting::Ron;
+            p.structural_renderer_name = crate::StructuralRendererSetting::Ron;
         });
         #[cfg(feature = "ron_serde_fmt")]
         program.global_flag("--ron-pretty", |p| {
-            p.general_renderer_name = crate::GeneralRendererSetting::RonPretty;
+            p.structural_renderer_name = crate::StructuralRendererSetting::RonPretty;
         });
     }
 }

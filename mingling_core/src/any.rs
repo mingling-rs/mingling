@@ -161,7 +161,7 @@ mod tests {
     }
 
     #[derive(Debug, Clone, PartialEq)]
-    #[cfg_attr(feature = "general_renderer", derive(serde::Serialize))]
+    #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
     struct AlphaData {
         value: i32,
     }
@@ -173,7 +173,7 @@ mod tests {
     }
 
     #[derive(Debug, Clone, PartialEq)]
-    #[cfg_attr(feature = "general_renderer", derive(serde::Serialize))]
+    #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
     struct BetaData {
         name: String,
     }
@@ -186,7 +186,7 @@ mod tests {
 
     #[derive(Debug, Clone, PartialEq)]
     #[allow(dead_code)]
-    #[cfg_attr(feature = "general_renderer", derive(serde::Serialize))]
+    #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
     struct GammaData;
 
     impl Groupped<MockGroup> for GammaData {
@@ -333,9 +333,9 @@ mod tests {
         assert_eq!(format!("{}", NextProcess::Renderer), "Renderer");
     }
 
-    // AnyOutput::restore general_renderer feature only
+    // AnyOutput::restore structural_renderer feature only
 
-    #[cfg(feature = "general_renderer")]
+    #[cfg(feature = "structural_renderer")]
     #[test]
     fn test_any_output_restore_success() {
         use serde::Serialize;
@@ -357,7 +357,7 @@ mod tests {
         assert_eq!(restored, Some(SerData { x: 42 }));
     }
 
-    #[cfg(feature = "general_renderer")]
+    #[cfg(feature = "structural_renderer")]
     #[test]
     fn test_any_output_restore_type_mismatch() {
         use serde::Serialize;

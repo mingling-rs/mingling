@@ -99,7 +99,7 @@
 //! | `comp` | [`#[completion]`](attr.completion.html), [`suggest!`], [`suggest_enum!`] |
 //! | `extra_macros` | [`entry!`], [`empty_result!`], [`route!`], [`#[program_setup]`](attr.program_setup.html) |
 //! | `dispatch_tree` | `register_dispatcher!` (enables trie-based command dispatch) |
-//! | `general_renderer` | Enables JSON/YAML/TOML/RON serialization renderers |
+//! | `structural_renderer` | Enables JSON/YAML/TOML/RON serialization renderers |
 //! | `async` | Enables async `#[chain]` functions |
 //! | `repl` | Enables REPL execution loop |
 //!
@@ -156,7 +156,7 @@ mod enum_tag;
 mod group_impl;
 mod groupped;
 mod help;
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 mod structural_data;
 mod node;
 mod pack;
@@ -182,12 +182,12 @@ pub(crate) fn get_global_set(lock: &OnceLock<Mutex<BTreeSet<String>>>) -> &Mutex
 pub(crate) type Registry = OnceLock<Mutex<BTreeSet<String>>>;
 
 // Global variables
-#[cfg(feature = "general_renderer")]
-pub(crate) static GENERAL_RENDERERS: Registry = OnceLock::new();
+#[cfg(feature = "structural_renderer")]
+pub(crate) static STRUCTURAL_RENDERERS: Registry = OnceLock::new();
 
 /// Types explicitly marked with `#[derive(StructuralData)]` or created via
 /// `pack_structural!` / `group_structural!`.
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 pub(crate) static STRUCTURED_TYPES: Registry = OnceLock::new();
 
 #[cfg(feature = "comp")]
@@ -293,8 +293,8 @@ pub fn group(input: TokenStream) -> TokenStream {
 /// group_structural!(IoError = std::io::Error);
 /// ```
 ///
-/// Requires the `general_renderer` and `extra_macros` features.
-#[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+/// Requires the `structural_renderer` and `extra_macros` features.
+#[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
 #[proc_macro]
 pub fn group_structural(input: TokenStream) -> TokenStream {
     structural_data::group_structural(input)
@@ -384,7 +384,7 @@ pub fn node(input: TokenStream) -> TokenStream {
 /// The struct is also registered via `register_type!` so that `gen_program!`
 /// can include it in the program enum.
 ///
-/// When the `general_renderer` feature is enabled, the struct also gets
+/// When the `structural_renderer` feature is enabled, the struct also gets
 /// `#[derive(serde::Serialize)]`.
 #[proc_macro]
 pub fn pack(input: TokenStream) -> TokenStream {
@@ -406,8 +406,8 @@ pub fn pack(input: TokenStream) -> TokenStream {
 /// impl ::mingling::StructuralData for Info {}
 /// ```
 ///
-/// Requires the `general_renderer` feature.
-#[cfg(feature = "general_renderer")]
+/// Requires the `structural_renderer` feature.
+#[cfg(feature = "structural_renderer")]
 #[proc_macro]
 pub fn pack_structural(input: TokenStream) -> TokenStream {
     structural_data::pack_structural(input)
@@ -471,7 +471,7 @@ pub fn pack_structural(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// When the `general_renderer` feature is enabled, the struct also gets
+/// When the `structural_renderer` feature is enabled, the struct also gets
 /// `#[derive(serde::Serialize)]`.
 ///
 /// This macro is only available with the `extra_macros` feature.
@@ -491,8 +491,8 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
 /// pack_err_structural!(ErrorNotDir = PathBuf);
 /// ```
 ///
-/// Requires the `general_renderer` and `extra_macros` features.
-#[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+/// Requires the `structural_renderer` and `extra_macros` features.
+#[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
 #[proc_macro]
 pub fn pack_err_structural(input: TokenStream) -> TokenStream {
     pack_err::pack_err_structural(input)
@@ -685,7 +685,7 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
 /// Unlike `print!`, this macro writes to the in-memory `RenderResult` buffer
 /// rather than directly to stdout. The buffered output is flushed automatically
 /// when the renderer returns, allowing the framework to control output timing
-/// and capture (e.g., for testing or general rendering to JSON/YAML).
+/// and capture (e.g., for testing or structural rendering to JSON/YAML).
 ///
 /// This macro requires a mutable reference to a [`RenderResult`] named
 /// `__renderer_inner_result` to be in scope, which is automatically provided
@@ -1068,7 +1068,7 @@ pub fn completion(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// #[program_setup]
 /// fn configure(program: &mut Program<ThisProgram>) {
-///     program.with_setup(GeneralRendererSetup);
+///     program.with_setup(StructuralRendererSetup);
 ///     program.user_context.some_flag = true;
 /// }
 /// ```
@@ -1387,7 +1387,7 @@ pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
 ///     age: i32,
 /// }
 /// ```
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 #[proc_macro_derive(StructuralData)]
 pub fn derive_structural_data(input: TokenStream) -> TokenStream {
     structural_data::derive_structural_data(input)
@@ -1395,10 +1395,10 @@ pub fn derive_structural_data(input: TokenStream) -> TokenStream {
 
 /// Derive macro for implementing both `Groupped` and `serde::Serialize` on a struct.
 ///
-/// **This macro is only available with the `general_renderer` feature.**
+/// **This macro is only available with the `structural_renderer` feature.**
 ///
 /// This is identical to `#[derive(Groupped)]` but also adds `#[derive(serde::Serialize)]`
-/// to the struct, which is required for the general renderer to serialize output
+/// to the struct, which is required for the structural renderer to serialize output
 /// to formats like JSON, YAML, TOML, or RON.
 ///
 /// # Syntax
@@ -1423,7 +1423,7 @@ pub fn derive_structural_data(input: TokenStream) -> TokenStream {
 ///     age: i32,
 /// }
 /// ```
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 #[proc_macro_derive(GrouppedSerialize, attributes(group))]
 pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
     groupped::derive_groupped_serialize(input)
@@ -1638,8 +1638,8 @@ pub fn register_chain(input: TokenStream) -> TokenStream {
 ///
 /// This macro is called internally by `#[renderer]`(macro.renderer.html) and is
 /// generally not needed in user code. It inserts entries into the global
-/// `RENDERERS`, `RENDERERS_EXIST` and (with `general_renderer` feature)
-/// `GENERAL_RENDERERS` registries.
+/// `RENDERERS`, `RENDERERS_EXIST` and (with `structural_renderer` feature)
+/// `STRUCTURAL_RENDERERS` registries.
 ///
 /// # Syntax
 ///
@@ -1704,7 +1704,7 @@ pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
 ///    creates an enum with each type as a variant.
 /// 2. Generates the `Display` implementation for the enum.
 /// 3. Generates the `ProgramCollect` implementation that dispatches to all
-///    registered renderers, chains, help handlers, completions, and general renderers.
+///    registered renderers, chains, help handlers, completions, and structural renderers.
 /// 4. Adds a `new()` constructor on the enum returning `Program<EnumName>`.
 ///
 /// The generated enum's representation type (`#[repr(u8)]`, `#[repr(u16)]`, etc.)
@@ -1738,7 +1738,7 @@ pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
 ///     fn has_renderer(any) -> bool { /* checks renderer registry */ }
 ///     fn has_chain(any) -> bool { /* checks chain registry */ }
 ///     // (with comp feature) fn do_comp(...)
-///     // (with general_renderer feature) fn general_render(...)
+///     // (with structural_renderer feature) fn structural_render(...)
 /// }
 ///
 /// impl MyProgram {
@@ -1781,8 +1781,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     let renderer_exist = get_global_set(&RENDERERS_EXIST).lock().unwrap().clone();
     let chain_exist = get_global_set(&CHAINS_EXIST).lock().unwrap().clone();
 
-    #[cfg(feature = "general_renderer")]
-    let general_renderers = get_global_set(&GENERAL_RENDERERS).lock().unwrap().clone();
+    #[cfg(feature = "structural_renderer")]
+    let structural_renderers = get_global_set(&STRUCTURAL_RENDERERS).lock().unwrap().clone();
 
     #[cfg(feature = "comp")]
     let completions = get_global_set(&COMPLETIONS).lock().unwrap().clone();
@@ -1812,27 +1812,27 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
         .collect();
 
-    #[cfg(feature = "general_renderer")]
-    let general_renderer_tokens: Vec<proc_macro2::TokenStream> = general_renderers
+    #[cfg(feature = "structural_renderer")]
+    let structural_renderer_tokens: Vec<proc_macro2::TokenStream> = structural_renderers
         .iter()
         .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
         .collect();
 
-    #[cfg(feature = "general_renderer")]
-    let general_render = quote! {
-        fn general_render(
+    #[cfg(feature = "structural_renderer")]
+    let structural_render = quote! {
+        fn structural_render(
             any: ::mingling::AnyOutput<Self::Enum>,
-            setting: &::mingling::GeneralRendererSetting,
-        ) -> Result<::mingling::RenderResult, ::mingling::error::GeneralRendererSerializeError> {
+            setting: &::mingling::StructuralRendererSetting,
+        ) -> Result<::mingling::RenderResult, ::mingling::error::StructuralRendererSerializeError> {
             match any.member_id {
-                #(#general_renderer_tokens)*
+                #(#structural_renderer_tokens)*
                 _ => Ok(::mingling::RenderResult::default()),
             }
         }
     };
 
-    #[cfg(not(feature = "general_renderer"))]
-    let general_render = quote! {};
+    #[cfg(not(feature = "structural_renderer"))]
+    let structural_render = quote! {};
 
     #[cfg(feature = "dispatch_tree")]
     let compile_time_dispatchers: Vec<String> = get_global_set(&COMPILE_TIME_DISPATCHERS)
@@ -2048,7 +2048,7 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
                 }
             }
             #dispatch_tree_nodes
-            #general_render
+            #structural_render
             #comp
         }
 
@@ -2079,8 +2079,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         .lock()
         .unwrap()
         .clear();
-    #[cfg(feature = "general_renderer")]
-    get_global_set(&GENERAL_RENDERERS).lock().unwrap().clear();
+    #[cfg(feature = "structural_renderer")]
+    get_global_set(&STRUCTURAL_RENDERERS).lock().unwrap().clear();
 
     TokenStream::from(expanded)
 }

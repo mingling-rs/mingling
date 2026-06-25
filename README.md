@@ -48,8 +48,8 @@
 4. **Lightning-Fast Subcommand Dispatch**: With the `dispatch_tree` feature, Mingling hardens the subcommand structure into a prefix tree at **compile time**, enabling blazing-fast subcommand lookup.
    See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-dispatch-tree/src/main.rs)
 5. **Lightweight Dependencies, On-Demand Importing**: Minimal core dependencies keep builds fast; enhanced features are imported on demand through fine-grained feature flags.
-6. **Structured Output**: Enabling the `general_renderer` feature adds support for flags like `--json` and `--yaml`, providing structured output capabilities.
-   See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-general-renderer/src/main.rs)
+6. **Structured Output**: Enabling the `structural_renderer` feature adds support for flags like `--json` and `--yaml`, providing structured output capabilities.
+   See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-structural-renderer/src/main.rs)
 
 <h1 align="center">
     ✍️ Writing with Mingling ✍️
@@ -658,16 +658,16 @@ fn main() {
 
 ---
 
-### 13. General Renderer — Structured Output (JSON/YAML)
+### 13. Structural Renderer — Structured Output (JSON/YAML)
 
-With the `general_renderer` feature, users can add `--json` or `--yaml` flags to get structured output instead of human-readable text.
+With the `structural_renderer` feature, users can add `--json` or `--yaml` flags to get structured output instead of human-readable text.
 
 ```rust
-// Features: ["general_renderer", "parser"]
+// Features: ["structural_renderer", "parser"]
 // Dependencies:
 // serde = "1"
 
-use mingling::{prelude::*, setup::GeneralRendererSetup};
+use mingling::{prelude::*, setup::StructuralRendererSetup};
 use mingling::Groupped;
 use mingling::StructuralData;
 use serde::Serialize;
@@ -693,7 +693,7 @@ fn render_info_result(info: ResultInfo) {
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_setup(GeneralRendererSetup);  // enables --json / --yaml
+    program.with_setup(StructuralRendererSetup);  // enables --json / --yaml
     program.with_dispatcher(CMDRender);
     let _ = program.exec();
 }
@@ -848,7 +848,7 @@ Then check out:
 </h1>
 
 - [ ] Milestone.1 "MVP"
-  - [x] \[[0.1.4](https://docs.rs/mingling/0.1.4/mingling/)\] \[`core`\] \[`general_renderer`\] **Mingling** can render data into serializable formats via `--json` and `--yaml` flags
+  - [x] \[[0.1.4](https://docs.rs/mingling/0.1.4/mingling/)\] \[`core`\] \[`structural_renderer`\] **Mingling** can render data into serializable formats via `--json` and `--yaml` flags
   - [x] \[[0.1.5](https://docs.rs/mingling/0.1.5/mingling/)\] \[`core`\] \[`comp`\] **Mingling** can dynamically invoke itself to provide completions for shells like `bash`, `zsh`, `fish`, and `pwsh`
   - [x] \[[0.1.6](https://docs.rs/mingling/0.1.6/mingling/)\] \[`core`\] \[`comp`\] **Mingling** can gather more context for smarter completions
   - [x] \[[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)\] \[`clap`\] Provides a **Clap** compatibility layer, allowing **Mingling** to reuse its powerful parsing capabilities

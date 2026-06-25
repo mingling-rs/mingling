@@ -5,7 +5,7 @@ use crate::ShellContext;
 /// A completion suggestion that tells the shell how to perform completion.
 /// This can be either a set of specific suggestion items or a request for file completion.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "general_renderer", derive(serde::Serialize))]
+#[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
 pub enum Suggest {
     /// A set of specific suggestion items for the shell to display.
     Suggest(BTreeSet<SuggestItem>),
@@ -78,7 +78,7 @@ impl std::ops::DerefMut for Suggest {
 /// The first `String` always holds the suggestion text, and the second `String` (if present)
 /// holds an optional description providing additional context.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "general_renderer", derive(serde::Serialize))]
+#[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
 pub enum SuggestItem {
     /// A simple suggestion with only the suggestion text.
     Simple(String),

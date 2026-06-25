@@ -7,7 +7,7 @@
 
 **Description:**
 
-Enables serde formatting support for all serialization formats (JSON, RON, TOML, YAML) in `general_renderer`.
+Enables serde formatting support for all serialization formats (JSON, RON, TOML, YAML) in `structural_renderer`.
 
 Enabling this feature will automatically enable the four sub-features: `json_serde_fmt`, `ron_serde_fmt`, `toml_serde_fmt`, `yaml_serde_fmt`.
 
@@ -208,27 +208,27 @@ pack_err!(ErrorNotDir = PathBuf);
  
 </details>
 
-## Feature `general_renderer`
+## Feature `structural_renderer`
 
 **Description:**
 
-Enables the general renderer, providing basic content rendering capabilities. Enabling this feature will automatically enable `json_serde_fmt`.
+Enables the structural renderer, providing basic content rendering capabilities. Enabling this feature will automatically enable `json_serde_fmt`.
 
 When enabled, users can get structured output via flags like `--json` or `--yaml`.
 
-See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-general-renderer)
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-structural-renderer)
 
-## Feature `general_renderer_empty`
-
-**Description:**
-
-Enables an empty implementation of the general renderer, suitable for scenarios where no actual rendering is needed. This feature does not enable any serde formatting backend.
-
-## Feature `general_renderer_full`
+## Feature `structural_renderer_empty`
 
 **Description:**
 
-Enables the full implementation of the general renderer, including all rendering capabilities and serialization format support. Enabling this feature will automatically enable `all_serde_fmt`.
+Enables an empty implementation of the structural renderer, suitable for scenarios where no actual rendering is needed. This feature does not enable any serde formatting backend.
+
+## Feature `structural_renderer_full`
+
+**Description:**
+
+Enables the full implementation of the structural renderer, including all rendering capabilities and serialization format support. Enabling this feature will automatically enable `all_serde_fmt`.
 
 ## Feature `json_serde_fmt`
 

@@ -69,7 +69,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
             let name_str = type_name.to_string();
             let snake_name = to_snake_case(&name_str);
 
-            // Note: No longer derives Serialize under general_renderer.
+            // Note: No longer derives Serialize under structural_renderer.
             // Use pack_err_structural for structured output support.
             let derive = quote! {
                 #[derive(::mingling::Groupped)]
@@ -102,7 +102,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
             let name_str = type_name.to_string();
             let snake_name = to_snake_case(&name_str);
 
-            // Note: No longer derives Serialize under general_renderer.
+            // Note: No longer derives Serialize under structural_renderer.
             // Use pack_err_structural for structured output support.
             let derive = quote! {
                 #[derive(::mingling::Groupped)]
@@ -152,7 +152,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
 /// impl ::mingling::__private::StructuralDataSealed for ErrorNotFound {}
 /// impl ::mingling::__private::StructuralData for ErrorNotFound {}
 /// ```
-#[cfg(feature = "general_renderer")]
+#[cfg(feature = "structural_renderer")]
 pub fn pack_err_structural(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as PackErrInput);
 
