@@ -1,3 +1,5 @@
+#[cfg(feature = "dispatch_tree")]
+use just_fmt::snake_case;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
@@ -215,7 +217,7 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
     } = syn::parse_macro_input!(input as RegisterDispatcherInput);
 
     let node_name_str = node_name.value();
-    let static_name = format!("__internal_dispatcher_{}", node_name_str.replace('.', "_"));
+    let static_name = format!("__internal_dispatcher_{}", snake_case!(node_name_str.clone()));
     let static_ident = Ident::new(&static_name, proc_macro2::Span::call_site());
 
     // Register node info in the global collection at compile time

@@ -1458,7 +1458,7 @@ pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
 
     #[cfg(feature = "dispatch_tree")]
     let internal_dispatcher_comp = quote! {
-        use __internal_completion_mod::__internal_dispatcher___comp;
+        use __internal_completion_mod::__internal_dispatcher_comp;
     };
 
     #[cfg(not(feature = "dispatch_tree"))]

@@ -1,3 +1,4 @@
+use just_fmt::snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
 use std::collections::BTreeMap;
@@ -7,7 +8,7 @@ pub fn gen_get_nodes(entries: &[(String, String, String)]) -> TokenStream {
     let mut node_entries = Vec::new();
 
     for (node_name, _disp_type, _entry_name) in entries {
-        let static_name_str = format!("__internal_dispatcher_{}", node_name.replace('.', "_"));
+        let static_name_str = format!("__internal_dispatcher_{}", snake_case!(node_name));
         let static_ident = syn::Ident::new(&static_name_str, proc_macro2::Span::call_site());
 
         let node_display_name = node_name.replace('.', " ");
