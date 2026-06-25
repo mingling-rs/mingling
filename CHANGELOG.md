@@ -351,6 +351,16 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 
    - **Examples and internal callers updated** throughout the codebase to use the new hook API patterns.
 
+6. **\[core\]** **\[general_renderer\]** Added the `pack_err_structural!`, `pack_structural!`, and `group_structural!` macros for creating types that support structured output (JSON/YAML/TOML/RON). These are like `pack_err!`, `pack!`, and `group!` respectively, but also mark the type with the `StructuralData` trait, enabling the `GeneralRenderer` to serialize them.
+
+7. **\[core\]** **\[general_renderer\]** Added the `StructuralData` derive macro and sealed trait, decoupling structured output from `Groupped`. Previously, under the `general_renderer` feature, all `pack!` and `pack_err!` types automatically derived `Serialize`. Now, structured output is an opt-in property controlled by `StructuralData`:
+  - `pack!` / `pack_err!` / `group!` no longer derive `Serialize` even when `general_renderer` is enabled.
+  - To enable structured output, use `pack_structural!` / `pack_err_structural!` / `group_structural!` or the `#[derive(StructuralData)]` marker.
+  - The `Groupped` trait no longer requires `Serialize` bounds, and `AnyOutput::new` no longer requires `Serialize`.
+  - `GeneralRenderer::render` now accepts `T: StructuralData + Send` instead of `T: Serialize + Send`, and the individual format methods (`render_to_json`, etc.) are now private.
+
+8. **\[core\]** **\[general_renderer\]** Added `mingling::__private::StructuralDataSealed` and `mingling::__private::StructuralData` (re-exported from `mingling_core::renderer::general::structural_data`) to support the sealed trait pattern. The `StructuralData` trait is only implementable via the derive macro or the `_structural` macro variants.
+
 ### Release 0.1.9 (2026-05-29)
 
 #### Fixes:

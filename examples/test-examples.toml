@@ -234,16 +234,26 @@ expect.exit-code = 0
 expect.result = "Search path not provided"
 
 [[test.example-pack-err]]
-command = "find --json"
-expect.exit-code = 0
-expect.result = '{"name":"error_not_found"}'
-
-[[test.example-pack-err]]
 command = "find Cargo.toml"
 expect.exit-code = 0
 expect.result = "Not a directory: Cargo.toml"
 
 [[test.example-pack-err]]
-command = "find Cargo.toml --json"
+command = "find examples"
 expect.exit-code = 0
-expect.result = '{"name":"error_not_dir","info":"Cargo.toml"}'
+expect.result = "Found directory: examples"
+
+[[test.example-pack-err]]
+command = "find-structural --json"
+expect.exit-code = 0
+expect.result = '{"name":"error_not_found_structural"}'
+
+[[test.example-pack-err]]
+command = "find-structural Cargo.toml --json"
+expect.exit-code = 0
+expect.result = '{"name":"error_not_dir_structural","info":"Cargo.toml"}'
+
+[[test.example-pack-err]]
+command = "find-structural examples --json"
+expect.exit-code = 0
+expect.result = '{"inner":"examples"}'

@@ -22,6 +22,9 @@ pub mod test {
 #[cfg(feature = "general_renderer")]
 pub use crate::renderer::general::GeneralRenderer;
 
+// NOT re-exported at top level: the `StructuralData` trait is sealed and only
+// accessible through the derive macro. Users who need the trait can access it
+// via `mingling::renderer::general::StructuralData` (through the inner alias).
 pub use crate::any::group::*;
 pub use crate::any::*;
 
@@ -70,6 +73,18 @@ pub use crate::comp::*;
 
 pub mod setup {
     pub use crate::program::setup::ProgramSetup;
+}
+
+/// Private API — not intended for direct use.
+#[doc(hidden)]
+pub mod __private {
+    /// Sealed trait for `StructuralData` — only implementable via derive macro.
+    pub trait StructuralDataSealed {}
+
+    /// Re-export so the derive macro can reference the trait without
+    /// conflicting with the derive macro name at `::mingling::StructuralData`.
+    #[cfg(feature = "general_renderer")]
+    pub use crate::renderer::general::structural_data::StructuralData;
 }
 
 #[doc(hidden)]

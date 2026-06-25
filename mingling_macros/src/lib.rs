@@ -156,6 +156,8 @@ mod enum_tag;
 mod group_impl;
 mod groupped;
 mod help;
+#[cfg(feature = "general_renderer")]
+mod structural_data;
 mod node;
 mod pack;
 #[cfg(feature = "extra_macros")]
@@ -182,6 +184,12 @@ pub(crate) type Registry = OnceLock<Mutex<BTreeSet<String>>>;
 // Global variables
 #[cfg(feature = "general_renderer")]
 pub(crate) static GENERAL_RENDERERS: Registry = OnceLock::new();
+
+/// Types explicitly marked with `#[derive(StructuralData)]` or created via
+/// `pack_structural!` / `group_structural!`.
+#[cfg(feature = "general_renderer")]
+pub(crate) static STRUCTURED_TYPES: Registry = OnceLock::new();
+
 #[cfg(feature = "comp")]
 pub(crate) static COMPLETIONS: Registry = OnceLock::new();
 
@@ -275,6 +283,23 @@ pub fn group(input: TokenStream) -> TokenStream {
     group_impl::group_macro(input)
 }
 
+/// Like `group!` but also marks the type as supporting structured output
+/// (JSON / YAML / TOML / RON) via `StructuralData`.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// group_structural!(std::io::Error);
+/// group_structural!(IoError = std::io::Error);
+/// ```
+///
+/// Requires the `general_renderer` and `extra_macros` features.
+#[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+#[proc_macro]
+pub fn group_structural(input: TokenStream) -> TokenStream {
+    structural_data::group_structural(input)
+}
+
 /// Creates a `Node` from a dot-separated path string.
 ///
 /// Each segment is converted to kebab-case (unless it starts with `_`).
@@ -366,6 +391,28 @@ pub fn pack(input: TokenStream) -> TokenStream {
     pack::pack(input)
 }
 
+/// Like `pack!` but also marks the type as supporting structured output
+/// (JSON / YAML / TOML / RON) via `StructuralData`.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// pack_structural!(Info = (String, i32));
+/// ```
+///
+/// This is equivalent to:
+/// ```rust,ignore
+/// pack!(Info = (String, i32));
+/// impl ::mingling::StructuralData for Info {}
+/// ```
+///
+/// Requires the `general_renderer` feature.
+#[cfg(feature = "general_renderer")]
+#[proc_macro]
+pub fn pack_structural(input: TokenStream) -> TokenStream {
+    structural_data::pack_structural(input)
+}
+
 /// Creates an error struct with a `name: String` field and optional `info: Type` field.
 ///
 /// This macro provides a concise way to define error types that implement `Groupped`
@@ -432,6 +479,23 @@ pub fn pack(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn pack_err(input: TokenStream) -> TokenStream {
     pack_err::pack_err(input)
+}
+
+/// Like `pack_err!` but also marks the type for structured output
+/// (JSON / YAML / TOML / RON) via `StructuralData`.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// pack_err_structural!(ErrorNotFound);
+/// pack_err_structural!(ErrorNotDir = PathBuf);
+/// ```
+///
+/// Requires the `general_renderer` and `extra_macros` features.
+#[cfg(all(feature = "general_renderer", feature = "extra_macros"))]
+#[proc_macro]
+pub fn pack_err_structural(input: TokenStream) -> TokenStream {
+    pack_err::pack_err_structural(input)
 }
 
 /// Early-returns an error from a `Result`, converting the `Ok` branch to a
@@ -1303,6 +1367,30 @@ pub fn derive_groupped(input: TokenStream) -> TokenStream {
 #[proc_macro_derive(EnumTag, attributes(enum_desc, enum_rename))]
 pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
     enum_tag::derive_enum_tag(input)
+}
+
+/// Derive macro for [`StructuralData`], marking a type as eligible for structured
+/// structured output (JSON / YAML / TOML / RON).
+///
+/// The type must also implement `serde::Serialize` — the generated
+/// `impl StructuralData` will fail to compile otherwise.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// use mingling::StructuralData;
+/// use serde::Serialize;
+///
+/// #[derive(Serialize, StructuralData)]
+/// struct Info {
+///     name: String,
+///     age: i32,
+/// }
+/// ```
+#[cfg(feature = "general_renderer")]
+#[proc_macro_derive(StructuralData)]
+pub fn derive_structural_data(input: TokenStream) -> TokenStream {
+    structural_data::derive_structural_data(input)
 }
 
 /// Derive macro for implementing both `Groupped` and `serde::Serialize` on a struct.

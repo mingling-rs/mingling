@@ -270,8 +270,17 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
     renderers.insert(renderer_entry_str);
     renderer_exist.insert(renderer_exist_entry_str);
 
+    // Only register general renderer if the type is in STRUCTURED_TYPES
     #[cfg(feature = "general_renderer")]
-    general_renderers.insert(general_renderer_entry_str);
+    {
+        let is_structured = get_global_set(&crate::STRUCTURED_TYPES)
+            .lock()
+            .unwrap()
+            .contains(&variant_name);
+        if is_structured {
+            general_renderers.insert(general_renderer_entry_str);
+        }
+    }
 
     quote! {}.into()
 }

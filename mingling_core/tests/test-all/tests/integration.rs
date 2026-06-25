@@ -3,6 +3,7 @@ use mingling::GeneralRenderer;
 use mingling::GeneralRendererSetting;
 use mingling::MockProgramCollect;
 use mingling::NextProcess;
+use mingling::StructuralData;
 use mingling::Node;
 use mingling::Program;
 use mingling::RenderResult;
@@ -90,7 +91,7 @@ fn test_render_result_print() {
 
 // GeneralRenderer
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, StructuralData)]
 struct TestData {
     name: String,
     value: i32,

@@ -1,6 +1,3 @@
-#[cfg(feature = "general_renderer")]
-use serde::Serialize;
-
 use crate::Groupped;
 use crate::error::ChainProcessError;
 
@@ -14,7 +11,8 @@ pub mod group;
 ///
 /// Note:
 /// - If an enum value that does not belong to this type is incorrectly specified, it will be **unsafely** unwrapped by the scheduler
-/// - Under the `general_renderer` feature, the passed value must ensure it implements `serde::Serialize`
+/// - Structured output via `--json`/`--yaml` is only available for types that implement
+///   [`StructuralData`], which implies `serde::Serialize`.
 /// - It is recommended to use the `pack!` macro from [mingling_macros](https://crates.io/crates/mingling_macros) to create types that can be converted to `AnyOutput`, which guarantees runtime safety
 #[derive(Debug)]
 pub struct AnyOutput<G> {
@@ -24,21 +22,7 @@ pub struct AnyOutput<G> {
 }
 
 impl<G> AnyOutput<G> {
-    /// Create an `AnyOutput` from a `Send + Groupped<G> + Serialize` type
-    #[cfg(feature = "general_renderer")]
-    pub fn new<T>(value: T) -> Self
-    where
-        T: Send + Groupped<G> + Serialize + 'static,
-    {
-        Self {
-            inner: Box::new(value),
-            type_id: std::any::TypeId::of::<T>(),
-            member_id: T::member_id(),
-        }
-    }
-
     /// Create an `AnyOutput` from a `Send + Groupped<G>` type
-    #[cfg(not(feature = "general_renderer"))]
     pub fn new<T>(value: T) -> Self
     where
         T: Send + Groupped<G> + 'static,
@@ -82,9 +66,14 @@ impl<G> AnyOutput<G> {
         ChainProcess::Ok((self, NextProcess::Renderer))
     }
 
-    #[cfg(feature = "general_renderer")]
-    /// Restore `AnyOutput` back to the original Serialize type
-    pub fn restore<T: Serialize + 'static>(self) -> Option<T> {
+    /// Restore `AnyOutput` back to the original concrete type.
+    ///
+    /// # Safety
+    ///
+    /// This is only safe when `T` matches the `TypeId` stored in the `AnyOutput`.
+    /// Generated code (via `gen_program!()`) guarantees this by dispatching on
+    /// `member_id` before calling `restore`.
+    pub fn restore<T: 'static>(self) -> Option<T> {
         if self.type_id == std::any::TypeId::of::<T>() {
             match self.inner.downcast::<T>() {
                 Ok(boxed) => Some(*boxed),

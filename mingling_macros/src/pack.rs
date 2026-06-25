@@ -34,18 +34,10 @@ pub fn pack(input: TokenStream) -> TokenStream {
     let attrs = pack_input.attrs;
 
     // Generate the struct definition
-    #[cfg(not(feature = "general_renderer"))]
+    // Note: No longer derives Serialize under general_renderer.
+    // Use pack_structual! for structured output support.
     let struct_def = quote! {
         #(#attrs)*
-        pub struct #type_name {
-            pub(crate) inner: #inner_type,
-        }
-    };
-
-    #[cfg(feature = "general_renderer")]
-    let struct_def = quote! {
-        #(#attrs)*
-        #[derive(serde::Serialize)]
         pub struct #type_name {
             pub(crate) inner: #inner_type,
         }

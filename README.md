@@ -669,11 +669,12 @@ With the `general_renderer` feature, users can add `--json` or `--yaml` flags to
 
 use mingling::{prelude::*, setup::GeneralRendererSetup};
 use mingling::Groupped;
+use mingling::StructuralData;
 use serde::Serialize;
 
 dispatcher!("render", CMDRender => EntryRender);
 
-#[derive(Default, Serialize, Groupped)]
+#[derive(Default, StructuralData, Serialize, Groupped)]
 struct ResultInfo {
     name: String,
     age: i32,

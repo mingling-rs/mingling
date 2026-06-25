@@ -1,9 +1,7 @@
-use mingling::GeneralRenderer;
-use mingling::GeneralRendererSetting;
-use mingling::RenderResult;
+use mingling::{GeneralRenderer, GeneralRendererSetting, RenderResult, StructuralData};
 use serde::Serialize;
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, StructuralData)]
 struct TestData {
     name: String,
     value: i32,

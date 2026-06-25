@@ -59,10 +59,10 @@ general_renderer_empty = [
 ]
 
 general_renderer_full = [
-    "mingling_core/general_renderer",
-    "dep:serde",
-    "mingling_macros/general_renderer",
-    "all_serde_fmt",
+    "general_renderer",
+    "yaml_serde_fmt",
+    "toml_serde_fmt",
+    "ron_serde_fmt",
 ]
 
 all_serde_fmt = [
