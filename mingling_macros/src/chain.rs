@@ -83,7 +83,7 @@ fn generate_proc_fn(
         stmts.push(syn::Stmt::Expr(
             syn::parse_quote! {
                 <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
-                ::to_chain(crate::ResultEmpty::new(()))
+                ::to_chain(crate::ResultEmpty)
             },
             None,
         ));
@@ -111,7 +111,7 @@ fn generate_proc_fn(
             quote! {
                 #call
                 <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
-                ::to_chain(crate::ResultEmpty::new(()))
+                ::to_chain(crate::ResultEmpty)
             }
         }
     } else if has_resources {
@@ -169,7 +169,7 @@ fn generate_original_fn(
         quote! {
             {
                 #fn_body
-                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty::new(()))
+                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
             }
         }
     } else {

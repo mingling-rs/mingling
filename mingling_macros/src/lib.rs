@@ -590,7 +590,7 @@ pub fn route(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn empty_result(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
-        <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty::new(()))
+        <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
     };
     TokenStream::from(expanded)
 }
@@ -1688,10 +1688,22 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
+    #[cfg(feature = "structural_renderer")]
+    let pack_empty = quote! {
+        #[derive(::serde::Serialize, ::mingling::StructuralData, ::mingling::Groupped, Default)]
+        pub struct ResultEmpty;
+    };
+
+    #[cfg(not(feature = "structural_renderer"))]
+    let pack_empty = quote! {
+        #[derive(::mingling::Groupped, Default)]
+        pub struct ResultEmpty;
+    };
+
     let expanded = quote! {
         ::mingling::macros::pack!(ErrorRendererNotFound = String);
         ::mingling::macros::pack!(ErrorDispatcherNotFound = Vec<String>);
-        ::mingling::macros::pack!(ResultEmpty = ());
+        #pack_empty
     };
     TokenStream::from(expanded)
 }
@@ -2025,7 +2037,7 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
                 ::mingling::AnyOutput::new(ErrorDispatcherNotFound::new(args))
             }
             fn build_empty_result() -> ::mingling::AnyOutput<Self::Enum> {
-                ::mingling::AnyOutput::new(ResultEmpty::new(()))
+                ::mingling::AnyOutput::new(ResultEmpty)
             }
             #render_fn
             #do_chain_fn

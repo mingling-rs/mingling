@@ -380,6 +380,14 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 
 9. **\[core\]** **\[structural_renderer\]** Added `mingling::__private::StructuralDataSealed` and `mingling::__private::StructuralData` (re-exported from `mingling_core::renderer::structural::structural_data`) to support the sealed trait pattern. The `StructuralData` trait is only implementable via the derive macro or the `_structural` macro variants.
 
+10. **\[macros\]** Changed `ResultEmpty` from a tuple struct (wrapping `()`) to a fieldless unit struct. `ResultEmpty::new(())` is now simply `ResultEmpty`. This simplifies construction and reduces generated code.
+
+- `pack!(ResultEmpty = ())` → `#[derive(...)] pub struct ResultEmpty;`
+- `crate::ResultEmpty::new(())` → `crate::ResultEmpty`
+- Updated all references in `#[chain]` code generation, `empty_result!()` macro, and `program_fallback_gen`/`program_final_gen` accordingly.
+
+When the `structural_renderer` feature is enabled, `ResultEmpty` also derives `Serialize` and `StructuralData` for consistency with structured output support.
+
 ### Release 0.1.9 (2026-05-29)
 
 #### Fixes:
