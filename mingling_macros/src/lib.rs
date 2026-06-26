@@ -51,8 +51,12 @@
 //! | [`macro@dispatcher_clap`] | Like `dispatcher!` but powered by `clap::Parser` |
 //! | [`node!`] | Builds a [`Node`](https://docs.rs/mingling/latest/mingling/struct.Node.html) from a dot-separated path string |
 //! | [`pack!`] | Creates a newtype wrapper around an inner type for use in Chain/Renderer |
+//! | [`pack_structural!`] | Like `pack!` but also derives `StructuralData` for structured output |
+//! | [`pack_err!`] | Creates an error struct with automatic `name` field |
+//! | [`pack_err_structural!`] | Like `pack_err!` but also derives `StructuralData` for structured output |
 //! | [`entry!`] | Creates a packed entry from string literals |
 //! | [`#[derive(Groupped)]`](derive@Groupped) | Makes a type recognizable by the framework's type registry |
+//! | [`#[derive(StructuralData)]`](derive@StructuralData) | Marks a type as eligible for structured output (JSON/YAML/etc.) |
 //! | [`#[derive(EnumTag)]`](derive@EnumTag) | Adds enum variant metadata (name, description) |
 //!
 //! ## Phase 2: Processing & Rendering Registration
@@ -97,9 +101,10 @@
 //! |---------|---------------|
 //! | `clap` | [`macro@dispatcher_clap`] |
 //! | `comp` | [`#[completion]`](attr.completion.html), [`suggest!`], [`suggest_enum!`] |
-//! | `extra_macros` | [`entry!`], [`empty_result!`], [`route!`], [`#[program_setup]`](attr.program_setup.html) |
+//! | `extra_macros` | [`entry!`], [`empty_result!`], [`route!`], [`#[program_setup]`](attr.program_setup.html), [`macro@group`] |
 //! | `dispatch_tree` | `register_dispatcher!` (enables trie-based command dispatch) |
-//! | `structural_renderer` | Enables JSON/YAML/TOML/RON serialization renderers |
+//! | `structural_renderer` | [`#[derive(StructuralData)]`](derive@StructuralData), [`pack_structural!`], [`pack_err_structural!`], [`macro@group_structural`] |
+//! | `structural_renderer` + `extra_macros` | [`group_structural!`], [`pack_err_structural!`] |
 //! | `async` | Enables async `#[chain]` functions |
 //! | `repl` | Enables REPL execution loop |
 //!
@@ -128,6 +133,9 @@
 //!     fn has_renderer(any: &AnyOutput) -> bool {
 //!         match any.member_id() {
 //!             MyType => true,  // ← collected from #[renderer] macros
+//!             // When `structural_renderer` is enabled, ALL registered types
+//!             // return true — non-structural types fall through to render
+//!             // a `ResultEmpty` value (via structural_render fallback).
 //!             _ => false,
 //!         }
 //!     }
