@@ -13,16 +13,11 @@
     Macro magician in your CLI.
 </p>
 <p align="center">
+  <img src="https://img.shields.io/github/license/mingling-rs/mingling">
 	<img src="https://img.shields.io/github/stars/mingling-rs/mingling?style=flat"> 
-	<a href="https://crates.io/crates/mingling">
-	    <img src="https://img.shields.io/crates/v/mingling?style=flat">
-	</a>
-	<a href="https://docs.rs/mingling/latest/mingling/">
-	    <img src="https://img.shields.io/docsrs/mingling?style=flat">
-	</a>	
-	<a href="https://mingling-rs.github.io/mingling/">
-	    <img src="https://img.shields.io/badge/helpdoc-rewriting-yellow?style=flat">
-	</a>
+	<img src="https://img.shields.io/crates/size/mingling">
+	<img src="https://img.shields.io/crates/v/mingling?style=flat">
+	<img src="https://img.shields.io/docsrs/mingling?style=flat">
 </p>
 
 > [!WARNING]
@@ -31,12 +26,12 @@
 > **Hint**: This note will be removed in version `0.5.0`
 
 <h1 align="center">
-  🤔 What is Mingling? 🤔 
+  What is Mingling?
 </h1>
 
-[`Mingling`](https://github.com/mingling-rs/mingling) is a **proc-macro and type system-based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
+[`Mingling`](https://github.com/mingling-rs/mingling) is a **proc-macro and type-system based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
 
-> **BTW:** Its name comes from the Chinese Pinyin **"Mìng Lìng"**, meaning **"Command"**. 😄
+> Its name comes from the Chinese Pinyin **"Mìng Lìng"**, meaning **"Command"**.
 
 ### Mingling's Core Capabilities
 
@@ -51,8 +46,46 @@
 6. **Structured Output**: Enabling the `structural_renderer` feature adds support for flags like `--json` and `--yaml`, providing structured output capabilities.
    See examples: [Example](https://github.com/mingling-rs/mingling/blob/main/examples/example-structural-renderer/src/main.rs)
 
+---
+
+**💡 To learn more, check out the following links:**
+
+- 📖 [Mainpage](https://mingling-rs.github.io/mingling/)
+- 📖 [Examples](https://mingling-rs.github.io/mingling/docs/examples.html)
+- 📖 [docs.rs](https://docs.rs/mingling/latest/mingling/)
+- 📖 Helpdoc [EN](https://mingling-rs.github.io/mingling/docs/doc.html#/) [中文](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
+
+
+
 <h1 align="center">
-    ✍️ Writing with Mingling ✍️
+    Getting Started
+</h1>
+
+Add Mingling to your `Cargo.toml`:
+
+```toml
+[dependencies.mingling]
+version = "0.2.0"
+features = []
+```
+
+Or use the github version
+
+```toml
+[dependencies.mingling]
+git = "https://github.com/mingling-rs/mingling.git"
+tag = "unreleased"
+features = []
+```
+
+Or use the [template project](https://github.com/mingling-rs/mingling-template):
+
+```bash
+cargo generate --git mingling-rs/mingling-template
+```
+
+<h1 align="center">
+    Writing with Mingling
 </h1>
 
 ### The Big Picture
@@ -63,9 +96,19 @@ Mingling organizes your CLI program into three distinct phases:
 User Input → [Dispatcher] → Entry → [Chain(s)] → Result → [Renderer] → Output
 ```
 
-The user's raw arguments flow in. A **Dispatcher** picks them up, wraps them into an **Entry** type, and hands it off to a **Chain** function. The chain processes the entry and produces a **Result**. A **Renderer** takes that result and writes it to the terminal.
+**Step1: Input** — The user's raw arguments flow in.
+**Step2: Dispatch** — A **Dispatcher** picks them up and wraps them into an **Entry** type.
+**Step3: Chain** — The entry is handed off to a **Chain** function, which processes it.
+**Step4: Render** — A **Renderer** takes that result and writes it to the terminal.
 
-Everything in this pipeline is a plain Rust function with an attribute macro on top. You never need to manually implement traits or construct boilerplate.
+> [!NOTE]
+> A Chain can produce a **State** type to be passed to the next Chain for further processing, 
+>
+> or it can produce a **Result** type to be handed off to a Renderer.  
+
+Everything in this pipeline is a **plain Rust function** with an attribute macro on top. 
+
+You never need to manually implement traits or construct boilerplate.
 
 ---
 
@@ -76,8 +119,8 @@ The entry point for every subcommand is the `dispatcher!` macro. It generates tw
 ```rust
 use mingling::prelude::*;
 
-//            "command.name"  dispatcher  entry type
-//            │               │           │
+//           "command.name" Dispatcher  EntryType
+//           │              │           │
 dispatcher!("greet",        CMDGreet => EntryGreet);
 
 // Nested subcommand: `remote add`
@@ -87,8 +130,6 @@ dispatcher!("remote.add",   CMDRemoteAdd => EntryRemoteAdd);
 Then in `main()`, register the dispatcher with the program:
 
 ```rust
-use mingling::prelude::*;
-
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
@@ -103,8 +144,6 @@ Mingling also supports an abbreviated form (with the `extra_macros` feature):
 ```rust
 // Features: ["extra_macros"]
 
-use mingling::prelude::*;
-
 // Auto-generates CMDGreet / EntryGreet from "greet"
 dispatcher!("greet");
 ```
@@ -116,8 +155,6 @@ dispatcher!("greet");
 The `#[chain]` attribute turns a plain function into an execution step. Think of it as "the logic that transforms one typed value into another."
 
 ```rust
-use mingling::prelude::*;
-
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 pack!(ResultGreeting = String);
@@ -147,8 +184,6 @@ Key points:
 The `#[renderer]` attribute turns a function into an output handler. It receives the final result of a chain and writes it to the terminal.
 
 ```rust
-use mingling::prelude::*;
-
 pack!(ResultGreeting = String);
 
 #[renderer]
@@ -179,7 +214,6 @@ Mingling provides a **Picker** for zero-cost argument extraction. You use `pick(
 ```rust
 // Features: ["parser"]
 
-use mingling::prelude::*;
 use mingling::parser::Picker;
 
 dispatcher!("greet", CMDGreet => EntryGreet);
@@ -200,8 +234,6 @@ With the `parser` feature, the `AsPicker` trait provides a shorthand directly on
 ```rust
 // Features: ["parser"]
 
-use mingling::prelude::*;
-
 dispatcher!("greet", CMDGreet => EntryGreet);
 pack!(ResultGreeting = String);
 
@@ -220,7 +252,6 @@ For enums, derive `EnumTag` and implement `PickableEnum` to parse enum variants 
 ```rust
 // Features: ["parser", "extra_macros"]
 
-use mingling::prelude::*;
 use mingling::{EnumTag, Groupped};
 use mingling::parser::PickableEnum;
 
@@ -252,7 +283,7 @@ Help is just another attribute macro. When the user passes `--help` or `-h`, the
 Enable it by adding `BasicProgramSetup`:
 
 ```rust
-use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
+use mingling::{macros::help, setup::BasicProgramSetup};
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 
@@ -287,7 +318,7 @@ With the `comp` feature, Mingling provides a fully dynamic completion system. Yo
 ```rust
 // Features: ["comp", "extra_macros"]
 
-use mingling::{macros::suggest, prelude::*, ShellContext, Suggest};
+use mingling::{macros::suggest, ShellContext, Suggest};
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 pack!(ResultName = (u8, String));
@@ -343,7 +374,6 @@ For enum-based completions, use `suggest_enum!`:
 ```rust
 // Features: ["comp", "extra_macros"]
 
-use mingling::prelude::*;
 use mingling::{ShellContext, Suggest};
 use mingling::macros::suggest_enum;
 use mingling::EnumTag;
@@ -370,8 +400,6 @@ fn complete_lang(_: &ShellContext) -> Suggest {
 Mingling doesn't use `?` operator propagation. Instead, errors are just **alternative results** that flow through the same chain/render pipeline. Create error types with `pack!` and route to them with `.to_render()`:
 
 ```rust
-use mingling::prelude::*;
-
 dispatcher!("hello", CMDHello => EntryHello);
 pack!(ResultName = String);
 pack!(ErrorNoNameProvided = ());
@@ -416,7 +444,6 @@ Chain and renderer functions can accept **additional parameters** for the progra
 // Features: ["parser", "extra_macros"]
 
 use std::path::PathBuf;
-use mingling::prelude::*;
 
 dispatcher!("current", CMDCurrent => EntryCurrent);
 dispatcher!("cd", CMDCd => EntryCd);
@@ -456,8 +483,6 @@ Resources can also be injected into `#[renderer]`:
 
 ```rust
 
-use mingling::prelude::*;
-
 dispatcher!("current", CMDCurrent => EntryCurrent);
 
 #[derive(Default, Clone)]
@@ -479,8 +504,6 @@ As your program grows to dozens or hundreds of subcommands, linear dispatcher lo
 
 ```rust
 // Features: ["dispatch_tree"]
-
-use mingling::prelude::*;
 
 dispatcher!("cmd1",              CMD1 => Entry1);
 dispatcher!("cmd2.sub1",         CMD2Sub1 => Entry2Sub1);
@@ -515,7 +538,6 @@ If you prefer clap's powerful argument parsing, use `#[dispatcher_clap]`. It gen
 // clap = "4"
 
 use mingling::macros::dispatcher_clap;
-use mingling::prelude::*;
 use mingling::Groupped;
 
 #[derive(Default, clap::Parser, Groupped)]
@@ -550,8 +572,6 @@ You can control how clap help is displayed:
 ```rust
 // Features: ["clap"]
 
-use mingling::prelude::*;
-
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
@@ -584,7 +604,6 @@ Mingling provides built-in REPL setups:
 // Features: ["repl", "extra_macros"]
 
 use mingling::{
-    prelude::*,
     res::ResREPL,
     setup::{BasicREPLReadlineSetup, BasicREPLOutputSetup, BasicREPLPromptSetup},
 };
@@ -626,7 +645,6 @@ Mingling provides a `ProgramHook` system for observing every stage of the execut
 ```rust
 use mingling::{
     hook::{ProgramControlUnit, ProgramHook},
-    prelude::*,
 };
 
 dispatcher!("greet", CMDGreet => EntryGreet);
@@ -724,7 +742,6 @@ Enable the `async` feature to use `async fn` inside `#[chain]`:
 // Dependencies:
 // tokio = { version = "1", features = ["full"] }
 
-use mingling::prelude::*;
 use std::time::Duration;
 
 dispatcher!("download", CMDDownload => EntryDownload);
@@ -772,8 +789,6 @@ It must be placed **after** all your `dispatcher!`, `pack!`, `#[chain]`, `#[rend
 Here's a complete, runnable program:
 
 ```rust
-use mingling::prelude::*;
-
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
@@ -811,58 +826,25 @@ Hello, Alice!
 ```
 
 <h1 align="center">
-    🚀 Getting Started 🚀
-</h1>
-
-Add Mingling to your `Cargo.toml`:
-
-```toml
-[dependencies.mingling]
-version = "0.2.0"
-features = []
-```
-
-Or use the github version
-
-```toml
-[dependencies.mingling]
-git = "https://github.com/mingling-rs/mingling.git"
-tag = "unreleased"
-features = []
-```
-
-Or use the [template project](https://github.com/mingling-rs/mingling-template):
-
-```bash
-cargo generate --git mingling-rs/mingling-template
-```
-
-Then check out:
-
-- 📖 [Mingling Helpdoc](https://mingling-rs.github.io/mingling/)
-- 📖 [Examples on docs.rs](https://docs.rs/mingling/latest/mingling/_mingling_examples/index.html)
-- 📖 [Full API docs](https://docs.rs/mingling/latest/mingling/)
-
-<h1 align="center">
     🗺️ Roadmap 🗺️
 </h1>
 
 - [ ] Milestone.1 "MVP"
-  - [x] \[[0.1.4](https://docs.rs/mingling/0.1.4/mingling/)\] \[`core`\] \[`structural_renderer`\] **Mingling** can render data into serializable formats via `--json` and `--yaml` flags
-  - [x] \[[0.1.5](https://docs.rs/mingling/0.1.5/mingling/)\] \[`core`\] \[`comp`\] **Mingling** can dynamically invoke itself to provide completions for shells like `bash`, `zsh`, `fish`, and `pwsh`
-  - [x] \[[0.1.6](https://docs.rs/mingling/0.1.6/mingling/)\] \[`core`\] \[`comp`\] **Mingling** can gather more context for smarter completions
-  - [x] \[[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)\] \[`clap`\] Provides a **Clap** compatibility layer, allowing **Mingling** to reuse its powerful parsing capabilities
-  - [x] \[[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)\] \[`core`\] **Mingling** can intercept `-h` or `--help` flags to display custom help text for each subcommand
-  - [x] \[[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)\] \[`mling`\] Provides a basic scaffolding tool (`mling`) for rapid development and debugging
-  - [x] \[[0.1.8](https://docs.rs/mingling/0.1.8/mingling/)\] \[`core`\] \[`dispatch_tree`\] Converts the subcommand list into a prefix tree to improve command matching speed
-  - [x] \[[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)\] \[`core`\] \[`dev_toolkits`\] Provides debugging interfaces for developers to capture invocation information when issues arise (`InvokeStackDisplay`) (indirectly implemented via `ProgramHook`)
-  - [x] \[[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)\] \[`core`\] \[`repl`\] Provides REPL capability (`program.exec_repl();`)
-  - [ ] \[**0.2.0**\] Complete documentation, tests, and examples
+  - [x] [[0.1.4](https://docs.rs/mingling/0.1.4/mingling/)] [`core`] [`structural_renderer`] **Mingling** can render data into serializable formats via `--json` and `--yaml` flags
+  - [x] [[0.1.5](https://docs.rs/mingling/0.1.5/mingling/)] [`core`] [`comp`] **Mingling** can dynamically invoke itself to provide completions for shells like `bash`, `zsh`, `fish`, and `pwsh`
+  - [x] [[0.1.6](https://docs.rs/mingling/0.1.6/mingling/)] [`core`] [`comp`] **Mingling** can gather more context for smarter completions
+  - [x] [[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)] [`clap`] Provides a **Clap** compatibility layer, allowing **Mingling** to reuse its powerful parsing capabilities
+  - [x] [[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)] [`core`] **Mingling** can intercept `-h` or `--help` flags to display custom help text for each subcommand
+  - [x] [[0.1.7](https://docs.rs/mingling/0.1.7/mingling/)] [`mling`] Provides a basic scaffolding tool (`mling`) for rapid development and debugging
+  - [x] [[0.1.8](https://docs.rs/mingling/0.1.8/mingling/)] [`core`] [`dispatch_tree`] Converts the subcommand list into a prefix tree to improve command matching speed
+  - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`dev_toolkits`] Provides debugging interfaces for developers to capture invocation information when issues arise (`InvokeStackDisplay`) (indirectly implemented via `ProgramHook`)
+  - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`repl`] Provides REPL capability (`program.exec_repl();`)
+  - [ ] [**0.2.0**] Complete documentation, tests, and examples
 
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
-  - [ ] \[**0.2.1**\] \[`macros`\] `r_println!` in `#[chain]` support.
-  - [ ] \[**0.2.5**\] \[`mling`\] Helpdoc Maker
-  - [ ] \[**0.2.8**\] \[`picker`\] A more efficient and intelligent argument parser
+  - [ ] [**0.2.1**] [`macros`] `r_println!` in `#[chain]` support.
+  - [ ] [**0.2.5**] [`mling`] Helpdoc Maker
+  - [ ] [**0.2.8**] [`picker`] A more efficient and intelligent argument parser
 
 - [ ] Milestone.3 "Unplanned"
   - [ ] ...
