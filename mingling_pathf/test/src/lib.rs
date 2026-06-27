@@ -37,3 +37,14 @@ fn test_module_pathf() {
     assert_eq!(mapping.get("src/use_all.rs").unwrap(), "crate");
     assert_eq!(mapping.get("src/main.rs").unwrap(), "crate");
 }
+
+#[test]
+fn test_pattern_analyzer() {
+    let dir = current_dir().unwrap().join("test_proj");
+    let mut analyzer = mingling_pathf::pattern_analyzer::init();
+    analyzer.add_pattern(mingling_pathf::patterns::BasicStructPattern);
+
+    let result = analyzer.analyze_file(dir.join("src/has_sub_mod.rs")).unwrap();
+
+    assert!(result.contains("::directly_sub_mod::DirectlySubModStruct"));
+}

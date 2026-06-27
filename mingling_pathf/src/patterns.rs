@@ -1,3 +1,2 @@
-pub trait AnalyzePattern {
-
-}
+mod basic_struct;
+pub use basic_struct::*;

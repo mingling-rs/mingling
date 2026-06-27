@@ -13,6 +13,7 @@ exclude = [
 
     # Tests
     "mingling_core/tests/*",
+    "mingling_pathf/test"
 ]
 
 [workspace.dependencies]
