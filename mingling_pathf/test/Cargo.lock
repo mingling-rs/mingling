@@ -12,6 +12,7 @@ checksum = "5454cda0d57db59778608d7a47bff5b16c6705598265869fb052b657f66cf05e"
 name = "mingling_pathf"
 version = "0.2.0"
 dependencies = [
+ "proc-macro2",
  "syn",
 ]
 
