@@ -1,4 +1,4 @@
-use crate::Groupped;
+use crate::{Groupped, ProgramCollect};
 use crate::error::ChainProcessError;
 
 #[doc(hidden)]
@@ -133,6 +133,12 @@ impl std::fmt::Display for NextProcess {
 impl<G> From<AnyOutput<G>> for ChainProcess<G> {
     fn from(value: AnyOutput<G>) -> Self {
         ChainProcess::Ok((value, NextProcess::Chain))
+    }
+}
+
+impl<G> From<()> for ChainProcess<G> where G: ProgramCollect<Enum = G> {
+    fn from(_v: ()) -> Self {
+        G::build_empty_result().route_chain()
     }
 }
 
