@@ -1,5 +1,31 @@
 # Changelogs
 
+This file tracks all notable changes to the Mingling project. Each release entry documents new features, bug fixes, optimizations, and breaking changes, helping developers and users understand the evolution of the framework.
+
+The format follows a human-readable changelog convention, with sections organized by release version and change type.
+
+Any contributor making changes to the project must record their changes in this file under the appropriate release section, using the established format and change type categories *(Features, Fixes, Optimizations, Tests, BREAKING CHANGES, etc.)*.
+
+## TOC
+
+**- Milestone.1 "MVP" -**
+
+- [Release 0.2.0 (Unreleased)](#release-020-unreleased)
+- [Release 0.1.9 (2026-05-29)](#release-019-2026-05-29)
+- [Release 0.1.8 (2026-05-18)](#release-018-2026-05-18)
+- [Release 0.1.7 (2026-05-04)](#release-017-2026-05-04)
+- [~~Yanked 0.1.6 (2026-04-24)~~](#yanked-016-2026-04-24)
+- [Release 0.1.5 (2026-04-12)](#release-015-2026-04-12)
+- [Release 0.1.4 (2026-04-06)](#release-014-2026-04-06)
+- [Release 0.1.3 (2026-04-01)](#release-013-2026-04-01)
+- [Release 0.1.2 (2026-03-31)](#release-012-2026-03-31)
+- [Release 0.1.1 (2026-03-29)](#release-011-2026-03-29)
+- [Release 0.1.0 (2026-03-29)](#release-010-2026-03-29)
+
+---
+
+## Contents
+
 ### Release 0.2.0 (Unreleased)
 
 > [!IMPORTANT]
@@ -408,6 +434,8 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 - Updated all references in `#[chain]` code generation, `empty_result!()` macro, and `program_fallback_gen`/`program_final_gen` accordingly.
 
 When the `structural_renderer` feature is enabled, `ResultEmpty` also derives `Serialize` and `StructuralData` for consistency with structured output support.
+
+---
 
 ### Release 0.1.9 (2026-05-29)
 
@@ -937,9 +965,7 @@ let (name, age) = Picker::new(prev.inner)
 
 ---
 
-### Release 0.1.6 (2026-04-20) **[`YANKED 26.4.24`]**
-
-`Mingling` 0.1.6 primarily focuses on optimizing the writing experience and code completion.
+### Yanked 0.1.6 (2026-04-24) 
 
 > [!CAUTION]
 >
@@ -948,6 +974,12 @@ let (name, age) = Picker::new(prev.inner)
 > [!warning]
 >
 > To align with the `mingling` version, `mingling_core` and `mingling_macros` will skip version `0.1.5` and be released directly as `0.1.6`.
+
+---
+
+### Release 0.1.6 (2026-04-20) 
+
+`Mingling` 0.1.6 primarily focuses on optimizing the writing experience and code completion.
 
 #### Fixes:
 
