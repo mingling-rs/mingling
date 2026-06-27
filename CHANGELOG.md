@@ -383,7 +383,7 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 
    - **All hook callbacks now receive structured info types** (e.g., `&HookPreDispatchInfo`, `&HookPostChainInfo<C>`) instead of raw tuples or bare values. Each hook event has a dedicated info struct with named fields, making hook signatures self-documenting and easier to evolve.
 
-   - **Hook signatures changed from `fn(...)` to `Box<dyn Fn(&InfoType) -> R>**`, with `R: Into<ProgramControls<C>>`. Closures that return `()`are automatically converted to`ProgramControls::Empty`via the`From<()>` impl.
+   - Hook signatures changed from `fn(...)` to `Box<dyn Fn(&InfoType) -> R>`, with `R: Into<ProgramControls<C>>`. Closures that return `()`are automatically converted to`ProgramControls::Empty`via the`From<()>` impl.
 
      ```rust
      // Before
