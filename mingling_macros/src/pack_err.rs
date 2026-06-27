@@ -2,8 +2,6 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Ident, Token, Type, parse_macro_input};
 
-use crate::get_global_set;
-
 /// Converts a PascalCase/UpperCamelCase identifier string to snake_case.
 ///
 /// Examples:
@@ -163,7 +161,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
 
     // Register in STRUCTURED_TYPES
     let type_name_str = type_name.to_string();
-    get_global_set(&crate::STRUCTURED_TYPES)
+    crate::get_global_set(&crate::STRUCTURED_TYPES)
         .lock()
         .unwrap()
         .insert(type_name_str);
