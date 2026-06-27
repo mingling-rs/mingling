@@ -47,7 +47,7 @@
 //! gen_program!();
 //! ```
 //!
-// Output:
+//! Output:
 //!
 //! ```text
 //! > mycmd greet
@@ -60,7 +60,10 @@
 //!
 //! # Examples
 //! `Mingling` provides detailed usage examples for your reference.
-//! See [Examples](_mingling_examples/index.html)
+//! See [Examples](_mingling_examples/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/examples.html)
+//!
+//! # About Features
+//! All features of `Mingling` are opt-in. To learn what each feature provides, see [Features](feature/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/doc.html#/pages/other/features)
 
 mod example_docs;
 
@@ -72,46 +75,56 @@ pub use mingling_core as mingling;
 #[cfg(feature = "parser")]
 pub mod parser;
 
-/// Re-export from `mingling_macros`
+/// Re-export of all macros from `mingling_macros`.
+///
+/// This module re-exports all macros provided by the `mingling_macros` crate,
+/// including `dispatcher!`, `chain!`, `renderer!`, `gen_program!`, `pack!`,
+/// `r_print!`, `r_println!`, and many others. These macros form the core
+/// building blocks of the Mingling framework.
+///
+/// For detailed documentation, usage examples, and the full list of available
+/// macros, please refer to the `mingling_macros` crate [documentation](https://docs.rs/mingling_macros/latest/mingling_macros/):
+///
+/// <https://docs.rs/mingling_macros/latest/mingling_macros/>
 #[allow(unused_imports)]
 pub mod macros {
-    /// Used to generate a struct implementing the `Chain` trait via a method
+    /// `#[chain]` - Used to generate a struct implementing the `Chain` trait via a method
     pub use mingling_macros::chain;
-    /// Used to generate completion entry
+    /// `#[completion(EntryType)]` - Used to generate completion entry
     #[cfg(feature = "comp")]
     pub use mingling_macros::completion;
-    /// Used to create a dispatcher that routes to a `Chain`
+    /// `dispatcher!("greet", CMDGreet => EntryGreet)` - Used to create a dispatcher that routes to a `Chain`
     pub use mingling_macros::dispatcher;
-    /// Used to create a dispatcher with clap argument parsing
+    /// `#[dispatcher_clap("greet", CMDGreet)]` - Used to create a dispatcher with clap argument parsing
     #[cfg(feature = "clap")]
     pub use mingling_macros::dispatcher_clap;
-    /// Used to create an empty result value for early return from a chain function
+    /// `empty_result!()` - Used to create an empty result value for early return from a chain function
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::empty_result;
-    /// Creates a packed entry value from a list of string literals
+    /// `entry!["--greet", "Alice"]` - Creates a packed entry value from a list of string literals
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::entry;
-    /// Used to collect data and create a command-line context
+    /// `gen_program!()` - Used to collect data and create a command-line context
     pub use mingling_macros::gen_program;
-    /// Used to register an external type as a group member
+    /// `group!(ErrorIo = std::io::Error)` - Used to register an external type as a group member
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::group;
-    /// Like `group!` but also marks the type for structured output
+    /// `group_structural!(ErrorIo = std::io::Error)` - Like `group!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::group_structural;
-    /// Used to generate a struct implementing the `HelpRequest` trait via a method
+    /// `#[help]` - Used to generate a struct implementing the `HelpRequest` trait via a method
     pub use mingling_macros::help;
-    /// Used to create a `Node` struct via a literal
+    /// `node!("remote.rm")` - Used to create a `Node` struct via a literal
     pub use mingling_macros::node;
-    /// Used to create a wrapper type for use with `Chain` and `Renderer`
+    /// `pack!(StateGreet = String)` - Used to create a wrapper type for use with `Chain` and `Renderer`
     pub use mingling_macros::pack;
-    /// Like `pack!` but also marks the type for structured output
+    /// `pack_structural!(StateGreet = String)` - Like `pack!` but also marks the type for structured output
     #[cfg(feature = "structural_renderer")]
     pub use mingling_macros::pack_structural;
-    /// Used to create an error struct with automatic `name` field
+    /// `pack_err!(ErrorUnknown)` - Used to create an error struct with automatic `name` field
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::pack_err;
-    /// Like `pack_err!` but also marks the type for structured output
+    /// `pack_err_structural!(ErrorUnknown)` - Like `pack_err!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;
     #[cfg(feature = "comp")]
@@ -121,12 +134,12 @@ pub mod macros {
     pub use mingling_macros::program_fallback_gen;
     #[doc(hidden)]
     pub use mingling_macros::program_final_gen;
-    /// Used to generate program setup
+    /// `#[program_setup]` - Used to generate program setup
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::program_setup;
-    /// Used to print content within a `Renderer` context
+    /// `r_print!("{someting}")` - Used to print content within a `Renderer` context
     pub use mingling_macros::r_print;
-    /// Used to print content with a newline within a `Renderer` context
+    /// `r_println!("{someting}")` - Used to print content with a newline within a `Renderer` context
     pub use mingling_macros::r_println;
     #[doc(hidden)]
     pub use mingling_macros::register_chain;
@@ -138,16 +151,16 @@ pub mod macros {
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]
     pub use mingling_macros::register_type;
-    /// Used to generate a struct implementing the `Renderer` trait via a method
+    /// `#[renderer]` - Used to generate a struct implementing the `Renderer` trait via a method
     pub use mingling_macros::renderer;
-    /// Used to generate a route that either returns a successful result or early returns an error.
+    /// `route! { /* ... */ }` - Used to generate a route that either returns a successful result or early returns an error.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::route;
+    /// `suggest! { "hello", "bye" }` - Used to generate suggestions
     #[cfg(feature = "comp")]
-    /// Used to generate suggestions
     pub use mingling_macros::suggest;
+    /// `suggest_enum!(EnumNames)` - Used to generate enum suggestions
     #[cfg(feature = "comp")]
-    /// Used to generate enum suggestions
     pub use mingling_macros::suggest_enum;
 }
 

@@ -1,5 +1,40 @@
 #![allow(dead_code)]
 
+//! Program lifecycle hook system.
+//!
+//! The hook system lets you observe and influence the program's execution
+//! at well-defined lifecycle points — before dispatch, after chain processing,
+//! on finish, etc.
+//!
+//! # Architecture
+//!
+//! Hooks are registered on [`ProgramHook`] via builder methods (`.on_begin()`,
+//! `.on_pre_dispatch()`, `.on_finish()`, …) and attached to the program with
+//! [`Program::with_hook`].
+//!
+//! Each hook callback receives a structured info type (e.g. [`HookPreDispatchInfo`])
+//! and returns either `()` (no-op) or a [`ProgramControlUnit`] / [`ProgramControls`]
+//! to influence the execution flow (override exit code, re-route to another
+//! chain/renderer/help, etc.).
+//!
+//! # Hook Lifecycle Order
+//!
+//! ```text
+//! begin
+//!   │
+//!   ├─ pre_dispatch    ← before an entry is dispatched
+//!   ├─ post_dispatch   ← after dispatching, before chain
+//!   ├─ pre_chain       ← before the type enters the chain pipeline
+//!   ├─ post_chain      ← after chain processing completes
+//!   ├─ pre_render      ← before the type enters the renderer
+//!   ├─ post_render     ← after rendering completes
+//!   │
+//! finish              ← before program exits
+//! ```
+//!
+//! When the `repl` feature is enabled, additional REPL-specific hooks are
+//! available (e.g. `repl_post_readline`, `repl_on_receive_result`).
+
 use crate::{Program, ProgramCollect};
 
 mod hook_info;
@@ -8,6 +43,16 @@ pub use hook_info::*;
 mod control_unit;
 pub use control_unit::*;
 
+/// The program's lifecycle hook registry.
+///
+/// `ProgramHook<C>` stores optional callbacks for each supported lifecycle
+/// event — from program start (`begin`) through dispatch, chaining, rendering,
+/// and finally program exit (`finish`).
+///
+/// Hooks are constructed via the builder pattern (see methods like
+/// [`on_begin`](Self::on_begin), [`on_pre_dispatch`](Self::on_pre_dispatch),
+/// etc.) and attached to a [`Program`] using
+/// [`Program::with_hook`].
 #[derive(Default)]
 #[allow(clippy::type_complexity)] // Shutup!
 pub struct ProgramHook<C>

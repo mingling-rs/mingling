@@ -1,4 +1,5 @@
 #[macro_export]
+#[doc(hidden)]
 /// A macro that only executes the given expressions when the `debug` feature is enabled.
 /// If the feature is not enabled, the expressions are compiled away.
 macro_rules! only_debug {
@@ -11,6 +12,7 @@ macro_rules! only_debug {
 }
 
 #[macro_export]
+#[doc(hidden)]
 /// Logs a message at the trace level, but only if the `debug` feature is enabled.
 /// Delegates to `log::trace!` internally.
 macro_rules! trace {
@@ -22,6 +24,7 @@ macro_rules! trace {
 }
 
 #[macro_export]
+#[doc(hidden)]
 /// Logs a message at the debug level, but only if the `debug` feature is enabled.
 /// Delegates to `log::debug!` internally.
 macro_rules! debug {
@@ -33,6 +36,7 @@ macro_rules! debug {
 }
 
 #[macro_export]
+#[doc(hidden)]
 /// Logs a message at the info level, but only if the `debug` feature is enabled.
 /// Delegates to `log::info!` internally.
 macro_rules! info {
@@ -44,6 +48,7 @@ macro_rules! info {
 }
 
 #[macro_export]
+#[doc(hidden)]
 /// Logs a message at the warn level, but only if the `debug` feature is enabled.
 /// Delegates to `log::warn!` internally.
 macro_rules! warn {
@@ -55,6 +60,7 @@ macro_rules! warn {
 }
 
 #[macro_export]
+#[doc(hidden)]
 /// Logs a message at the error level, but only if the `debug` feature is enabled.
 /// Delegates to `log::error!` internally.
 macro_rules! error {
@@ -66,6 +72,7 @@ macro_rules! error {
 }
 
 #[cfg(feature = "debug")]
+#[doc(hidden)]
 pub fn init_env_logger() {
     let mut log_path = std::env::current_exe()
         .expect("Failed to get current executable path")

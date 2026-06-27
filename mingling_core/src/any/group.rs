@@ -4,7 +4,7 @@ use crate::{AnyOutput, ChainProcess};
 ///
 /// **Note:** Unlike earlier versions, `Groupped` no longer requires `Serialize`
 /// even when the `structural_renderer` feature is enabled. Structured output is
-/// controlled separately via the [`StructalData`] trait.
+/// controlled separately via the \[`StructuralData`\] trait.
 pub trait Groupped<Group>
 where
     Self: Sized + 'static,

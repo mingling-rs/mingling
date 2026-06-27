@@ -12,7 +12,7 @@ pub mod group;
 /// Note:
 /// - If an enum value that does not belong to this type is incorrectly specified, it will be **unsafely** unwrapped by the scheduler
 /// - Structured output via `--json`/`--yaml` is only available for types that implement
-///   [`StructuralData`], which implies `serde::Serialize`.
+///   \[`StructuralData`\], which implies `serde::Serialize`.
 /// - It is recommended to use the `pack!` macro from [mingling_macros](https://crates.io/crates/mingling_macros) to create types that can be converted to `AnyOutput`, which guarantees runtime safety
 #[derive(Debug)]
 pub struct AnyOutput<G> {

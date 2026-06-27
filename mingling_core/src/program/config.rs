@@ -42,13 +42,21 @@ pub struct ProgramStdoutSetting {
     pub clap_help_print_behaviour: ClapHelpPrintBehaviour,
 }
 
+/// Behavior when Clap Dispatcher outputs help information
 #[cfg(feature = "clap")]
 #[derive(Debug, Default, Clone)]
 pub enum ClapHelpPrintBehaviour {
-    /// Write to RenderResult
+    /// Write help information to `RenderResult` instead of printing to stdout directly.
+    ///
+    /// This allows the help text to be captured and processed as part of the program's
+    /// structured output, which is useful when integrating with external tools or
+    /// when the output needs to be further transformed.
     WriteToRenderResult,
 
-    /// Print directly
+    /// Print help information directly to stdout.
+    ///
+    /// This is the default behavior, which prints help text immediately to the terminal
+    /// without any intermediate processing or capture.
     #[default]
     PrintDirectly,
 }
