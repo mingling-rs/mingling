@@ -44,6 +44,7 @@ dispatch_tree = ["mingling_core/dispatch_tree", "mingling_macros/dispatch_tree"]
 repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
 parser = ["dep:size"]
+pathf = ["mingling_core/pathf", "mingling_macros/pathf"]
 
 structural_renderer = [
     "mingling_core/structural_renderer",
@@ -80,7 +81,7 @@ ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 extra_macros = ["mingling_macros/extra_macros"]
 
 [dependencies]
-mingling_core = { path = "../mingling_core", default-features = false }
-mingling_macros = { path = "../mingling_macros", default-features = false }
+mingling_core.workspace = true
+mingling_macros.workspace = true
 serde = { workspace = true, optional = true }
 size = { version = "0.5", optional = true }

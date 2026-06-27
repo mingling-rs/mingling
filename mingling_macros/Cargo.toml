@@ -23,6 +23,7 @@ comp = []
 dispatch_tree = []
 structural_renderer = []
 repl = []
+pathf = []
 
 extra_macros = []
 

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["mingling", "mingling_core", "mingling_macros", "mling"]
+members = ["mingling", "mingling_core", "mingling_macros", "mingling_pathf", "mling"]
 exclude = [
     # README-Tests
     "./temp/*",
@@ -16,6 +16,10 @@ exclude = [
 ]
 
 [workspace.dependencies]
+mingling_core = { path = "mingling_core", default-features = false }
+mingling_macros = { path = "mingling_macros", default-features = false }
+mingling_pathf = { path = "mingling_pathf", default-features = false }
+
 just_fmt = "0.1.2"
 just_template = "0.1.3"
 

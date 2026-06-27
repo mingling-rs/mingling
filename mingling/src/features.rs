@@ -130,6 +130,17 @@ pub const MINGLING_PARSER: bool = false;
 #[cfg(feature = "parser")]
 #[allow(unused)]
 pub const MINGLING_PARSER: bool = true;
+/// Whether the `pathf` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "pathf"))]
+#[allow(unused)]
+pub const MINGLING_PATHF: bool = false;
+
+/// Whether the `pathf` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "pathf")]
+#[allow(unused)]
+pub const MINGLING_PATHF: bool = true;
 /// Whether the `repl` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "repl"))]

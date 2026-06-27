@@ -421,6 +421,7 @@ dependencies = [
  "just_fmt",
  "just_template",
  "log",
+ "mingling_pathf",
  "ron",
  "serde",
  "serde_json",
@@ -437,6 +438,10 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "mingling_pathf"
+version = "0.2.0"
 
 [[package]]
 name = "mio"

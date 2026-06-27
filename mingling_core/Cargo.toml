@@ -28,8 +28,11 @@ repl = []
 clap = []
 comp = ["dep:just_template"]
 debug = ["dep:log", "dep:env_logger"]
+pathf = ["dep:mingling_pathf"]
 
 [dependencies]
+mingling_pathf = { workspace = true, optional = true }
+
 just_fmt.workspace = true
 
 # comp
