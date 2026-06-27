@@ -1,0 +1,11 @@
+[package]
+name = "test-mingling-pathf"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[workspace]
+
+[dependencies]
+mingling_pathf = { path = "../../mingling_pathf" }
+just_fmt = "0.1.2"
