@@ -48,10 +48,13 @@ where
     }
 
     /// Run the command line program
+    #[must_use]
     pub async fn exec(self) -> i32
     where
         C: 'static + Send + Sync,
     {
+        use crate::error::ProgramExecuteError;
+
         let stdout_setting = self.stdout_setting.clone();
         let result = match self.exec_without_render().await {
             Ok(r) => r,
@@ -61,35 +64,37 @@ where
                     return 1;
                 }
                 ProgramExecuteError::RendererNotFound(renderer_name) => {
-                    eprintln!("Renderer `{}` not found", renderer_name);
+                    eprintln!("Renderer `{renderer_name}` not found");
                     return 1;
                 }
                 ProgramExecuteError::Other(e) => {
-                    eprintln!("{}", e);
+                    eprintln!("{e}");
                     return 1;
                 }
                 ProgramExecuteError::Panic(unwinded_error) => {
-                    eprintln!("{}", unwinded_error);
+                    eprintln!("{unwinded_error}");
                     return 1;
                 }
             },
         };
 
+        // Read exit code
+        let exit_code = result.exit_code;
+
         // Render result
         if stdout_setting.render_output && !result.is_empty() {
-            let exit_code = result.exit_code;
-            print!("{}", result);
+            print!("{result}");
 
             if let Err(e) = std::io::Write::flush(&mut std::io::stdout())
                 && stdout_setting.error_output
             {
-                eprintln!("{}", e);
+                eprintln!("{e}");
                 1
             } else {
                 exit_code
             }
         } else {
-            0
+            exit_code
         }
     }
 
@@ -211,9 +216,11 @@ where
             },
         };
 
+        // Read exit code
+        let exit_code = result.exit_code;
+
         // Render result
         if stdout_setting.render_output && !result.is_empty() {
-            let exit_code = result.exit_code;
             print!("{result}");
 
             if let Err(e) = std::io::Write::flush(&mut std::io::stdout())
@@ -225,7 +232,7 @@ where
                 exit_code
             }
         } else {
-            0
+            exit_code
         }
     }
 
