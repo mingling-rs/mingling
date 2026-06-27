@@ -530,6 +530,23 @@ dispatcher! {
 }
 ```
 
+10. **\[mingling\]** Added the `DirectoryEnvironmentSetup<C>` setup struct, which registers four common directory-based resources (`ResCurrentDir`, `ResCurrentExe`, `ResHomeDir`, `ResTempDir`) in a single call. These resources provide convenient access to the current working directory, the executable's path, the user's home directory, and the system temporary directory, respectively.
+
+```rust
+use mingling::setups::DirectoryEnvironmentSetup;
+
+program.with_setup(DirectoryEnvironmentSetup::<ThisProgram>::default());
+```
+
+11. **\[mingling\]** Added four new resource types for directory environments:
+
+   - `ResCurrentDir` — Wraps `std::env::current_dir()` as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+   - `ResCurrentExe` — Wraps `std::env::current_exe()` as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+   - `ResHomeDir` — Wraps the user's home directory (`$HOME` on Unix, `%USERPROFILE%` on Windows) as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+   - `ResTempDir` — Wraps `std::env::temp_dir()` as a global resource. Provides `new()` (infallible), `Default`, and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+
+   All four types implement `Deref<Target = PathBuf>`, `DerefMut`, `AsRef<Path>`, `Clone`, `Debug`, and `PartialEq`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **\[core\]** Panic Unwind will not be supported when the `async` feature is enabled

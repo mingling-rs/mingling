@@ -1,6 +1,9 @@
 mod basic;
 pub use basic::*;
 
+mod dirs;
+pub use dirs::*;
+
 mod exit_code;
 pub use exit_code::*;
 
