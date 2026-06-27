@@ -4,7 +4,7 @@ use std::{collections::HashMap, env::current_dir};
 
 #[test]
 fn test_module_pathf() {
-    let dir = current_dir().unwrap();
+    let dir = current_dir().unwrap().join("test_proj");
     let mapping = mingling_pathf::module_pathf::analyze(&dir)
         .unwrap()
         .into_iter()
