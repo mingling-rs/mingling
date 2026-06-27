@@ -158,9 +158,19 @@ pub(crate) fn generate_immut_resource_bindings<'a>(
         .collect()
 }
 
+/// Generates a unique binding name for a mutable resource variable.
+fn mut_res_binding_name(var_name: &Ident) -> Ident {
+    syn::Ident::new(
+        &format!("__{}_binding", var_name),
+        var_name.span(),
+    )
+}
+
 /// Wraps the function body in nested `__modify_res_and_return_route` closures for
-/// each mutable resource parameter. The innermost closure gets the original body,
-/// and each mutable parameter wraps outward from last to first.
+/// each mutable resource parameter (sync version).
+///
+/// The innermost closure gets the original body, and each mutable parameter wraps
+/// outward from last to first.
 pub(crate) fn wrap_body_with_mut_resources(
     fn_body_stmts: &[syn::Stmt],
     mut_resources: &[&ResourceInjection],
@@ -181,4 +191,63 @@ pub(crate) fn wrap_body_with_mut_resources(
     }
 
     wrapped
+}
+
+/// Generates code for mutable resource injection in async `#[chain]` functions.
+///
+/// Instead of wrapping in a closure (which causes lifetime issues with async),
+/// this generates a three-part pattern:
+///
+/// 1. **Extract** each mutable resource from the global store into an owned local.
+/// 2. **Body block** — the user's body with `&mut` references scoped to a block.
+/// 3. **Store back** each modified resource after the body block completes.
+///
+/// This avoids holding a `&mut` reference across `.await` points — the borrow
+/// ends when the body block closes.
+pub(crate) fn wrap_body_with_mut_resources_async(
+    fn_body_stmts: &[syn::Stmt],
+    mut_resources: &[&ResourceInjection],
+    program_type: &proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    // 1. Generate extract statements and body-block `let` bindings
+    let mut extract_stmts = Vec::new();
+    let mut body_lets = Vec::new();
+
+    for res in mut_resources {
+        let var_name = &res.var_name;
+        let inner_type = &res.inner_type;
+        let binding_name = mut_res_binding_name(var_name);
+
+        extract_stmts.push(quote! {
+            let mut #binding_name = ::mingling::this::<#program_type>()
+                .__extract_res_mut::<#inner_type>();
+        });
+
+        body_lets.push(quote! {
+            let #var_name: &mut #inner_type = &mut #binding_name;
+        });
+    }
+
+    // 2. Store-back statements (reverse order is fine, resources are independent)
+    let mut store_stmts = Vec::new();
+    for res in mut_resources {
+        let var_name = &res.var_name;
+        let inner_type = &res.inner_type;
+        let binding_name = mut_res_binding_name(var_name);
+
+        store_stmts.push(quote! {
+            ::mingling::this::<#program_type>()
+                .__store_res::<#inner_type>(#binding_name);
+        });
+    }
+
+    quote! {
+        #(#extract_stmts)*
+        let __chain_result = {
+            #(#body_lets)*
+            #(#fn_body_stmts)*
+        };
+        #(#store_stmts)*
+        __chain_result
+    }
 }

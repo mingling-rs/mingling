@@ -858,8 +858,6 @@ pub fn r_println(input: TokenStream) -> TokenStream {
 /// - The first parameter (previous type) must be taken **by move**, not by reference.
 /// - Resource injection parameters **must** be references (`&T` or `&mut T`),
 ///   owned values are not allowed.
-/// - When the `async` feature is enabled, `&mut T` cannot be used in async
-///   chain functions (only `&T` is supported for async).
 ///
 /// # Sync Example
 ///
@@ -921,6 +919,22 @@ pub fn r_println(input: TokenStream) -> TokenStream {
 ///     let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
 ///     some_async_fn(&name).await;
 ///     MyOutput::new(format!("{}{}", prefix.0, name))
+/// }
+/// ```
+///
+/// # Async Example with Mutable Resource Injection
+///
+/// ```rust,ignore
+/// use mingling::macros::{chain, pack, gen_program};
+///
+/// pack!(MyOutput = String);
+///
+/// #[chain]
+/// async fn greet(prev: HelloEntry, ec: &mut ResExitCode) -> Next {
+///     let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
+///     ec.exit_code = 42;
+///     some_async_fn(&name).await;
+///     MyOutput::new(name)
 /// }
 /// ```
 ///

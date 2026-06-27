@@ -2,7 +2,7 @@
 
 use crate::res_injection::{
     ResourceInjection, extract_args_info, generate_immut_resource_bindings,
-    wrap_body_with_mut_resources,
+    wrap_body_with_mut_resources, wrap_body_with_mut_resources_async,
 };
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
@@ -93,7 +93,11 @@ fn generate_proc_fn(
         fn_body_stmts
     };
 
-    let wrapped_body = wrap_body_with_mut_resources(body_stmts, &mut_resources, program_type);
+    let wrapped_body = if is_async_fn && !mut_resources.is_empty() {
+        wrap_body_with_mut_resources_async(body_stmts, &mut_resources, program_type)
+    } else {
+        wrap_body_with_mut_resources(body_stmts, &mut_resources, program_type)
+    };
 
     // When the function returns `()`, wrap the result with ResultEmpty
     let call_or_wrapped = if is_unit_return {
@@ -252,19 +256,6 @@ fn reject_async(sig: &Signature) -> Result<(), proc_macro2::TokenStream> {
     Ok(())
 }
 
-/// Ensures no `&mut` resource injection is used in async functions.
-#[cfg(feature = "async")]
-fn reject_mut_in_async(resources: &[ResourceInjection]) -> Result<(), proc_macro2::TokenStream> {
-    if let Some(mut_res) = resources.iter().find(|r| r.is_mut) {
-        return Err(syn::Error::new(
-            mut_res.var_name.span(),
-            "Cannot use `&mut` resource injection in async chain function.",
-        )
-        .to_compile_error());
-    }
-    Ok(())
-}
-
 pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Reject non-empty attribute arguments; #[chain] must be bare
     if !attr.is_empty() {
@@ -303,14 +294,6 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         Ok(info) => info,
         Err(e) => return e.to_compile_error().into(),
     };
-
-    // Reject `&mut` in async chains
-    #[cfg(feature = "async")]
-    if is_async_fn {
-        if let Err(err) = reject_mut_in_async(&resources) {
-            return err.into();
-        }
-    }
 
     // Prepare building blocks
     let sig = &input_fn.sig;

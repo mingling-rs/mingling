@@ -243,6 +243,22 @@ fn comp_my_entry(ctx: &ShellContext, res: &mut ResA) -> Suggest {
 
 For mutable resources (`&mut T`), both macros use `Program::modify_res` (with constraint `Return: Default`) instead of `#[chain]`'s dedicated `__modify_res_and_return_route` (with constraint `Return: Into<ChainProcess>`), because the return types of help/completion are `()` and `Suggest` respectively.
 
+12. **\[macros\]** Added async mutable resource injection support for `#[chain]`. Previously, async chain functions could only use `&T` (immutable) resource injection; `&mut T` was rejected with a compile-time error. Now, async chain functions support `&mut T` resource injection by using an extract‑store pattern: each mutable resource is cloned out of the global store before the body executes (via `__extract_res_mut`), bound as `&mut` within a scoped block, and written back after the block completes (via `__store_res`). This avoids holding a mutable borrow across `.await` points while still providing a natural `&mut T` syntax.
+
+```rust
+use mingling::macros::{chain, pack, gen_program};
+
+pack!(MyOutput = String);
+
+#[chain]
+async fn greet(prev: HelloEntry, ec: &mut ResExitCode) -> Next {
+    let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
+    ec.exit_code = 42;
+    some_async_fn(&name).await;
+    MyOutput::new(name)
+}
+```
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 ---

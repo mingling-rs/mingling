@@ -9,8 +9,7 @@
 //!
 //! However, you will lose some capabilities:
 //!
-//! 1. `&mut` resource injection is not available in async chain functions
-//! 2. The program will not be able to use panic unwind functionality
+//! 1. The program will not be able to use panic unwind functionality
 //!
 //! Run:
 //! ```bash
