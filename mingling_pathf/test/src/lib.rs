@@ -39,12 +39,10 @@ fn test_module_pathf() {
 }
 
 #[test]
-fn test_pattern_analyzer() {
+fn test_pattern_analyzer_once() {
     let dir = current_dir().unwrap().join("test_proj");
-    let mut analyzer = mingling_pathf::pattern_analyzer::init();
-    analyzer.add_pattern(mingling_pathf::patterns::BasicStructPattern);
+    let analyzer = mingling_pathf::pattern_analyzer::init();
 
     let result = analyzer.analyze_file(dir.join("src/has_sub_mod.rs")).unwrap();
-
     assert!(result.contains("::directly_sub_mod::DirectlySubModStruct"));
 }
