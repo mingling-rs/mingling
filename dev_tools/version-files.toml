@@ -1,0 +1,19 @@
+[[file]]
+file = "./Cargo.toml"
+pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./README.md"
+pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./docs/_zh_CN/pages/1-getting-started.md"
+pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./docs/pages/1-getting-started.md"
+pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./docs/res/guide.txt"
+pattern = "mingling = \"{VER}\""
