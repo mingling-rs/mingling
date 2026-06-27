@@ -442,6 +442,9 @@ dependencies = [
 [[package]]
 name = "mingling_pathf"
 version = "0.2.0"
+dependencies = [
+ "syn",
+]
 
 [[package]]
 name = "mio"
