@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use just_template::tmpl_param;
+use just_template::tmpl;
 
 use crate::ShellFlag;
 
@@ -86,7 +86,7 @@ pub fn build_comp_script_to(
 ) -> Result<(), std::io::Error> {
     let (tmpl_str, ext) = get_tmpl(shell_flag);
     let mut tmpl = just_template::Template::from(tmpl_str);
-    tmpl_param!(tmpl, bin_name = bin_name);
+    tmpl!(bin_name = bin_name);
     let target_path = std::path::PathBuf::from(target_dir);
     std::fs::create_dir_all(&target_path)?;
     let output_path = target_path.join(format!("{bin_name}_comp{ext}"));
@@ -112,7 +112,7 @@ pub fn build_comp_script_to_file(
 ) -> Result<(), std::io::Error> {
     let (tmpl_str, _ext) = get_tmpl(shell_flag);
     let mut tmpl = just_template::Template::from(tmpl_str);
-    tmpl_param!(tmpl, bin_name = bin_name);
+    tmpl!(bin_name = bin_name);
     std::fs::write(output_path.into(), tmpl.to_string())
 }
 
