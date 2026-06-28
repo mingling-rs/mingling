@@ -2,12 +2,18 @@
 >
 > You are using `mling` to create your `mingling` project. Before proceeding, please fill in your project information.
 
-## Question 1: What is your project name?
+## Question 1: Fill in your project information
 
 Use `snake-case` style to fill in the project name. It will serve as your `crate` name:
 
 ```name
 my-cli
+```
+
+Describe your `program` in one sentence:
+
+```description
+This is a command-line program
 ```
 
 ## Question 2: Which Mingling version do you need?
@@ -59,7 +65,7 @@ my-cli
 ├─ commands/               # Organizes subcommands by hierarchy
 │  ├── remote/add.rs       # "remote add"
 │  ├── remote/rm.rs        # "remote rm"
-│  ├── remote.rs           # Not a command, 
+│  ├── remote.rs           # Not a command,
 │  │                           but a local implementation for
 │  │                           the remote series of commands
 │  ├── foo.rs              # "foo"
@@ -76,15 +82,19 @@ my-cli
 >
 > All of the following options are **OPTIONAL**
 
+**Pre:**
+
+- [x] `exec:git_init` Initialize this project as a git repository (requires `git` to be installed)
+
 **Features:**
 
+- [x] `feat:extra_macros` Extra macro support
+- [x] `feat:dispatch_tree` Compile-time dispatch tree (solidify all commands)
 - [ ] `feat:structural_renderer` Structural renderer (JSON/YAML) for feature output
 - [ ] `feat:comp` Dynamic completion system
 - [ ] `feat:clap` Clap support
 - [ ] `feat:parser` Mingling Picker parser support
 - [ ] `feat:async` Async support
-- [ ] `feat:dispatch_tree` Compile-time dispatch tree (solidify all commands)
-- [ ] `feat:extra_macros` Extra macro support
 
 **Implementations:**
 
