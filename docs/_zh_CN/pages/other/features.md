@@ -19,15 +19,15 @@
 
 ```rust
 // Features: ["async"]
- 
+
 pack!(StateFoo = ());
- 
+
 #[chain]
 async fn handle_state_foo(foo: StateFoo) -> Next {
     StateFoo::new(())
 }
 ```
- 
+
 详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-async-support)
 
 ## 特性 `builds`
@@ -41,13 +41,13 @@ async fn handle_state_foo(foo: StateFoo) -> Next {
 ```rust
 // Features: ["builds", "comp"]
 use mingling::build::build_comp_scripts;
- 
+
 fn main() {
     // 为 `myprogram` 生成补全脚本
     build_comp_scripts("myprogram").unwrap();
 }
 ```
- 
+
 ## 特性 `clap`
 
 **介绍:**
@@ -108,17 +108,17 @@ fn main() {
 
 ```rust
 // Features: ["extra_macros"]
- 
+
 pack!(StatePrev1 = ());
 pack!(StatePrev2 = ());
- 
+
 pack!(StateNext = ());
- 
+
 #[chain]
 fn handle_state_prev2(_p: StatePrev2) {
     // 无 Next 的 #[chain] 可以直接不返回值
 }
- 
+
 #[chain]
 fn handle_state_prev1(_p: StatePrev1) -> Next {
     let foo = 1;
@@ -131,19 +131,19 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
     }
 }
 ```
- 
+
 ### `#[program_setup]`
 
 ```rust
 // Features: ["extra_macros"]
 use mingling::{macros::program_setup, Program};
- 
+
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(NoErrorSetup);
     program.exec_and_exit();
 }
- 
+
 #[program_setup]
 fn no_error_setup(program: &mut Program<ThisProgram>) {
     program.global_flag(["--no-error"], |program| {
@@ -151,24 +151,24 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
     });
 }
 ```
- 
+
 ### `entry!`
 
 ```rust
 // Features: ["extra_macros"]
 use mingling::macros::entry;
- 
+
 pack!(EntryHello = Vec<String>);
- 
+
 fn main() {
     let result = handle_hello(entry!("--name", "Bob")).into();
     // ... 此处为断言逻辑
 }
- 
+
 #[chain]
 fn handle_hello(args: EntryHello) {}
 ```
- 
+
 ### `group!`
 
 将外部类型注册为程序组成员，无需修改原始类型的定义。
@@ -178,12 +178,12 @@ fn handle_hello(args: EntryHello) {}
 // Features: ["extra_macros"]
 use mingling::macros::group;
 use std::num::ParseIntError;
- 
+
 // 将 std::num::ParseIntError 注册为组成员。
 // 注册后，ParseIntError 可用于 #[chain] 和 #[renderer] 函数中。
 group!(std::num::ParseIntError);
 ```
- 
+
 ### `pack_err!`
 
 创建带自动 `name: String` 字段的错误结构体，字段值自动设为结构体名的蛇形命名。
@@ -192,20 +192,20 @@ group!(std::num::ParseIntError);
 ```rust
 // Features: ["extra_macros"]
 use std::path::PathBuf;
- 
+
 // 简单形式——仅包含 name 字段：
 pack_err!(ErrorNotFound);
 // 生成：
 //   struct ErrorNotFound { pub name: String }
 //   impl Default for ErrorNotFound { ... }
- 
+
 // 带类型的形式——包含额外的 info 字段：
 pack_err!(ErrorNotDir = PathBuf);
 // 生成：
 //   struct ErrorNotDir { pub name: String, pub info: PathBuf }
 //   impl ErrorNotDir { pub fn new(info: PathBuf) -> Self { ... } }
 ```
- 
+
 </details>
 
 ## 特性 `structural_renderer`
@@ -241,6 +241,35 @@ pack_err!(ErrorNotDir = PathBuf);
 **介绍:**
 
 启用仅在不稳定（Nightly）Rust 编译器中可用的实验性功能。
+
+## 特性 `pathf`
+
+> [!IMPORTANT]
+>
+> 此特性为 **实验性功能**，API 可能在后续版本中发生变化。
+
+**介绍:**
+
+启用模块路径分析器（Module Pathfinder），在构建期自动解析所有 Mingling 类型的完整模块路径，生成 `use` 语句映射文件供 `gen_program!()` 消费。
+
+开启后，类型可以定义在任意子模块中，`gen_program!()` 无需手动 `use` 即可自动识别并生成正确的完整路径引用。
+
+```toml
+# Cargo.toml
+[dependencies.mingling]
+features = ["pathf"]
+
+[build-dependencies.mingling]
+features = ["builds", "pathf"]
+```
+
+```rust
+// BUILD TIME
+// Features: ["pathf"]
+analyze_and_build_type_mapping().unwrap();
+```
+
+详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-pathfinder)
 
 ## 特性 `parser`
 

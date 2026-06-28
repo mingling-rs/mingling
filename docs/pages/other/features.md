@@ -19,15 +19,15 @@ Enables async runtime support, allowing `#[chain]` to bind `async` functions, e.
 
 ```rust
 // Features: ["async"]
- 
+
 pack!(StateFoo = ());
- 
+
 #[chain]
 async fn handle_state_foo(foo: StateFoo) -> Next {
     StateFoo::new(())
-} 
+}
 ```
- 
+
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-async-support)
 
 ## Feature `builds`
@@ -41,13 +41,13 @@ Enables scripts needed for use in `build.rs`, currently including:
 ```rust
 // Features: ["builds", "comp"]
 use mingling::build::build_comp_scripts;
- 
+
 fn main() {
     // Generate completion scripts for `myprogram`
     build_comp_scripts("myprogram").unwrap();
 }
 ```
- 
+
 ## Feature `clap`
 
 **Description:**
@@ -108,17 +108,17 @@ For example, allows the shorthand form `dispatcher!("greet")`, which auto-genera
 
 ```rust
 // Features: ["extra_macros"]
- 
+
 pack!(StatePrev1 = ());
 pack!(StatePrev2 = ());
- 
+
 pack!(StateNext = ());
- 
+
 #[chain]
 fn handle_state_prev2(_p: StatePrev2) {
     // A #[chain] with no return type can simply omit the return value
 }
- 
+
 #[chain]
 fn handle_state_prev1(_p: StatePrev1) -> Next {
     let foo = 1;
@@ -131,19 +131,19 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
     }
 }
 ```
- 
+
 ### `#[program_setup]`
 
 ```rust
 // Features: ["extra_macros"]
 use mingling::{macros::program_setup, Program};
- 
+
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(NoErrorSetup);
     program.exec_and_exit();
 }
- 
+
 #[program_setup]
 fn no_error_setup(program: &mut Program<ThisProgram>) {
     program.global_flag(["--no-error"], |program| {
@@ -151,24 +151,24 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
     });
 }
 ```
- 
+
 ### `entry!`
 
 ```rust
 // Features: ["extra_macros"]
 use mingling::macros::entry;
- 
+
 pack!(EntryHello = Vec<String>);
- 
+
 fn main() {
     let result = handle_hello(entry!("--name", "Bob")).into();
     // ... assertion logic here
 }
- 
+
 #[chain]
 fn handle_hello(args: EntryHello) {}
 ```
- 
+
 ### `group!`
 
 Registers an external type as a member of the program group without modifying its definition.
@@ -178,12 +178,12 @@ The type's simple name is used as the enum variant, just like `pack!` or `#[deri
 // Features: ["extra_macros"]
 use mingling::macros::group;
 use std::num::ParseIntError;
- 
+
 // Register std::num::ParseIntError as a group member.
 // After this, ParseIntError can be used in #[chain] and #[renderer] functions.
 group!(std::num::ParseIntError);
 ```
- 
+
 ### `pack_err!`
 
 Creates an error struct with an automatic `name: String` field set to the snake_case
@@ -192,20 +192,20 @@ of the struct name. Optionally wraps an inner type for additional context.
 ```rust
 // Features: ["extra_macros"]
 use std::path::PathBuf;
- 
+
 // Simple form — only a name field:
 pack_err!(ErrorNotFound);
 // Generates:
 //   struct ErrorNotFound { pub name: String }
 //   impl Default for ErrorNotFound { ... }
- 
+
 // Typed form — with additional info field:
 pack_err!(ErrorNotDir = PathBuf);
 // Generates:
 //   struct ErrorNotDir { pub name: String, pub info: PathBuf }
 //   impl ErrorNotDir { pub fn new(info: PathBuf) -> Self { ... } }
 ```
- 
+
 </details>
 
 ## Feature `structural_renderer`
@@ -241,6 +241,35 @@ Enables JSON serde serialization/deserialization formatting support.
 **Description:**
 
 Enables experimental features only available in the Nightly Rust compiler.
+
+## Feature `pathf`
+
+> [!IMPORTANT]
+>
+> This feature is **EXPERIMENTAL**, its API may change in future versions.
+
+**Description:**
+
+Enables the Module Pathfinder, which at build time automatically resolves the full module paths of all Mingling types and generates a `use` statement mapping file for `gen_program!()` to consume.
+
+When enabled, types can be defined in any submodule, and `gen_program!()` can automatically identify them and generate the correct full-path references without requiring manual `use` imports.
+
+```toml
+# Cargo.toml
+[dependencies.mingling]
+features = ["pathf"]
+
+[build-dependencies.mingling]
+features = ["builds", "pathf"]
+```
+
+```rust
+// BUILD TIME
+// Features: ["pathf"]
+analyze_and_build_type_mapping().unwrap();
+```
+
+See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-pathfinder)
 
 ## Feature `parser`
 
