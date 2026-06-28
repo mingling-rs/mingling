@@ -44,6 +44,8 @@ pub mod error {
     pub use crate::program::error::*;
     #[cfg(feature = "structural_renderer")]
     pub use crate::renderer::structural::error::*;
+    #[cfg(feature = "pathf")]
+    pub use mingling_pathf::error::*;
 }
 
 pub use crate::program::*;
@@ -91,4 +93,11 @@ pub mod __private {
 pub mod core_res {
     #[cfg(feature = "repl")]
     pub use crate::program::repl_exec::res::ResREPL;
+}
+
+#[cfg(feature = "pathf")]
+pub mod pathf {
+    pub use mingling_pathf::module_pathf::*;
+    pub use mingling_pathf::pattern_analyzer::*;
+    pub use mingling_pathf::patterns::*;
 }

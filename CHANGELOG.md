@@ -285,6 +285,47 @@ async fn greet(prev: HelloEntry, ec: &mut ResExitCode) -> Next {
 }
 ```
 
+13. **[`pathf`]** Added the `mingling_pathf` sub-crate and the `pathf` feature for build-time type path resolution.
+
+The `pathf` (pathfinder) system enables automatic resolution of type module paths at build time. It scans source files, identifies Mingling macro invocations (`pack!`, `#[chain]`, `#[renderer]`, `#[help]`, `#[completion]`, `dispatcher!`, `#[dispatcher_clap]`, `group!`, `#[derive(Groupped)]`, etc.), infers their module paths from the file system layout, and generates a mapping file consumed by `gen_program!()` at compile time.
+
+**Feature activation**: Enable the `pathf` feature on the `mingling` crate:
+
+```toml
+mingling = { version = "0.2", features = ["pathf"] }
+```
+
+**Usage** — Add a `build.rs` to your project:
+
+```rust
+// build.rs
+fn main() {
+    mingling::pathf::analyze_and_build_type_mapping().unwrap();
+}
+```
+
+The pathfinder system consists of:
+
+- **`mingling_pathf` sub-crate** — A standalone crate for build-time source analysis:
+  - `module_pathf::analyze()` — Scans the crate's source tree and infers module paths from the directory structure
+  - `pattern_analyzer::init()` — Creates a `PatternAnalyzer` registered with all supported Mingling patterns
+  - `analyze_and_build_type_mapping()` / `analyze_and_build_type_mapping_for()` — Convenience functions for build scripts
+  - **Pattern matchers** — Individual pattern implementations for each Mingling macro:
+    - `PackPattern` — Matches `pack!`, `pack_err!`, `pack_structural!`, `pack_err_structural!` invocations
+    - `GroupPattern` — Matches `group!` and `group_structural!` invocations
+    - `GrouppedDerivePattern` — Matches `#[derive(Groupped)]` and `#[derive(GrouppedSerialize)]`
+    - `ChainPattern` — Matches `#[chain]` functions, extracts `__internal_chain_*` names
+    - `RendererPattern` — Matches `#[renderer]` functions, extracts `__internal_renderer_*` names
+    - `HelpPattern` — Matches `#[help]` functions, extracts `__internal_help_*` names
+    - `CompletionPattern` — Matches `#[completion(T)]` functions, extracts `__internal_completion_*` names
+    - `DispatcherPattern` — Matches `dispatcher!` invocations, extracts entry type names (supports both explicit and implicit forms)
+    - `DispatcherClapPattern` — Matches `#[dispatcher_clap]` structs, extracts struct names
+  - `type_mapping_builder` — Assembles the mapping from all analyzed files and writes `MAPPING` and `type_using.rs` output files
+
+- **Integration with `gen_program!()`** — When the `pathf` feature is enabled, `gen_program!()` includes the generated `type_using.rs` file via `include!()`, making all type paths available in scope for the generated dispatch code.
+
+- **Public re-exports** — The `mingling` crate re-exports `mingling_pathf` types under `mingling::pathf::*` and error types under `mingling::error::*` (behind the `pathf` feature gate).
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 ---

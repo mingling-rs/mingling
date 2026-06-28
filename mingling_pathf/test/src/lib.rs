@@ -1,6 +1,7 @@
 #![cfg(test)]
 
 use std::{collections::HashMap, env::current_dir};
+use mingling_pathf::analyze_and_build_type_mapping_for;
 
 #[test]
 fn test_module_pathf() {
@@ -45,4 +46,238 @@ fn test_pattern_analyzer_once() {
 
     let result = analyzer.analyze_file(dir.join("src/has_sub_mod.rs")).unwrap();
     assert!(result.contains("::directly_sub_mod::DirectlySubModStruct"));
+}
+
+#[test]
+fn test_chain_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_chain.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required_entries: Vec<&str> = vec![
+        "::sub::__internal_chain_my_chain1",
+        "::sub::__internal_chain_my_chain2",
+        "::sub::__internal_chain_my_chain3",
+        "::sub::__internal_chain_my_chain4",
+        "::sub::__internal_chain_my_chain5",
+        "::sub::__internal_chain_my_chain6",
+        "::__internal_chain_my_chain1",
+        "::__internal_chain_my_chain2",
+        "::__internal_chain_my_chain3",
+        "::__internal_chain_my_chain4",
+        "::__internal_chain_my_chain5",
+        "::__internal_chain_my_chain6",
+    ];
+
+    assert_eq!(r.len(), required_entries.len(), "Result should contain exactly {} entries", required_entries.len());
+
+    for entry in &required_entries {
+        assert!(r.iter().any(|e| e == entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_renderer_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_renderer.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::sub::__internal_renderer_my_renderer1",
+        "::sub::__internal_renderer_my_renderer2",
+        "::sub::__internal_renderer_my_renderer3",
+        "::sub::__internal_renderer_my_renderer4",
+        "::__internal_renderer_my_renderer1",
+        "::__internal_renderer_my_renderer2",
+        "::__internal_renderer_my_renderer3",
+        "::__internal_renderer_my_renderer4",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_help_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_help.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::sub::__internal_help_my_help1",
+        "::sub::__internal_help_my_help2",
+        "::sub::__internal_help_my_help3",
+        "::sub::__internal_help_my_help4",
+        "::__internal_help_my_help1",
+        "::__internal_help_my_help2",
+        "::__internal_help_my_help3",
+        "::__internal_help_my_help4",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_completion_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_completion.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::sub::__internal_completion_my_completion1",
+        "::sub::__internal_completion_my_completion2",
+        "::sub::__internal_completion_my_completion3",
+        "::sub::__internal_completion_my_completion4",
+        "::__internal_completion_my_completion1",
+        "::__internal_completion_my_completion2",
+        "::__internal_completion_my_completion3",
+        "::__internal_completion_my_completion4",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_pack_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_pack.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::ResultPack1",
+        "::ErrorPack1",
+        "::ErrorPack2",
+        "::ResultPack2",
+        "::ErrorPack3",
+        "::ErrorPack4",
+        "::sub::ResultPack1",
+        "::sub::ErrorPack1",
+        "::sub::ErrorPack2",
+        "::sub::ResultPack2",
+        "::sub::ErrorPack3",
+        "::sub::ErrorPack4",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_group_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_group.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::Group1",
+        "::GroupAlias1",
+        "::Group2",
+        "::GroupAlias2",
+        "::sub::Group1",
+        "::sub::GroupAlias1",
+        "::sub::Group2",
+        "::sub::GroupAlias2",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_groupped_derive_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_groupped_derive.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::Derived1",
+        "::Derived2",
+        "::Derived3",
+        "::sub::Derived1",
+        "::sub::Derived3",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_dispatcher_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_dispatcher.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::EntryGreet",
+        "::EntryRemoteAdd",
+        "::EntryAdd",
+        "::EntryDelete",
+        "::EntryRemoteRm",
+        "::EntryRm",
+        "::sub::EntryGreet",
+        "::sub::EntryDelete",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_dispatcher_clap_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir().unwrap().join("src/test_files/test_dispatcher_clap.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        "::EntryClap1",
+        "::EntryClap2",
+        "::EntryClap3",
+        "::EntryClap4",
+        "::sub::EntryClap1",
+        "::sub::EntryClap3",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_type_mapping_file_created() {
+    let tmp = std::env::temp_dir().join("mingling_pathf_test_type_mapping");
+    let _ = std::fs::remove_dir_all(&tmp);
+
+    let crate_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+
+    analyze_and_build_type_mapping_for(
+        crate_dir,
+        &tmp,
+    )
+    .unwrap();
+
+    let output_path = tmp.join("type-mapping");
+    assert!(
+        output_path.exists(),
+        "type-mapping file should exist at: {}",
+        output_path.display()
+    );
+
+    let _ = std::fs::remove_dir_all(&tmp);
 }

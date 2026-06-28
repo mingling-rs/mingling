@@ -2037,7 +2037,17 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         quote! { u128 }
     };
 
+    let pathf_include = if cfg!(feature = "pathf") {
+        quote! {
+            include!(concat!(env!("OUT_DIR"), "/", env!("CARGO_PKG_NAME"), "/type_using.rs"));
+        }
+    } else {
+        quote! {}
+    };
+
     let expanded = quote! {
+        #pathf_include
+
         #[derive(Debug, PartialEq, Eq, Clone)]
         #[repr(#repr_type)]
         #[allow(nonstandard_style)]

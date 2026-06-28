@@ -255,7 +255,7 @@ pub fn run_parallel(phase: &str, tasks: Vec<(String, String, String)>) -> Result
                 code,
             ));
             if !output.is_empty() {
-                pb.println(output.trim_end().to_string());
+                pb.println(output.trim_end());
             }
         }
     }

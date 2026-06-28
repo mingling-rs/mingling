@@ -94,7 +94,7 @@ fn run_all_tests(config: &TestConfig, bar: &ProgressBar) -> usize {
 /// Build the example binary, return true on success
 fn build_example(example_name: &str) -> bool {
     let manifest = format!("examples/{example_name}/Cargo.toml");
-    tools::run_cmd_capture(&format!(
+    tools::run_cmd_capture(format!(
         "cargo build --manifest-path {manifest} --color always",
     ))
     .is_ok()

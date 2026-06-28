@@ -41,7 +41,7 @@ fn main() {
 1. **Build-time scanning**: `build.rs` traverses all `.rs` source files under `src/`, locating macro invocations such as `pack!`, `#[chain]`, `#[renderer]`, etc., via pattern matching.
 2. **Module inference**: The module path is inferred from the file's directory path (e.g., `src/app/sub.rs` → `app::sub`).
 3. **Reference tracking**: Following the chain of `mod use` re-exports (i.e., paths re-exported via `pub use` or `use`), the type name is resolved to the module path under which it is ultimately referenced.
-4. **Mapping output**: The mapping from type names to their final referenceable module paths is written to `$OUT_DIR/CRATE_NAME/type-mapping.rs`.
+4. **Mapping output**: The mapping from type names to their final referenceable module paths is written to `$OUT_DIR/CRATE_NAME/type-mapping`.
 5. **Compile-time consumption**: `gen_program!()` reads this mapping file and uses the full paths for downcasting in the generated dispatch code.
 
 ## Constraints

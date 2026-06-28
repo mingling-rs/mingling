@@ -16,6 +16,15 @@ pub fn init() -> PatternAnalyzer {
 
     __register![
         BasicStructPattern,
+        PackPattern,
+        GroupPattern,
+        GrouppedDerivePattern,
+        ChainPattern,
+        RendererPattern,
+        HelpPattern,
+        CompletionPattern,
+        DispatcherPattern,
+        DispatcherClapPattern,
     ];
 
     analyzer
@@ -123,6 +132,22 @@ impl PatternAnalyzer {
     /// - `Ok(HashSet<String>)` —— On success, returns a formatted set of strings, each in the form `"::module_path::item_name"`.
     /// - `Err(MinglingPathfinderError)` —— If the file cannot be read, returns the corresponding I/O error wrapper.
     pub fn analyze_file(&self, path: impl AsRef<Path>) -> Result<HashSet<String>, MinglingPathfinderError> {
+        self.collect_items(path).map(|items| {
+            AnalyzeResult { items }.into_formatted()
+        })
+    }
+
+    /// Analyzes a single file and returns the raw `Vec<AnalyzeItem>`.
+    ///
+    /// Unlike `analyze_file`, this method does not format the results into strings,
+    /// preserving the original module-path and item-name information. Useful for
+    /// callers that need to combine the results with other data sources.
+    pub fn analyze_file_items(&self, path: impl AsRef<Path>) -> Result<Vec<AnalyzeItem>, MinglingPathfinderError> {
+        self.collect_items(path)
+    }
+
+    /// Internal: collects raw `AnalyzeItem`s from a file.
+    fn collect_items(&self, path: impl AsRef<Path>) -> Result<Vec<AnalyzeItem>, MinglingPathfinderError> {
         let path = path.as_ref();
         let content = std::fs::read_to_string(path)?;
 
@@ -134,7 +159,6 @@ impl PatternAnalyzer {
             }
         }
 
-        let result = AnalyzeResult { items: all_items };
-        Ok(result.into_formatted())
+        Ok(all_items)
     }
 }
