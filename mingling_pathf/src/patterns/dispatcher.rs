@@ -94,8 +94,7 @@ fn extract_dispatcher_entry(tokens: &proc_macro2::TokenStream) -> Option<String>
     if let Some(start) = stream.find('"') {
         let rest = &stream[start + 1..];
         let cmd_name = rest.split('"').next()?;
-        let last_segment = cmd_name.split('.').next_back()?;
-        let entry = format!("Entry{}", to_pascal_case(last_segment));
+        let entry = format!("Entry{}", to_pascal_case(cmd_name));
         Some(entry)
     } else {
         None

@@ -1,7 +1,6 @@
 #![cfg(test)]
 
 use std::{collections::HashMap, env::current_dir};
-use mingling_pathf::analyze_and_build_type_mapping_for;
 
 #[test]
 fn test_module_pathf() {
@@ -16,8 +15,8 @@ fn test_module_pathf() {
                 .to_string();
             let module_path = i.module_path();
             (file_path, module_path.to_string())
-        }
-        ).collect::<HashMap<String, String>>();
+        })
+        .collect::<HashMap<String, String>>();
 
     assert!(mapping.contains_key("src/has_sub_use/sub_mod.rs"));
     assert!(mapping.contains_key("src/has_sub_use/sub_use.rs"));
@@ -29,12 +28,24 @@ fn test_module_pathf() {
     assert!(mapping.contains_key("src/main.rs"));
     assert!(!mapping.contains_key("src/unused.rs"));
 
-    assert_eq!(mapping.get("src/has_sub_use/sub_mod.rs").unwrap(), "crate::sub_mod");
+    assert_eq!(
+        mapping.get("src/has_sub_use/sub_mod.rs").unwrap(),
+        "crate::sub_mod"
+    );
     assert_eq!(mapping.get("src/has_sub_use/sub_use.rs").unwrap(), "crate");
-    assert_eq!(mapping.get("src/has_sub_mod/sub_mod.rs").unwrap(), "crate::has_sub_mod::sub_mod");
+    assert_eq!(
+        mapping.get("src/has_sub_mod/sub_mod.rs").unwrap(),
+        "crate::has_sub_mod::sub_mod"
+    );
     assert_eq!(mapping.get("src/has_sub_use.rs").unwrap(), "crate");
-    assert_eq!(mapping.get("src/has_sub_mod.rs").unwrap(), "crate::has_sub_mod");
-    assert_eq!(mapping.get("src/directly_mod.rs").unwrap(), "crate::directly_mod");
+    assert_eq!(
+        mapping.get("src/has_sub_mod.rs").unwrap(),
+        "crate::has_sub_mod"
+    );
+    assert_eq!(
+        mapping.get("src/directly_mod.rs").unwrap(),
+        "crate::directly_mod"
+    );
     assert_eq!(mapping.get("src/use_all.rs").unwrap(), "crate");
     assert_eq!(mapping.get("src/main.rs").unwrap(), "crate");
 }
@@ -44,7 +55,9 @@ fn test_pattern_analyzer_once() {
     let dir = current_dir().unwrap().join("test_proj");
     let analyzer = mingling_pathf::pattern_analyzer::init();
 
-    let result = analyzer.analyze_file(dir.join("src/has_sub_mod.rs")).unwrap();
+    let result = analyzer
+        .analyze_file(dir.join("src/has_sub_mod.rs"))
+        .unwrap();
     assert!(result.contains("::directly_sub_mod::DirectlySubModStruct"));
 }
 
@@ -69,17 +82,28 @@ fn test_chain_analyze() {
         "::__internal_chain_my_chain6",
     ];
 
-    assert_eq!(r.len(), required_entries.len(), "Result should contain exactly {} entries", required_entries.len());
+    assert_eq!(
+        r.len(),
+        required_entries.len(),
+        "Result should contain exactly {} entries",
+        required_entries.len()
+    );
 
     for entry in &required_entries {
-        assert!(r.iter().any(|e| e == entry), "Result should contain: {}", entry);
+        assert!(
+            r.iter().any(|e| e == entry),
+            "Result should contain: {}",
+            entry
+        );
     }
 }
 
 #[test]
 fn test_renderer_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_renderer.rs");
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_renderer.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
@@ -125,7 +149,9 @@ fn test_help_analyze() {
 #[test]
 fn test_completion_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_completion.rs");
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_completion.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
@@ -198,7 +224,9 @@ fn test_group_analyze() {
 #[test]
 fn test_groupped_derive_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_groupped_derive.rs");
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_groupped_derive.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
@@ -218,16 +246,16 @@ fn test_groupped_derive_analyze() {
 #[test]
 fn test_dispatcher_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_dispatcher.rs");
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_dispatcher.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
         "::EntryGreet",
         "::EntryRemoteAdd",
-        "::EntryAdd",
         "::EntryDelete",
         "::EntryRemoteRm",
-        "::EntryRm",
         "::sub::EntryGreet",
         "::sub::EntryDelete",
     ];
@@ -241,7 +269,9 @@ fn test_dispatcher_analyze() {
 #[test]
 fn test_dispatcher_clap_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_dispatcher_clap.rs");
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_dispatcher_clap.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
