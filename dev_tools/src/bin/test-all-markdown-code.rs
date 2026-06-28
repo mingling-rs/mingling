@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use indicatif::ProgressBar;
 use tools::verify::{
-    build_block, compute_block_hash, generate_cargo_toml, generate_main_rs, is_block_testable,
-    parse_code_blocks, write_summary_report,
+    build_block, compute_block_hash, generate_cargo_toml, generate_main_rs, generate_build_rs,
+    is_block_testable, parse_code_blocks, write_summary_report,
 };
 use tools::{eprintln_cargo_style, println_cargo_style};
 
@@ -184,8 +184,19 @@ async fn main() {
 
                 bar.set_message(block_label.clone());
 
-                let main_rs = generate_main_rs(block);
-                let (ok, err) = build_block(&src_dir, &manifest_path, &cargo_toml, &main_rs);
+                let main_rs = if block.is_build_time {
+                    // For build-time blocks, write a stub main.rs and generate build.rs
+                    generate_build_rs(block)
+                } else {
+                    generate_main_rs(block)
+                };
+                let (ok, err) = build_block(
+                    &src_dir,
+                    &manifest_path,
+                    &cargo_toml,
+                    &main_rs,
+                    block.is_build_time,
+                );
                 if ok {
                     bar.inc(1);
                 } else {

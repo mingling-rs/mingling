@@ -23,6 +23,8 @@ pub struct CodeBlock {
     pub has_main: bool,
     /// Whether this block has `gen_program!()` call
     pub has_gen_program: bool,
+    /// Whether this block has `// BUILD TIME` annotation (write to build.rs, not main.rs)
+    pub is_build_time: bool,
 }
 
 /// Parse all ```rust code blocks from markdown content
@@ -58,6 +60,7 @@ fn parse_single_block(lines: &[&str], start: usize, source_file: &str) -> Option
     let mut external_deps: Vec<(String, String)> = Vec::new();
     let mut has_main = false;
     let mut has_gen_program = false;
+    let mut is_build_time = false;
 
     let mut idx = start + 1;
     let mut in_header = true;
@@ -74,6 +77,12 @@ fn parse_single_block(lines: &[&str], start: usize, source_file: &str) -> Option
         // Check for NOT VERIFIED marker
         if in_header && trimmed == "// NOT VERIFIED" {
             not_verified = true;
+            idx += 1;
+            continue;
+        }
+
+        if in_header && trimmed == "// BUILD TIME" {
+            is_build_time = true;
             idx += 1;
             continue;
         }
@@ -147,6 +156,7 @@ fn parse_single_block(lines: &[&str], start: usize, source_file: &str) -> Option
         external_deps,
         has_main,
         has_gen_program,
+        is_build_time,
     })
 }
 
@@ -165,7 +175,6 @@ pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str, manifest_path:
     let mut extra_deps = String::new();
     for (name, version) in &block.external_deps {
         if !version.starts_with('{') {
-            // Plain version string, e.g. "1"
             if name == "serde" || name == "clap" {
                 extra_deps.push_str(&format!(
                     "{name} = {{ version = \"{version}\", features = [\"derive\"] }}\n"
@@ -174,7 +183,6 @@ pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str, manifest_path:
                 extra_deps.push_str(&format!("{name} = \"{version}\"\n"));
             }
         } else {
-            // Already in TOML inline table format, e.g. { version = "1", features = [...] }
             extra_deps.push_str(&format!("{name} = {version}\n"));
         }
     }
@@ -189,13 +197,30 @@ pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str, manifest_path:
         )
     };
 
+    // Build-time blocks: add `builds` by default, merge with explicit features
+    let build_deps_section = if block.is_build_time {
+        let mut all_feats = vec!["builds".to_string()];
+        for f in &block.features {
+            if f != "builds" {
+                all_feats.push(f.clone());
+            }
+        }
+        let feats_str: Vec<String> = all_feats.iter().map(|f| format!("\"{f}\"")).collect();
+        let build_feats = format!("features = [{}]", feats_str.join(", "));
+        format!(
+            "\n[build-dependencies]\nmingling = {{ path = \"{mingling_path}\", {build_feats} }}\n"
+        )
+    } else {
+        String::new()
+    };
+
     format!(
         r#"[package]
-name = "{package_name}"
-version = "0.0.0"
-edition = "2024"
+	name = "{package_name}"
+	version = "0.0.0"
+	edition = "2024"
 
-{deps_section}
+{deps_section}{build_deps_section}
 [workspace]
 "#
     )
@@ -247,13 +272,41 @@ pub fn generate_main_rs(block: &CodeBlock) -> String {
     output
 }
 
+/// Generate build.rs for a build-time block
+///
+/// Default: `use mingling::builds::*;`, code wrapped in `fn main() { }`.
+pub fn generate_build_rs(block: &CodeBlock) -> String {
+    let mut output = String::from("#![allow(dead_code)]\n#![allow(unused)]\n");
+
+    if !block.code.contains("use mingling::builds::*;") {
+        output.push_str("#[allow(unused_imports)]\nuse mingling::builds::*;\n\n");
+    }
+
+    if block.has_main {
+        output.push_str(&block.code);
+    } else {
+        output.push_str("fn main() {\n");
+        for line in block.code.lines() {
+            output.push_str("    ");
+            output.push_str(line);
+            output.push('\n');
+        }
+        output.push_str("}\n");
+    }
+
+    output
+}
+
 /// Build a single code block as a Cargo project.
-/// Returns (success, error_message).
+///
+/// When `is_build_time` is true, `src_content` is written to `build.rs` instead of `src/main.rs`,
+/// and a minimal `src/main.rs` stub (`fn main() {}`) is created.
 pub fn build_block(
     src_dir: &Path,
     manifest_path: &Path,
     cargo_toml: &str,
-    main_rs: &str,
+    src_content: &str,
+    is_build_time: bool,
 ) -> (bool, String) {
     if let Err(e) = std::fs::create_dir_all(src_dir) {
         return (false, format!("mkdir: {e}"));
@@ -264,9 +317,20 @@ pub fn build_block(
         return (false, format!("write Cargo.toml: {e}"));
     }
 
-    // Write main.rs
-    if let Err(e) = std::fs::write(src_dir.join("main.rs"), main_rs) {
-        return (false, format!("write main.rs: {e}"));
+    if is_build_time {
+        // Write build.rs and a stub main.rs
+        let crate_dir = manifest_path.parent().unwrap();
+        if let Err(e) = std::fs::write(crate_dir.join("build.rs"), src_content) {
+            return (false, format!("write build.rs: {e}"));
+        }
+        if let Err(e) = std::fs::write(src_dir.join("main.rs"), "fn main() {}\n") {
+            return (false, format!("write main.rs: {e}"));
+        }
+    } else {
+        // Normal: write src/main.rs
+        if let Err(e) = std::fs::write(src_dir.join("main.rs"), src_content) {
+            return (false, format!("write main.rs: {e}"));
+        }
     }
 
     // Check code — inherit stderr so cargo output is real-time and colored
