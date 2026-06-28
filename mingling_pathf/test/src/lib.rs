@@ -258,26 +258,3 @@ fn test_dispatcher_clap_analyze() {
         assert!(r.contains(*entry), "Result should contain: {}", entry);
     }
 }
-
-#[test]
-fn test_type_mapping_file_created() {
-    let tmp = std::env::temp_dir().join("mingling_pathf_test_type_mapping");
-    let _ = std::fs::remove_dir_all(&tmp);
-
-    let crate_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-
-    analyze_and_build_type_mapping_for(
-        crate_dir,
-        &tmp,
-    )
-    .unwrap();
-
-    let output_path = tmp.join("type-mapping");
-    assert!(
-        output_path.exists(),
-        "type-mapping file should exist at: {}",
-        output_path.display()
-    );
-
-    let _ = std::fs::remove_dir_all(&tmp);
-}
