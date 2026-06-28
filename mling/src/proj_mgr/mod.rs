@@ -4,19 +4,11 @@ use mingling::{
     macros::{dispatcher, program_setup},
 };
 
-mod generator;
-pub use generator::*;
-
+pub mod checklist_reader;
+pub mod generator;
 pub mod metadata;
-
-mod checklist_reader;
-pub use checklist_reader::*;
-
-mod show_binaries;
-pub use show_binaries::*;
-
-mod show_directories;
-pub use show_directories::*;
+pub mod show_binaries;
+pub mod show_directories;
 
 dispatcher!("gen", CMDGenerateProject => EntryGenerateProject);
 

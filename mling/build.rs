@@ -2,10 +2,12 @@ use std::path::Path;
 use std::process::Command;
 
 use mingling::build::build_comp_scripts;
+use mingling::builds::analyze_and_build_type_mapping;
 
 fn main() {
     build_version_info();
     build_completion();
+    analyze_and_build_type_mapping().unwrap();
 }
 
 fn build_version_info() {

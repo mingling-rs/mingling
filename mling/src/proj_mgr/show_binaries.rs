@@ -8,8 +8,11 @@ use mingling::{
 use serde::Serialize;
 
 use crate::{
-    EntryShowBinaries, Next,
-    metadata::{CargoLockFile, read_metadata},
+    Next,
+    proj_mgr::{
+        EntryShowBinaries,
+        metadata::{CargoLockFile, read_metadata},
+    },
     res::ResManifestPath,
 };
 

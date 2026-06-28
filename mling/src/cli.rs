@@ -1,9 +1,9 @@
 use crate::{
-    CMDCompletion, ErrorDispatcherNotFound, Next, PackageManagerSetup, ProjectManagerSetup,
-    ThisProgram,
+    CMDCompletion, ErrorDispatcherNotFound, Next, ThisProgram,
     display::markdown,
     eformat_cargo, eprintln_cargo, hformat_cargo,
-    pkg_mgr::{CMDInstall, CMDListNamespace, CMDRemoveNamespace},
+    pkg_mgr::{CMDInstall, CMDListNamespace, CMDRemoveNamespace, PackageManagerSetup},
+    proj_mgr::ProjectManagerSetup,
     res::{ResCurrentDir, ResManifestPath},
 };
 use colored::Colorize;
@@ -12,7 +12,7 @@ use mingling::{
     hook::ProgramHook,
     macros::{chain, help, pack, program_setup, r_println, renderer},
     res::ResExitCode,
-    setup::{ExitCodeSetup, StructuralRendererSetup, HelpFlagSetup, QuietFlagSetup},
+    setup::{ExitCodeSetup, HelpFlagSetup, QuietFlagSetup, StructuralRendererSetup},
 };
 use std::{env::current_dir, path::PathBuf, process::exit, str::FromStr};
 

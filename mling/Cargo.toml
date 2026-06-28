@@ -25,6 +25,7 @@ mingling = { path = "../mingling", features = [
     "structural_renderer",
     "extra_macros",
     "yaml_serde_fmt",
+    "pathf"
 ] }
 
 serde = { version = "1", features = ["derive"] }
@@ -37,4 +38,4 @@ toml.workspace = true
 
 [build-dependencies]
 chrono = "0.4"
-mingling = { path = "../mingling", features = ["comp", "builds"] }
+mingling = { path = "../mingling", features = ["comp", "pathf", "builds"] }
