@@ -257,3 +257,13 @@ expect.result = '{"name":"error_not_dir_structural","info":"Cargo.toml"}'
 command = "find-structural examples --json"
 expect.exit-code = 0
 expect.result = '{"inner":"examples"}'
+
+[[test.example-pathfinder]]
+command = "greet"
+expect.exit-code = 0
+expect.result = "Hello, World!"
+
+[[test.example-pathfinder]]
+command = "greet Alice"
+expect.exit-code = 0
+expect.result = "Hello, Alice!"

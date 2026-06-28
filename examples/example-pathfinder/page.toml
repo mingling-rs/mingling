@@ -1,0 +1,10 @@
+[example]
+id = "example-pathfinder"
+name = "Module Pathfinder"
+icon = "🧭"
+category = "advanced"
+desc = """
+Demonstrates the `pathf` feature, which automatically resolves type module paths at build time. Types can be defined in submodules without explicit `use` in the main module.
+"""
+tags = ["pathf", "build.rs", "architecture"]
+files = [ "Cargo.toml", "build.rs", "src/main.rs", "src/sub/mod.rs"]

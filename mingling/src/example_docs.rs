@@ -1831,6 +1831,69 @@ pub mod example_pack_err {}
 /// gen_program!();
 /// ```
 pub mod example_panic_unwind {}
+/// Example: Module Pathfinder (pathf)
+///
+///  > This example demonstrates how to use the `pathf` feature to define types
+///  > in submodules without needing explicit `use` in the main module.
+///  > All type paths are resolved automatically at build time.
+///
+///  Run:
+///  ```bash
+///  cargo run --manifest-path examples/example-pathfinder/Cargo.toml --quiet -- greet
+///  cargo run --manifest-path examples/example-pathfinder/Cargo.toml --quiet -- greet Alice
+///  ```
+///
+///  Output:
+///  ```plaintext
+///  Hello, World!
+///  Hello, Alice!
+///  ```
+///
+/// Source code (./Cargo.toml)
+/// ```toml
+/// [package]
+/// name = "example-pathfinder"
+/// version = "0.1.0"
+/// edition = "2024"
+///
+/// [dependencies.mingling]
+/// path = "../../mingling"
+///
+/// features = [
+///     # Enable `pathf` features
+///     "pathf",
+/// ]
+///
+/// [build-dependencies.mingling]
+/// path = "../../mingling"
+///
+/// features = [
+///     # Enable `pathf` features
+///     "pathf",
+///
+///     # Enable the `builds` feature for build-time support
+///     "builds",
+/// ]
+///
+/// [workspace]
+/// ```
+///
+/// Source code (./src/main.rs)
+/// ```ignore
+/// mod sub;
+///
+/// use mingling::macros::gen_program;
+/// use crate::sub::CMDGreet;
+///
+/// fn main() {
+///     let mut program = ThisProgram::new();
+///     program.with_dispatcher(CMDGreet);
+///     program.exec_and_exit();
+/// }
+///
+/// gen_program!();
+/// ```
+pub mod example_pathfinder {}
 /// Example REPL Basic
 ///
 ///  > This example demonstrates how to develop a REPL program using the `repl` feature

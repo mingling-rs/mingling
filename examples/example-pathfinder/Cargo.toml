@@ -1,0 +1,25 @@
+[package]
+name = "example-pathfinder"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies.mingling]
+path = "../../mingling"
+
+features = [
+    # Enable `pathf` features
+    "pathf",
+]
+
+[build-dependencies.mingling]
+path = "../../mingling"
+
+features = [
+    # Enable `pathf` features
+    "pathf",
+
+    # Enable the `builds` feature for build-time support
+    "builds",
+]
+
+[workspace]
