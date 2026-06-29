@@ -1,6 +1,7 @@
 use std::collections::HashSet;
-use std::path::{Path};
+use std::path::Path;
 
+use crate::config::PathfinderConfig;
 use crate::error::MinglingPathfinderError;
 use crate::module_pathf;
 use crate::pattern_analyzer;
@@ -9,14 +10,16 @@ use crate::pattern_analyzer;
 ///
 /// `crate_dir` — crate root directory (i.e., the directory containing Cargo.toml)
 /// `output_dir` — directory where mapping files will be written
+/// `config` — pathfinder configuration (e.g., dispatch_tree detection)
 ///
 /// Mapping file format per line: `TypeName = crate::module::path::TypeName`
 pub fn analyze_and_build_type_mapping_for(
     crate_dir: &Path,
     output_dir: &Path,
+    config: &PathfinderConfig,
 ) -> Result<(), MinglingPathfinderError> {
     let module_mapping = module_pathf::analyze(crate_dir)?;
-    let analyzer = pattern_analyzer::init();
+    let analyzer = pattern_analyzer::init_with_config(config.clone());
 
     let mut type_mappings: Vec<(String, String)> = Vec::new();
 
@@ -75,22 +78,24 @@ pub fn analyze_and_build_type_mapping_for(
 ///
 /// Reads `CARGO_PKG_NAME` and `OUT_DIR`, and outputs to `{OUT_DIR}/{CARGO_PKG_NAME}/`.
 pub fn analyze_and_build_type_mapping() -> Result<(), MinglingPathfinderError> {
-    let crate_name = std::env::var("CARGO_PKG_NAME")
-        .map_err(|_| MinglingPathfinderError::IoError(
-            std::io::Error::new(std::io::ErrorKind::NotFound,
-                "CARGO_PKG_NAME not set (not running in build.rs?)")
-        ))?;
+    let crate_name = std::env::var("CARGO_PKG_NAME").map_err(|_| {
+        MinglingPathfinderError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "CARGO_PKG_NAME not set (not running in build.rs?)",
+        ))
+    })?;
 
-    let out_dir = std::env::var("OUT_DIR")
-        .map_err(|_| MinglingPathfinderError::IoError(
-            std::io::Error::new(std::io::ErrorKind::NotFound,
-                "OUT_DIR not set (not running in build.rs?)")
-        ))?;
+    let out_dir = std::env::var("OUT_DIR").map_err(|_| {
+        MinglingPathfinderError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "OUT_DIR not set (not running in build.rs?)",
+        ))
+    })?;
 
     let crate_dir = std::env::current_dir()?;
     let output_dir = Path::new(&out_dir).join(&crate_name);
 
-    analyze_and_build_type_mapping_for(&crate_dir, &output_dir)?;
+    analyze_and_build_type_mapping_for(&crate_dir, &output_dir, &PathfinderConfig::default())?;
 
     // Notify Cargo to re-run build.rs when source files change
     println!("cargo:rerun-if-changed=src/");

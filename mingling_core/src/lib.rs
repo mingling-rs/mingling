@@ -97,7 +97,24 @@ pub mod core_res {
 
 #[cfg(feature = "pathf")]
 pub mod pathf {
+    pub use mingling_pathf::config::*;
     pub use mingling_pathf::module_pathf::*;
     pub use mingling_pathf::pattern_analyzer::*;
     pub use mingling_pathf::patterns::*;
+
+    pub use mingling_pathf::analyze_and_build_type_mapping;
+
+    use std::path::Path;
+
+    /// Wraps `analyze_and_build_type_mapping_for` with config derived from
+    /// the crate's feature flags (e.g., `dispatch_tree`).
+    pub fn analyze_and_build_type_mapping_for(
+        crate_dir: &Path,
+        output_dir: &Path,
+    ) -> Result<(), crate::error::MinglingPathfinderError> {
+        let config = mingling_pathf::config::PathfinderConfig {
+            use_dispatch_tree: cfg!(feature = "dispatch_tree"),
+        };
+        mingling_pathf::analyze_and_build_type_mapping_for(crate_dir, output_dir, &config)
+    }
 }

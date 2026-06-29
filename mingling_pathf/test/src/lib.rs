@@ -253,17 +253,57 @@ fn test_dispatcher_analyze() {
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
         "::EntryGreet",
+        "::CMDGreet",
         "::EntryRemoteAdd",
+        "::CMDRemoteAdd",
         "::EntryDelete",
+        "::CMDDelete",
         "::EntryRemoteRm",
+        "::CMDRemoteRm",
         "::sub::EntryGreet",
+        "::sub::CMDGreet",
         "::sub::EntryDelete",
+        "::sub::CMDDelete",
     ];
 
     assert_eq!(r.len(), required.len());
     for entry in &required {
         assert!(r.contains(*entry), "Result should contain: {}", entry);
     }
+}
+
+#[test]
+fn test_dispatcher_dispatch_tree() {
+    use mingling_pathf::config::PathfinderConfig;
+    use mingling_pathf::pattern_analyzer;
+
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_dispatcher_dispatch_tree.rs");
+
+    // Without dispatch_tree: only Entry + CMD types
+    let r1 = pattern_analyzer::init().analyze_file(&file).unwrap();
+    // 4 root (EntryGreet, CMDGreet, EntryDelete, CMDDelete)
+    // + 4 sub (sub::EntryGreet, sub::CMDGreet, sub::EntryDelete, sub::CMDDelete)
+    // = 8
+    assert_eq!(r1.len(), 8);
+    assert!(r1.contains("::EntryGreet"));
+    assert!(r1.contains("::CMDGreet"));
+    assert!(r1.contains("::EntryDelete"));
+    assert!(r1.contains("::CMDDelete"));
+    assert!(r1.contains("::sub::EntryGreet"));
+    assert!(r1.contains("::sub::CMDGreet"));
+
+    // With dispatch_tree: Entry + CMD + __internal_dispatcher
+    let r2 = pattern_analyzer::init_with_config(PathfinderConfig::with_dispatch_tree())
+        .analyze_file(&file)
+        .unwrap();
+    // 8 (from above) + 2 __internal (root) + 2 __internal (sub) = 12
+    assert_eq!(r2.len(), 12);
+    assert!(r2.contains("::__internal_dispatcher_greet"));
+    assert!(r2.contains("::__internal_dispatcher_delete"));
+    assert!(r2.contains("::sub::__internal_dispatcher_greet"));
+    assert!(r2.contains("::sub::__internal_dispatcher_delete"));
 }
 
 #[test]

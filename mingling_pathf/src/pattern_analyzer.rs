@@ -1,32 +1,29 @@
 use std::collections::HashSet;
 use std::path::Path;
 
+use crate::config::PathfinderConfig;
 use crate::error::MinglingPathfinderError;
+use crate::patterns::*;
 
-/// Top-level convenience function: creates a default PatternAnalyzer with all built-in patterns pre-registered
+/// Creates a default `PatternAnalyzer` with all built-in patterns pre-registered.
 pub fn init() -> PatternAnalyzer {
+    init_with_config(PathfinderConfig::default())
+}
+
+/// Creates a `PatternAnalyzer` with the given config, used by `mingling_core`'s pathf wrapper
+/// to inject feature-dependent settings (e.g., `dispatch_tree`).
+pub fn init_with_config(config: PathfinderConfig) -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
-    macro_rules! __register {
-        ( $($pattern:ident),* $(,)? ) => {
-            $(
-                analyzer.add_pattern(crate::patterns::$pattern);
-            )*
-        };
-    }
-
-    __register![
-        BasicStructPattern,
-        PackPattern,
-        GroupPattern,
-        GrouppedDerivePattern,
-        ChainPattern,
-        RendererPattern,
-        HelpPattern,
-        CompletionPattern,
-        DispatcherPattern,
-        DispatcherClapPattern,
-    ];
-
+    analyzer.add_pattern(BasicStructPattern);
+    analyzer.add_pattern(PackPattern);
+    analyzer.add_pattern(GroupPattern);
+    analyzer.add_pattern(GrouppedDerivePattern);
+    analyzer.add_pattern(ChainPattern);
+    analyzer.add_pattern(RendererPattern);
+    analyzer.add_pattern(HelpPattern);
+    analyzer.add_pattern(CompletionPattern);
+    analyzer.add_pattern(DispatcherPattern::new(config.use_dispatch_tree));
+    analyzer.add_pattern(DispatcherClapPattern);
     analyzer
 }
 
@@ -83,71 +80,41 @@ pub trait AnalyzePattern {
 
 /// A pattern analyzer that registers and runs multiple `AnalyzePattern` instances to parse
 /// referenceable items from code.
-///
-/// Internally maintains a `Vec<Box<dyn AnalyzePattern>>` for dynamic dispatch, supporting
-/// runtime registration of custom patterns. The `Default` derive provides an empty analyzer
-/// instance.
-///
-/// # Fields
-/// - `patterns`: A list of registered analysis patterns, each responsible for detecting and
-///   extracting a specific type of analyzable item (e.g., structs, functions).
 #[derive(Default)]
 pub struct PatternAnalyzer {
-    /// A list of registered analysis patterns, each responsible for detecting and extracting
-    /// a specific type of analyzable item.
     patterns: Vec<Box<dyn AnalyzePattern>>,
 }
 
 impl PatternAnalyzer {
-    /// Creates a new `PatternAnalyzer` instance.
-    ///
-    /// Internally calls `Default::default()` directly, initially containing no registered patterns.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Registers an analysis pattern with the current analyzer.
-    ///
-    /// The pattern is wrapped in a `Box` and stored in the internal pattern list,
-    /// and will be used to scan and analyze file content in subsequent calls to `analyze_file`.
-    ///
-    /// # Parameters
-    /// - `pattern` —— A type instance implementing the `AnalyzePattern` trait,
-    ///   responsible for detecting and extracting a specific syntactic structure (e.g., structs, functions).
     pub fn add_pattern(&mut self, pattern: impl AnalyzePattern + 'static) {
         self.patterns.push(Box::new(pattern));
     }
 
     /// Analyzes a single file and returns a formatted set of strings.
-    ///
-    /// This method reads the content of the file at the specified path, then uses each registered
-    /// pattern to analyze the content in turn. Only patterns whose `contains` method returns `true`
-    /// will trigger the subsequent `analyze` call. All extracted `AnalyzeItem`s are merged and
-    /// converted into a formatted `HashSet<String>`.
-    ///
-    /// # Parameters
-    /// - `path` —— The path to the file to analyze, supporting any type that implements `AsRef<Path>`.
-    ///
-    /// # Returns
-    /// - `Ok(HashSet<String>)` —— On success, returns a formatted set of strings, each in the form `"::module_path::item_name"`.
-    /// - `Err(MinglingPathfinderError)` —— If the file cannot be read, returns the corresponding I/O error wrapper.
-    pub fn analyze_file(&self, path: impl AsRef<Path>) -> Result<HashSet<String>, MinglingPathfinderError> {
-        self.collect_items(path).map(|items| {
-            AnalyzeResult { items }.into_formatted()
-        })
+    pub fn analyze_file(
+        &self,
+        path: impl AsRef<Path>,
+    ) -> Result<HashSet<String>, MinglingPathfinderError> {
+        self.collect_items(path)
+            .map(|items| AnalyzeResult { items }.into_formatted())
     }
 
     /// Analyzes a single file and returns the raw `Vec<AnalyzeItem>`.
-    ///
-    /// Unlike `analyze_file`, this method does not format the results into strings,
-    /// preserving the original module-path and item-name information. Useful for
-    /// callers that need to combine the results with other data sources.
-    pub fn analyze_file_items(&self, path: impl AsRef<Path>) -> Result<Vec<AnalyzeItem>, MinglingPathfinderError> {
+    pub fn analyze_file_items(
+        &self,
+        path: impl AsRef<Path>,
+    ) -> Result<Vec<AnalyzeItem>, MinglingPathfinderError> {
         self.collect_items(path)
     }
 
-    /// Internal: collects raw `AnalyzeItem`s from a file.
-    fn collect_items(&self, path: impl AsRef<Path>) -> Result<Vec<AnalyzeItem>, MinglingPathfinderError> {
+    fn collect_items(
+        &self,
+        path: impl AsRef<Path>,
+    ) -> Result<Vec<AnalyzeItem>, MinglingPathfinderError> {
         let path = path.as_ref();
         let content = std::fs::read_to_string(path)?;
 
