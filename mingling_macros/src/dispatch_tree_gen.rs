@@ -1,21 +1,27 @@
+use std::collections::{BTreeMap, HashMap};
+
 use just_fmt::snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
-use std::collections::BTreeMap;
+
+use crate::resolve_type;
 
 /// Generate the `get_nodes()` function body for a ProgramCollect impl.
-pub fn gen_get_nodes(entries: &[(String, String, String)]) -> TokenStream {
+/// If `pathf_map` is non-empty, resolves internal dispatcher statics using full paths.
+pub fn gen_get_nodes(
+    entries: &[(String, String, String)],
+    pathf_map: &HashMap<String, String>,
+) -> TokenStream {
     let mut node_entries = Vec::new();
 
     for (node_name, _disp_type, _entry_name) in entries {
         let static_name_str = format!("__internal_dispatcher_{}", snake_case!(node_name));
-        let static_ident = syn::Ident::new(&static_name_str, proc_macro2::Span::call_site());
-
+        let resolved = resolve_type(&static_name_str, pathf_map);
         let node_display_name = node_name.replace('.', " ");
         let node_display_lit = syn::LitStr::new(&node_display_name, proc_macro2::Span::call_site());
 
         node_entries.push(quote! {
-            (#node_display_lit.to_string(), & #static_ident)
+            (#node_display_lit.to_string(), & #resolved)
         });
     }
 
@@ -32,7 +38,12 @@ pub fn gen_get_nodes(entries: &[(String, String, String)]) -> TokenStream {
 ///
 /// Builds a hardcoded match tree: at each depth, group nodes by character.
 /// Single-node groups use `starts_with`; multi-node groups recurse with `nth()` match.
-pub fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> TokenStream {
+///
+/// If `pathf_map` is non-empty, resolves dispatcher types using full paths.
+pub fn gen_dispatch_args_trie(
+    entries: &[(String, String, String)],
+    pathf_map: &HashMap<String, String>,
+) -> TokenStream {
     // Prepare (display_name, disp_type) pairs.
     // display_name = node_name.replace('.', " ")
     let nodes: Vec<(String, String)> = entries
@@ -40,7 +51,7 @@ pub fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> TokenStre
         .map(|(name, disp, _)| (name.replace('.', " "), disp.clone()))
         .collect();
 
-    let dispatch_body = build_dispatch_body(&nodes, 0);
+    let dispatch_body = build_dispatch_body(&nodes, 0, pathf_map);
 
     quote! {
         fn dispatch_args_trie(
@@ -59,9 +70,12 @@ pub fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> TokenStre
 ///
 /// `nodes`: slice of (display_name, disp_type) for commands that share the same prefix so far.
 /// `depth`: The character index currently being matched.
-///
-/// Returns a `TokenStream` representing the match block at this depth.
-fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream {
+/// `pathf_map`: optional mapping from type name to full path for resolving dispatchers.
+fn build_dispatch_body(
+    nodes: &[(String, String)],
+    depth: usize,
+    pathf_map: &HashMap<String, String>,
+) -> TokenStream {
     if nodes.is_empty() {
         return quote! {
             return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
@@ -69,8 +83,6 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
     }
 
     // Group by character at `depth`
-    // Nodes that end exactly at this depth (name is closed – rare but possible, e.g. "hell")
-    // are collected into `exact_nodes`. All others go into `groups[char]`.
     let mut groups: BTreeMap<char, Vec<(String, String)>> = BTreeMap::new();
     let mut exact_nodes: Vec<(String, String)> = Vec::new();
 
@@ -89,14 +101,14 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
     let make_starts_with_arm = |name: &str, disp_type: &str| -> TokenStream {
         let name_space = format!("{} ", name);
         let name_lit = syn::LitStr::new(&name_space, proc_macro2::Span::call_site());
-        let disp_ident = syn::Ident::new(disp_type, proc_macro2::Span::call_site());
+        let disp_resolved = resolve_type(disp_type, pathf_map);
         let prefix_word_count = name.split_whitespace().count();
         quote! {
             if raw_str.starts_with(#name_lit) {
                 let prefix_len = #prefix_word_count;
                 let trimmed_args: Vec<String> = raw.iter().skip(prefix_len).cloned().collect();
-                let __cp = <#disp_ident as ::mingling::Dispatcher<Self::Enum>>::begin(
-                    &#disp_ident::default(),
+                let __cp = <#disp_resolved as ::mingling::Dispatcher<Self::Enum>>::begin(
+                    &#disp_resolved::default(),
                     trimmed_args,
                 );
                 return match __cp {
@@ -109,14 +121,12 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
         }
     };
 
-    // Build match arms
     let mut arms = Vec::new();
 
     for (&ch, sub_nodes) in &groups {
         let ch_char = ch;
 
         if sub_nodes.len() == 1 {
-            // Only one candidate – use `starts_with` directly at this depth.
             let (name, disp_type) = &sub_nodes[0];
             let arm = make_starts_with_arm(name, disp_type);
             arms.push(quote! {
@@ -126,8 +136,7 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
                 }
             });
         } else {
-            // Multiple candidates – recurse deeper
-            let sub_body = build_dispatch_body(sub_nodes, depth + 1);
+            let sub_body = build_dispatch_body(sub_nodes, depth + 1, pathf_map);
             arms.push(quote! {
                 Some(#ch_char) => {
                     #sub_body
@@ -136,18 +145,12 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
         }
     }
 
-    // Exact-match nodes at this depth
-    // These are names that are a prefix of other names (e.g. "hell" when "hello" exists).
-    // They are tried first via `starts_with`, then fall through to `raw_chars.nth(depth)` match.
     let exact_checks: Vec<TokenStream> = exact_nodes
         .iter()
         .map(|(name, disp_type)| make_starts_with_arm(name, disp_type))
         .collect();
 
-    // Assemble
-    // If there are exact nodes, first check starts_with, then do matching.
     if !exact_checks.is_empty() && !groups.is_empty() {
-        // Exact nodes + deeper groups: do starts_with checks, then match on nth(depth)
         let match_body = quote! {
             match raw_chars.nth(0) {
                 #(#arms)*
@@ -159,18 +162,15 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
             #match_body
         }
     } else if !exact_checks.is_empty() {
-        // Only exact nodes, no deeper groups
         quote! {
             #(#exact_checks)*
             return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
         }
     } else if arms.is_empty() {
-        // Only fallback (shouldn't happen if nodes is non-empty)
         quote! {
             return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
         }
     } else {
-        // Only group arms
         quote! {
             match raw_chars.nth(0) {
                 #(#arms)*

@@ -1834,7 +1834,7 @@ fn load_pathf_map() -> std::collections::HashMap<String, String> {
 }
 
 /// Resolves a type name to its full path token stream using the pathf mapping.
-fn resolve_type(
+pub(crate) fn resolve_type(
     name: &str,
     map: &std::collections::HashMap<String, String>,
 ) -> proc_macro2::TokenStream {
@@ -1969,8 +1969,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
             })
             .collect();
 
-        let get_nodes_fn = dispatch_tree_gen::gen_get_nodes(&entries);
-        let dispatch_trie_fn = dispatch_tree_gen::gen_dispatch_args_trie(&entries);
+        let get_nodes_fn = dispatch_tree_gen::gen_get_nodes(&entries, &pathf_map);
+        let dispatch_trie_fn = dispatch_tree_gen::gen_dispatch_args_trie(&entries, &pathf_map);
 
         quote! {
             #get_nodes_fn
