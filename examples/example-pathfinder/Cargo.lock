@@ -45,6 +45,7 @@ dependencies = [
 name = "mingling_pathf"
 version = "0.2.0"
 dependencies = [
+ "just_fmt",
  "proc-macro2",
  "syn",
 ]
