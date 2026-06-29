@@ -233,8 +233,11 @@ fn test_groupped_derive_analyze() {
         "::Derived1",
         "::Derived2",
         "::Derived3",
+        "::EnumDerived1",
+        "::EnumDerived2",
         "::sub::Derived1",
         "::sub::Derived3",
+        "::sub::EnumDerived1",
     ];
 
     assert_eq!(r.len(), required.len());

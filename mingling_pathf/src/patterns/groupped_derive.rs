@@ -24,27 +24,24 @@ impl AnalyzePattern for GrouppedDerivePattern {
 
         for item in &syntax.items {
             match item {
-                Item::Struct(s)
-                    if has_groupped_derive(&s.attrs) => {
-                        items.push(AnalyzeItem {
-                            module: String::new(),
-                            item_name: s.ident.to_string(),
-                        });
-                    }
-                Item::Enum(e)
-                    if has_groupped_derive(&e.attrs) => {
-                        items.push(AnalyzeItem {
-                            module: String::new(),
-                            item_name: e.ident.to_string(),
-                        });
-                    }
-                Item::Union(u)
-                    if has_groupped_derive(&u.attrs) => {
-                        items.push(AnalyzeItem {
-                            module: String::new(),
-                            item_name: u.ident.to_string(),
-                        });
-                    }
+                Item::Struct(s) if has_groupped_derive(&s.attrs) => {
+                    items.push(AnalyzeItem {
+                        module: String::new(),
+                        item_name: s.ident.to_string(),
+                    });
+                }
+                Item::Enum(e) if has_groupped_derive(&e.attrs) => {
+                    items.push(AnalyzeItem {
+                        module: String::new(),
+                        item_name: e.ident.to_string(),
+                    });
+                }
+                Item::Union(u) if has_groupped_derive(&u.attrs) => {
+                    items.push(AnalyzeItem {
+                        module: String::new(),
+                        item_name: u.ident.to_string(),
+                    });
+                }
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
@@ -77,12 +74,18 @@ impl AnalyzePattern for GrouppedDerivePattern {
 fn has_groupped_derive(attrs: &[syn::Attribute]) -> bool {
     attrs.iter().any(|attr| {
         if attr.path().is_ident("derive") {
-            attr.parse_args::<syn::MetaList>().ok().is_some_and(|meta| {
-                meta.path.segments.iter().any(|seg| {
-                    let name = seg.ident.to_string();
+            // Correctly parse comma-separated paths in #[derive(Groupped, Debug, ...)]
+            attr.parse_args_with(|input: syn::parse::ParseStream| {
+                let paths =
+                    syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated(
+                        input,
+                    )?;
+                Ok(paths.iter().any(|p| {
+                    let name = p.segments.last().unwrap().ident.to_string();
                     name == "Groupped" || name == "GrouppedSerialize"
-                })
+                }))
             })
+            .unwrap_or(false)
         } else {
             false
         }
