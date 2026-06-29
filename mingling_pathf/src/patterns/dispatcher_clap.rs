@@ -7,13 +7,22 @@ use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 /// - The dispatcher struct (`CMD*`, always)
 /// - The error type, if `error = ErrorType` is specified
 /// - The help internal struct, if `help = true` is specified
+/// - `__internal_dispatcher_*` — dispatch tree static (when `use_dispatch_tree` is true)
 ///
 /// Covers forms:
 /// - `#[dispatcher_clap("greet", CMDGreet)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, help = true)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet, help = true)] struct EntryGreet { ... }`
-pub struct DispatcherClapPattern;
+pub struct DispatcherClapPattern {
+    pub use_dispatch_tree: bool,
+}
+
+impl DispatcherClapPattern {
+    pub fn new(use_dispatch_tree: bool) -> Self {
+        Self { use_dispatch_tree }
+    }
+}
 
 impl AnalyzePattern for DispatcherClapPattern {
     fn contains(&self, content: &str) -> bool {
@@ -65,11 +74,6 @@ impl AnalyzePattern for DispatcherClapPattern {
                         }
 
                         // Help internal struct — if help = true
-                        // The dispatcher_clap macro generates:
-                        //   __{cmd_snake}_help  (via `format!("__{}_help", snake_case(dispatcher_struct))`)
-                        // The `#[help]` macro then generates:
-                        //   __internal_help_{fn_snake}  (via `format!("__internal_help_{}", snake_case(fn_name))`)
-                        // Final name: __internal_help_{snake_case("__{cmd_snake}_help")}
                         if parsed.help_enabled
                             && let Some(ref cmd) = parsed.cmd_type
                         {
@@ -79,6 +83,20 @@ impl AnalyzePattern for DispatcherClapPattern {
                             items.push(AnalyzeItem {
                                 module: String::new(),
                                 item_name: help_struct,
+                            });
+                        }
+
+                        // __internal_dispatcher_* — when configured
+                        if self.use_dispatch_tree
+                            && let Some(ref cmd_name) = parsed.cmd_name
+                        {
+                            let internal_name = format!(
+                                "__internal_dispatcher_{}",
+                                just_fmt::snake_case!(cmd_name)
+                            );
+                            items.push(AnalyzeItem {
+                                module: String::new(),
+                                item_name: internal_name,
                             });
                         }
                     }
@@ -135,6 +153,20 @@ impl AnalyzePattern for DispatcherClapPattern {
                                             item_name: help_struct,
                                         });
                                     }
+
+                                    // __internal_dispatcher_* — when configured
+                                    if self.use_dispatch_tree
+                                        && let Some(ref cmd_name) = parsed.cmd_name
+                                    {
+                                        let internal_name = format!(
+                                            "__internal_dispatcher_{}",
+                                            just_fmt::snake_case!(cmd_name)
+                                        );
+                                        items.push(AnalyzeItem {
+                                            module: item_mod.ident.to_string(),
+                                            item_name: internal_name,
+                                        });
+                                    }
                                 }
                             }
                         }
@@ -149,6 +181,7 @@ impl AnalyzePattern for DispatcherClapPattern {
 }
 
 struct ParsedClapArgs {
+    cmd_name: Option<String>,
     cmd_type: Option<String>,
     error_type: Option<String>,
     help_enabled: bool,
@@ -156,17 +189,18 @@ struct ParsedClapArgs {
 
 /// Parse `#[dispatcher_clap("cmd", CMDType, error = ErrorType, help = true)]` arguments.
 fn parse_dispatcher_clap_args(args: &str) -> ParsedClapArgs {
+    let mut cmd_name = None;
     let mut cmd_type = None;
     let mut error_type = None;
     let mut help_enabled = false;
 
     let args = args.trim();
 
-    // Find the first quoted string (the command name) and skip it
-    // After that, look for ident-like tokens separated by commas
+    // Extract the first quoted string (the command name)
     let after_cmd = if let Some(start) = args.find('"') {
         let after_open = &args[start + 1..];
         if let Some(end) = after_open.find('"') {
+            cmd_name = Some(after_open[..end].to_string());
             after_open[end + 1..].trim()
         } else {
             args
@@ -212,6 +246,7 @@ fn parse_dispatcher_clap_args(args: &str) -> ParsedClapArgs {
     }
 
     ParsedClapArgs {
+        cmd_name,
         cmd_type,
         error_type,
         help_enabled,

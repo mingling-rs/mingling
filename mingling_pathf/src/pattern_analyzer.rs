@@ -23,7 +23,7 @@ pub fn init_with_config(config: PathfinderConfig) -> PatternAnalyzer {
     analyzer.add_pattern(HelpPattern);
     analyzer.add_pattern(CompletionPattern);
     analyzer.add_pattern(DispatcherPattern::new(config.use_dispatch_tree));
-    analyzer.add_pattern(DispatcherClapPattern);
+    analyzer.add_pattern(DispatcherClapPattern::new(config.use_dispatch_tree));
     analyzer
 }
 

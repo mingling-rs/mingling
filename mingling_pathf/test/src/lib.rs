@@ -357,3 +357,30 @@ fn test_dispatcher_clap_analyze() {
         assert!(r.contains(*entry), "Result should contain: {}", entry);
     }
 }
+
+#[test]
+fn test_dispatcher_clap_dispatch_tree() {
+    use mingling_pathf::config::PathfinderConfig;
+    use mingling_pathf::pattern_analyzer;
+
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_dispatcher_clap.rs");
+
+    // Without dispatch_tree: 26 items (same set as test_dispatcher_clap_analyze)
+    let r1 = pattern_analyzer::init().analyze_file(&file).unwrap();
+    assert_eq!(r1.len(), 26);
+
+    // With dispatch_tree: 26 + 4 __internal (root) + 3 __internal (sub, no "full") = 33
+    let r2 = pattern_analyzer::init_with_config(PathfinderConfig::with_dispatch_tree())
+        .analyze_file(&file)
+        .unwrap();
+    assert_eq!(r2.len(), 33);
+    assert!(r2.contains("::__internal_dispatcher_greet"));
+    assert!(r2.contains("::__internal_dispatcher_delete"));
+    assert!(r2.contains("::__internal_dispatcher_helpcmd"));
+    assert!(r2.contains("::__internal_dispatcher_full"));
+    assert!(r2.contains("::sub::__internal_dispatcher_greet"));
+    assert!(r2.contains("::sub::__internal_dispatcher_delete"));
+    assert!(r2.contains("::sub::__internal_dispatcher_helpcmd"));
+}
