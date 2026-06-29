@@ -24,30 +24,27 @@ impl AnalyzePattern for GrouppedDerivePattern {
 
         for item in &syntax.items {
             match item {
-                Item::Struct(s) => {
-                    if has_groupped_derive(&s.attrs) {
+                Item::Struct(s)
+                    if has_groupped_derive(&s.attrs) => {
                         items.push(AnalyzeItem {
                             module: String::new(),
                             item_name: s.ident.to_string(),
                         });
                     }
-                }
-                Item::Enum(e) => {
-                    if has_groupped_derive(&e.attrs) {
+                Item::Enum(e)
+                    if has_groupped_derive(&e.attrs) => {
                         items.push(AnalyzeItem {
                             module: String::new(),
                             item_name: e.ident.to_string(),
                         });
                     }
-                }
-                Item::Union(u) => {
-                    if has_groupped_derive(&u.attrs) {
+                Item::Union(u)
+                    if has_groupped_derive(&u.attrs) => {
                         items.push(AnalyzeItem {
                             module: String::new(),
                             item_name: u.ident.to_string(),
                         });
                     }
-                }
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
