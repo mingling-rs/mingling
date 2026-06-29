@@ -1801,6 +1801,54 @@ fn parse_entry_pair(entry: &proc_macro2::TokenStream) -> (proc_macro2::Ident, pr
     (struct_ident, variant_ident)
 }
 
+/// Loads the pathf type mapping from `$OUT_DIR/{crate}/type_using.rs`.
+/// Always compiled; returns empty map when pathf feature is not enabled.
+fn load_pathf_map() -> std::collections::HashMap<String, String> {
+    if !cfg!(feature = "pathf") {
+        return std::collections::HashMap::new();
+    }
+    let out_dir = std::env::var("OUT_DIR").ok();
+    let crate_name = std::env::var("CARGO_PKG_NAME").ok();
+    match (out_dir, crate_name) {
+        (Some(dir), Some(name)) => {
+            let path = std::path::Path::new(&dir).join(&name).join("type_using.rs");
+            match std::fs::read_to_string(&path) {
+                Ok(content) => content
+                    .lines()
+                    .filter_map(|line| {
+                        let line = line.trim();
+                        if let Some(rest) = line.strip_prefix("use ") {
+                            let path = rest.strip_suffix(';').unwrap_or(rest);
+                            if let Some((_mod, type_name)) = path.rsplit_once("::") {
+                                return Some((type_name.to_string(), path.to_string()));
+                            }
+                        }
+                        None
+                    })
+                    .collect(),
+                Err(_) => std::collections::HashMap::new(),
+            }
+        }
+        _ => std::collections::HashMap::new(),
+    }
+}
+
+/// Resolves a type name to its full path token stream using the pathf mapping.
+fn resolve_type(
+    name: &str,
+    map: &std::collections::HashMap<String, String>,
+) -> proc_macro2::TokenStream {
+    if let Some(full_path) = map.get(name) {
+        syn::parse_str::<proc_macro2::TokenStream>(full_path).unwrap_or_else(|_| {
+            let ident = proc_macro2::Ident::new(name, proc_macro2::Span::call_site());
+            quote! { #ident }
+        })
+    } else {
+        let ident = proc_macro2::Ident::new(name, proc_macro2::Span::call_site());
+        quote! { #ident }
+    }
+}
+
 /// Panics if any of the global registries (`PACKED_TYPES`, `RENDERERS`, `CHAINS`, etc.)
 /// are poisoned.
 #[proc_macro]
@@ -1849,6 +1897,21 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
         .collect();
 
+    let pathf_map: std::collections::HashMap<String, String> = if cfg!(feature = "pathf") {
+        load_pathf_map()
+    } else {
+        std::collections::HashMap::new()
+    };
+
+    let pathf_uses: Vec<proc_macro2::TokenStream> = if cfg!(feature = "pathf") {
+        pathf_map
+            .values()
+            .map(|path| format!("use {};", path).parse().unwrap_or_default())
+            .collect()
+    } else {
+        Vec::new()
+    };
+
     #[cfg(feature = "structural_renderer")]
     let structural_renderer_tokens: Vec<proc_macro2::TokenStream> = structural_renderers
         .iter()
@@ -1861,6 +1924,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
             any: ::mingling::AnyOutput<Self::Enum>,
             setting: &::mingling::StructuralRendererSetting,
         ) -> Result<::mingling::RenderResult, ::mingling::error::StructuralRendererSerializeError> {
+            #[allow(unused_imports)]
+            #(#pathf_uses)*
             match any.member_id {
                 #(#structural_renderer_tokens)*
                 _ => {
@@ -1925,6 +1990,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     #[cfg(feature = "comp")]
     let comp = quote! {
         fn do_comp(any: &::mingling::AnyOutput<Self::Enum>, ctx: &::mingling::ShellContext) -> ::mingling::Suggest {
+            #[allow(unused_imports)]
+            #(#pathf_uses)*
             match any.member_id {
                 #(#completion_tokens)*
                 _ => ::mingling::Suggest::FileCompletion,
@@ -1943,12 +2010,14 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     } else {
         let render_arms: Vec<_> = renderer_tokens.iter().map(|entry| {
             let (struct_ident, variant_ident) = parse_entry_pair(entry);
+            let downcast_ty = resolve_type(&variant_ident.to_string(), &pathf_map);
+            let resolved_struct = resolve_type(&struct_ident.to_string(), &pathf_map);
             quote! {
                 Self::#variant_ident => {
                     // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
                     // so downcasting to `#variant_ident` is safe.
-                    let value = unsafe { any.downcast::<#variant_ident>().unwrap_unchecked() };
-                    <#struct_ident as ::mingling::Renderer>::render(value, __renderer_inner_result);
+                    let value = unsafe { any.downcast::<#downcast_ty>().unwrap_unchecked() };
+                    <#resolved_struct as ::mingling::Renderer>::render(value, __renderer_inner_result);
                 }
             }
         }).collect();
@@ -1965,12 +2034,14 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     // Build do_chain function (async and sync versions)
     let chain_arms_async: Vec<_> = chain_tokens.iter().map(|entry| {
         let (struct_ident, variant_ident) = parse_entry_pair(entry);
+        let downcast_ty = resolve_type(&variant_ident.to_string(), &pathf_map);
+        let resolved_struct = resolve_type(&struct_ident.to_string(), &pathf_map);
         quote! {
             Self::#variant_ident => {
                 // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
                 // so downcasting to `#variant_ident` is safe.
-                let value = unsafe { any.downcast::<#variant_ident>().unwrap_unchecked() };
-                let fut = async { <#struct_ident as ::mingling::Chain<Self::Enum>>::proc(value).await };
+                let value = unsafe { any.downcast::<#downcast_ty>().unwrap_unchecked() };
+                let fut = async { <#resolved_struct as ::mingling::Chain<Self::Enum>>::proc(value).await };
                 ::std::boxed::Box::pin(fut)
             }
         }
@@ -1980,12 +2051,14 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         .iter()
         .map(|entry| {
             let (struct_ident, variant_ident) = parse_entry_pair(entry);
+            let downcast_ty = resolve_type(&variant_ident.to_string(), &pathf_map);
+            let resolved_struct = resolve_type(&struct_ident.to_string(), &pathf_map);
             quote! {
                 Self::#variant_ident => {
                     // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
                     // so downcasting to `#variant_ident` is safe.
-                    let value = unsafe { any.downcast::<#variant_ident>().unwrap_unchecked() };
-                    <#struct_ident as ::mingling::Chain<Self::Enum>>::proc(value)
+                    let value = unsafe { any.downcast::<#downcast_ty>().unwrap_unchecked() };
+                    <#resolved_struct as ::mingling::Chain<Self::Enum>>::proc(value)
                 }
             }
         })
@@ -2040,30 +2113,7 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         quote! { u128 }
     };
 
-    let pathf_include = if cfg!(feature = "pathf") {
-        let out_dir = std::env::var("OUT_DIR").ok();
-        let crate_name = std::env::var("CARGO_PKG_NAME").ok();
-
-        match (out_dir, crate_name) {
-            (Some(dir), Some(name)) => {
-                let path = std::path::Path::new(&dir).join(&name).join("type_using.rs");
-                match std::fs::read_to_string(&path) {
-                    Ok(content) => {
-                        let tokens: proc_macro2::TokenStream = content.parse().unwrap_or_default();
-                        tokens
-                    }
-                    Err(_) => quote! {},
-                }
-            }
-            _ => quote! {},
-        }
-    } else {
-        quote! {}
-    };
-
     let expanded = quote! {
-        #pathf_include
-
         #[derive(Debug, PartialEq, Eq, Clone)]
         #[repr(#repr_type)]
         #[allow(nonstandard_style)]
@@ -2096,6 +2146,8 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
             #render_fn
             #do_chain_fn
             fn render_help(any: ::mingling::AnyOutput<Self::Enum>, __renderer_inner_result: &mut ::mingling::RenderResult) {
+                #[allow(unused_imports)]
+                #(#pathf_uses)*
                 match any.member_id {
                     #(#help_tokens)*
                     _ => (),
