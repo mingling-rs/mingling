@@ -10,16 +10,20 @@ fn get_ignore_dirs() -> Vec<String> {
 }
 
 fn print_help() {
-    println!("Usage: ci [options]");
-    println!();
-    println!("Options:");
-    println!("  -h, --help              Print this help message");
-    println!("  -y                      Auto-confirm temporary commits");
-    println!("  --refresh-docs          Refresh documentation files");
-    println!("  --test-docs             Run documentation tests (build, clippy, test)");
-    println!("  --test-codes            Test examples and documentation code blocks");
-    println!();
-    println!("If no specific options are given, all checks are run.");
+    println!(
+        r"
+Usage: ci [options]
+Options:
+   -h, --help              Print this help message
+   -y                      Auto-confirm temporary commits
+       --dirty             Run CI on dirty workspace (skip temp commit & clean check)
+       --refresh-docs      Refresh documentation files
+       --test-docs         Run documentation tests (build, clippy, test)
+       --test-codes        Test examples and documentation code blocks
+
+If no specific options are given, all checks are run.
+    "
+    );
 }
 
 fn main() {
@@ -35,6 +39,7 @@ fn main() {
     }
 
     let auto_yes = args.iter().any(|a| a == "-y");
+    let dirty = args.iter().any(|a| a == "--dirty");
 
     let test_docs = args.iter().any(|a| a == "--test-docs");
     let refresh_docs = args.iter().any(|a| a == "--refresh-docs");
@@ -42,7 +47,7 @@ fn main() {
     let any_specified = test_docs || refresh_docs || test_codes;
     let run_all = !any_specified;
 
-    let needs_commit_temp = !{ run_cmd!("git diff-index --quiet HEAD --").is_ok() };
+    let needs_commit_temp = !dirty && !{ run_cmd!("git diff-index --quiet HEAD --").is_ok() };
 
     if needs_commit_temp {
         if auto_yes {
@@ -69,18 +74,20 @@ fn main() {
         exit(exit_code)
     }
 
-    let is_worktree_clean = run_cmd!("git diff-index --quiet HEAD --").is_ok();
-    if !is_worktree_clean {
-        eprintln_cargo_style!("The repository was contaminated during CI, failing!");
+    if !dirty {
+        let is_worktree_clean = run_cmd!("git diff-index --quiet HEAD --").is_ok();
+        if !is_worktree_clean {
+            eprintln_cargo_style!("The repository was contaminated during CI, failing!");
 
-        // Print git status
-        println!();
-        let _ = run_cmd!("git status");
+            // Print git status
+            println!();
+            let _ = run_cmd!("git status");
 
-        if needs_commit_temp {
-            restore_workspace(true).unwrap();
+            if needs_commit_temp {
+                restore_workspace(true).unwrap();
+            }
+            exit(1)
         }
-        exit(1)
     }
 
     println_cargo_style!("Done: All check passed!");
