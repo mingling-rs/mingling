@@ -1,35 +1,7 @@
+use just_fmt::snake_case;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Ident, Token, Type, parse_macro_input};
-
-/// Converts a PascalCase/UpperCamelCase identifier string to snake_case.
-///
-/// Examples:
-/// - `ErrorNotFound` → `"error_not_found"`
-/// - `ErrorNotDir` → `"error_not_dir"`
-/// - `FileIO` → `"file_io"`
-/// - `XMLParser` → `"xml_parser"`
-fn to_snake_case(ident: &str) -> String {
-    let mut result = String::new();
-    let mut prev_is_upper = false;
-
-    for (i, c) in ident.chars().enumerate() {
-        if c.is_uppercase() {
-            if i > 0 && !prev_is_upper {
-                result.push('_');
-            }
-            for lower_c in c.to_lowercase() {
-                result.push(lower_c);
-            }
-            prev_is_upper = true;
-        } else {
-            result.push(c);
-            prev_is_upper = false;
-        }
-    }
-
-    result
-}
 
 enum PackErrInput {
     /// pack_err!(ErrorNotFound)
@@ -65,7 +37,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
     match parsed {
         PackErrInput::Simple { type_name } => {
             let name_str = type_name.to_string();
-            let snake_name = to_snake_case(&name_str);
+            let snake_name = snake_case!(&name_str);
 
             // Note: No longer derives Serialize under structural_renderer.
             // Use pack_err_structural for structured output support.
@@ -98,7 +70,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
             inner_type,
         } => {
             let name_str = type_name.to_string();
-            let snake_name = to_snake_case(&name_str);
+            let snake_name = snake_case!(&name_str);
 
             // Note: No longer derives Serialize under structural_renderer.
             // Use pack_err_structural for structured output support.
@@ -175,7 +147,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
     match parsed {
         PackErrInput::Simple { type_name } => {
             let name_str = type_name.to_string();
-            let snake_name = to_snake_case(&name_str);
+            let snake_name = snake_case!(&name_str);
 
             let expanded = quote! {
                 #[derive(::mingling::Groupped, ::serde::Serialize)]
@@ -204,7 +176,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
             inner_type,
         } => {
             let name_str = type_name.to_string();
-            let snake_name = to_snake_case(&name_str);
+            let snake_name = snake_case!(&name_str);
 
             let expanded = quote! {
                 #[derive(::mingling::Groupped, ::serde::Serialize)]
