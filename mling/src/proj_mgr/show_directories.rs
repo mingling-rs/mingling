@@ -6,8 +6,9 @@ use mingling::{
 use serde::Serialize;
 
 use crate::{
-    EntryShowTargetDirectories, EntryShowWorkspaceDirectory, Next,
-    proj_mgr::metadata::read_metadata, res::ResManifestPath,
+    Next,
+    proj_mgr::{EntryShowTargetDirectories, EntryShowWorkspaceDirectory, metadata::read_metadata},
+    res::ResManifestPath,
 };
 
 #[derive(Serialize, Groupped)]

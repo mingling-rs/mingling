@@ -1,8 +1,11 @@
 use std::path::{self, PathBuf};
 
-use mingling::{Groupped, macros::{chain, pack, r_println, renderer, route}};
+use mingling::{
+    Groupped,
+    macros::{chain, pack, r_println, renderer, route},
+};
 
-use crate::{EntryGenerateProject, Next, res::ResCurrentDir};
+use crate::{Next, proj_mgr::EntryGenerateProject, res::ResCurrentDir};
 
 pack!(StateGenerateProjectReady = PathBuf);
 pack!(ResultGenerateProjectChecklistCreated = PathBuf);
@@ -33,7 +36,11 @@ pub fn handle_state_gen_proj_ready(prev: StateGenerateProjectReady) -> Next {
 
 #[renderer]
 pub fn render_gen_proj_checklist_created(result: ResultGenerateProjectChecklistCreated) {
-    r_println!("Successfully create {} at \"{}\"", CHECK_LIST_NAME, result.to_string_lossy());
+    r_println!(
+        "Successfully create {} at \"{}\"",
+        CHECK_LIST_NAME,
+        result.to_string_lossy()
+    );
     r_println!("");
     r_println!("Please fill in {CHECK_LIST_NAME} and run `mling gen` again to continue generating");
 }
