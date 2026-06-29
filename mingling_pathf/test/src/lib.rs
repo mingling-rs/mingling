@@ -315,12 +315,41 @@ fn test_dispatcher_clap_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
+        // Root: entry types (bare dispatcher_clap, no params)
         "::EntryClap1",
         "::EntryClap2",
         "::EntryClap3",
         "::EntryClap4",
+        // Root: with CMD type
+        "::EntryWithCmd",
+        "::CMDGreet",
+        // Root: with CMD + error
+        "::EntryWithError",
+        "::CMDDelete",
+        "::ErrorDelete",
+        // Root: with CMD + help
+        "::EntryWithHelp",
+        "::CMDHelp",
+        "::__internal_help_cmdhelp_help",
+        // Root: with CMD + error + help
+        "::EntryFull",
+        "::CMDFull",
+        "::ErrorFull",
+        "::__internal_help_cmdfull_help",
+        // Sub: entry types (bare dispatcher_clap)
         "::sub::EntryClap1",
         "::sub::EntryClap3",
+        // Sub: with CMD type
+        "::sub::EntryWithCmd",
+        "::sub::CMDGreet",
+        // Sub: with CMD + error
+        "::sub::EntryWithError",
+        "::sub::CMDDelete",
+        "::sub::ErrorDelete",
+        // Sub: with CMD + help
+        "::sub::EntryWithHelp",
+        "::sub::CMDHelp",
+        "::sub::__internal_help_cmdhelp_help",
     ];
 
     assert_eq!(r.len(), required.len());
