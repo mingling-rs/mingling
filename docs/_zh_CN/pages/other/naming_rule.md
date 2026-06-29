@@ -33,9 +33,9 @@ Res + 名称
 名称 + Setup
 ```
  
-| 示例                   | 说明                                           |
-| ---------------------- | ---------------------------------------------- |
-| `BasicSetup`           | 基础初始化（`--quiet`、`--help`、`--confirm`） |
+| 示例                      | 说明                                           |
+| ------------------------- | ---------------------------------------------- |
+| `BasicSetup`              | 基础初始化（`--quiet`、`--help`、`--confirm`） |
 | `StructuralRendererSetup` | 通用渲染器初始化（`--json`、`--yaml` 等）      |
 
 ### 分发器
@@ -148,9 +148,13 @@ Error + 描述
 | 资源（可变）   | `counter`、`cache`、`session` 等 |
 
 ```rust
-// NOT VERIFIED
+@@@ pack!(EntryRemoteAdd = Vec<String>);
+@@@ #[derive(Default, Clone)]
+@@@ struct ResDatabase {  }
+@@@ #[derive(Default, Clone)]
+@@@ struct ResCurrentDir {  }
 #[chain]
-fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResDatabase) -> Next {
+fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResDatabase) {
     // args: 入口数据
     // cwd:  注入的不可变资源
     // db:   注入的可变资源
@@ -162,36 +166,41 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 ## 完整示例
 
 ```rust
-// NOT VERIFIED
+@@@ #[derive(Default, Clone)]
+@@@ struct ResDatabase {  }
+@@@ impl ResDatabase { fn has_remote(&self, remote: &String) -> bool { true } }
+@@@ pack!(StateOperationRemotes = String);
+@@@ pack!(ResultRemoteAdded = String);
+@@@ pack!(ErrorRepositoryNotFound = String);
 // 分发器
 dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
  
 // 入口 → 状态
 #[chain]
 fn handle_remote_add(args: EntryRemoteAdd) -> Next {
-    StateOperationRemotes::new(...).to_chain()
+    StateOperationRemotes::default().to_chain()
 }
  
 // 状态 → 错误或结果
 #[chain]
 fn handle_state_operation_remotes(state: StateOperationRemotes, db: &ResDatabase) -> Next {
-    if db.has_remote(&state.name) {
-        ErrorRepositoryNotFound::new(...).to_render()
+    if db.has_remote(&state.inner) {
+        ErrorRepositoryNotFound::new(state.inner).to_render()
     } else {
-        ResultRemoteAdded::new(...).to_render()
+        ResultRemoteAdded::new(state.inner).to_render()
     }
 }
  
 // 结果渲染
 #[renderer]
 fn render_remote_added(result: ResultRemoteAdded) {
-    r_println!("Remote added: {}", result.name);
+    r_println!("Remote added: {}", result.inner);
 }
  
 // 错误渲染
 #[renderer]
 fn render_error_repository_not_found(err: ErrorRepositoryNotFound) {
-    r_println!("Error: remote '{}' not found", err.name);
+    r_println!("Error: remote '{}' not found", err.inner);
 }
 ```
  

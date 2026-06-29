@@ -63,6 +63,16 @@
                     depth: 2,
                 },
                 plugins: [
+                    function (hook) {
+                        hook.beforeEach(function (content) {
+                            return content
+                                .split("\n")
+                                .filter(function (line) {
+                                    return !line.startsWith("@@@");
+                                })
+                                .join("\n");
+                        });
+                    },
                     [
                         "flexible-alerts",
                         {
