@@ -61,6 +61,25 @@
     ]
   },
   {
+    "id": "example-combine-pathf-dispatch-tree",
+    "name": "Pathfinder + Dispatch Tree",
+    "icon": "🧭",
+    "category": "advanced",
+    "desc": "Demonstrates combining the `pathf` and `dispatch_tree` features. Types are defined in submodules and automatically resolved. Requires `dispatch_tree` in both `[dependencies]` and `[build-dependencies]`.\n",
+    "tags": [
+      "pathf",
+      "dispatch_tree",
+      "extra_macros",
+      "build.rs"
+    ],
+    "files": [
+      "src/main.rs",
+      "src/sub/mod.rs",
+      "build.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
     "id": "example-completion",
     "name": "Completion",
     "icon": "🔄",

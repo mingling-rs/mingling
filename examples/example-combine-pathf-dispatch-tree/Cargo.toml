@@ -1,0 +1,26 @@
+[package]
+name = "example-combine-pathf-dispatch-tree"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+mingling = { path = "../../mingling", features = [
+    "dispatch_tree",
+    "extra_macros",
+    "pathf",
+] }
+
+[build-dependencies]
+mingling = { path = "../../mingling", features = [
+    "builds",
+
+    # --------- IMPORTANT ---------
+    # To use pathf under dispatch_tree
+    #   **must** enable the `dispatch_tree`
+    #   feature in build dependencies
+    "dispatch_tree",
+    "pathf",
+    # --------- IMPORTANT ---------
+] }
+
+[workspace]

@@ -439,6 +439,71 @@ pub mod example_basic {}
 /// gen_program!();
 /// ```
 pub mod example_clap_binding {}
+/// Example: Combining pathf + dispatch_tree
+///
+///  > This example demonstrates how to use `pathf` and `dispatch_tree` together.
+///  > Types are defined in a submodule (`sub`), and `gen_program!()` resolves
+///  > them automatically via pathf without explicit `use` imports.
+///  >
+///  > **Important**: `dispatch_tree` must be enabled in BOTH `[dependencies]`
+///  > AND `[build-dependencies]` so that pathf's builder can detect
+///  > `__internal_dispatcher_*` types needed by the dispatch tree.
+///  >
+///  > Also requires `extra_macros` for the implicit `dispatcher!("hello")` form.
+///
+///  Run:
+///  ```bash
+///  cargo run --manifest-path examples/example-combine-pathf-dispatch-tree/Cargo.toml --quiet -- hello Alice
+///  ```
+///
+///  Output:
+///  ```plaintext
+///  Hello, Alice!
+///  ```
+///
+/// Source code (./Cargo.toml)
+/// ```toml
+/// [package]
+/// name = "example-combine-pathf-dispatch-tree"
+/// version = "0.1.0"
+/// edition = "2024"
+///
+/// [dependencies]
+/// mingling = { path = "../../mingling", features = [
+///     "dispatch_tree",
+///     "extra_macros",
+///     "pathf",
+/// ] }
+///
+/// [build-dependencies]
+/// mingling = { path = "../../mingling", features = [
+///     "builds",
+///
+///     # --------- IMPORTANT ---------
+///     # To use pathf under dispatch_tree
+///     #   **must** enable the `dispatch_tree`
+///     #   feature in build dependencies
+///     "dispatch_tree",
+///     "pathf",
+///     # --------- IMPORTANT ---------
+/// ] }
+///
+/// [workspace]
+/// ```
+///
+/// Source code (./src/main.rs)
+/// ```ignore
+/// mod sub;
+///
+/// use mingling::macros::gen_program;
+///
+/// fn main() {
+///     ThisProgram::new().exec_and_exit();
+/// }
+///
+/// gen_program!();
+/// ```
+pub mod example_combine_pathf_dispatch_tree {}
 /// Example Completion
 ///
 ///  > This example demonstrates how to use **Mingling** to create fully dynamic command-line completions

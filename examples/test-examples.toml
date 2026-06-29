@@ -267,3 +267,13 @@ expect.result = "Hello, World!"
 command = "greet Alice"
 expect.exit-code = 0
 expect.result = "Hello, Alice!"
+
+[[test.example-combine-pathf-dispatch-tree]]
+command = "hello Alice"
+expect.exit-code = 0
+expect.result = "Hello, Alice!"
+
+[[test.example-combine-pathf-dispatch-tree]]
+command = "hello"
+expect.exit-code = 0
+expect.result = "Hello, World!"
