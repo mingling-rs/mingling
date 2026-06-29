@@ -6,7 +6,11 @@ use tools::{
 };
 
 fn get_ignore_dirs() -> Vec<String> {
-    vec![".temp".to_string(), "mling/res".to_string()]
+    vec![
+        ".temp".to_string(),
+        "mling/res".to_string(),
+        "mling\\res".to_string(),
+    ]
 }
 
 fn print_help() {
