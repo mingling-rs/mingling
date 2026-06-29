@@ -278,8 +278,8 @@ pub fn generate_main_rs(block: &CodeBlock) -> String {
 pub fn generate_build_rs(block: &CodeBlock) -> String {
     let mut output = String::from("#![allow(dead_code)]\n#![allow(unused)]\n");
 
-    if !block.code.contains("use mingling::builds::*;") {
-        output.push_str("#[allow(unused_imports)]\nuse mingling::builds::*;\n\n");
+    if !block.code.contains("use mingling::build::*;") {
+        output.push_str("#[allow(unused_imports)]\nuse mingling::build::*;\n\n");
     }
 
     if block.has_main {

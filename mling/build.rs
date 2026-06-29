@@ -1,8 +1,8 @@
 use std::path::Path;
 use std::process::Command;
 
+use mingling::build::analyze_and_build_type_mapping;
 use mingling::build::build_comp_scripts;
-use mingling::builds::analyze_and_build_type_mapping;
 
 fn main() {
     build_version_info();
