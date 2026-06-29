@@ -164,8 +164,6 @@ mod enum_tag;
 mod group_impl;
 mod groupped;
 mod help;
-#[cfg(feature = "structural_renderer")]
-mod structural_data;
 mod node;
 mod pack;
 #[cfg(feature = "extra_macros")]
@@ -175,6 +173,8 @@ mod program_setup;
 mod render;
 mod renderer;
 mod res_injection;
+#[cfg(feature = "structural_renderer")]
+mod structural_data;
 #[cfg(feature = "comp")]
 mod suggest;
 
@@ -1816,7 +1816,10 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     let chain_exist = get_global_set(&CHAINS_EXIST).lock().unwrap().clone();
 
     #[cfg(feature = "structural_renderer")]
-    let structural_renderers = get_global_set(&STRUCTURAL_RENDERERS).lock().unwrap().clone();
+    let structural_renderers = get_global_set(&STRUCTURAL_RENDERERS)
+        .lock()
+        .unwrap()
+        .clone();
 
     #[cfg(feature = "comp")]
     let completions = get_global_set(&COMPLETIONS).lock().unwrap().clone();
@@ -2038,8 +2041,21 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     };
 
     let pathf_include = if cfg!(feature = "pathf") {
-        quote! {
-            include!(concat!(env!("OUT_DIR"), "/", env!("CARGO_PKG_NAME"), "/type_using.rs"));
+        let out_dir = std::env::var("OUT_DIR").ok();
+        let crate_name = std::env::var("CARGO_PKG_NAME").ok();
+
+        match (out_dir, crate_name) {
+            (Some(dir), Some(name)) => {
+                let path = std::path::Path::new(&dir).join(&name).join("type_using.rs");
+                match std::fs::read_to_string(&path) {
+                    Ok(content) => {
+                        let tokens: proc_macro2::TokenStream = content.parse().unwrap_or_default();
+                        tokens
+                    }
+                    Err(_) => quote! {},
+                }
+            }
+            _ => quote! {},
         }
     } else {
         quote! {}
@@ -2130,7 +2146,10 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
         .unwrap()
         .clear();
     #[cfg(feature = "structural_renderer")]
-    get_global_set(&STRUCTURAL_RENDERERS).lock().unwrap().clear();
+    get_global_set(&STRUCTURAL_RENDERERS)
+        .lock()
+        .unwrap()
+        .clear();
 
     TokenStream::from(expanded)
 }
