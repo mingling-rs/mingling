@@ -116,6 +116,16 @@ Marks the block **not to be compiled**. Use for illustrative snippets that can't
 fn placeholder() {}
 ```
  
+### `// BUILD TIME`
+
+Marks the block as a `build.rs` script instead of `src/main.rs`. The block code is wrapped in `fn main() { }` and written to `build.rs`. A stub `fn main() {}` is generated for `src/main.rs`.
+
+```rust
+// BUILD TIME
+// Features: ["builds", "pathf"]
+analyze_and_build_type_mapping().unwrap();
+```
+ 
 ### `// Features: [...]`
 
 Declares the mingling crate features needed by this block, as a JSON string array. These features are written into `Cargo.toml`'s `[dependencies]`.
@@ -145,6 +155,40 @@ Declares external crate deps needed by the block. After `// Dependencies:`, each
 > If the version uses a TOML inline table (e.g. `{ version = "1", features = ["derive"] }`),
 >
 > it's kept as-is.
+
+---
+
+## `@@@` Lines (Hidden Compilation)
+
+Lines starting with `@@@` are **hidden from the rendered documentation** but still included in compilation.
+
+This is useful when you want to show only the core logic while keeping the block fully compilable:
+
+```rust
+// This line is visible in docs
+@@@// This line is hidden but still compiled
+@@@fn setup() { /* hidden boilerplate */ }
+```
+ 
+### How it works
+
+| Stage                 | Handling                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------ |
+| **docsify rendering** | `@@@` lines are stripped before markdown is rendered (via `beforeEach` plugin)                   |
+| **CI verification**   | `@@@` prefix is stripped during block parsing, remaining content is treated as regular Rust code |
+
+### Convention
+
+Use `@@@` for:
+
+- `fn main() {}` / `gen_program!()` when the block doesn't need to show them
+- Common `use` imports that would distract from the example
+- Type definitions (`pack!`, `#[derive]`) that are necessary for compilation but not the focus
+- Helper functions that the reader doesn't need to see
+
+> [!TIP]
+> `@@@` is the replacement for `// NOT VERIFIED` — instead of marking a block as uncompilable,
+> hide the boilerplate and keep everything compiling.
 
 ---
 
