@@ -825,7 +825,7 @@ Hello, Alice!
     🗺️ Roadmap 🗺️
 </h1>
 
-- [ ] Milestone.1 "MVP"
+- [x] Milestone.1 "MVP" 🎉
   - [x] [[0.1.4](https://docs.rs/mingling/0.1.4/mingling/)] [`core`] [`structural_renderer`] **Mingling** can render data into serializable formats via `--json` and `--yaml` flags
   - [x] [[0.1.5](https://docs.rs/mingling/0.1.5/mingling/)] [`core`] [`comp`] **Mingling** can dynamically invoke itself to provide completions for shells like `bash`, `zsh`, `fish`, and `pwsh`
   - [x] [[0.1.6](https://docs.rs/mingling/0.1.6/mingling/)] [`core`] [`comp`] **Mingling** can gather more context for smarter completions
@@ -835,12 +835,12 @@ Hello, Alice!
   - [x] [[0.1.8](https://docs.rs/mingling/0.1.8/mingling/)] [`core`] [`dispatch_tree`] Converts the subcommand list into a prefix tree to improve command matching speed
   - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`dev_toolkits`] Provides debugging interfaces for developers to capture invocation information when issues arise (`InvokeStackDisplay`) (indirectly implemented via `ProgramHook`)
   - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`repl`] Provides REPL capability (`program.exec_repl();`)
-  - [ ] [**0.2.0**] Complete documentation, tests, and examples
+  - [x] [[0.2.0](https://docs.rs/mingling/0.2.0/mingling/)] Complete documentation, tests, and examples
 
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
-  - [ ] [**0.2.1**] [`macros`] `r_println!` in `#[chain]` support.
-  - [ ] [**0.2.5**] [`mling`] Helpdoc Maker
-  - [ ] [**0.2.8**] [`picker`] A more efficient and intelligent argument parser
+  - [ ] [**0.3.0**] [`macros`] `r_println!` in `#[chain]` support.
+  - [ ] [**0.5.0**] [`mling`] Helpdoc Maker
+  - [ ] [**0.7.0**] [`picker`] A more efficient and intelligent argument parser
 
 - [ ] Milestone.3 "Unplanned"
   - [ ] ...
