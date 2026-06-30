@@ -8,7 +8,7 @@ readme = "README.md"
 repository.workspace = true
 description = "Macros of the mingling library"
 keywords = ["cli", "macros", "procedural", "command-line", "framework"]
-categories = ["command-line-interface", "development-tools::procedural-macros"]
+categories = ["command-line-interface"]
 
 [lib]
 proc-macro = true
