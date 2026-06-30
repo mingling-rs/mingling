@@ -19,9 +19,9 @@ features = []
  
 ## Enable Features
 
-**Mingling** has all features disabled by default and does not provide an all-in-one feature like `full`.
+**Mingling** has all features disabled by default and does **not** provide an all-in-one feature like `full`.
 
-Some features will **directly affect the behavior of the entire lifecycle**, so you need to enable them as needed, for example:
+Some features **directly affect the entire lifecycle behavior**, so you need to enable them as needed, e.g.:
 
 ```toml
 [dependencies.mingling]
@@ -33,11 +33,11 @@ features = [
 ```
  
 > [!NOTE]
-> Visit [docs.rs](https://docs.rs/mingling/latest/mingling/feature/index.html) or [Features](pages/other/features) to learn about all available features.
+> Visit [docs.rs](https://docs.rs/mingling/latest/mingling/feature/index.html) or [Features](pages/other/features) to learn about all features.
 
 ## Write the Basic Entry Point
 
-Edit `src/main.rs` with the following code:
+Write the following code in `src/main.rs`:
 
 ```rust
 use mingling::prelude::*;
@@ -52,13 +52,13 @@ gen_program!();
 ```
  
 > [!IMPORTANT]
-> Almost all Rust code blocks in the documentation have been compiled through the CI pipeline and are guaranteed to be usable.
+> Almost all Rust code blocks in the docs have been compiled in CI and are guaranteed to work.
 >
-> However, code blocks starting with `// NOT VERIFIED` have **not been verified**.
+> However, code blocks starting with `// NOT VERIFIED` are **not verified**.
 >
-> Want to know which `*.md` files have been compiled? Check [`verified-docs.toml`](https://github.com/mingling-rs/mingling/blob/main/verified-docs.toml)
+> Want to know which `*.md` files are compiled? See [`verified-docs.toml`](https://github.com/mingling-rs/mingling/blob/main/verified-docs.toml).
 
-## Verify Compilation
+## Verify with Compilation
 
 ```plaintext
 ~# cargo check
@@ -66,4 +66,4 @@ gen_program!();
  
 ---
 
-Once everything is good, start building!
+Once everything is good, start writing something!
