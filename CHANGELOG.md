@@ -4,7 +4,7 @@ This file tracks all notable changes to the Mingling project. Each release entry
 
 The format follows a human-readable changelog convention, with sections organized by release version and change type.
 
-Any contributor making changes to the project must record their changes in this file under the appropriate release section, using the established format and change type categories *(Features, Fixes, Optimizations, Tests, BREAKING CHANGES, etc.)*.
+Any contributor making changes to the project must record their changes in this file under the appropriate release section, using the established format and change type categories _(Features, Fixes, Optimizations, Tests, BREAKING CHANGES, etc.)_.
 
 ## TOC
 
@@ -26,7 +26,27 @@ Any contributor making changes to the project must record their changes in this 
 
 ## Contents
 
-### Release 0.2.0 (Unreleased)
+### Release ? (Unreleased)
+
+#### Fixes:
+
+None
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+None
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
+
+### Release 0.2.0 (2026-06-30)
 
 > [!IMPORTANT]
 > Starting from 0.2.0, Mingling's GitHub repository has been migrated from [catilgrass/mingling](https://github.com/catilgrass/mingling) to [mingling-rs/mingling](https://github.com/mingling-rs/mingling).
@@ -461,10 +481,11 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 7. **[`core`]** **[`structural_renderer`]** Added the `pack_err_structural!`, `pack_structural!`, and `group_structural!` macros for creating types that support structured output (JSON/YAML/TOML/RON). These are like `pack_err!`, `pack!`, and `group!` respectively, but also mark the type with the `StructuralData` trait, enabling the `StructuralRenderer` to serialize them.
 
 8. **[`core`]** **[`structural_renderer`]** Added the `StructuralData` derive macro and sealed trait, decoupling structured output from `Groupped`. Previously, under the `structural_renderer` feature, all `pack!` and `pack_err!` types automatically derived `Serialize`. Now, structured output is an opt-in property controlled by `StructuralData`:
-  - `pack!` / `pack_err!` / `group!` no longer derive `Serialize` even when `structural_renderer` is enabled.
-  - To enable structured output, use `pack_structural!` / `pack_err_structural!` / `group_structural!` or the `#[derive(StructuralData)]` marker.
-  - The `Groupped` trait no longer requires `Serialize` bounds, and `AnyOutput::new` no longer requires `Serialize`.
-  - `StructuralRenderer::render` now accepts `T: StructuralData + Send` instead of `T: Serialize + Send`, and the individual format methods (`render_to_json`, etc.) are now private.
+
+- `pack!` / `pack_err!` / `group!` no longer derive `Serialize` even when `structural_renderer` is enabled.
+- To enable structured output, use `pack_structural!` / `pack_err_structural!` / `group_structural!` or the `#[derive(StructuralData)]` marker.
+- The `Groupped` trait no longer requires `Serialize` bounds, and `AnyOutput::new` no longer requires `Serialize`.
+- `StructuralRenderer::render` now accepts `T: StructuralData + Send` instead of `T: Serialize + Send`, and the individual format methods (`render_to_json`, etc.) are now private.
 
 9. **[`core`]** **[`structural_renderer`]** Added `mingling::__private::StructuralDataSealed` and `mingling::__private::StructuralData` (re-exported from `mingling_core::renderer::structural::structural_data`) to support the sealed trait pattern. The `StructuralData` trait is only implementable via the derive macro or the `_structural` macro variants.
 
@@ -609,12 +630,12 @@ program.with_setup(DirectoryEnvironmentSetup::<ThisProgram>::default());
 
 11. **[`mingling`]** Added four new resource types for directory environments:
 
-   - `ResCurrentDir` — Wraps `std::env::current_dir()` as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
-   - `ResCurrentExe` — Wraps `std::env::current_exe()` as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
-   - `ResHomeDir` — Wraps the user's home directory (`$HOME` on Unix, `%USERPROFILE%` on Windows) as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
-   - `ResTempDir` — Wraps `std::env::temp_dir()` as a global resource. Provides `new()` (infallible), `Default`, and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+- `ResCurrentDir` — Wraps `std::env::current_dir()` as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+- `ResCurrentExe` — Wraps `std::env::current_exe()` as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+- `ResHomeDir` — Wraps the user's home directory (`$HOME` on Unix, `%USERPROFILE%` on Windows) as a global resource. Provides `new() -> Result`, `Default` (panics on failure), and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
+- `ResTempDir` — Wraps `std::env::temp_dir()` as a global resource. Provides `new()` (infallible), `Default`, and conversions from/to `PathBuf`, `&Path`, and `&PathBuf`.
 
-   All four types implement `Deref<Target = PathBuf>`, `DerefMut`, `AsRef<Path>`, `Clone`, `Debug`, and `PartialEq`.
+All four types implement `Deref<Target = PathBuf>`, `DerefMut`, `AsRef<Path>`, `Clone`, `Debug`, and `PartialEq`.
 
 #### **BREAKING CHANGES** (API CHANGES):
 
@@ -1006,7 +1027,7 @@ let (name, age) = Picker::new(prev.inner)
 
 ---
 
-### Yanked 0.1.6 (2026-04-24) 
+### Yanked 0.1.6 (2026-04-24)
 
 > [!CAUTION]
 >
@@ -1018,7 +1039,7 @@ let (name, age) = Picker::new(prev.inner)
 
 ---
 
-### Release 0.1.6 (2026-04-20) 
+### Release 0.1.6 (2026-04-20)
 
 `Mingling` 0.1.6 primarily focuses on optimizing the writing experience and code completion.
 
