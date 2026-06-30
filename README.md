@@ -55,8 +55,6 @@
 - 📖 [docs.rs](https://docs.rs/mingling/latest/mingling/)
 - 📖 Helpdoc [EN](https://mingling-rs.github.io/mingling/docs/doc.html#/) [中文](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
 
-
-
 <h1 align="center">
     Getting Started
 </h1>
@@ -102,11 +100,11 @@ User Input → [Dispatcher] → Entry → [Chain(s)] → Result → [Renderer] �
 **Step4: Render** — A **Renderer** takes that result and writes it to the terminal.
 
 > [!NOTE]
-> A Chain can produce a **State** type to be passed to the next Chain for further processing, 
+> A Chain can produce a **State** type to be passed to the next Chain for further processing,
 >
-> or it can produce a **Result** type to be handed off to a Renderer.  
+> or it can produce a **Result** type to be handed off to a Renderer.
 
-Everything in this pipeline is a **plain Rust function** with an attribute macro on top. 
+Everything in this pipeline is a **plain Rust function** with an attribute macro on top.
 
 You never need to manually implement traits or construct boilerplate.
 
@@ -362,11 +360,9 @@ fn main() {
 In your `build.rs`, generate the shell scripts:
 
 ```rust
+// BUILD TIME
 // Features: ["comp", "builds"]
-
-fn main() {
-    mingling::build::build_comp_scripts(env!("CARGO_PKG_NAME")).unwrap();
-}
+mingling::build::build_comp_scripts(env!("CARGO_PKG_NAME")).unwrap();
 ```
 
 For enum-based completions, use `suggest_enum!`:

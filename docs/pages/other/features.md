@@ -39,13 +39,12 @@ Enables scripts needed for use in `build.rs`, currently including:
 1. Completion script generation under the `comp` feature:
 
 ```rust
+// BUILD TIME
 // Features: ["builds", "comp"]
 use mingling::build::build_comp_scripts;
  
-fn main() {
-    // Generate completion scripts for `myprogram`
-    build_comp_scripts("myprogram").unwrap();
-}
+// Generate completion scripts for `myprogram`
+build_comp_scripts("myprogram").unwrap();
 ```
  
 ## Feature `clap`

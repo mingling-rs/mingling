@@ -39,13 +39,12 @@ async fn handle_state_foo(foo: StateFoo) -> Next {
 1. `comp` 特性下的补全脚本生成：
 
 ```rust
+// BUILD TIME
 // Features: ["builds", "comp"]
 use mingling::build::build_comp_scripts;
  
-fn main() {
-    // 为 `myprogram` 生成补全脚本
-    build_comp_scripts("myprogram").unwrap();
-}
+// 为 `myprogram` 生成补全脚本
+build_comp_scripts("myprogram").unwrap();
 ```
  
 ## 特性 `clap`
