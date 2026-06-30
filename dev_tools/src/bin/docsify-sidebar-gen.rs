@@ -93,8 +93,8 @@ fn build_sidebar_content(base_dir: &Path, pages_dir: &Path, sidebar_head: &str) 
         }
     }
 
-    // Sort root files by link for stable order
-    root_files.sort_by(|a, b| a.link.cmp(&b.link));
+    // Sort root files — natural order (1, 2, ..., 10, 11)
+    root_files.sort_by(|a, b| natural_cmp(&a.link, &b.link));
 
     // Append root-level files
     for f in &root_files {
@@ -104,7 +104,7 @@ fn build_sidebar_content(base_dir: &Path, pages_dir: &Path, sidebar_head: &str) 
     // Append subdirectory groups
     for (dir_name, entries) in &sub_dirs {
         let mut sorted_entries = entries.clone();
-        sorted_entries.sort_by(|a, b| a.link.cmp(&b.link));
+        sorted_entries.sort_by(|a, b| natural_cmp(&a.link, &b.link));
 
         // Directory header with 2-space indent
         let _ = writeln!(lines, "* {dir_name}");
@@ -199,4 +199,29 @@ fn find_git_repo() -> Option<std::path::PathBuf> {
     }
 
     None
+}
+
+/// Natural (numeric-aware) comparison for sidebar links.
+///
+/// Files prefixed with a number (e.g. `1-getting-started`) are sorted by that number;
+/// files without a numeric prefix fall back to lexicographic order (after numbers).
+fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
+    let num_a = extract_leading_number(a);
+    let num_b = extract_leading_number(b);
+    num_a.cmp(&num_b)
+}
+
+/// Extract the leading numeric prefix from a sidebar link path.
+///
+/// Looks at the filename stem (after the last `/`) for a number before the first `-`.
+/// Returns `usize::MAX` for entries without a numeric prefix.
+fn extract_leading_number(link: &str) -> usize {
+    if let Some(file_stem) = link.rsplit('/').next() {
+        if let Some(num_end) = file_stem.find('-') {
+            if let Ok(num) = file_stem[..num_end].parse::<usize>() {
+                return num;
+            }
+        }
+    }
+    usize::MAX
 }
