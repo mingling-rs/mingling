@@ -401,11 +401,11 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 
 [[package]]
 name = "mingling"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "mingling",
- "mingling_core 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "mingling_macros 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mingling_core",
+ "mingling_macros",
  "serde",
  "size",
  "tokio",
@@ -413,7 +413,7 @@ dependencies = [
 
 [[package]]
 name = "mingling-cli"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "colored",
@@ -427,31 +427,13 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "env_logger",
  "just_fmt",
  "just_template",
  "log",
- "mingling_pathf 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ron",
- "serde",
- "serde_json",
- "serde_yaml",
- "toml",
-]
-
-[[package]]
-name = "mingling_core"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8574549fae598e8056016c1760d85bdb962a60228d31b3a00bcdd37a40eabfde"
-dependencies = [
- "env_logger",
- "just_fmt",
- "just_template",
- "log",
- "mingling_pathf 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mingling_pathf",
  "ron",
  "serde",
  "serde_json",
@@ -461,19 +443,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.2.0"
-dependencies = [
- "just_fmt",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "mingling_macros"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "083f1190c65174044c59814ccd12dcb4620085c325fcfa4f3b364943ec2cbe07"
+version = "0.2.1"
 dependencies = [
  "just_fmt",
  "proc-macro2",
@@ -483,18 +453,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_pathf"
-version = "0.2.0"
-dependencies = [
- "just_fmt",
- "proc-macro2",
- "syn",
-]
-
-[[package]]
-name = "mingling_pathf"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6991b5b4ec98b4a9eafcf1826a09810f9168cf0ab6f3945b07c7d1a23e805da2"
+version = "0.2.1"
 dependencies = [
  "just_fmt",
  "proc-macro2",

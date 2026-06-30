@@ -13,7 +13,7 @@ Add the following to `Cargo.toml`:
 
 ```toml
 [dependencies.mingling]
-version = "0.2.0"
+version = "0.2.1"
 features = []
 ```
  
@@ -25,7 +25,7 @@ Some features **directly affect the entire lifecycle behavior**, so you need to 
 
 ```toml
 [dependencies.mingling]
-version = "0.2.0"
+version = "0.2.1"
 features = [
     "parser",
     "comp",
