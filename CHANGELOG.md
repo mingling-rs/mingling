@@ -10,7 +10,8 @@ Any contributor making changes to the project must record their changes in this 
 
 **- Milestone.1 "MVP" -**
 
-- [Release 0.2.1 (Unreleased)](#release-021-unreleased)
+- [Unreleased](#unreleased)
+- [Release 0.2.1 (2026-07-01)](#release-021-2026-07-01)
 - [Release 0.2.0 (2026-06-30)](#release-020-2026-06-30)
 - [Release 0.1.9 (2026-05-29)](#release-019-2026-05-29)
 - [Release 0.1.8 (2026-05-18)](#release-018-2026-05-18)
@@ -27,7 +28,27 @@ Any contributor making changes to the project must record their changes in this 
 
 ## Contents
 
-### Release 0.2.1 (Unreleased)
+### Unreleased
+
+#### Fixes:
+
+None
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+None
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
+
+### Release 0.2.1 (2026-07-01)
 
 #### Fixes:
 
@@ -36,7 +57,7 @@ Any contributor making changes to the project must record their changes in this 
    `"=> EntryList"` would incorrectly match as a substring of `"=> EntryListAlias,"`, causing a false duplicate registration detection.
    Now changed to use `find` + trailing character boundary validation, ensuring the character immediately after the match is not an identifier character (letter/digit/underscore).
 
-   Affected scope: Deduplication logic for `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` registration.
+    Affected scope: Deduplication logic for `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` registration.
 
 #### Optimizations:
 

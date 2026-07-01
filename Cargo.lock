@@ -404,8 +404,8 @@ name = "mingling"
 version = "0.2.1"
 dependencies = [
  "mingling",
- "mingling_core",
- "mingling_macros",
+ "mingling_core 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "mingling_macros 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "size",
  "tokio",
@@ -433,7 +433,25 @@ dependencies = [
  "just_fmt",
  "just_template",
  "log",
- "mingling_pathf",
+ "mingling_pathf 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ron",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "toml",
+]
+
+[[package]]
+name = "mingling_core"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c6a8751b43d4fd3d61d7b37f0d7f4d5d274d9391cf80cae9bd75f218219eefe"
+dependencies = [
+ "env_logger",
+ "just_fmt",
+ "just_template",
+ "log",
+ "mingling_pathf 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "ron",
  "serde",
  "serde_json",
@@ -452,8 +470,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "mingling_macros"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b7cd478387797590d2afb4122078649c3e4f9da7f29dbf37817763fecf04958f"
+dependencies = [
+ "just_fmt",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "mingling_pathf"
 version = "0.2.1"
+dependencies = [
+ "just_fmt",
+ "proc-macro2",
+ "syn",
+]
+
+[[package]]
+name = "mingling_pathf"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d400d170c80e3f2f7d6f9b6739c286bc64279c805b770fabac390e3a7c7baf0"
 dependencies = [
  "just_fmt",
  "proc-macro2",
