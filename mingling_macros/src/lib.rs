@@ -241,10 +241,27 @@ pub(crate) fn check_duplicate_variant(
 /// Checks if a stored entry string contains the given variant name.
 /// Handles both "StructName => Variant," and "Self::Variant => ..." formats.
 fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
-    entry.contains(&format!("=> {variant_name},"))
-        || entry.contains(&format!("=> {variant_name} "))
-        || entry.contains(&format!("=> {variant_name}"))
-        || entry.contains(&format!(":: {variant_name} =>"))
+    let variant_match = format!("=> {variant_name}");
+
+    // "StructName => Variant," — exact match with trailing comma
+    if entry.contains(&format!("{variant_match},")) {
+        return true;
+    }
+    // "StructName => Variant " — exact match with trailing space
+    if entry.contains(&format!("{variant_match} ")) {
+        return true;
+    }
+    // "StructName => Variant" (fallback) — must NOT be followed by identifier chars
+    if let Some(idx) = entry.find(&variant_match) {
+        let after = idx + variant_match.len();
+        if after >= entry.len()
+            || !entry[after..].starts_with(|c: char| c.is_alphanumeric() || c == '_')
+        {
+            return true;
+        }
+    }
+    // "Self::Variant => ..." — match-arm existence check format
+    entry.contains(&format!(":: {variant_name} =>"))
 }
 
 /// Registers an outside-type as a member of a program group without modifying its definition.

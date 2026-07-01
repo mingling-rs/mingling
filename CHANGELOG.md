@@ -10,7 +10,8 @@ Any contributor making changes to the project must record their changes in this 
 
 **- Milestone.1 "MVP" -**
 
-- [Release 0.2.0 (Unreleased)](#release-020-unreleased)
+- [Release 0.2.1 (Unreleased)](#release-021-unreleased)
+- [Release 0.2.0 (2026-06-30)](#release-020-2026-06-30)
 - [Release 0.1.9 (2026-05-29)](#release-019-2026-05-29)
 - [Release 0.1.8 (2026-05-18)](#release-018-2026-05-18)
 - [Release 0.1.7 (2026-05-04)](#release-017-2026-05-04)
@@ -26,11 +27,16 @@ Any contributor making changes to the project must record their changes in this 
 
 ## Contents
 
-### Release ? (Unreleased)
+### Release 0.2.1 (Unreleased)
 
 #### Fixes:
 
-None
+1. **[`macros`]** Fixed false positives in `entry_has_variant` caused by bare substring matching in the third `contains` check.
+   When a longer variant (e.g., `EntryListAlias`) is registered first, followed by a shorter variant that shares the same prefix (e.g., `EntryList`),
+   `"=> EntryList"` would incorrectly match as a substring of `"=> EntryListAlias,"`, causing a false duplicate registration detection.
+   Now changed to use `find` + trailing character boundary validation, ensuring the character immediately after the match is not an identifier character (letter/digit/underscore).
+
+   Affected scope: Deduplication logic for `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` registration.
 
 #### Optimizations:
 
