@@ -118,15 +118,15 @@ pub mod macros {
     pub use mingling_macros::node;
     /// `pack!(StateGreet = String)` - Used to create a wrapper type for use with `Chain` and `Renderer`
     pub use mingling_macros::pack;
-    /// `pack_structural!(StateGreet = String)` - Like `pack!` but also marks the type for structured output
-    #[cfg(feature = "structural_renderer")]
-    pub use mingling_macros::pack_structural;
     /// `pack_err!(ErrorUnknown)` - Used to create an error struct with automatic `name` field
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::pack_err;
     /// `pack_err_structural!(ErrorUnknown)` - Like `pack_err!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;
+    /// `pack_structural!(StateGreet = String)` - Like `pack!` but also marks the type for structured output
+    #[cfg(feature = "structural_renderer")]
+    pub use mingling_macros::pack_structural;
     #[cfg(feature = "comp")]
     #[doc(hidden)]
     pub use mingling_macros::program_comp_gen;
@@ -226,15 +226,9 @@ pub mod prelude {
     pub use crate::macros::gen_program;
     /// Re-export of the `pack` macro for creating wrapper types.
     pub use crate::macros::pack;
-    /// Like `pack!` but also marks the type for structured output
-    #[cfg(feature = "structural_renderer")]
-    pub use mingling_macros::pack_structural;
     /// Re-export of the `pack_err` macro for creating error types.
     #[cfg(feature = "extra_macros")]
     pub use crate::macros::pack_err;
-    /// Like `pack_err!` but also marks the type for structured output
-    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
-    pub use mingling_macros::pack_err_structural;
     /// Re-export of the `r_print` macro for printing within a renderer context.
     pub use crate::macros::r_print;
     /// Re-export of the `r_println` macro for printing with a newline within a renderer
@@ -242,6 +236,12 @@ pub mod prelude {
     pub use crate::macros::r_println;
     /// Re-export of the `renderer` macro for defining renderer functions.
     pub use crate::macros::renderer;
+    /// Like `pack_err!` but also marks the type for structured output
+    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
+    pub use mingling_macros::pack_err_structural;
+    /// Like `pack!` but also marks the type for structured output
+    #[cfg(feature = "structural_renderer")]
+    pub use mingling_macros::pack_structural;
 
     /// Re-export of the `completion` macro for generating completion entries.
     #[cfg(feature = "comp")]

@@ -63,10 +63,7 @@ fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem
 }
 
 fn has_attr(attrs: &[syn::Attribute], name: &str) -> bool {
-    attrs.iter().any(|a| {
-        a.path()
-            .segments
-            .last()
-            .is_some_and(|s| s.ident == name)
-    })
+    attrs
+        .iter()
+        .any(|a| a.path().segments.last().is_some_and(|s| s.ident == name))
 }

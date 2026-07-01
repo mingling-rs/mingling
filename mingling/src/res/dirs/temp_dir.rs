@@ -40,7 +40,9 @@ impl From<PathBuf> for ResTempDir {
 
 impl From<&Path> for ResTempDir {
     fn from(path: &Path) -> Self {
-        Self { tmp: path.to_path_buf() }
+        Self {
+            tmp: path.to_path_buf(),
+        }
     }
 }
 

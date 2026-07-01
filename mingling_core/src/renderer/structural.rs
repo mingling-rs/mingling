@@ -1,5 +1,6 @@
 use crate::{
-    StructuralRendererSetting, RenderResult, renderer::structural::error::StructuralRendererSerializeError,
+    RenderResult, StructuralRendererSetting,
+    renderer::structural::error::StructuralRendererSerializeError,
 };
 use serde::Serialize;
 
@@ -103,9 +104,7 @@ impl StructuralRenderer {
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
-        let pretty_config = ron::ser::PrettyConfig::new()
-            .new_line("\n")
-            .indentor("  ");
+        let pretty_config = ron::ser::PrettyConfig::new().new_line("\n").indentor("  ");
 
         let ron_string = ron::ser::to_string_pretty(data, pretty_config)
             .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
@@ -123,8 +122,8 @@ impl StructuralRenderer {
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
-        let toml_string =
-            toml::to_string(data).map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        let toml_string = toml::to_string(data)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
         r.print(&toml_string);
         Ok(())
     }
@@ -196,8 +195,11 @@ mod tests {
     #[test]
     fn test_render_to_json_pretty() {
         let mut r = RenderResult::default();
-        let result =
-            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::JsonPretty, &mut r);
+        let result = StructuralRenderer::render(
+            &test_data(),
+            &StructuralRendererSetting::JsonPretty,
+            &mut r,
+        );
         assert!(result.is_ok());
         let output: String = r.into();
         // Pretty JSON has newlines
@@ -261,7 +263,8 @@ mod tests {
     #[test]
     fn test_render_dispatches_json() {
         let mut r = RenderResult::default();
-        let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Json, &mut r);
+        let result =
+            StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Json, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
     }

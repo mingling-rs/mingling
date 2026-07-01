@@ -160,10 +160,7 @@ pub(crate) fn generate_immut_resource_bindings<'a>(
 
 /// Generates a unique binding name for a mutable resource variable.
 fn mut_res_binding_name(var_name: &Ident) -> Ident {
-    syn::Ident::new(
-        &format!("__{}_binding", var_name),
-        var_name.span(),
-    )
+    syn::Ident::new(&format!("__{}_binding", var_name), var_name.span())
 }
 
 /// Wraps the function body in nested `__modify_res_and_return_route` closures for

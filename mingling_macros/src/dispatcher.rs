@@ -217,7 +217,10 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
     } = syn::parse_macro_input!(input as RegisterDispatcherInput);
 
     let node_name_str = node_name.value();
-    let static_name = format!("__internal_dispatcher_{}", snake_case!(node_name_str.clone()));
+    let static_name = format!(
+        "__internal_dispatcher_{}",
+        snake_case!(node_name_str.clone())
+    );
     let static_ident = Ident::new(&static_name, proc_macro2::Span::call_site());
 
     // Register node info in the global collection at compile time

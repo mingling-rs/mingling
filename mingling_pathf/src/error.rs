@@ -24,10 +24,7 @@ pub enum MinglingPathfinderError {
     ///
     /// `file` is the file containing the invalid attribute.
     /// `path_attr` is the value of the `#[path]` attribute.
-    PathPointsOutside {
-        file: PathBuf,
-        path_attr: String,
-    },
+    PathPointsOutside { file: PathBuf, path_attr: String },
 
     /// No entry point file (`main.rs`, `lib.rs`, or any file under `bin/`) was found.
     NoEntryPointFound,
@@ -36,23 +33,33 @@ pub enum MinglingPathfinderError {
     ///
     /// `path` is the file that failed to parse.
     /// `message` contains details from the parser.
-    SynError {
-        path: PathBuf,
-        message: String,
-    },
+    SynError { path: PathBuf, message: String },
 }
 
 impl fmt::Display for MinglingPathfinderError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::IoError(e) => write!(f, "IO error: {e}"),
-            Self::ModuleNotFound { parent, module_name } => {
-                write!(f, "Module `{module_name}` not found relative to {}", parent.display())
+            Self::ModuleNotFound {
+                parent,
+                module_name,
+            } => {
+                write!(
+                    f,
+                    "Module `{module_name}` not found relative to {}",
+                    parent.display()
+                )
             }
             Self::PathPointsOutside { file, path_attr } => {
-                write!(f, "#[path = \"{path_attr}\"] in {} points outside the project", file.display())
+                write!(
+                    f,
+                    "#[path = \"{path_attr}\"] in {} points outside the project",
+                    file.display()
+                )
             }
-            Self::NoEntryPointFound => write!(f, "No entry point found (main.rs, lib.rs, or bin/*.rs)"),
+            Self::NoEntryPointFound => {
+                write!(f, "No entry point found (main.rs, lib.rs, or bin/*.rs)")
+            }
             Self::SynError { path, message } => {
                 write!(f, "Failed to parse {}: {message}", path.display())
             }

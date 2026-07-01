@@ -1,9 +1,6 @@
 use std::marker::PhantomData;
 
-use mingling_core::{
-    ProgramCollect,
-    setup::ProgramSetup,
-};
+use mingling_core::{ProgramCollect, setup::ProgramSetup};
 
 use crate::res::{ResCurrentDir, ResCurrentExe, ResHomeDir, ResTempDir};
 

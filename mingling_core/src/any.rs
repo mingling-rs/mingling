@@ -1,5 +1,5 @@
-use crate::{Groupped, ProgramCollect};
 use crate::error::ChainProcessError;
+use crate::{Groupped, ProgramCollect};
 
 #[doc(hidden)]
 pub mod group;
@@ -136,7 +136,10 @@ impl<G> From<AnyOutput<G>> for ChainProcess<G> {
     }
 }
 
-impl<G> From<()> for ChainProcess<G> where G: ProgramCollect<Enum = G> {
+impl<G> From<()> for ChainProcess<G>
+where
+    G: ProgramCollect<Enum = G>,
+{
     fn from(_v: ()) -> Self {
         G::build_empty_result().route_chain()
     }

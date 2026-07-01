@@ -222,7 +222,6 @@ impl syn::parse::Parse for PackStructuralInput {
 /// impl ::mingling::StructuralData for Info {}
 /// ```
 pub(crate) fn group_structural(input: TokenStream) -> TokenStream {
-
     // Parse the same input as group!
     let input_parsed = syn::parse_macro_input!(input as GroupStructuralInput);
 

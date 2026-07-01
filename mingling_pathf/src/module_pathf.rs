@@ -10,7 +10,6 @@ use crate::error::MinglingPathfinderError;
 /// effective module path (e.g., `crate::foo::bar`).
 #[derive(Debug, Clone)]
 pub struct MappingItem {
-
     /// The path of the source file (relative to the crate root, with `./` prefix).
     file_path: PathBuf,
 
@@ -349,11 +348,7 @@ fn propagate_children(parent_file: &Path, ctx: &mut Context) {
         .cloned()
         .unwrap_or_else(|| "crate".to_string());
 
-    let reexported = ctx
-        .reexports
-        .get(parent_file)
-        .cloned()
-        .unwrap_or_default();
+    let reexported = ctx.reexports.get(parent_file).cloned().unwrap_or_default();
 
     let Some(children) = ctx.children.get(parent_file).cloned() else {
         return;
@@ -367,8 +362,7 @@ fn propagate_children(parent_file: &Path, ctx: &mut Context) {
             format!("{}::{}", parent_effective, child.name)
         };
 
-        ctx.effective_paths
-            .insert(child.file.clone(), effective);
+        ctx.effective_paths.insert(child.file.clone(), effective);
         propagate_children(&child.file, ctx);
     }
 }

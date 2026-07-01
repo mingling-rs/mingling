@@ -26,13 +26,17 @@ impl ResCurrentExe {
     /// filesystem is not available on Linux, or the process handle is invalid).
     /// Unlike the `Default` implementation, this method does not panic on failure.
     pub fn new() -> Result<Self, std::io::Error> {
-        Ok(Self { exe: current_exe()? })
+        Ok(Self {
+            exe: current_exe()?,
+        })
     }
 }
 
 impl Default for ResCurrentExe {
     fn default() -> Self {
-        Self { exe: current_exe().unwrap() }
+        Self {
+            exe: current_exe().unwrap(),
+        }
     }
 }
 
@@ -44,7 +48,9 @@ impl From<PathBuf> for ResCurrentExe {
 
 impl From<&Path> for ResCurrentExe {
     fn from(path: &Path) -> Self {
-        Self { exe: path.to_path_buf() }
+        Self {
+            exe: path.to_path_buf(),
+        }
     }
 }
 

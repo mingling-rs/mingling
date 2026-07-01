@@ -24,15 +24,18 @@ impl ResHomeDir {
     /// Returns `Err` if the home directory cannot be determined (e.g., the `HOME` or
     /// `USERPROFILE` environment variable is not set).
     pub fn new() -> Result<Self, std::io::Error> {
-        let home = home_dir_env()
-            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::NotFound, "home directory not found"))?;
+        let home = home_dir_env().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::NotFound, "home directory not found")
+        })?;
         Ok(Self { home })
     }
 }
 
 impl Default for ResHomeDir {
     fn default() -> Self {
-        Self { home: home_dir_env().expect("home directory not found") }
+        Self {
+            home: home_dir_env().expect("home directory not found"),
+        }
     }
 }
 
@@ -44,7 +47,9 @@ impl From<PathBuf> for ResHomeDir {
 
 impl From<&Path> for ResHomeDir {
     fn from(path: &Path) -> Self {
-        Self { home: path.to_path_buf() }
+        Self {
+            home: path.to_path_buf(),
+        }
     }
 }
 

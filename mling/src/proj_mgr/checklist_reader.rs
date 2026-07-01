@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, io};
+use std::{collections::HashMap, io, path::Path};
 
 /// Reads and parses a `CHECKLIST.md` file, extracting both *values* (from
 /// fenced code blocks) and *toggles* (from checkbox lines).
@@ -56,27 +56,28 @@ impl CheckListReader {
             let line = lines[i];
 
             if let Some(key) = line.strip_prefix("```").map(|s| s.trim())
-                && !key.is_empty() && !key.starts_with(' ') {
-                    let mut block_lines = Vec::new();
+                && !key.is_empty()
+                && !key.starts_with(' ')
+            {
+                let mut block_lines = Vec::new();
+                i += 1;
+                while i < lines.len() && !lines[i].trim_start().starts_with("```") {
+                    block_lines.push(lines[i]);
                     i += 1;
-                    while i < lines.len() && !lines[i].trim_start().starts_with("```") {
-                        block_lines.push(lines[i]);
-                        i += 1;
-                    }
-                    let value = block_lines
-                        .into_iter()
-                        .find(|l| !l.trim().is_empty())
-                        .map(|l| l.trim().to_string());
-                    if let Some(val) = value {
-                        self.values.insert(key.to_string(), val);
-                    }
-                    continue;
                 }
+                let value = block_lines
+                    .into_iter()
+                    .find(|l| !l.trim().is_empty())
+                    .map(|l| l.trim().to_string());
+                if let Some(val) = value {
+                    self.values.insert(key.to_string(), val);
+                }
+                continue;
+            }
 
             if let Some(toggle_key) = Self::parse_toggle_line(line) {
                 let is_checked = line.contains("[x]") || line.contains("[X]");
-                self.all_toggles
-                    .insert(toggle_key.clone(), is_checked);
+                self.all_toggles.insert(toggle_key.clone(), is_checked);
                 if is_checked {
                     self.toggles.insert(toggle_key, true);
                 }

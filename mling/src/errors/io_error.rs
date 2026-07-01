@@ -1,4 +1,7 @@
-use mingling::{macros::{group, r_println, renderer}, res::ResExitCode};
+use mingling::{
+    macros::{group, r_println, renderer},
+    res::ResExitCode,
+};
 
 use crate::eformat_cargo;
 

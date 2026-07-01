@@ -80,9 +80,7 @@ where
     /// owned value. The caller must call [`__store_res`] to write back modifications.
     #[doc(hidden)]
     #[must_use]
-    pub fn __extract_res_mut<Res: 'static + Default + ResourceMarker + Send + Sync>(
-        &self,
-    ) -> Res {
+    pub fn __extract_res_mut<Res: 'static + Default + ResourceMarker + Send + Sync>(&self) -> Res {
         let Ok(mut guard) = self.resources.lock() else {
             return Res::res_default();
         };
@@ -103,10 +101,7 @@ where
     ///
     /// Stores a modified resource value back into the global store.
     #[doc(hidden)]
-    pub fn __store_res<Res: 'static + Send + Sync + ResourceMarker>(
-        &self,
-        val: Res,
-    ) {
+    pub fn __store_res<Res: 'static + Send + Sync + ResourceMarker>(&self, val: Res) {
         if let Ok(mut guard) = self.resources.lock() {
             guard.insert(TypeId::of::<Res>(), Box::new(Arc::new(val)));
         }

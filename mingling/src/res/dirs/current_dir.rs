@@ -17,7 +17,7 @@ use std::{
 /// a `Result`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResCurrentDir {
-    cwd: PathBuf
+    cwd: PathBuf,
 }
 
 impl ResCurrentDir {
@@ -27,13 +27,17 @@ impl ResCurrentDir {
     /// deleted or permissions are insufficient). Unlike the `Default` implementation, this
     /// method does not panic on failure.
     pub fn new() -> Result<Self, std::io::Error> {
-        Ok(Self { cwd: current_dir()? })
+        Ok(Self {
+            cwd: current_dir()?,
+        })
     }
 }
 
 impl Default for ResCurrentDir {
     fn default() -> Self {
-        Self { cwd: current_dir().unwrap() }
+        Self {
+            cwd: current_dir().unwrap(),
+        }
     }
 }
 
@@ -45,7 +49,9 @@ impl From<PathBuf> for ResCurrentDir {
 
 impl From<&Path> for ResCurrentDir {
     fn from(path: &Path) -> Self {
-        Self { cwd: path.to_path_buf() }
+        Self {
+            cwd: path.to_path_buf(),
+        }
     }
 }
 

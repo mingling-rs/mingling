@@ -40,12 +40,13 @@ impl AnalyzePattern for PackPattern {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
                             if let Item::Macro(m) = n
-                                && let Some(name) = try_extract_pack_name(m) {
-                                    items.push(AnalyzeItem {
-                                        module: item_mod.ident.to_string(),
-                                        item_name: name,
-                                    });
-                                }
+                                && let Some(name) = try_extract_pack_name(m)
+                            {
+                                items.push(AnalyzeItem {
+                                    module: item_mod.ident.to_string(),
+                                    item_name: name,
+                                });
+                            }
                         }
                     }
                 }
@@ -89,10 +90,11 @@ fn try_extract_pack_name(m: &syn::ItemMacro) -> Option<String> {
 
                 // Check if `=` follows
                 if let Some(proc_macro2::TokenTree::Punct(p)) = iter.next()
-                    && p.as_char() == '=' {
-                        // pack!(TypeName = InnerType)
-                        return Some(type_name);
-                    }
+                    && p.as_char() == '='
+                {
+                    // pack!(TypeName = InnerType)
+                    return Some(type_name);
+                }
 
                 // pack_err!(TypeName) — only a single ident
                 return Some(type_name);
