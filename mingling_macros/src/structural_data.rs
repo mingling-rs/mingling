@@ -268,11 +268,18 @@ pub(crate) fn group_structural(input: TokenStream) -> TokenStream {
         proc_macro2::Span::call_site(),
     );
 
-    // Generate the appropriate `use` statement
+    // Generate the appropriate `use` statement for the original type
+    // (consistent with gen_type_use in group_impl.rs)
     let type_use = if type_path.path.segments.len() > 1 {
         quote! { #[allow(unused_imports)] use #type_path; }
     } else {
-        let ident = &type_name;
+        let ident = type_path
+            .path
+            .segments
+            .last()
+            .expect("TypePath must have at least one segment")
+            .ident
+            .clone();
         quote! { #[allow(unused_imports)] use super::#ident; }
     };
 
