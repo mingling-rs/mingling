@@ -246,7 +246,7 @@ fn find_git_repo() -> Option<std::path::PathBuf> {
 fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
     let num_a = extract_leading_number(a);
     let num_b = extract_leading_number(b);
-    num_a.cmp(&num_b)
+    num_a.cmp(&num_b).then_with(|| a.cmp(b))
 }
 
 /// Extract the leading numeric prefix from a sidebar link path.
