@@ -19,8 +19,6 @@ dependencies = [
 [[package]]
 name = "mingling_core"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c6a8751b43d4fd3d61d7b37f0d7f4d5d274d9391cf80cae9bd75f218219eefe"
 dependencies = [
  "just_fmt",
 ]
@@ -28,8 +26,6 @@ dependencies = [
 [[package]]
 name = "mingling_macros"
 version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7cd478387797590d2afb4122078649c3e4f9da7f29dbf37817763fecf04958f"
 dependencies = [
  "just_fmt",
  "proc-macro2",
