@@ -18,7 +18,7 @@ checksum = "5454cda0d57db59778608d7a47bff5b16c6705598265869fb052b657f66cf05e"
 
 [[package]]
 name = "mingling"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "mingling_core",
  "mingling_macros",
@@ -27,14 +27,14 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "just_fmt",
 ]
 
 [[package]]
 name = "mingling_macros"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "just_fmt",
  "proc-macro2",
