@@ -17,9 +17,9 @@ exclude = [
 ]
 
 [workspace.dependencies]
-mingling_core = { version = "0.2.1", default-features = false }
-mingling_macros = { version = "0.2.1", default-features = false }
-mingling_pathf = { version = "0.2.1", default-features = false }
+mingling_core = { path = "mingling_core", default-features = false }
+mingling_macros = { path = "mingling_macros", default-features = false }
+mingling_pathf = { path = "mingling_pathf", default-features = false }
 
 just_fmt = "0.1.2"
 just_template = "0.2.0"
