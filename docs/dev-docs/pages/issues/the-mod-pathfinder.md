@@ -27,13 +27,13 @@ mod sub {
     mingling::macros::pack!(ResultMyName = String); // directly creates ..::sub::ResultMyName
 }
 ```
-
+ 
 There are a few exceptions, such as the implicit Dispatcher provided by `extra_macros`, but these can be inferred from the node name:
 
 ```rust
 dispatcher!("remote.add"); // although the type is unknown, we can infer CMDRemoteAdd and EntryRemoteAdd
 ```
-
+ 
 And also `#[program_setup]`:
 
 ```rust
@@ -42,7 +42,7 @@ fn custom_setup(program: &mut Program<ThisProgram>) {
     program.with_dispatchers((CMD1, CMD2, CMD3, CMD4, CMD5));
 }
 ```
-
+ 
 ## Pathf Output Format
 
 Uses TOML key-value pairs, formatted as follows:
@@ -50,13 +50,13 @@ Uses TOML key-value pairs, formatted as follows:
 ```toml
 ResultRemoteAdd = "crate::mymod::ResultRemoteAdd"
 ```
-
+ 
 Recommended storage location is under the target directory:
 
 ```
 /target/{target}/{crate-name}/type-mapping.toml
 ```
-
+ 
 ## Other Issues
 
 This solution is limited to Mingling's own syntax system. If types like `dispatcher!`, `pack!` are indirectly expanded through macros, the analyzer will not be able to discover them.

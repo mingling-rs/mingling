@@ -14,11 +14,11 @@ You can also test a single file via command-line arg:
 ```sh
 ./run-tools.sh test-all-markdown-code docs/pages/1-getting-started.md
 ```
-
+ 
 ```powershell
 .\run-tools.ps1 test-all-markdown-code docs/pages/1-getting-started.md
 ```
-
+ 
 ## Default Rules
 
 Every verified ` ```rust ` code block gets the following injected automatically at compile time — no need to write them explicitly in the block:
@@ -82,7 +82,7 @@ Each block (or each dedup-hash group) gets its own Cargo project:
 └── src/
     └── main.rs
 ```
-
+ 
 ### 3. Build Verification
 
 Compiled with `cargo build --release`, stderr inherited to the terminal for real-time progress.
@@ -118,7 +118,7 @@ Marks the block **not to be compiled**. Use for illustrative snippets that can't
 // This block is illustrative only, won't be compiled
 fn placeholder() {}
 ```
-
+ 
 ### `// BUILD TIME`
 
 Marks the block as a `build.rs` script instead of `src/main.rs`. The block code is wrapped in `fn main() { }` and written to `build.rs`. A stub `fn main() {}` is generated for `src/main.rs`.
@@ -128,7 +128,7 @@ Marks the block as a `build.rs` script instead of `src/main.rs`. The block code 
 // Features: ["builds", "pathf"]
 analyze_and_build_type_mapping().unwrap();
 ```
-
+ 
 ### `// Features: [...]`
 
 Declares the mingling crate features needed by this block, as a JSON string array. These features are written into `Cargo.toml`'s `[dependencies]`.
@@ -136,7 +136,7 @@ Declares the mingling crate features needed by this block, as a JSON string arra
 ```rust
 // Features: ["full", "serde"]
 ```
-
+ 
 ### `// Dependencies:`
 
 Declares external crate deps needed by the block. After `// Dependencies:`, each dep goes on one line: `// crate_name = "version"`.
@@ -146,7 +146,7 @@ Declares external crate deps needed by the block. After `// Dependencies:`, each
 // serde = "1"
 // clap = "4"
 ```
-
+ 
 > [!TIP]
 >
 > **Special handling**:
@@ -172,7 +172,7 @@ This is useful when you want to show only the core logic while keeping the block
 @@@// This line is hidden but still compiled
 @@@fn setup() { /* hidden boilerplate */ }
 ```
-
+ 
 ### How it works
 
 | Stage                 | Handling                                                                                         |
@@ -216,23 +216,23 @@ Use `@@@` for:
 // Example code ...
 ```
 ````
-
+ 
 The above block compiles equivalently to:
 
 ```rust
 #![allow(dead_code)]
 #![allow(unused)]
-
+ 
 #[allow(unused_imports)]
 use mingling::prelude::*;
-
+ 
 // Example code ...
-
+ 
 fn main() {}
-
+ 
 mingling::macros::gen_program!();
 ```
-
+ 
 `Cargo.toml` will contain:
 
 ```toml
