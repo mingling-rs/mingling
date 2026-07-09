@@ -1,4 +1,7 @@
-# Doc Code Block Verification System
+<h1 align="center">Markdown Code Verification System</h1>
+<p align="center">
+    A system that verifies every identified code block can be compiled
+</p>
 
 This system automatically extracts and compiles Rust code blocks from docs, ensuring all example code stays usable in CI.
 
