@@ -206,6 +206,12 @@ main {
 .sidebar .sidebar-nav {
     padding: 12px 0 40px;
 }
+.sidebar .sidebar-nav > ul > li {
+    padding-left: 28px;
+}
+.sidebar .sidebar-nav > ul > li > ul {
+    padding-left: 8px;
+}
 .sidebar li.collapse .app-sub-sidebar {
     display: none;
 }
