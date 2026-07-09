@@ -53,7 +53,8 @@
 - 📖 [Mainpage](https://mingling-rs.github.io/mingling/)
 - 📖 [Examples](https://mingling-rs.github.io/mingling/docs/examples.html)
 - 📖 [docs.rs](https://docs.rs/mingling/latest/mingling/)
-- 📖 Helpdoc [EN](https://mingling-rs.github.io/mingling/docs/doc.html#/) [中文](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
+- 📖 [Helpdoc](https://mingling-rs.github.io/mingling/docs/doc.html#/) Or [帮助文档](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
+- 🔍 [Devdoc](https://mingling-rs.github.io/mingling/docs/dev-docs/)
 
 <h1 align="center">
     Getting Started
@@ -837,7 +838,7 @@ Hello, Alice!
   - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`repl`] Provides REPL capability (`program.exec_repl();`)
   - [x] [[0.2.0](https://docs.rs/mingling/0.2.0/mingling/)] Complete documentation, tests, and examples
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
-  - [ ] [`mling` / `mingling-cli`] 
+  - [ ] [`mling` / `mingling-cli`]
     - [ ] **Mingling** Linter
     - [ ] **Mingling** Project Generator
     - [ ] **Mingling** Program Installer & Manager (For development)
