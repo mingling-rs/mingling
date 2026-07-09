@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  ci:
+  Check-Codes:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
@@ -16,11 +16,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo ci
 
-  move-unreleased-tag:
+      - name: Restore .temp cache
+        id: cache-temp
+        uses: actions/cache@v4
+        with:
+          path: .temp
+          key: ${{ runner.os }}-mingling-temp-${{ hashFiles('Cargo.lock', 'dev_tools/Cargo.toml', 'verified-docs.toml', 'examples/test-examples.toml') }}-${{ hashFiles('dev_tools/src/**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-mingling-temp-
+
+      - run: cargo ci --test-codes
+
+  Check-Docs:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Restore .temp cache
+        id: cache-temp
+        uses: actions/cache@v4
+        with:
+          path: .temp
+          key: ${{ runner.os }}-mingling-temp-${{ hashFiles('Cargo.lock', 'dev_tools/Cargo.toml', 'verified-docs.toml', 'examples/test-examples.toml') }}-${{ hashFiles('dev_tools/src/**/*.rs') }}
+          restore-keys: |
+            ${{ runner.os }}-mingling-temp-
+
+      - run: cargo ci --test-docs
+
+  Move-Unreleased-Tag:
     if: github.ref == 'refs/heads/main'
-    needs: ci
+    needs: [Check-Codes, Check-Docs]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,3 +59,22 @@ jobs:
       - run: |
           git tag -f unreleased
           git push origin unreleased --force
+
+  Deploy-Github-Pages:
+    needs: [Move-Unreleased-Tag]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
