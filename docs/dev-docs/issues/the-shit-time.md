@@ -1,4 +1,7 @@
-# Some Situations Where You'd Be Like "Shit!"
+<h1 align="center">Some Situations Where You'd Be Like "Shit!"</h1>
+<p align="center">
+    This document collects the discomforts currently experienced while using Mingling.
+</p>
 
 This document collects the discomforts currently experienced while using Mingling.
 

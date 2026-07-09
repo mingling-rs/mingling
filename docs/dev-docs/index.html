@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover"
+        />
+
+        <title>Mingling Dev Docs</title>
+        <meta
+            name="Mingling Dev Docs"
+            content="Internal design docs, issue discussions, and development notes for Mingling."
+        />
+
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="icon" type="image/png" href="../res/favicon_small.png" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+
+        <link rel="stylesheet" href="../css/dev-light.css" />
+        <link
+            id="dark-style"
+            rel="stylesheet"
+            href="../css/dev-dark.css"
+            disabled
+        />
+
+        <style>
+            /* ── No sidebar header image override ── */
+            .sidebar > h1 .app-name-link {
+                font-family:
+                    "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code",
+                    monospace;
+                font-size: 16px;
+                font-weight: 600;
+                letter-spacing: -0.3px;
+            }
+            .sidebar > h1 .app-name-link::before {
+                content: "⚙ ";
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+                letter-spacing: 0;
+            }
+            .markdown-section h1,
+            .markdown-section h2,
+            .markdown-section h3,
+            .markdown-section h4 {
+                font-family:
+                    "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code",
+                    monospace;
+                font-weight: 600;
+                letter-spacing: -0.5px;
+            }
+            .markdown-section h1 {
+                font-size: 24px;
+            }
+            .markdown-section h2 {
+                font-size: 19px;
+            }
+            .markdown-section h3 {
+                font-size: 16px;
+            }
+            .markdown-section p,
+            .markdown-section li {
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    "Noto Sans",
+                    Helvetica,
+                    Arial,
+                    sans-serif;
+            }
+            .sidebar ul li a {
+                font-family:
+                    "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code",
+                    monospace;
+                font-size: 13px;
+                letter-spacing: -0.2px;
+            }
+            .sidebar ul li ul li a {
+                font-size: 12px;
+            }
+            /* ── Top nav bar ── */
+            .dev-nav {
+                position: fixed;
+                top: 12px;
+                right: 30px;
+                z-index: 20;
+                display: flex;
+                gap: 4px;
+                align-items: center;
+            }
+            .dev-nav a {
+                font-family:
+                    "JetBrains Mono", "SF Mono", "Fira Code", "Cascadia Code",
+                    monospace;
+                font-size: 12px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #656d76;
+                text-decoration: none;
+                padding: 4px 10px;
+                transition: color 0.15s;
+            }
+            .dev-nav a:hover {
+                color: #0969da;
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav class="dev-nav">
+            <a
+                href="#"
+                onclick="
+                    toggleTheme();
+                    return false;
+                "
+                >🌓 Theme</a
+            >
+            <a href="../doc.html">📖 Helpdoc</a>
+        </nav>
+
+        <div id="app"></div>
+
+        <script>
+            window.$docsify = {
+                name: "dev-docs",
+                repo: "true",
+                corner: {
+                    url: "https://github.com/mingling-rs/mingling",
+                    icon: "github",
+                },
+                auto2top: true,
+                loadSidebar: true,
+                maxLevel: 0,
+                subMaxLevel: 3,
+                search: {
+                    placeholder: "Search dev docs…",
+                    noData: "No matches found.",
+                    depth: 2,
+                },
+            };
+        </script>
+
+        <script src="../scripts/docsify.min.js"></script>
+        <script src="../scripts/search.js"></script>
+        <script src="../scripts/prism-bash.min.js"></script>
+        <script src="../scripts/prism-toml.min.js"></script>
+        <script src="../scripts/prism-rust.js"></script>
+        <script src="../scripts/docsify-corner.js"></script>
+        <script src="../scripts/day-night-switch.js"></script>
+    </body>
+</html>

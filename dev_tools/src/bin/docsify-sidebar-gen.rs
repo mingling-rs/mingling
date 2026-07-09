@@ -1,60 +1,98 @@
 use std::collections::BTreeMap;
 use std::fmt::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use tools::println_cargo_style;
-
-const PAGES_ROOT: &str = "./docs/pages";
-const SIDEBAR_PATH: &str = "./docs/_sidebar.md";
 
 const SIDEBAR_HEAD: &str = "- [Welcome!](README)\n";
 
 fn main() {
     println_cargo_style!("Refresh: _sidebar.md");
-    gen_sidebar();
-    gen_translation_sidebars();
+    gen_all_sidebars();
 }
 
-/// Generate _sidebar.md for the primary language
-fn gen_sidebar() {
-    let repo_root = find_git_repo().unwrap();
-    let pages_root = repo_root.join(PAGES_ROOT);
-
-    let lines = build_sidebar_content(&repo_root.join("docs"), &pages_root, SIDEBAR_HEAD);
-
-    let sidebar_path = repo_root.join(SIDEBAR_PATH);
-    std::fs::write(&sidebar_path, lines).unwrap();
-    println_cargo_style!("Generated: {}", sidebar_path.display());
-}
-
-/// Generate _sidebar.md inside translation directories
-fn gen_translation_sidebars() {
+/// Find all README.md under docs/, treat each as a site, and generate _sidebar.md for it.
+fn gen_all_sidebars() {
     let repo_root = find_git_repo().unwrap();
     let docs_root = repo_root.join("docs");
 
-    if let Ok(read_dir) = std::fs::read_dir(&docs_root) {
-        for entry in read_dir.flatten() {
+    let readme_paths = find_all_readmes(&docs_root);
+
+    for readme_path in &readme_paths {
+        let site_root = readme_path.parent().unwrap();
+
+        let content_dir = find_content_dir(site_root);
+
+        if let Some(content_dir) = content_dir {
+            let lines = build_sidebar_content(site_root, &content_dir, SIDEBAR_HEAD);
+
+            let sidebar_path = site_root.join("_sidebar.md");
+            std::fs::write(&sidebar_path, lines).unwrap();
+            println_cargo_style!("Generated: {}", sidebar_path.display());
+        }
+    }
+}
+
+/// Recursively find all README.md files under a directory.
+fn find_all_readmes(dir: &Path) -> Vec<PathBuf> {
+    let mut results = Vec::new();
+    if let Ok(read_dir) = std::fs::read_dir(dir) {
+        let mut entries: Vec<_> = read_dir.flatten().collect();
+        entries.sort_by_key(|e| e.path());
+        for entry in entries {
             let path = entry.path();
-            let file_name = entry.file_name().to_string_lossy().to_string();
-
-            // Only process entries starting with '_' that are directories
-            if file_name.starts_with('_') && path.is_dir() {
-                // Check if this directory has a 'pages' subdirectory
-                let pages_dir = path.join("pages");
-                if !pages_dir.exists() || !pages_dir.is_dir() {
-                    continue;
-                }
-
-                // The _sidebar.md for a translation directory is relative to that directory,
-                // so strip_prefix should use the translation directory path, removing the _zh_CN/ prefix
-                let lines = build_sidebar_content(&path, &pages_dir, "- [Welcome!](README)\n");
-
-                let sidebar_path = path.join("_sidebar.md");
-                std::fs::write(&sidebar_path, lines).unwrap();
-                println_cargo_style!("Generated: {}", sidebar_path.display());
+            if path.is_dir() {
+                results.extend(find_all_readmes(&path));
+            } else if path.file_name().map_or(false, |n| n == "README.md") {
+                results.push(path);
             }
         }
     }
+    results
+}
+
+/// Find the content directory for a site:
+/// 1. Prefer `pages/` if it exists (backward compatible)
+/// 2. Fall back to the first subdirectory that contains .md files
+fn find_content_dir(site_root: &Path) -> Option<PathBuf> {
+    // Try pages/ first
+    let pages_dir = site_root.join("pages");
+    if pages_dir.exists() && pages_dir.is_dir() {
+        return Some(pages_dir);
+    }
+
+    // Fall back to any subdirectory containing .md files
+    if let Ok(read_dir) = std::fs::read_dir(site_root) {
+        let mut entries: Vec<_> = read_dir.flatten().collect();
+        entries.sort_by_key(|e| e.path());
+        for entry in entries {
+            let path = entry.path();
+            if path.is_dir() {
+                if has_markdown_files(&path) {
+                    return Some(path);
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Check if a directory (recursively) contains any .md files.
+fn has_markdown_files(dir: &Path) -> bool {
+    if let Ok(read_dir) = std::fs::read_dir(dir) {
+        for entry in read_dir.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                if has_markdown_files(&path) {
+                    return true;
+                }
+            } else if path.extension().is_some_and(|ext| ext == "md") {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 /// Build sidebar content: scan .md files in `pages_dir` and return a formatted sidebar string

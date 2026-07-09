@@ -1,0 +1,716 @@
+/*
+ * Mingling Dev Docs — Light theme (Minimal / technical)
+ * Clean white, sans-serif body, crisp monospace code
+ */
+
+* {
+    -webkit-font-smoothing: antialiased;
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-text-size-adjust: none;
+    -webkit-touch-callout: none;
+    box-sizing: border-box;
+}
+body:not(.ready) {
+    overflow: hidden;
+}
+body:not(.ready) [data-cloak],
+body:not(.ready) .app-nav,
+body:not(.ready) > nav {
+    display: none;
+}
+div#app {
+    font-size: 30px;
+    font-weight: lighter;
+    margin: 40vh auto;
+    text-align: center;
+}
+div#app:empty::before {
+    content: "Loading...";
+}
+img.emoji {
+    height: 1.2em;
+    vertical-align: middle;
+}
+span.emoji {
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+        "Noto Color Emoji";
+    font-size: 1.2em;
+    vertical-align: middle;
+}
+
+/* ── Progress bar ── */
+.progress {
+    background-color: #0969da;
+    height: 2px;
+    left: 0;
+    position: fixed;
+    right: 0;
+    top: 0;
+    transition: width 0.2s, opacity 0.4s;
+    width: 0%;
+    z-index: 999999;
+}
+
+/* ── Search ── */
+.search a:hover {
+    color: #0969da;
+}
+.search .search-keyword {
+    color: #0969da;
+    font-style: normal;
+    font-weight: 600;
+}
+
+/* ── Base ── */
+html,
+body {
+    height: 100%;
+}
+body {
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    background-color: #ffffff;
+    color: #24292f;
+    font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    letter-spacing: 0;
+    margin: 0;
+    overflow-x: hidden;
+}
+img {
+    max-width: 100%;
+}
+a[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+kbd {
+    border: solid 1px #d0d7de;
+    border-radius: 4px;
+    display: inline-block;
+    font-size: 12px !important;
+    line-height: 14px;
+    margin-bottom: 3px;
+    padding: 3px 6px;
+    vertical-align: middle;
+}
+
+/* ── Nav bar (top) ── */
+.app-nav {
+    font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif;
+    margin: 0 0 0 auto;
+    position: fixed;
+    right: 30px;
+    top: 10px;
+    z-index: 10;
+}
+.app-nav a {
+    color: #656d76;
+    font-size: 14px;
+    padding: 6px 14px;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.app-nav a:hover {
+    color: #0969da;
+}
+.app-nav a.active {
+    color: #0969da;
+}
+
+/* ── GitHub corner ── */
+.github-corner {
+    position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 999;
+}
+.github-corner svg {
+    fill: #24292f;
+    height: 60px;
+    width: 60px;
+}
+
+/* ── Main layout ── */
+main {
+    display: block;
+    height: 100%;
+    margin-left: 300px;
+    overflow-y: auto;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ── Anchor links ── */
+.anchor {
+    display: block;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+}
+.anchor span {
+    color: #24292f;
+}
+.anchor:hover {
+    text-decoration: underline;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+    background: #f6f8fa;
+    border-right: 1px solid #d0d7de;
+    bottom: 0;
+    left: 0;
+    overflow-y: auto;
+    position: fixed;
+    top: 0;
+    width: 300px;
+    z-index: 1;
+    -webkit-overflow-scrolling: touch;
+}
+.sidebar > h1 {
+    border-bottom: 1px solid #d0d7de;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+    padding: 16px 20px;
+    line-height: 1.4;
+}
+.sidebar > h1 a {
+    color: #24292f;
+    text-decoration: none;
+}
+.sidebar > h1 a:hover {
+    color: #0969da;
+}
+
+.sidebar .sidebar-nav {
+    padding: 12px 0 40px;
+}
+.sidebar li.collapse .app-sub-sidebar {
+    display: none;
+}
+.sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.sidebar li > p {
+    font-weight: 600;
+    margin: 0;
+}
+.sidebar ul,
+.sidebar ul li {
+    list-style: none;
+}
+.sidebar ul li a {
+    border-right: 2px solid transparent;
+    color: #24292f;
+    display: block;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 6px 20px;
+    text-decoration: none;
+    transition: all 0.1s;
+}
+.sidebar ul li a:hover {
+    color: #0969da;
+    background: rgba(9, 105, 218, 0.06);
+}
+.sidebar ul li ul {
+    padding-left: 16px;
+}
+.sidebar ul li.active > a {
+    border-right-color: #0969da;
+    color: #0969da;
+    font-weight: 600;
+    background: rgba(9, 105, 218, 0.08);
+}
+.sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 2px;
+}
+.sidebar:hover::-webkit-scrollbar-thumb {
+    background: #d0d7de;
+}
+.sidebar:hover::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ── Sidebar toggle ── */
+.sidebar-toggle {
+    background: transparent;
+    border: none;
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    outline: none;
+    padding: 10px;
+    position: absolute;
+    text-align: center;
+    transition: opacity 0.3s;
+    width: 284px;
+    z-index: 10;
+    display: none;
+}
+.sidebar-toggle:hover .sidebar-toggle-button {
+    opacity: 0.6;
+}
+.sidebar-toggle span {
+    background: #0969da;
+    border-radius: 1px;
+    display: block;
+    height: 2px;
+    margin-bottom: 4px;
+    width: 16px;
+}
+body.sticky .sidebar,
+body.sticky .sidebar-toggle {
+    position: fixed;
+}
+
+/* ── Content area ── */
+.content {
+    display: block;
+    padding-bottom: 60px;
+    padding-top: 24px;
+}
+.markdown-section {
+    margin: 0 auto;
+    max-width: 880px;
+    padding: 24px 40px 40px;
+    position: relative;
+}
+.markdown-section > * {
+    box-sizing: border-box;
+}
+.markdown-section > :first-child {
+    margin-top: 0 !important;
+}
+.markdown-section hr {
+    border: none;
+    border-top: 1px solid #d0d7de;
+    margin: 32px 0;
+}
+.markdown-section table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    display: block;
+    margin: 24px 0;
+    overflow: auto;
+    width: 100%;
+}
+.markdown-section th {
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: left;
+}
+.markdown-section td {
+    border: 1px solid #d0d7de;
+    padding: 8px 12px;
+}
+.markdown-section tr:nth-child(2n) {
+    background: #f6f8fa;
+}
+
+/* ── Headings ── */
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4,
+.markdown-section strong {
+    color: #1f2328;
+    font-weight: 600;
+}
+.markdown-section h1 {
+    border-bottom: 1px solid #d0d7de;
+    font-size: 28px;
+    margin: 0 0 20px;
+    padding-bottom: 8px;
+}
+.markdown-section h2 {
+    border-bottom: 1px solid #d0d7de;
+    font-size: 22px;
+    margin: 28px 0 16px;
+    padding-bottom: 6px;
+}
+.markdown-section h3 {
+    font-size: 18px;
+    margin: 24px 0 12px;
+}
+.markdown-section h4 {
+    font-size: 16px;
+    margin: 20px 0 10px;
+}
+.markdown-section h5 {
+    font-size: 15px;
+    margin: 16px 0 8px;
+}
+.markdown-section h6 {
+    color: #656d76;
+    font-size: 14px;
+    margin: 14px 0 8px;
+}
+.markdown-section a {
+    color: #0969da;
+    text-decoration: none;
+}
+.markdown-section a:hover {
+    text-decoration: underline;
+}
+
+/* ── Inline code ── */
+.markdown-section code {
+    background: rgba(27, 31, 36, 0.06);
+    border-radius: 4px;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code",
+        "SF Mono", "Fira Mono", "Source Code Pro", Menlo, Consolas,
+        "DejaVu Sans Mono", monospace;
+    font-size: 13px;
+    margin: 0;
+    padding: 2px 6px;
+    word-break: break-word;
+}
+
+/* ── Code blocks ── */
+.markdown-section pre {
+    background: #f6f8fa;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    font-family: "JetBrains Mono", "Fira Code", "Cascadia Code",
+        "SF Mono", "Fira Mono", "Source Code Pro", Menlo, Consolas,
+        "DejaVu Sans Mono", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 16px 0;
+    overflow: auto;
+    padding: 16px;
+    position: relative;
+    word-wrap: normal;
+}
+.markdown-section pre > code {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    font-size: 13px;
+    margin: 0;
+    padding: 0;
+    white-space: pre;
+    word-break: normal;
+}
+
+/* ── Blockquote ── */
+.markdown-section blockquote {
+    border-left: 4px solid #d0d7de;
+    color: #656d76;
+    margin: 16px 0;
+    padding: 0 16px;
+}
+
+/* ── Tip / warning callouts ── */
+.markdown-section p.tip {
+    background: rgba(9, 105, 218, 0.08);
+    border-left: 4px solid #0969da;
+    border-radius: 4px;
+    padding: 12px 16px;
+}
+.markdown-section p.tip:before {
+    color: #0969da;
+    content: "💡";
+    font-weight: 600;
+    margin-right: 6px;
+}
+.markdown-section p.tip code {
+    background: rgba(9, 105, 218, 0.1);
+}
+.markdown-section p.warn {
+    background: rgba(242, 211, 91, 0.15);
+    border-left: 4px solid #d29922;
+    border-radius: 4px;
+    padding: 12px 16px;
+}
+.markdown-section ul.task-list > li {
+    list-style: none;
+}
+
+/* ── Prism token overrides (light) ── */
+.token.cdata,
+.token.comment,
+.token.doctype,
+.token.prolog {
+    color: #6e7781;
+}
+.token.namespace {
+    opacity: 0.7;
+}
+.token.boolean,
+.token.number {
+    color: #0550ae;
+}
+.token.punctuation {
+    color: #24292f;
+}
+.token.property {
+    color: #0550ae;
+}
+.token.tag {
+    color: #116329;
+}
+.token.string {
+    color: #0a3069;
+}
+.token.selector {
+    color: #6f42c1;
+}
+.token.attr-name {
+    color: #0550ae;
+}
+.language-css .token.string,
+.style .token.string,
+.token.entity,
+.token.url {
+    color: #0a3069;
+}
+.token.attr-value,
+.token.control,
+.token.directive,
+.token.unit {
+    color: #0a3069;
+}
+.token.function {
+    color: #8250df;
+}
+.token.keyword {
+    color: #cf222e;
+}
+.token.atrule,
+.token.regex,
+.token.statement {
+    color: #0a3069;
+}
+.token.placeholder,
+.token.variable {
+    color: #953800;
+}
+.token.deleted {
+    text-decoration: line-through;
+}
+.token.inserted {
+    text-decoration: none;
+}
+.token.italic {
+    font-style: italic;
+}
+.token.bold,
+.token.important {
+    font-weight: 700;
+}
+.token.important {
+    color: #cf222e;
+}
+.token.entity {
+    cursor: help;
+}
+code .token {
+    -moz-osx-font-smoothing: initial;
+    -webkit-font-smoothing: initial;
+    min-height: 24px;
+}
+
+/* ── Search panel ── */
+.search {
+    border-bottom: 1px solid #d0d7de;
+    padding: 12px 16px 0;
+}
+.search .input-wrap {
+    position: relative;
+}
+.search .input-wrap input[type="search"] {
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    color: #24292f;
+    font-family: system-ui, -apple-system, "Segoe UI", "Noto Sans",
+        Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    outline: none;
+    padding: 6px 32px 6px 12px;
+    width: 100%;
+}
+.search .input-wrap input[type="search"]::placeholder {
+    color: #8b949e;
+}
+.search .input-wrap input[type="search"]:focus {
+    border-color: #0969da;
+    box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.15);
+}
+.search .input-wrap .clear-button {
+    background: transparent;
+    border: none;
+    color: #656d76;
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 8px;
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.search .input-wrap .clear-button:hover {
+    color: #24292f;
+}
+.search .results-panel {
+    padding: 8px 0;
+}
+.search .results-panel a {
+    color: #24292f;
+    display: block;
+    font-size: 14px;
+    padding: 4px 16px;
+    text-decoration: none;
+}
+.search .results-panel a:hover {
+    color: #0969da;
+}
+
+/* ── App name in sidebar header ── */
+.app-name-link {
+    color: #24292f;
+    font-size: 18px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+/* ── Iframe ── */
+.markdown-section iframe {
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+}
+
+/* ── Prev/Next nav ── */
+.page-nav {
+    border-top: 1px solid #d0d7de;
+    display: flex;
+    margin-top: 40px;
+    padding-top: 24px;
+}
+.page-nav a {
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    color: #24292f;
+    display: inline-flex;
+    flex: 1 1 50%;
+    font-size: 14px;
+    gap: 8px;
+    max-width: 50%;
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: border-color 0.15s;
+}
+.page-nav a:hover {
+    border-color: #0969da;
+}
+.page-nav .nav-prev {
+    justify-content: flex-start;
+    margin-right: 8px;
+}
+.page-nav .nav-next {
+    justify-content: flex-end;
+    margin-left: auto;
+}
+.page-nav a:only-child {
+    max-width: 50%;
+}
+.page-nav .nav-label {
+    font-size: 12px;
+    opacity: 0.6;
+}
+.page-nav .nav-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media screen and (max-width: 768px) {
+    .github-corner,
+    .sidebar-toggle,
+    .sidebar {
+        position: fixed;
+    }
+    .app-nav {
+        margin-top: 0;
+    }
+    .app-nav li ul {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+    }
+    main {
+        margin-left: 0;
+        overflow-y: auto;
+    }
+    .sidebar {
+        border-right: 1px solid #d0d7de;
+        left: -300px;
+        transition: left 0.25s ease;
+    }
+    .content {
+        padding-top: 20px;
+    }
+    .app-nav,
+    .github-corner {
+        opacity: 1;
+        transition: opacity 0.25s ease;
+    }
+    .sidebar-toggle {
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 0 4px 4px 0;
+        display: flex;
+        flex-direction: column;
+        left: 0;
+        padding: 8px;
+        position: fixed;
+        top: 10px;
+        width: auto;
+        z-index: 20;
+    }
+    body.close .sidebar {
+        left: 0;
+    }
+    body.close .sidebar-toggle {
+        left: 300px;
+    }
+    body.close .content {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+    body.close .app-nav,
+    body.close .github-corner {
+        opacity: 0;
+        pointer-events: none;
+    }
+}
+
+@media print {
+    .github-corner,
+    .sidebar-toggle,
+    .sidebar,
+    .app-nav {
+        display: none;
+    }
+    main {
+        margin-left: 0;
+    }
+}

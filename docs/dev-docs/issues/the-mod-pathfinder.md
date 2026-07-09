@@ -1,4 +1,7 @@
-# The Mod Pathfinder
+<h1 align="center">The Mod Pathfinder</h1>
+<p align="center">
+    A build-time analyzer that computes full module paths for Mingling types, resolving path ambiguity in macros.
+</p>
 
 ## Background
 
