@@ -11,6 +11,7 @@ Any contributor making changes to the project must record their changes in this 
 **- Milestone.1 "MVP" -**
 
 - [Unreleased](#unreleased)
+- [Release 0.2.2 (2026-07-10)](#release-022-2026-07-10)
 - [Release 0.2.1 (2026-07-01)](#release-021-2026-07-01)
 - [Release 0.2.0 (2026-06-30)](#release-020-2026-06-30)
 - [Release 0.1.9 (2026-05-29)](#release-019-2026-05-29)
@@ -48,6 +49,28 @@ None
 
 ---
 
+## Release 0.2.2 (2026-07-10)
+
+### Unreleased
+
+#### Fixes:
+
+1. **[`macros:structural_data`]** Fixed `group_structural!` macro to correctly generate `use` statements for multi-segment type paths (e.g., `crate::MyType`). Previously, when an aliased type had only one segment, the macro used the alias name (`type_name`) instead of the original type's last segment for `super::` imports, which could cause compilation errors. Now correctly extracts the last segment from the original `type_path` for single-segment fallback imports.
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+None
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
+
 ### Release 0.2.1 (2026-07-01)
 
 #### Fixes:
@@ -57,7 +80,7 @@ None
    `"=> EntryList"` would incorrectly match as a substring of `"=> EntryListAlias,"`, causing a false duplicate registration detection.
    Now changed to use `find` + trailing character boundary validation, ensuring the character immediately after the match is not an identifier character (letter/digit/underscore).
 
-    Affected scope: Deduplication logic for `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` registration.
+   Affected scope: Deduplication logic for `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` registration.
 
 #### Optimizations:
 
@@ -86,36 +109,36 @@ None
 
 1. **[`core`]** - **Added complete unit test coverage**, adding `#[cfg(test)]` test modules for 23 modules in `mingling_core` that previously lacked tests, covering:
 
-    - **Core types** (`any.rs`): `AnyOutput` creation, downcast, type judgment, route routing, restore deserialization; `ChainProcess` type conversion; `NextProcess` formatting
-    - **Dispatcher** (`dispatcher.rs`): Conversion of `Dispatchers` from 1~7 tuples, Vec, Box; Deref dereferencing; clone behavior
-    - **Node** (`node.rs`): Construction, join, kebab-case conversion, equality comparison, sorting
-    - **Global resource** (`global_resource.rs`): `GlobalResource` new, Deref, AsRef; three default implementations of `ResourceMarker`
-    - **Lazy resource** (`lazy_resource.rs`): Coverage of all 18+ methods of `LazyRes`, including initialization triggering, get_ref/get_mut/get_clone, into_inner/unwrap, Drop callback, `ResourceMarker` integration
-    - **Error types** (`chain/error.rs`, `program/error.rs`): All Display, Error source, From conversions
-    - **Configuration structs** (`config.rs`): Default values for `ProgramStdoutSetting`, `ProgramUserContext`; FromStr parsing and Display output of `StructuralRendererSetting` (feature-gated)
-    - **Flag system** (`flag.rs`): Added 8 From conversions, Deref, AsRef for `Flag`
-    - **String wrapper** (`string_vec.rs`): 6 From conversions, Deref, Into\<Vec\>
-    - **Render result** (`render_result.rs`): print/println/clear/is_empty, Write trait, Display, Deref, From conversions
-    - **Render error** (`structural/error.rs`): Construction, From, Deref, Into\<String\>
-    - **Structural renderer** (`structural.rs`): Rendering in Disable/JSON/YAML/TOML/RON formats (feature-gated)
-    - **Completion suggestions** (`suggest.rs`): All construction, access, modification, sorting, and conversion methods for `Suggest` and `SuggestItem`
-    - **Shell context** (`shell_ctx.rs`): Added `filling_argument`, `filling_argument_first`, `typing_argument`, `strip_typed_argument`, `get_typed_arguments`
-    - **Hook system** (`hook.rs`): `ProgramHook::empty` and all 8 builder methods
-    - **Singleton management** (`single_instance.rs`): `ProgramCell` set/get_raw/take/double-set-panic
-    - **Program setup** (`setup.rs`): Verification of `with_setup` invocation
-    - **Completion detection** (`comp_ctx.rs`): Three scenarios for `is_completing`
-    - **Build script** (`builds/comp.rs`): `get_tmpl` for four Shells and Other fallback
+   - **Core types** (`any.rs`): `AnyOutput` creation, downcast, type judgment, route routing, restore deserialization; `ChainProcess` type conversion; `NextProcess` formatting
+   - **Dispatcher** (`dispatcher.rs`): Conversion of `Dispatchers` from 1~7 tuples, Vec, Box; Deref dereferencing; clone behavior
+   - **Node** (`node.rs`): Construction, join, kebab-case conversion, equality comparison, sorting
+   - **Global resource** (`global_resource.rs`): `GlobalResource` new, Deref, AsRef; three default implementations of `ResourceMarker`
+   - **Lazy resource** (`lazy_resource.rs`): Coverage of all 18+ methods of `LazyRes`, including initialization triggering, get_ref/get_mut/get_clone, into_inner/unwrap, Drop callback, `ResourceMarker` integration
+   - **Error types** (`chain/error.rs`, `program/error.rs`): All Display, Error source, From conversions
+   - **Configuration structs** (`config.rs`): Default values for `ProgramStdoutSetting`, `ProgramUserContext`; FromStr parsing and Display output of `StructuralRendererSetting` (feature-gated)
+   - **Flag system** (`flag.rs`): Added 8 From conversions, Deref, AsRef for `Flag`
+   - **String wrapper** (`string_vec.rs`): 6 From conversions, Deref, Into\<Vec\>
+   - **Render result** (`render_result.rs`): print/println/clear/is_empty, Write trait, Display, Deref, From conversions
+   - **Render error** (`structural/error.rs`): Construction, From, Deref, Into\<String\>
+   - **Structural renderer** (`structural.rs`): Rendering in Disable/JSON/YAML/TOML/RON formats (feature-gated)
+   - **Completion suggestions** (`suggest.rs`): All construction, access, modification, sorting, and conversion methods for `Suggest` and `SuggestItem`
+   - **Shell context** (`shell_ctx.rs`): Added `filling_argument`, `filling_argument_first`, `typing_argument`, `strip_typed_argument`, `get_typed_arguments`
+   - **Hook system** (`hook.rs`): `ProgramHook::empty` and all 8 builder methods
+   - **Singleton management** (`single_instance.rs`): `ProgramCell` set/get_raw/take/double-set-panic
+   - **Program setup** (`setup.rs`): Verification of `with_setup` invocation
+   - **Completion detection** (`comp_ctx.rs`): Three scenarios for `is_completing`
+   - **Build script** (`builds/comp.rs`): `get_tmpl` for four Shells and Other fallback
 
 2. **[`core`]** - **Added 6 integration test crates**, testing public APIs under different feature combinations:
 
-    - `test-basic`: Basic type tests with default features (Node, Flag, RenderResult, NextProcess, StringVec)
-    - `test-comp`: ShellContext, Suggest, SuggestItem, is_completing with `comp + builds` features
-    - `test-structural-renderer`: StructuralRenderer output in various formats with `structural_renderer_full + parser` features
-    - `test-repl`: ResREPL and basic types with `repl + extra_macros` features
-    - `test-dispatch-tree`: Basic types with `dispatch_tree` feature
-    - `test-all`: Comprehensive testing with all feature combinations (ShellContext, Suggest, ResREPL, StructuralRenderer, Hooks, basic types, etc.)
+   - `test-basic`: Basic type tests with default features (Node, Flag, RenderResult, NextProcess, StringVec)
+   - `test-comp`: ShellContext, Suggest, SuggestItem, is_completing with `comp + builds` features
+   - `test-structural-renderer`: StructuralRenderer output in various formats with `structural_renderer_full + parser` features
+   - `test-repl`: ResREPL and basic types with `repl + extra_macros` features
+   - `test-dispatch-tree`: Basic types with `dispatch_tree` feature
+   - `test-all`: Comprehensive testing with all feature combinations (ShellContext, Suggest, ResREPL, StructuralRenderer, Hooks, basic types, etc.)
 
-    These crates are located in `mingling_core/tests/test-*/`, each marked as an independent workspace via `[workspace]`, isolated from the main workspace.
+   These crates are located in `mingling_core/tests/test-*/`, each marked as an independent workspace via `[workspace]`, isolated from the main workspace.
 
 3. **[`workspace`]** - **Added workspace exclude rules for the 6 test crates in the root `Cargo.toml`**, ensuring that integration test crates are not captured by the workspace's implicit member rules.
 
@@ -126,33 +149,33 @@ None
 2. **[`core:comp`]** Fixed `default_completion` jumping to the next subcommand level on partial input (e.g. typing `b` for `bind` would skip `bind` and directly suggest third-level commands `add`/`ls`/`rm`). Now if the last input word is only a partial match (`starts_with` but not equal), the current-level word is suggested instead of skipping ahead
 
 3. **[`core`]** Replaced `OnceLock<Option<Box<dyn Any>>>` with a custom `ProgramCell` type backed by `UnsafeCell` and `AtomicBool`. The new `ProgramCell` replaces `OnceLock`'s `get_or_init` / `get` / `as_ref` calls with a direct `set` / `get_raw` / `take` API. This change:
-    - Eliminates the double indirection (`OnceLock<Option<Box<...>>>` → `UnsafeCell<Option<Box<...>>>`)
-    - Allows the program instance to be **taken** (moved out) via an `unsafe fn take()` after execution completes, enabling proper cleanup before `std::process::exit()` in `exec_and_exit`
-    - Is paired with corresponding simplifications in `once_exec.rs` and `repl_exec.rs` that switch from `THIS_PROGRAM.get().unwrap().as_ref()` to `THIS_PROGRAM.get_raw().unwrap()`
+   - Eliminates the double indirection (`OnceLock<Option<Box<...>>>` → `UnsafeCell<Option<Box<...>>>`)
+   - Allows the program instance to be **taken** (moved out) via an `unsafe fn take()` after execution completes, enabling proper cleanup before `std::process::exit()` in `exec_and_exit`
+   - Is paired with corresponding simplifications in `once_exec.rs` and `repl_exec.rs` that switch from `THIS_PROGRAM.get().unwrap().as_ref()` to `THIS_PROGRAM.get_raw().unwrap()`
 
 4. **[`macros:dispatcher_clap`]** Added `dispatch_tree` feature integration for `#[dispatcher_clap]`. When the `dispatch_tree` feature is enabled, `#[dispatcher_clap]` will now automatically register the dispatcher and entry in the dispatch tree via `register_dispatcher!`, matching the behavior already present in the `dispatcher!` macro. When the feature is disabled, no additional code is generated.
 
 5. **[`macros`]** The four macros `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` now support using fully qualified type paths with `::` (e.g. `crate::EntryFine`) as type inputs. Previously, these macros required types to be bare single-segment idents (e.g. `EntryFine`), rejecting reasonable paths like `crate::EntryFine`. Specific changes:
 
-    - `res_injection::extract_args_info` (shared by `#[chain]` and `#[renderer]`): Removed the single-segment validation for the first parameter type
-    - `#[renderer]` / `#[help]`: Removed respective `check_single_segment_type` calls
-    - `#[completion]`: Attribute parameter parsing changed from `Ident` to `TypePath`, supporting `#[completion(crate::EntryFine)]`
-    - Fixed code generation in `build_chain_arm`, `build_chain_exist_arm`, `build_renderer_entry`, `build_renderer_exist_entry`, `build_general_renderer_entry`, and completion entry: `Self::#variant` match arms now only take the last segment ident of the type path (e.g. `Self::EntryFine`), rather than concatenating the full path directly (which would generate invalid syntax like `Self::crate::EntryFine`), while `downcast::<T>()` and `type Previous = T` still use the full path to ensure correct type resolution
+   - `res_injection::extract_args_info` (shared by `#[chain]` and `#[renderer]`): Removed the single-segment validation for the first parameter type
+   - `#[renderer]` / `#[help]`: Removed respective `check_single_segment_type` calls
+   - `#[completion]`: Attribute parameter parsing changed from `Ident` to `TypePath`, supporting `#[completion(crate::EntryFine)]`
+   - Fixed code generation in `build_chain_arm`, `build_chain_exist_arm`, `build_renderer_entry`, `build_renderer_exist_entry`, `build_general_renderer_entry`, and completion entry: `Self::#variant` match arms now only take the last segment ident of the type path (e.g. `Self::EntryFine`), rather than concatenating the full path directly (which would generate invalid syntax like `Self::crate::EntryFine`), while `downcast::<T>()` and `type Previous = T` still use the full path to ensure correct type resolution
 
 6. **[`macros:register`]** Added compile-time duplicate variant detection for chain, renderer, help, and completion registrations. When two `#[chain]` (or `#[renderer]`, `#[help]`, `#[completion]`) functions register the same type variant, the compiler now emits a clear error at the registration site (e.g. `fn handle_state_prev1(_p: StatePrev1)`) instead of silently producing an unreachable match arm that only manifests as dead code in the generated `do_chain()`/`render()` dispatch.
 
-    Affected registration points:
-    - `register_chain` — checks `CHAINS` set for existing entries with the same variant
-    - `register_renderer` — checks `RENDERERS` set
-    - `help_attr` (via `#[help]`) + `register_help` — checks `HELP_REQUESTS`; `register_help` also serves as a public escape hatch for manual help registration, automatically skipping the duplicate check when the exact same entry was pre-inserted by `#[help]`
-    - `completion_attr` (via `#[completion]`) — checks `COMPLETIONS` set
+   Affected registration points:
+   - `register_chain` — checks `CHAINS` set for existing entries with the same variant
+   - `register_renderer` — checks `RENDERERS` set
+   - `help_attr` (via `#[help]`) + `register_help` — checks `HELP_REQUESTS`; `register_help` also serves as a public escape hatch for manual help registration, automatically skipping the duplicate check when the exact same entry was pre-inserted by `#[help]`
+   - `completion_attr` (via `#[completion]`) — checks `COMPLETIONS` set
 
 7. **[`macros:dispatch_tree`]** Fixed the static name generation for dispatch tree nodes to use `snake_case` conversion instead of simple `.` → `_` replacement, and fixed the `__comp` completion dispatcher static name from `__internal_dispatcher___comp` (triple underscore) to `__internal_dispatcher_comp` (double underscore), resolving a mismatch between the name generated by `register_dispatcher!` and the name used in `program_comp_gen`.
 
 8. **[`core`]** Changed the `exec_without_render` and `exec` methods' behavior: when `stdout_setting.render_output` is `false` or the result is empty, the exit code from the result is now returned instead of hardcoded `0`. This ensures that programs which set a non-zero exit code without producing renderable output (e.g., via `ExitCodeSetup` or `ProgramControlUnit::OverrideExitCode`) will exit with the correct code. Specific changes in `once_exec.rs`:
 
-    - `exec()` (async) and `exec_without_render_and_print()` (sync): The `exit_code` is now read from the result before the render check, and returned as the fallback value instead of `0` when output is not printed.
-    - This means `ExitCode` / `ProgramControls` overrides are now respected regardless of whether any output is rendered.
+   - `exec()` (async) and `exec_without_render_and_print()` (sync): The `exit_code` is now read from the result before the render check, and returned as the fallback value instead of `0` when output is not printed.
+   - This means `ExitCode` / `ProgramControls` overrides are now respected regardless of whether any output is rendered.
 
 #### Optimizations:
 
@@ -354,20 +377,20 @@ fn main() {
 The pathfinder system consists of:
 
 - **`mingling_pathf` sub-crate** — A standalone crate for build-time source analysis:
-    - `module_pathf::analyze()` — Scans the crate's source tree and infers module paths from the directory structure
-    - `pattern_analyzer::init()` — Creates a `PatternAnalyzer` registered with all supported Mingling patterns
-    - `analyze_and_build_type_mapping()` / `analyze_and_build_type_mapping_for()` — Convenience functions for build scripts
-    - **Pattern matchers** — Individual pattern implementations for each Mingling macro:
-        - `PackPattern` — Matches `pack!`, `pack_err!`, `pack_structural!`, `pack_err_structural!` invocations
-        - `GroupPattern` — Matches `group!` and `group_structural!` invocations
-        - `GrouppedDerivePattern` — Matches `#[derive(Groupped)]` and `#[derive(GrouppedSerialize)]`
-        - `ChainPattern` — Matches `#[chain]` functions, extracts `__internal_chain_*` names
-        - `RendererPattern` — Matches `#[renderer]` functions, extracts `__internal_renderer_*` names
-        - `HelpPattern` — Matches `#[help]` functions, extracts `__internal_help_*` names
-        - `CompletionPattern` — Matches `#[completion(T)]` functions, extracts `__internal_completion_*` names
-        - `DispatcherPattern` — Matches `dispatcher!` invocations, extracts entry type names (supports both explicit and implicit forms)
-        - `DispatcherClapPattern` — Matches `#[dispatcher_clap]` structs, extracts struct names
-    - `type_mapping_builder` — Assembles the mapping from all analyzed files and writes `MAPPING` and `type_using.rs` output files
+  - `module_pathf::analyze()` — Scans the crate's source tree and infers module paths from the directory structure
+  - `pattern_analyzer::init()` — Creates a `PatternAnalyzer` registered with all supported Mingling patterns
+  - `analyze_and_build_type_mapping()` / `analyze_and_build_type_mapping_for()` — Convenience functions for build scripts
+  - **Pattern matchers** — Individual pattern implementations for each Mingling macro:
+    - `PackPattern` — Matches `pack!`, `pack_err!`, `pack_structural!`, `pack_err_structural!` invocations
+    - `GroupPattern` — Matches `group!` and `group_structural!` invocations
+    - `GrouppedDerivePattern` — Matches `#[derive(Groupped)]` and `#[derive(GrouppedSerialize)]`
+    - `ChainPattern` — Matches `#[chain]` functions, extracts `__internal_chain_*` names
+    - `RendererPattern` — Matches `#[renderer]` functions, extracts `__internal_renderer_*` names
+    - `HelpPattern` — Matches `#[help]` functions, extracts `__internal_help_*` names
+    - `CompletionPattern` — Matches `#[completion(T)]` functions, extracts `__internal_completion_*` names
+    - `DispatcherPattern` — Matches `dispatcher!` invocations, extracts entry type names (supports both explicit and implicit forms)
+    - `DispatcherClapPattern` — Matches `#[dispatcher_clap]` structs, extracts struct names
+  - `type_mapping_builder` — Assembles the mapping from all analyzed files and writes `MAPPING` and `type_using.rs` output files
 
 - **Integration with `gen_program!()`** — When the `pathf` feature is enabled, `gen_program!()` includes the generated `type_using.rs` file via `include!()`, making all type paths available in scope for the generated dispatch code.
 
@@ -401,29 +424,29 @@ The following explicit syntaxes are **removed**:
 
 1. **[`core`]** **[`structural_renderer`]** Renamed the `general_renderer` feature to `structural_renderer`. All associated types, structs, and APIs have been renamed accordingly:
 
-    - Feature flag: `general_renderer` → `structural_renderer`
-    - Setup struct: `GeneralRendererSetup` → `StructuralRendererSetup`
-    - Simple setup struct: `GeneralRendererSimpleSetup` → `StructuralRendererSimpleSetup`
-    - Renderer type: `GeneralRenderer` → `StructuralRenderer`
-    - Setting enum: `GeneralRendererSetting` → `StructuralRendererSetting`
-    - Error type: `GeneralRendererSerializeError` → `StructuralRendererSerializeError`
-    - Field name: `program.general_renderer_name` → `program.structural_renderer_name`
-    - Trait method: `ProgramCollect::general_render()` → `ProgramCollect::structural_render()`
-    - Internal module: `mingling_core::renderer::general` → `mingling::renderer::structural`
-    - Internal static: `GENERAL_RENDERERS` → `STRUCTURAL_RENDERERS`
-    - Feature gate attributes: `#[cfg(feature = "general_renderer")]` → `#[cfg(feature = "structural_renderer")]`
-    - Sub-features: `general_renderer_empty` → `structural_renderer_empty`, `general_renderer_full` → `structural_renderer_full`
-    - Runtime feature constant: `MINGLING_GENERAL_RENDERER` → `MINGLING_STRUCTURAL_RENDERER` (and similarly for `_EMPTY` and `_FULL`)
-    - Derive macro feature gate: `#[cfg(feature = "general_renderer")]` on `#[derive(StructuralData)]` and `#[derive(GrouppedSerialize)]` → `#[cfg(feature = "structural_renderer")]`
-    - Example project: `example-general-renderer` renamed to `example-structural-renderer`
-    - Test crate: `test-general-renderer` renamed to `test-structural-renderer`
+   - Feature flag: `general_renderer` → `structural_renderer`
+   - Setup struct: `GeneralRendererSetup` → `StructuralRendererSetup`
+   - Simple setup struct: `GeneralRendererSimpleSetup` → `StructuralRendererSimpleSetup`
+   - Renderer type: `GeneralRenderer` → `StructuralRenderer`
+   - Setting enum: `GeneralRendererSetting` → `StructuralRendererSetting`
+   - Error type: `GeneralRendererSerializeError` → `StructuralRendererSerializeError`
+   - Field name: `program.general_renderer_name` → `program.structural_renderer_name`
+   - Trait method: `ProgramCollect::general_render()` → `ProgramCollect::structural_render()`
+   - Internal module: `mingling_core::renderer::general` → `mingling::renderer::structural`
+   - Internal static: `GENERAL_RENDERERS` → `STRUCTURAL_RENDERERS`
+   - Feature gate attributes: `#[cfg(feature = "general_renderer")]` → `#[cfg(feature = "structural_renderer")]`
+   - Sub-features: `general_renderer_empty` → `structural_renderer_empty`, `general_renderer_full` → `structural_renderer_full`
+   - Runtime feature constant: `MINGLING_GENERAL_RENDERER` → `MINGLING_STRUCTURAL_RENDERER` (and similarly for `_EMPTY` and `_FULL`)
+   - Derive macro feature gate: `#[cfg(feature = "general_renderer")]` on `#[derive(StructuralData)]` and `#[derive(GrouppedSerialize)]` → `#[cfg(feature = "structural_renderer")]`
+   - Example project: `example-general-renderer` renamed to `example-structural-renderer`
+   - Test crate: `test-general-renderer` renamed to `test-structural-renderer`
 
 2. **[`core`]** Changed the signature of `ProgramSetup::setup` from `fn setup(&mut self, program: &mut Program<C>) -> S` to `fn setup(self, program: &mut Program<C>)`, consuming `self` instead of taking a mutable reference. Correspondingly, `Program::with_setup` now accepts `S` by value (`&mut self, setup: S`) instead of by mutable reference (`&mut self, setup: &mut S`).
 
 3. **[`core`]** Consolidated resource naming for `ExitCode` and `REPL`:
-    - Renamed `ExitCode` to `ResExitCode` and moved `ResREPL` from the `mingling` root to `mingling::res::ResREPL` (the `mingling::ResREPL` re-export is removed).
-    - This aligns with the naming convention where resources are prefixed with `Res`.
-    - The corresponding setup `ExitCodeSetup` and resource injection remain unchanged.
+   - Renamed `ExitCode` to `ResExitCode` and moved `ResREPL` from the `mingling` root to `mingling::res::ResREPL` (the `mingling::ResREPL` re-export is removed).
+   - This aligns with the naming convention where resources are prefixed with `Res`.
+   - The corresponding setup `ExitCodeSetup` and resource injection remain unchanged.
 
 ```rust
 // Before
@@ -435,25 +458,25 @@ use mingling::{res::ResExitCode, res::ResREPL};
 
 4. **[`core`]** **[`macros`]** Migrated `to_chain()` and `to_render()` methods from being generated individually per type by `#[derive(Groupped)]` and `pack!` macros, to being provided as default trait methods on the `Groupped` trait itself.
 
-    Previously, each packed or derived type had its own inherent `to_chain()` and `to_render()` methods generated by the macros. Now, these methods are defined on the `Groupped<Group>` trait with default implementations, making them available to all types that implement the trait without redundant code generation.
+   Previously, each packed or derived type had its own inherent `to_chain()` and `to_render()` methods generated by the macros. Now, these methods are defined on the `Groupped<Group>` trait with default implementations, making them available to all types that implement the trait without redundant code generation.
 
-    ```rust
-    // Before (generated per type by macros):
-    impl MyType {
-        pub fn to_chain(self) -> ChainProcess<Group> {
-            AnyOutput::new(self).route_chain()
-        }
-        pub fn to_render(self) -> ChainProcess<Group> {
-            AnyOutput::new(self).route_renderer()
-        }
-    }
+   ```rust
+   // Before (generated per type by macros):
+   impl MyType {
+       pub fn to_chain(self) -> ChainProcess<Group> {
+           AnyOutput::new(self).route_chain()
+       }
+       pub fn to_render(self) -> ChainProcess<Group> {
+           AnyOutput::new(self).route_renderer()
+       }
+   }
 
-    // After (provided by Groupped trait default methods):
-    // just ensure Groupped is implemented — to_chain() and to_render()
-    // are automatically available
-    ```
+   // After (provided by Groupped trait default methods):
+   // just ensure Groupped is implemented — to_chain() and to_render()
+   // are automatically available
+   ```
 
-    Removed the per-type inherent method generation from both `groupped.rs` and `pack.rs` in `mingling_macros`.
+   Removed the per-type inherent method generation from both `groupped.rs` and `pack.rs` in `mingling_macros`.
 
 5. **[`macros`]** Changed the `route!()` macro's error branch from `return e` to `return ::mingling::Groupped::to_chain(e)`, so that the error type no longer needs to be pre-converted to `ChainProcess` via `.to_chain()` or `.to_render()`. The macro now accepts any type implementing `Groupped` in the error position and automatically converts it.
 
@@ -467,43 +490,43 @@ let value = route!(prev.pick_or_route((), Error::default()).unpack());
 
 6. **[`core`]** **[`hook`]** Refactored the hook system to use structured info types and return `ProgramControls<C>` instead of raw values.
 
-    The hook system has been redesigned for better type safety, extensibility, and control flow management:
+   The hook system has been redesigned for better type safety, extensibility, and control flow management:
 
-    - **All hook callbacks now receive structured info types** (e.g., `&HookPreDispatchInfo`, `&HookPostChainInfo<C>`) instead of raw tuples or bare values. Each hook event has a dedicated info struct with named fields, making hook signatures self-documenting and easier to evolve.
+   - **All hook callbacks now receive structured info types** (e.g., `&HookPreDispatchInfo`, `&HookPostChainInfo<C>`) instead of raw tuples or bare values. Each hook event has a dedicated info struct with named fields, making hook signatures self-documenting and easier to evolve.
 
-    - Hook signatures changed from `fn(...)` to `Box<dyn Fn(&InfoType) -> R>`, with `R: Into<ProgramControls<C>>`. Closures that return `()`are automatically converted to`ProgramControls::Empty`via the`From<()>` impl.
+   - Hook signatures changed from `fn(...)` to `Box<dyn Fn(&InfoType) -> R>`, with `R: Into<ProgramControls<C>>`. Closures that return `()`are automatically converted to`ProgramControls::Empty`via the`From<()>` impl.
 
-        ```rust
-        // Before
-        .on_begin(|| println!("Program started"))
-        .on_pre_dispatch(|args| println!("Dispatching: {args:?}"))
-        .on_finish(|| 0)  // returns i32 as exit code
+     ```rust
+     // Before
+     .on_begin(|| println!("Program started"))
+     .on_pre_dispatch(|args| println!("Dispatching: {args:?}"))
+     .on_finish(|| 0)  // returns i32 as exit code
 
-        // After
-        .on_begin::<_, ()>(|_| println!("Program started"))
-        .on_pre_dispatch(|info| println!("Dispatching: {}", info.arguments.join(" ")))
-        .on_finish(|_| ProgramControlUnit::OverrideExitCode(0))
-        ```
+     // After
+     .on_begin::<_, ()>(|_| println!("Program started"))
+     .on_pre_dispatch(|info| println!("Dispatching: {}", info.arguments.join(" ")))
+     .on_finish(|_| ProgramControlUnit::OverrideExitCode(0))
+     ```
 
-    - **Added `ProgramControls<C>` and `ProgramControlUnit<C>`** — a new control flow system that replaces the previous approach where only the `finish` hook could return a value (exit code). Now any hook can issue control instructions:
-        - `ProgramControlUnit::OverrideExitCode(i32)` — override the program's exit code
-        - `ProgramControlUnit::RouteToChain(AnyOutput<C>)` — route to another chain processor
-        - `ProgramControlUnit::RouteToRender(AnyOutput<C>)` — route directly to the renderer
-        - `ProgramControlUnit::RouteToHelp(AnyOutput<C>)` — route to help display
+   - **Added `ProgramControls<C>` and `ProgramControlUnit<C>`** — a new control flow system that replaces the previous approach where only the `finish` hook could return a value (exit code). Now any hook can issue control instructions:
+     - `ProgramControlUnit::OverrideExitCode(i32)` — override the program's exit code
+     - `ProgramControlUnit::RouteToChain(AnyOutput<C>)` — route to another chain processor
+     - `ProgramControlUnit::RouteToRender(AnyOutput<C>)` — route directly to the renderer
+     - `ProgramControlUnit::RouteToHelp(AnyOutput<C>)` — route to help display
 
-    - **Added `handle_program_control` function** in `exec.rs` that processes `ProgramControls` returned by hooks, updating the current execution state (exit code, current `AnyOutput`) or triggering early returns (e.g., routing to render/help).
+   - **Added `handle_program_control` function** in `exec.rs` that processes `ProgramControls` returned by hooks, updating the current execution state (exit code, current `AnyOutput`) or triggering early returns (e.g., routing to render/help).
 
-    - **`ExitCodeSetup` updated** — its `on_finish` hook now returns `ProgramControlUnit::OverrideExitCode(this.exit_code)` instead of just `this.exit_code`.
+   - **`ExitCodeSetup` updated** — its `on_finish` hook now returns `ProgramControlUnit::OverrideExitCode(this.exit_code)` instead of just `this.exit_code`.
 
-    - **`HookPostReadlineInfo` now wraps `line: &mut String`** — the `repl_post_readline` hook receives a structured info object instead of a raw `&mut String`.
+   - **`HookPostReadlineInfo` now wraps `line: &mut String`** — the `repl_post_readline` hook receives a structured info object instead of a raw `&mut String`.
 
-    - **`HookOnReceiveResultInfo` now wraps `result: &RenderResult`** — the `repl_on_receive_result` hook receives the result through an info struct with a `.result` field instead of directly.
+   - **`HookOnReceiveResultInfo` now wraps `result: &RenderResult`** — the `repl_on_receive_result` hook receives the result through an info struct with a `.result` field instead of directly.
 
-    - **`hook` module made public** — moved from `#[doc(hidden)]` to a documented public module (`pub mod hook`), along with all associated info types and control unit types.
+   - **`hook` module made public** — moved from `#[doc(hidden)]` to a documented public module (`pub mod hook`), along with all associated info types and control unit types.
 
-    - **Added `dispatch_args_trie` default method** on `ProgramCollect` (behind `#[cfg(not(feature = "dispatch_tree"))]`) that calls `unreachable!()` by default, avoiding `#[cfg]` gymnastics in `exec.rs`.
+   - **Added `dispatch_args_trie` default method** on `ProgramCollect` (behind `#[cfg(not(feature = "dispatch_tree"))]`) that calls `unreachable!()` by default, avoiding `#[cfg]` gymnastics in `exec.rs`.
 
-    - **Examples and internal callers updated** throughout the codebase to use the new hook API patterns.
+   - **Examples and internal callers updated** throughout the codebase to use the new hook API patterns.
 
 7. **[`core`]** **[`structural_renderer`]** Added the `pack_err_structural!`, `pack_structural!`, and `group_structural!` macros for creating types that support structured output (JSON/YAML/TOML/RON). These are like `pack_err!`, `pack!`, and `group!` respectively, but also mark the type with the `StructuralData` trait, enabling the `StructuralRenderer` to serialize them.
 
@@ -531,8 +554,8 @@ When the `structural_renderer` feature is enabled, `ResultEmpty` also derives `S
 #### Fixes:
 
 1. **[`macros:dispatcher_clap`]** Fixed the issue where clap error messages (`DisplayHelp` and parse errors from `try_parse_from`) could not output ANSI
-    - For error paths, use `e.render().ansi()` instead of `e.to_string()` to prevent ANSI codes from being stripped by `strip_str` in `StyledStr::Display`
-    - For help info paths, use with `BasicProgramSetup`, output ANSI-colored help content through the mingling framework's `render_help` flow
+   - For error paths, use `e.render().ansi()` instead of `e.to_string()` to prevent ANSI codes from being stripped by `strip_str` in `StyledStr::Display`
+   - For help info paths, use with `BasicProgramSetup`, output ANSI-colored help content through the mingling framework's `render_help` flow
 
 #### Optimizations:
 
@@ -572,8 +595,8 @@ fn handle_path_pick(prev: PathPick) {
 ```
 
 3. **[`macros`]** Extended the `#[renderer]` attribute to support custom return types. Previously, `#[renderer]` functions could only return `()`, and the generated helper function always returned `RenderResult`. Now:
-    - **`fn foo(x: T)` / `fn foo(x: T) -> ()`** → The generated helper function returns `()`. If the internal `RenderResult` (`dummy_r`) is non-empty, it is automatically printed to stdout.
-    - **`fn foo(x: T) -> U`** → The generated helper function returns `U`. The internal `RenderResult` is converted via `dummy_r.into()`, and no automatic printing occurs.
+   - **`fn foo(x: T)` / `fn foo(x: T) -> ()`** → The generated helper function returns `()`. If the internal `RenderResult` (`dummy_r`) is non-empty, it is automatically printed to stdout.
+   - **`fn foo(x: T) -> U`** → The generated helper function returns `U`. The internal `RenderResult` is converted via `dummy_r.into()`, and no automatic printing occurs.
 
 4. **[`macros`]** Resource injection is now shared between `#[chain]` and `#[renderer]`.  
    Extracted the common resource injection infrastructure (`ResourceInjection`, `extract_args_info`, `generate_immut_resource_bindings`, `wrap_body_with_mut_resources`) from `chain.rs` into a new `res_injection.rs` module. Both `#[chain]` and `#[renderer]` now reuse the same logic.
@@ -720,10 +743,10 @@ None
 1. **[`core`]** The core library no longer depends on `thiserror`
 
 2. **[`mingling`]** Split the monolithic `general_renderer` feature into separate format-specific features:
-    - `general_renderer` now only includes core serialization support without any specific format
-    - `general_renderer_full` bundles all available serialization formats
-    - Individual format features: `json_serde_fmt`, `yaml_serde_fmt`, `toml_serde_fmt`, `ron_serde_fmt`
-    - A meta feature `all_serde_fmt` enables all format features at once
+   - `general_renderer` now only includes core serialization support without any specific format
+   - `general_renderer_full` bundles all available serialization formats
+   - Individual format features: `json_serde_fmt`, `yaml_serde_fmt`, `toml_serde_fmt`, `ron_serde_fmt`
+   - A meta feature `all_serde_fmt` enables all format features at once
 
 #### Features:
 
@@ -843,9 +866,9 @@ fn my_chain(prev: Prev) -> Next {
 1. **[`core`]** The signature of `exec` has been changed to `exec(self) -> i32` (previously was `exec(self)`)
 
 2. **[`macros`]** All proc macros that accept a program/group name parameter (e.g. `pack!`, `dispatcher!`, `#[chain]`, `#[program_setup]`, `#[dispatcher_clap]`, `#[derive(Groupped)]`) now parse the name as a `syn::Path` instead of a bare `Ident`. This means:
-    - You can now use paths like `crate::MyProgram` or `my_crate::MyProgram` in addition to plain `MyProgram`.
-    - The default program name `ThisProgram` is no longer re-exported or required as an import — generated code references `crate::ThisProgram` directly.
-    - If you previously imported `ThisProgram` from `crate` only for macro use, that import is no longer needed and can be removed.
+   - You can now use paths like `crate::MyProgram` or `my_crate::MyProgram` in addition to plain `MyProgram`.
+   - The default program name `ThisProgram` is no longer re-exported or required as an import — generated code references `crate::ThisProgram` directly.
+   - If you previously imported `ThisProgram` from `crate` only for macro use, that import is no longer needed and can be removed.
 
 ```rust
 use crate::ThisProgram; // Can be removed if not used directly
@@ -1022,9 +1045,9 @@ gen_program!();
 ```
 
 6. **[`picker`]** Simplified `Picker` logic:
-    - `Picker` no longer requires the generic parameter `<G>` by default; it only needs it when using `pick_or_route` or `after_or_route`
+   - `Picker` no longer requires the generic parameter `<G>` by default; it only needs it when using `pick_or_route` or `after_or_route`
 
-    - Additionally, if no `or_route` operations are used, the `unpack_directly` function is no longer available; `unpack` will directly extract the inner value
+   - Additionally, if no `or_route` operations are used, the `unpack_directly` function is no longer available; `unpack` will directly extract the inner value
 
 ```rust
 // Before
