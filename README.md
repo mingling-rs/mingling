@@ -836,12 +836,14 @@ Hello, Alice!
   - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`dev_toolkits`] Provides debugging interfaces for developers to capture invocation information when issues arise (`InvokeStackDisplay`) (indirectly implemented via `ProgramHook`)
   - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`repl`] Provides REPL capability (`program.exec_repl();`)
   - [x] [[0.2.0](https://docs.rs/mingling/0.2.0/mingling/)] Complete documentation, tests, and examples
-
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
-  - [ ] [**0.3.0**] [`macros`] `r_println!` in `#[chain]` support.
-  - [ ] [**0.5.0**] [`mling`] Helpdoc Maker
-  - [ ] [**0.7.0**] [`picker`] A more efficient and intelligent argument parser
-
+  - [ ] [`mling` / `mingling-cli`] 
+    - [ ] **Mingling** Linter
+    - [ ] **Mingling** Project Generator
+    - [ ] **Mingling** Program Installer & Manager (For development)
+    - [ ] Helpdoc Editor
+  - [ ] [`picker`] A more efficient and intelligent argument parser
+  - [ ] [`macros`] Remove `r_print!` / `r_println!`macros
 - [ ] Milestone.3 "Unplanned"
   - [ ] ...
 
