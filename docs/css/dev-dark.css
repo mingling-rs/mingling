@@ -548,6 +548,34 @@ code .token {
     min-height: 24px;
 }
 
+/* ── Flexible alerts ── */
+.alert.callout {
+    border-radius: 6px;
+}
+.alert.callout.note {
+    border: 1px solid #58a6ff;
+    background: rgba(88, 166, 255, 0.08);
+}
+.alert.callout.tip {
+    border: 1px solid #3fb950;
+    background: rgba(63, 185, 80, 0.08);
+}
+.alert.callout.important {
+    border: 1px solid #a371f7;
+    background: rgba(163, 113, 247, 0.08);
+}
+.alert.callout.warning {
+    border: 1px solid #d29922;
+    background: rgba(210, 153, 34, 0.08);
+}
+.alert.callout.attention {
+    border: 1px solid #f85149;
+    background: rgba(248, 81, 73, 0.08);
+}
+.alert.callout code {
+    background-color: transparent;
+}
+
 /* ── Search panel ── */
 .search {
     border-bottom: 1px solid #30363d;
