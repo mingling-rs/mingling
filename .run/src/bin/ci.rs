@@ -139,12 +139,12 @@ fn ci(test_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
 }
 
 fn test_examples() -> Result<(), i32> {
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --color always --bin test-examples")
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --color always --bin test-examples")
 }
 
 fn test_docs_code_blocks() -> Result<(), i32> {
     run_cmd!(
-        "cargo run --manifest-path dev_tools/Cargo.toml --color always --bin test-all-markdown-code"
+        "cargo run --manifest-path .run/Cargo.toml --color always --bin test-all-markdown-code"
     )
 }
 
@@ -214,11 +214,11 @@ fn test_all() -> Result<(), i32> {
 fn docs_refresh() -> Result<(), i32> {
     println_cargo_style!("Refresh: document at `./docs/`");
 
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin docs-code-box-fix")?;
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin docsify-sidebar-gen")?;
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin refresh-docs")?;
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin refresh-feature-mod")?;
-    run_cmd!("cargo run --manifest-path dev_tools/Cargo.toml --bin sync-examples")?;
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --bin docs-code-box-fix")?;
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --bin docsify-sidebar-gen")?;
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --bin refresh-docs")?;
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --bin refresh-feature-mod")?;
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --bin sync-examples")?;
     run_cmd!("cargo fmt")?;
 
     Ok(())

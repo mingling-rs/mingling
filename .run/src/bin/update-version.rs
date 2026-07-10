@@ -39,7 +39,9 @@ fn main() {
     let root_cargo_path = "Cargo.toml";
     let root_cargo_content =
         std::fs::read_to_string(root_cargo_path).expect("Failed to read Cargo.toml");
-    let cargo_value: toml::Value = root_cargo_content.parse().expect("Failed to parse Cargo.toml");
+    let cargo_value: toml::Value = root_cargo_content
+        .parse()
+        .expect("Failed to parse Cargo.toml");
 
     let current_ver = cargo_value["workspace"]["package"]["version"]
         .as_str()
@@ -54,11 +56,11 @@ fn main() {
     println_cargo_style!("Version: {} -> {}", current_ver, new_ver);
 
     // Read version-files.toml
-    let config_path = Path::new("dev_tools").join("version-files.toml");
+    let config_path = Path::new(".run").join("version-files.toml");
     let config_str =
-        std::fs::read_to_string(&config_path).expect("Failed to read dev_tools/version-files.toml");
-    let config: Config = toml::from_str(&config_str)
-        .expect("Failed to parse dev_tools/version-files.toml");
+        std::fs::read_to_string(&config_path).expect("Failed to read .run/version-files.toml");
+    let config: Config =
+        toml::from_str(&config_str).expect("Failed to parse .run/version-files.toml");
 
     let mut updated_count = 0;
     let mut skipped_count = 0;
@@ -94,5 +96,9 @@ fn main() {
         updated_count += 1;
     }
 
-    println_cargo_style!("Done: {} file(s) updated, {} file(s) skipped", updated_count, skipped_count);
+    println_cargo_style!(
+        "Done: {} file(s) updated, {} file(s) skipped",
+        updated_count,
+        skipped_count
+    );
 }
