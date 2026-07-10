@@ -141,6 +141,17 @@ pub const MINGLING_PATHF: bool = false;
 #[cfg(feature = "pathf")]
 #[allow(unused)]
 pub const MINGLING_PATHF: bool = true;
+/// Whether the `picker` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "picker"))]
+#[allow(unused)]
+pub const MINGLING_PICKER: bool = false;
+
+/// Whether the `picker` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "picker")]
+#[allow(unused)]
+pub const MINGLING_PICKER: bool = true;
 /// Whether the `repl` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "repl"))]

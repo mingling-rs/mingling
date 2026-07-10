@@ -1,5 +1,6 @@
 - [Welcome!](README)
 * ❓ Issues
+  * [The Picker2 Arguments Parser](pages/issues/add-picker2)
   * [Remove r_print! and r_println! Macros](pages/issues/remove-r-print-macro)
   * [The Mod Pathfinder](pages/issues/the-mod-pathfinder)
   * [Some Situations Where You'd Be Like "Shit!"](pages/issues/the-shit-time)
