@@ -85,3 +85,13 @@ More flexible, but blurs the boundary between logic functions like `#[chain]` an
 I lean toward **Option 1 (Explicit Return)**. There's no need to turn `RenderResult` into `ResRenderResult` as a global resource.
 
 As for rendering in logic functions like `#[chain]`, that should be handled by a separate system — not discussed here.
+
+## 🕘 Progress
+
+- [ ] In Progress
+  - [ ] Remove `r_println!` and `r_print!` macros
+  - [ ] Modify `#[renderer]` and `#[help]` macros, remove implicit injection
+  - [ ] Provide **no-return-value mode** and **RenderResult return value mode** for `#[renderer]` and `#[help]` macros
+  - [ ] Add new simplified syntax
+  - [ ] Update documentation and test cases, ensure **all pass**
+- [ ] Complete
