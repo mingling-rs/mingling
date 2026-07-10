@@ -20,7 +20,7 @@ macro_rules! my_println {
         r_println!("Custom: {}", format!($($arg)*));
     };
 }
-
+ 
 #[renderer]
 fn render_something(_p: ResultSomething) {
     // Although this function body has __renderer_inner_result injected,
@@ -34,7 +34,7 @@ fn render_something(_p: ResultSomething) {
     my_println!("{}", box_val); // Compile error: cannot find __renderer_inner_result
 }
 ```
-
+ 
 ## Deeper Issues
 
 I have to admit, this is an early design flaw. After re-examining the code, I found the problem goes beyond "can't be wrapped".
@@ -58,11 +58,11 @@ fn render_something(prev: ResultSomething) -> RenderResult {
     result.println(prev.to_string());
     // or
     write!(result, "{}", prev.to_string());
-
+ 
     result // return here
 }
 ```
-
+ 
 Clear boundaries — the entire rendering process is confined within the function body decorated by `#[help]` or `#[renderer]`, without introducing extra out-of-scope dependencies. The trade-off is slightly more boilerplate compared to the original approach.
 
 ### Option 2: Resource Injection
@@ -73,11 +73,11 @@ fn render_something(prev: ResultSomething, result: &mut ResRenderResult) {
     result.println(prev.to_string());
     // or
     write!(result, "{}", prev.to_string());
-
+ 
     result // return here
 }
 ```
-
+ 
 More flexible, but blurs the boundary between logic functions like `#[chain]` and rendering functions like `#[help]`.
 
 ### Preferred Direction
