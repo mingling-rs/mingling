@@ -54,7 +54,7 @@
 - 📖 [Examples](https://mingling-rs.github.io/mingling/docs/examples.html)
 - 📖 [docs.rs](https://docs.rs/mingling/latest/mingling/)
 - 📖 [Helpdoc](https://mingling-rs.github.io/mingling/docs/doc.html#/) Or [帮助文档](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
-- 🔍 [Devdoc](https://mingling-rs.github.io/mingling/docs/dev-docs/)
+- 🔍 [Devdoc](https://mingling-rs.github.io/mingling/docs/dev/)
 
 <h1 align="center">
     Getting Started
