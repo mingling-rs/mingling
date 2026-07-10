@@ -24,7 +24,7 @@ fn handle_hello(args: EntryHello) {
         .parse();
 }
 ```
-
+ 
 4. **Post-processing & routing control:** Use `after`, `after_route` to control post-processing logic. The route type is explicitly specified by the first `route` method.
 
 ```rust
@@ -36,7 +36,7 @@ fn handle_hello(args: EntryHello) {
         .parse();
 }
 ```
-
+ 
 ```rust
 #[chain]
 fn handle_hello(args: EntryHello) -> Next {
@@ -50,7 +50,7 @@ fn handle_hello(args: EntryHello) -> Next {
     empty_result!()
 }
 ```
-
+ 
 5. **Keep the `Pickable` Trait**
 6. **Keep `PickableEnum` & provide a derive macro**
 7. **Use `pick_optional`, `pick_vec` instead of implementing trait separately for `Option<T>`, `Vec<T>`**
@@ -63,17 +63,17 @@ fn handle_hello(args: EntryHello) -> Next {
 pub struct SomeToggles {
     // default [-i]
     pub install: bool,
-
+ 
     #[flag('U')]
     pub uninstall: bool,
-
+ 
     #[flag('X')]
     pub execute: bool,
 }
-
+ 
 // Auto-implements Pickable, supports parsing args like `-iUX`
 ```
-
+ 
 11. **Support multiple arg formats:** e.g. `--key=value`, `/Key=Value`, controlled by global config `PickerConfig` (or: `Picker::from_with_cfg(prev.inner, PickerConfig::default())`)
 
 12. `.parse()` no longer returns a bare tuple, but instead returns:
