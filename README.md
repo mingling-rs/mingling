@@ -64,7 +64,7 @@ Add Mingling to your `Cargo.toml`:
 
 ```toml
 [dependencies.mingling]
-version = "0.2.2"
+version = "0.3.0"
 features = []
 ```
 
