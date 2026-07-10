@@ -71,9 +71,15 @@ mod example_docs;
 pub use mingling::*;
 pub use mingling_core as mingling;
 
-/// `Mingling` argument parser
+/// `Mingling` argument parser (Built-in)
 #[cfg(feature = "parser")]
 pub mod parser;
+
+/// `Mingling` argument parser (Picker2)
+#[cfg(feature = "picker")]
+pub mod picker {
+    pub use mingling_picker::*;
+}
 
 /// Re-export of all macros from `mingling_macros`.
 ///
@@ -162,6 +168,9 @@ pub mod macros {
     /// `suggest_enum!(EnumNames)` - Used to generate enum suggestions
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest_enum;
+
+    #[cfg(feature = "picker")]
+    pub use mingling_macros::*;
 }
 
 /// derive macro `EnumTag`
@@ -250,4 +259,7 @@ pub mod prelude {
     /// Re-export of the `AsPicker` trait for picker functionality.
     #[cfg(feature = "parser")]
     pub use crate::parser::AsPicker;
+
+    #[cfg(feature = "picker")]
+    pub use mingling_picker::prelude::*;
 }

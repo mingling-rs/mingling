@@ -6,20 +6,22 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 
 ## 1. Project Structure 📦
 
-| Category                | Path/Name            | Description                                                        |
-| ----------------------- | -------------------- | ------------------------------------------------------------------ |
-| **Entry crate**         | `mingling/`          | Project entry point                                                |
-| **Core library**        | `mingling_core/`     | Imported as an external dependency                                 |
-| **Macro library**       | `mingling_macros/`   | Imported as an external dependency                                 |
-| **Mingling Pathfinder** | `mingling_pathf/`    | Build-time module path resolution for types                        |
-| **Scaffolding tool**    | `mling/`             | Scaffolding tool `mingling-cli`                                    |
-| **Examples**            | `examples/`          | To add expected output tests, modify `examples/test-examples.toml` |
-| **Documents**           | `docs/`              | All documents                                                      |
-| **Dev Documents**       | `docs/dev/`          | Internal documents                                                 |
-| **Resources**           | `docs/res/`          | All resources                                                      |
-| **Development tools**   | `.run/src/bin`       | Contains scripts and Rust tools                                    |
-| **CI**                  | `.run/src/bin/ci.rs` | Can be invoked directly via `cargo ci`                             |
-| **Temporary files**     | `.temp/`             | Ignored by `.gitignore`                                            |
+| Category                    | Path/Name                 | Description                                                        |
+| --------------------------- | ------------------------- | ------------------------------------------------------------------ |
+| **Entry crate**             | `mingling/`               | Project entry point                                                |
+| **Core library**            | `mingling_core/`          | Imported as an external dependency                                 |
+| **Macro library**           | `mingling_macros/`        | Imported as an external dependency                                 |
+| **Mingling Pathfinder**     | `mingling_pathf/`         | Build-time module path resolution for types                        |
+| **Mingling Picker2**        | `mingling_picker/`        | Mingling Arguments Parser                                          |
+| **Mingling Picker2 Macros** | `mingling_picker_macros/` | Mingling Arguments Parser Macros                                   |
+| **Scaffolding tool**        | `mling/`                  | Scaffolding tool `mingling-cli`                                    |
+| **Examples**                | `examples/`               | To add expected output tests, modify `examples/test-examples.toml` |
+| **Documents**               | `docs/`                   | All documents                                                      |
+| **Dev Documents**           | `docs/dev/`               | Internal documents                                                 |
+| **Resources**               | `docs/res/`               | All resources                                                      |
+| **Development tools**       | `.run/src/bin`            | Contains scripts and Rust tools                                    |
+| **CI**                      | `.run/src/bin/ci.rs`      | Can be invoked directly via `cargo ci`                             |
+| **Temporary files**         | `.temp/`                  | Ignored by `.gitignore`                                            |
 
 ## 2. How to Contribute
 
