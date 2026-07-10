@@ -1,4 +1,7 @@
-# About Nightly Rust
+<h1 align="center">About Nightly Features</h1>
+<p align="center">
+    Using nightly Rust features in Mingling
+</p>
 
 **Mingling** uses some features that are only available in the `nightly` toolchain. This requires you to enable the `nightly` feature:
 
@@ -6,7 +9,7 @@
 [dependencies]
 mingling = { version = "...", features = ["nightly"] }
 ```
-
+ 
 ## Features
 
 > [!WARNING]

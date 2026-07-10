@@ -1,4 +1,7 @@
-# About Mingling CI Process
+<h1 align="center">About Mingling CI Process</h1>
+<p align="center">
+    CI workflow and local execution guide for Mingling
+</p>
 
 Mingling's CI process is built into the project, with its execution logic located in `.run/src/bin/ci.rs`. You can run it locally via the `cargo ci` command, which produces the same results as the `CI` workflow in GitHub Actions.
 
@@ -12,13 +15,13 @@ An alias is defined in `.cargo/config.toml` at the project root:
 [alias]
 ci = "run --manifest-path .run/Cargo.toml --bin ci --quiet --"
 ```
-
+ 
 Simply execute:
 
 ```bash
 cargo ci
 ```
-
+ 
 ## CI Execution Flow
 
 `cargo ci` runs the following stages in order:

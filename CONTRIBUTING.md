@@ -70,7 +70,7 @@ After editing documentation, refresh relevant files:
 These steps are included in `cargo ci`; running `cargo ci` will execute them automatically.
 
 > [!TIP]
-> You can check the [ABOUT CI](./ABOUT-CI.md) section to learn how "Mingling CI" works.
+> You can check the [ABOUT CI](https://mingling-rs.github.io/mingling/docs/dev/#/pages/abouts/ci) section to learn how "Mingling CI" works.
 
 ## 4. Regarding AI Agent Usage
 
