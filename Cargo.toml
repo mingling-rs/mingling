@@ -9,7 +9,7 @@ exclude = [
     "examples/*",
 
     # Dev Tools
-    "dev_tools",
+    ".run",
 
     # Tests
     "mingling_core/tests/*",

@@ -4,5 +4,5 @@ target-dir = "./.temp/target"
 [env]
 
 [alias]
-ci = "run --manifest-path dev_tools/Cargo.toml --bin ci --quiet --"
-dev_tool = "run --manifest-path dev_tools/Cargo.toml --quiet --bin "
+ci = "run --manifest-path .run/Cargo.toml --bin ci --quiet --"
+dev_tool = "run --manifest-path .run/Cargo.toml --quiet --bin "

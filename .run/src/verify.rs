@@ -76,10 +76,10 @@ fn parse_single_block(lines: &[&str], start: usize, source_file: &str) -> Option
         // @@@ lines: strip the prefix and treat as regular Rust code
         // These lines are hidden in the rendered docs (filtered by a docsify plugin)
         // but must still compile.
-        if trimmed.starts_with("@@@") {
+        if let Some(stripped) = trimmed.strip_prefix("@@@") {
             in_header = false;
             // Strip @@@ and optionally one following space
-            let code = trimmed[3..].trim_start();
+            let code = stripped.trim_start();
             if code.contains("fn main") {
                 has_main = true;
             }

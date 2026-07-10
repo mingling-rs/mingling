@@ -1,0 +1,7 @@
+# All temp build artifacts will be stored in this dir
+/target
+
+# If you want to add some Rust crates? Remove this line
+# /Cargo.*
+
+last_check

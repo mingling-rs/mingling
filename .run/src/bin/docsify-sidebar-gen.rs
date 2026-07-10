@@ -43,7 +43,7 @@ fn find_all_readmes(dir: &Path) -> Vec<PathBuf> {
             let path = entry.path();
             if path.is_dir() {
                 results.extend(find_all_readmes(&path));
-            } else if path.file_name().map_or(false, |n| n == "README.md") {
+            } else if path.file_name().is_some_and(|n| n == "README.md") {
                 results.push(path);
             }
         }
@@ -67,11 +67,10 @@ fn find_content_dir(site_root: &Path) -> Option<PathBuf> {
         entries.sort_by_key(|e| e.path());
         for entry in entries {
             let path = entry.path();
-            if path.is_dir() {
-                if has_markdown_files(&path) {
+            if path.is_dir()
+                && has_markdown_files(&path) {
                     return Some(path);
                 }
-            }
         }
     }
 
@@ -254,12 +253,10 @@ fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
 /// Looks at the filename stem (after the last `/`) for a number before the first `-`.
 /// Returns `usize::MAX` for entries without a numeric prefix.
 fn extract_leading_number(link: &str) -> usize {
-    if let Some(file_stem) = link.rsplit('/').next() {
-        if let Some(num_end) = file_stem.find('-') {
-            if let Ok(num) = file_stem[..num_end].parse::<usize>() {
+    if let Some(file_stem) = link.rsplit('/').next()
+        && let Some(num_end) = file_stem.find('-')
+            && let Ok(num) = file_stem[..num_end].parse::<usize>() {
                 return num;
             }
-        }
-    }
     usize::MAX
 }
