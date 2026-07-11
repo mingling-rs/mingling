@@ -24,7 +24,7 @@ fn help_greet(entry: EntryGreet) -> RenderResult {
 ```
  
 > [!NOTE]
-> Help functions also use `r_println!`, because `#[help]` follows the rendering pipeline — it's a short-circuit render triggered early by the `--help` flag, not logic outside the pipeline.
+> Help functions also use `writeln!` into a `RenderResult`, because `#[help]` follows the rendering pipeline — it's a short-circuit render triggered early by the `--help` flag, not logic outside the pipeline.
 
 ## Global Help
 

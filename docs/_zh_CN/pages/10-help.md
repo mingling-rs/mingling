@@ -24,7 +24,7 @@ fn help_greet(_entry: EntryGreet) -> RenderResult {
 ```
  
 > [!NOTE]
-> 帮助函数里也用 `r_println!`，因为 `#[help]` 走的也是渲染流程 —— 它是被 `--help` 参数提前触发的短路渲染，不是独立于管线之外的逻辑。
+> 帮助函数同样通过 `writeln!` 向 `RenderResult` 写入内容，因为 `#[help]` 遵循渲染管线 —— 它是由 `--help` 标志提前触发的短路渲染，而不是管线之外的逻辑。
 
 ## 全局帮助
 
