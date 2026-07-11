@@ -10,6 +10,8 @@
 #  You can go to [https://catilgrass.github.io/run] to install it
 #                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+# Version: 0.1.1
+
 cd "$(dirname "$0")" || exit 1
 
 declare -A tools
@@ -89,11 +91,18 @@ done
 if [ $# -eq 0 ]; then
     sorted_names=($(
         for name in "${!tools[@]}"; do
-            if [ "${tools[$name]}" = "sh" ]; then
-                echo "0 $name"
+            first_char="${name:0:1}"
+            if [[ "$first_char" =~ [A-Z] ]]; then
+                case_pri="0"
             else
-                echo "1 $name"
+                case_pri="1"
             fi
+            if [ "${tools[$name]}" = "sh" ]; then
+                lang_pri="0"
+            else
+                lang_pri="1"
+            fi
+            echo "$case_pri$lang_pri $name"
         done | sort | while read -r _ n; do echo "$n"; done
     ))
     total=${#sorted_names[@]}
@@ -149,11 +158,18 @@ shift
 if [[ "$target_name" =~ ^[0-9]+$ ]]; then
     sorted=($(
         for name in "${!tools[@]}"; do
-            if [ "${tools[$name]}" = "sh" ]; then
-                echo "0 $name"
+            first_char="${name:0:1}"
+            if [[ "$first_char" =~ [A-Z] ]]; then
+                case_pri="0"
             else
-                echo "1 $name"
+                case_pri="1"
             fi
+            if [ "${tools[$name]}" = "sh" ]; then
+                lang_pri="0"
+            else
+                lang_pri="1"
+            fi
+            echo "$case_pri$lang_pri $name"
         done | sort | while read -r _ n; do echo "$n"; done
     ))
     idx=$((target_name - 1))

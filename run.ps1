@@ -8,6 +8,8 @@
 #  You can go to [https://catilgrass.github.io/run] to install it
 #                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+# Version: 0.1.1
+
 Set-Location -Path (Split-Path -Parent $MyInvocation.MyCommand.Path) -ErrorAction Stop
 
 $tools = @{}
@@ -73,7 +75,7 @@ if (Test-Path ".run/src/bin/*.zig") {
 }
 
 if ($args.Count -eq 0) {
-    $sorted = @($tools.Keys | Sort-Object @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
+    $sorted = @($tools.Keys | Sort-Object @{Expression={if ($_[0] -cmatch '[A-Z]') {0} else {1}}}, @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
     $total = $sorted.Count
     $num_w = $total.ToString().Length
 
@@ -120,7 +122,7 @@ if ($args.Count -eq 0) {
 $target_name = $args[0]
 
 if ($target_name -match '^\d+$') {
-    $sorted = @($tools.Keys | Sort-Object @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
+    $sorted = @($tools.Keys | Sort-Object @{Expression={if ($_[0] -cmatch '[A-Z]') {0} else {1}}}, @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
     $idx = [int]$target_name - 1
     if ($idx -ge 0 -and $idx -lt $sorted.Count) {
         $target_name = $sorted[$idx]
