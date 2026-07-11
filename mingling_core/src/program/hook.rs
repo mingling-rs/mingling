@@ -718,11 +718,11 @@ mod tests {
             unreachable!()
         }
 
-        fn render(_any: crate::AnyOutput<MockHookEnum>, _r: &mut crate::RenderResult) {
+        fn render(_any: crate::AnyOutput<MockHookEnum>) -> crate::RenderResult {
             unreachable!()
         }
 
-        fn render_help(_any: crate::AnyOutput<MockHookEnum>, _r: &mut crate::RenderResult) {
+        fn render_help(_any: crate::AnyOutput<MockHookEnum>) -> crate::RenderResult {
             unreachable!()
         }
 

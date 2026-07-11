@@ -1,7 +1,9 @@
 use mingling::{
-    macros::{group, r_println, renderer},
+    macros::{group, renderer},
     res::ResExitCode,
+    RenderResult,
 };
+use std::io::Write as _;
 
 use crate::eformat_cargo;
 
@@ -49,167 +51,174 @@ pub const EC_IO_ERR_OUT_OF_MEMORY: i32 = 1037;
 pub const EC_IO_ERR_OTHER: i32 = 1038;
 
 #[renderer]
-pub fn render_error_io(err: ErrorIo, ec: &mut ResExitCode) {
+pub fn render_error_io(err: ErrorIo, ec: &mut ResExitCode) -> RenderResult {
+    let mut result = RenderResult::default();
     match err.kind() {
         std::io::ErrorKind::NotFound => {
-            r_println!("{}", eformat_cargo!("file or directory not found"));
+            writeln!(result, "{}", eformat_cargo!("file or directory not found")).ok();
             ec.exit_code = EC_IO_ERR_NOT_FOUND;
         }
         std::io::ErrorKind::PermissionDenied => {
-            r_println!("{}", eformat_cargo!("permission denied"));
+            writeln!(result, "{}", eformat_cargo!("permission denied")).ok();
             ec.exit_code = EC_IO_ERR_PERMISSION_DENIED;
         }
         std::io::ErrorKind::ConnectionRefused => {
-            r_println!("{}", eformat_cargo!("connection refused"));
+            writeln!(result, "{}", eformat_cargo!("connection refused")).ok();
             ec.exit_code = EC_IO_ERR_CONNECTION_REFUSED;
         }
         std::io::ErrorKind::ConnectionReset => {
-            r_println!("{}", eformat_cargo!("connection reset"));
+            writeln!(result, "{}", eformat_cargo!("connection reset")).ok();
             ec.exit_code = EC_IO_ERR_CONNECTION_RESET;
         }
         std::io::ErrorKind::HostUnreachable => {
-            r_println!("{}", eformat_cargo!("host unreachable"));
+            writeln!(result, "{}", eformat_cargo!("host unreachable")).ok();
             ec.exit_code = EC_IO_ERR_HOST_UNREACHABLE;
         }
         std::io::ErrorKind::NetworkUnreachable => {
-            r_println!("{}", eformat_cargo!("network unreachable"));
+            writeln!(result, "{}", eformat_cargo!("network unreachable")).ok();
             ec.exit_code = EC_IO_ERR_NETWORK_UNREACHABLE;
         }
         std::io::ErrorKind::ConnectionAborted => {
-            r_println!("{}", eformat_cargo!("connection aborted"));
+            writeln!(result, "{}", eformat_cargo!("connection aborted")).ok();
             ec.exit_code = EC_IO_ERR_CONNECTION_ABORTED;
         }
         std::io::ErrorKind::NotConnected => {
-            r_println!("{}", eformat_cargo!("not connected"));
+            writeln!(result, "{}", eformat_cargo!("not connected")).ok();
             ec.exit_code = EC_IO_ERR_NOT_CONNECTED;
         }
         std::io::ErrorKind::AddrInUse => {
-            r_println!("{}", eformat_cargo!("address in use"));
+            writeln!(result, "{}", eformat_cargo!("address in use")).ok();
             ec.exit_code = EC_IO_ERR_ADDR_IN_USE;
         }
         std::io::ErrorKind::AddrNotAvailable => {
-            r_println!("{}", eformat_cargo!("address not available"));
+            writeln!(result, "{}", eformat_cargo!("address not available")).ok();
             ec.exit_code = EC_IO_ERR_ADDR_NOT_AVAILABLE;
         }
         std::io::ErrorKind::NetworkDown => {
-            r_println!("{}", eformat_cargo!("network down"));
+            writeln!(result, "{}", eformat_cargo!("network down")).ok();
             ec.exit_code = EC_IO_ERR_NETWORK_DOWN;
         }
         std::io::ErrorKind::BrokenPipe => {
-            r_println!("{}", eformat_cargo!("broken pipe"));
+            writeln!(result, "{}", eformat_cargo!("broken pipe")).ok();
             ec.exit_code = EC_IO_ERR_BROKEN_PIPE;
         }
         std::io::ErrorKind::AlreadyExists => {
-            r_println!("{}", eformat_cargo!("file or directory already exists"));
+            writeln!(
+                result,
+                "{}",
+                eformat_cargo!("file or directory already exists")
+            )
+            .ok();
             ec.exit_code = EC_IO_ERR_ALREADY_EXISTS;
         }
         std::io::ErrorKind::WouldBlock => {
-            r_println!("{}", eformat_cargo!("operation would block"));
+            writeln!(result, "{}", eformat_cargo!("operation would block")).ok();
             ec.exit_code = EC_IO_ERR_WOULD_BLOCK;
         }
         std::io::ErrorKind::NotADirectory => {
-            r_println!("{}", eformat_cargo!("not a directory"));
+            writeln!(result, "{}", eformat_cargo!("not a directory")).ok();
             ec.exit_code = EC_IO_ERR_NOT_A_DIRECTORY;
         }
         std::io::ErrorKind::IsADirectory => {
-            r_println!("{}", eformat_cargo!("is a directory"));
+            writeln!(result, "{}", eformat_cargo!("is a directory")).ok();
             ec.exit_code = EC_IO_ERR_IS_A_DIRECTORY;
         }
         std::io::ErrorKind::DirectoryNotEmpty => {
-            r_println!("{}", eformat_cargo!("directory not empty"));
+            writeln!(result, "{}", eformat_cargo!("directory not empty")).ok();
             ec.exit_code = EC_IO_ERR_DIRECTORY_NOT_EMPTY;
         }
         std::io::ErrorKind::ReadOnlyFilesystem => {
-            r_println!("{}", eformat_cargo!("read-only filesystem"));
+            writeln!(result, "{}", eformat_cargo!("read-only filesystem")).ok();
             ec.exit_code = EC_IO_ERR_READ_ONLY_FILESYSTEM;
         }
         std::io::ErrorKind::StaleNetworkFileHandle => {
-            r_println!("{}", eformat_cargo!("stale network file handle"));
+            writeln!(result, "{}", eformat_cargo!("stale network file handle")).ok();
             ec.exit_code = EC_IO_ERR_STALE_NETWORK_FILE_HANDLE;
         }
         std::io::ErrorKind::InvalidInput => {
-            r_println!("{}", eformat_cargo!("invalid input"));
+            writeln!(result, "{}", eformat_cargo!("invalid input")).ok();
             ec.exit_code = EC_IO_ERR_INVALID_INPUT;
         }
         std::io::ErrorKind::InvalidData => {
-            r_println!("{}", eformat_cargo!("invalid data"));
+            writeln!(result, "{}", eformat_cargo!("invalid data")).ok();
             ec.exit_code = EC_IO_ERR_INVALID_DATA;
         }
         std::io::ErrorKind::TimedOut => {
-            r_println!("{}", eformat_cargo!("timed out"));
+            writeln!(result, "{}", eformat_cargo!("timed out")).ok();
             ec.exit_code = EC_IO_ERR_TIMED_OUT;
         }
         std::io::ErrorKind::WriteZero => {
-            r_println!("{}", eformat_cargo!("write zero"));
+            writeln!(result, "{}", eformat_cargo!("write zero")).ok();
             ec.exit_code = EC_IO_ERR_WRITE_ZERO;
         }
         std::io::ErrorKind::StorageFull => {
-            r_println!("{}", eformat_cargo!("storage full"));
+            writeln!(result, "{}", eformat_cargo!("storage full")).ok();
             ec.exit_code = EC_IO_ERR_STORAGE_FULL;
         }
         std::io::ErrorKind::NotSeekable => {
-            r_println!("{}", eformat_cargo!("not seekable"));
+            writeln!(result, "{}", eformat_cargo!("not seekable")).ok();
             ec.exit_code = EC_IO_ERR_NOT_SEEKABLE;
         }
         std::io::ErrorKind::QuotaExceeded => {
-            r_println!("{}", eformat_cargo!("quota exceeded"));
+            writeln!(result, "{}", eformat_cargo!("quota exceeded")).ok();
             ec.exit_code = EC_IO_ERR_QUOTA_EXCEEDED;
         }
         std::io::ErrorKind::FileTooLarge => {
-            r_println!("{}", eformat_cargo!("file too large"));
+            writeln!(result, "{}", eformat_cargo!("file too large")).ok();
             ec.exit_code = EC_IO_ERR_FILE_TOO_LARGE;
         }
         std::io::ErrorKind::ResourceBusy => {
-            r_println!("{}", eformat_cargo!("resource busy"));
+            writeln!(result, "{}", eformat_cargo!("resource busy")).ok();
             ec.exit_code = EC_IO_ERR_RESOURCE_BUSY;
         }
         std::io::ErrorKind::ExecutableFileBusy => {
-            r_println!("{}", eformat_cargo!("executable file busy"));
+            writeln!(result, "{}", eformat_cargo!("executable file busy")).ok();
             ec.exit_code = EC_IO_ERR_EXECUTABLE_FILE_BUSY;
         }
         std::io::ErrorKind::Deadlock => {
-            r_println!("{}", eformat_cargo!("deadlock"));
+            writeln!(result, "{}", eformat_cargo!("deadlock")).ok();
             ec.exit_code = EC_IO_ERR_DEADLOCK;
         }
         std::io::ErrorKind::CrossesDevices => {
-            r_println!("{}", eformat_cargo!("crosses devices"));
+            writeln!(result, "{}", eformat_cargo!("crosses devices")).ok();
             ec.exit_code = EC_IO_ERR_CROSSES_DEVICES;
         }
         std::io::ErrorKind::TooManyLinks => {
-            r_println!("{}", eformat_cargo!("too many links"));
+            writeln!(result, "{}", eformat_cargo!("too many links")).ok();
             ec.exit_code = EC_IO_ERR_TOO_MANY_LINKS;
         }
         std::io::ErrorKind::InvalidFilename => {
-            r_println!("{}", eformat_cargo!("invalid filename"));
+            writeln!(result, "{}", eformat_cargo!("invalid filename")).ok();
             ec.exit_code = EC_IO_ERR_INVALID_FILENAME;
         }
         std::io::ErrorKind::ArgumentListTooLong => {
-            r_println!("{}", eformat_cargo!("argument list too long"));
+            writeln!(result, "{}", eformat_cargo!("argument list too long")).ok();
             ec.exit_code = EC_IO_ERR_ARGUMENT_LIST_TOO_LONG;
         }
         std::io::ErrorKind::Interrupted => {
-            r_println!("{}", eformat_cargo!("interrupted"));
+            writeln!(result, "{}", eformat_cargo!("interrupted")).ok();
             ec.exit_code = EC_IO_ERR_INTERRUPTED;
         }
         std::io::ErrorKind::Unsupported => {
-            r_println!("{}", eformat_cargo!("unsupported"));
+            writeln!(result, "{}", eformat_cargo!("unsupported")).ok();
             ec.exit_code = EC_IO_ERR_UNSUPPORTED;
         }
         std::io::ErrorKind::UnexpectedEof => {
-            r_println!("{}", eformat_cargo!("unexpected end of file"));
+            writeln!(result, "{}", eformat_cargo!("unexpected end of file")).ok();
             ec.exit_code = EC_IO_ERR_UNEXPECTED_EOF;
         }
         std::io::ErrorKind::OutOfMemory => {
-            r_println!("{}", eformat_cargo!("out of memory"));
+            writeln!(result, "{}", eformat_cargo!("out of memory")).ok();
             ec.exit_code = EC_IO_ERR_OUT_OF_MEMORY;
         }
         std::io::ErrorKind::Other => {
-            r_println!("{}", eformat_cargo!(err.to_string()));
+            writeln!(result, "{}", eformat_cargo!(err.to_string())).ok();
             ec.exit_code = EC_IO_ERR_OTHER;
         }
         _ => {
-            r_println!("{}", eformat_cargo!(err.to_string()));
+            writeln!(result, "{}", eformat_cargo!(err.to_string())).ok();
             ec.exit_code = EC_IO_ERR_OTHER;
         }
     }
+    result
 }

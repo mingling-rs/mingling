@@ -33,15 +33,19 @@
 //! }
 //!
 //! #[renderer]
-//! fn render_name(name: ResultName) {
-//!     r_println!("Hello, {}!", *name);
+//! fn render_name(name: ResultName) -> RenderResult {
+//!     let mut result = RenderResult::default();
+//!     result.println(&format!("Hello, {}!", *name));
+//!     result
 //! }
 //!
 //! #[renderer]
-//! fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
+//! fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+//!     let mut result = RenderResult::default();
 //!     if err.len() > 0 {
-//!         r_println!("Command not found: [{}]", err.join(" "));
+//!         result.println(&format!("Command not found: [{}]", err.join(" ")));
 //!     }
+//!     result
 //! }
 //!
 //! gen_program!();
@@ -84,8 +88,8 @@ pub mod picker {
 /// Re-export of all macros from `mingling_macros`.
 ///
 /// This module re-exports all macros provided by the `mingling_macros` crate,
-/// including `dispatcher!`, `chain!`, `renderer!`, `gen_program!`, `pack!`,
-/// `r_print!`, `r_println!`, and many others. These macros form the core
+/// including `dispatcher!`, `chain!`, `renderer!`,
+/// `gen_program!`, `pack!`, and many others. These macros form the core
 /// building blocks of the Mingling framework.
 ///
 /// For detailed documentation, usage examples, and the full list of available
@@ -143,10 +147,6 @@ pub mod macros {
     /// `#[program_setup]` - Used to generate program setup
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::program_setup;
-    /// `r_print!("{someting}")` - Used to print content within a `Renderer` context
-    pub use mingling_macros::r_print;
-    /// `r_println!("{someting}")` - Used to print content with a newline within a `Renderer` context
-    pub use mingling_macros::r_println;
     #[doc(hidden)]
     pub use mingling_macros::register_chain;
     #[doc(hidden)]
@@ -222,8 +222,6 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
-    /// Re-export of the `Groupped` derive macro for grouping types.
-    pub use crate::Groupped;
     /// Re-export of the `chain` macro for defining a chain of commands.
     pub use crate::macros::chain;
     /// Re-export of the `dispatcher` macro for routing commands.
@@ -238,13 +236,12 @@ pub mod prelude {
     /// Re-export of the `pack_err` macro for creating error types.
     #[cfg(feature = "extra_macros")]
     pub use crate::macros::pack_err;
-    /// Re-export of the `r_print` macro for printing within a renderer context.
-    pub use crate::macros::r_print;
-    /// Re-export of the `r_println` macro for printing with a newline within a renderer
-    /// context.
-    pub use crate::macros::r_println;
     /// Re-export of the `renderer` macro for defining renderer functions.
     pub use crate::macros::renderer;
+    /// Re-export of the `Groupped` derive macro for grouping types.
+    pub use crate::Groupped;
+    /// Re-export of the `RenderResult` struct for outputting rendering result
+    pub use crate::RenderResult;
     /// Like `pack_err!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;

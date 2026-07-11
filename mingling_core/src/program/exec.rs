@@ -461,18 +461,14 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
 fn render<C: ProgramCollect<Enum = C>>(program: &Program<C>, any: AnyOutput<C>) -> RenderResult {
     #[cfg(not(feature = "structural_renderer"))]
     {
-        let mut render_result = RenderResult::default();
-        C::render(any, &mut render_result);
-        render_result
+        C::render(any)
     }
     #[cfg(feature = "structural_renderer")]
     {
         #[allow(unreachable_patterns)]
         match program.structural_renderer_name {
             super::StructuralRendererSetting::Disable => {
-                let mut render_result = RenderResult::default();
-                C::render(any, &mut render_result);
-                render_result
+                C::render(any)
             }
             _ => C::structural_render(any, &program.structural_renderer_name).unwrap(),
         }
@@ -487,18 +483,14 @@ fn render_help<C: ProgramCollect<Enum = C>>(
 ) -> RenderResult {
     #[cfg(not(feature = "structural_renderer"))]
     {
-        let mut render_result = RenderResult::default();
-        C::render_help(entry, &mut render_result);
-        render_result
+        C::render_help(entry)
     }
     #[cfg(feature = "structural_renderer")]
     {
         #[allow(unreachable_patterns)]
         match program.structural_renderer_name {
             super::StructuralRendererSetting::Disable => {
-                let mut render_result = RenderResult::default();
-                C::render_help(entry, &mut render_result);
-                render_result
+                C::render_help(entry)
             }
             _ => RenderResult::default(),
         }

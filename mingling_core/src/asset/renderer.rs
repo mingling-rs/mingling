@@ -6,5 +6,5 @@ pub trait Renderer {
     type Previous;
 
     /// Process the previous value and write the result into the provided [`RenderResult`](./struct.RenderResult.html)
-    fn render(p: Self::Previous, r: &mut RenderResult);
+    fn render(p: Self::Previous) -> RenderResult;
 }

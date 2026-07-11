@@ -7,7 +7,7 @@ use crate::Dispatcher;
 use crate::{AnyOutput, ChainProcess, Groupped, RenderResult};
 
 #[cfg(feature = "structural_renderer")]
-use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
+use crate::{error::StructuralRendererSerializeError, StructuralRendererSetting};
 
 #[cfg(feature = "comp")]
 use crate::{ShellContext, Suggest};
@@ -53,10 +53,10 @@ pub trait ProgramCollect {
     fn build_empty_result() -> AnyOutput<Self::Enum>;
 
     /// Render the input [`AnyOutput`](./struct.AnyOutput.html)
-    fn render(any: AnyOutput<Self::Enum>, r: &mut RenderResult);
+    fn render(any: AnyOutput<Self::Enum>) -> RenderResult;
 
     /// Render help for Entry
-    fn render_help(any: AnyOutput<Self::Enum>, r: &mut RenderResult);
+    fn render_help(any: AnyOutput<Self::Enum>) -> RenderResult;
 
     /// Find a matching chain to continue execution based on the input [AnyOutput](./struct.AnyOutput.html), returning a new [AnyOutput](./struct.AnyOutput.html)
     #[cfg(feature = "async")]

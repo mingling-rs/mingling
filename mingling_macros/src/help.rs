@@ -1,22 +1,34 @@
 use proc_macro::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{quote, ToTokens};
 use syn::spanned::Spanned;
-use syn::{Ident, ItemFn, ReturnType, Signature, Type, TypePath, parse_macro_input};
+use syn::{parse_macro_input, Ident, ItemFn, ReturnType, Type, TypePath};
 
 use crate::get_global_set;
 use crate::res_injection::{extract_args_info, generate_immut_resource_bindings};
 
-/// Validates the return type is () or empty
-fn validate_return_type(sig: &Signature) -> syn::Result<()> {
+/// Validates that the function returns `::mingling::RenderResult`.
+fn validate_render_result_return(sig: &syn::Signature) -> syn::Result<()> {
     match &sig.output {
         ReturnType::Type(_, ty) => match &**ty {
-            Type::Tuple(tuple) if tuple.elems.is_empty() => Ok(()),
+            Type::Path(type_path) => {
+                let last_seg = type_path.path.segments.last().map(|s| s.ident.to_string());
+                match last_seg.as_deref() {
+                    Some("RenderResult") => Ok(()),
+                    _ => Err(syn::Error::new(
+                        ty.span(),
+                        "Help function must return `RenderResult`",
+                    )),
+                }
+            }
             _ => Err(syn::Error::new(
                 ty.span(),
-                "Help function must return () or have no return type",
+                "Help function must return `RenderResult`",
             )),
         },
-        ReturnType::Default => Ok(()),
+        ReturnType::Default => Err(syn::Error::new(
+            sig.span(),
+            "Help function must have a return type `-> RenderResult`",
+        )),
     }
 }
 
@@ -37,8 +49,8 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
     };
 
-    // Validate return type
-    if let Err(e) = validate_return_type(&input_fn.sig) {
+    // Validate return type is RenderResult
+    if let Err(e) = validate_render_result_return(&input_fn.sig) {
         return e.to_compile_error().into();
     }
 
@@ -136,19 +148,17 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
         impl ::mingling::HelpRequest for #struct_name {
             type Entry = #entry_type;
 
-            fn render_help(#prev_param: Self::Entry, __renderer_inner_result: &mut ::mingling::RenderResult) {
+            fn render_help(#prev_param: Self::Entry) -> ::mingling::RenderResult {
                 #help_render_body
             }
         }
 
         ::mingling::macros::register_help!(#entry_type, #struct_name);
 
-        // Keep the original function for internal use with original params without __renderer_inner_result
+        // Keep the original function unchanged
 
         #(#fn_attrs)*
-        #vis fn #fn_name(#original_inputs) {
-            let mut dummy_r = ::mingling::RenderResult::default();
-            let __renderer_inner_result = &mut dummy_r;
+        #vis fn #fn_name(#original_inputs) -> ::mingling::RenderResult {
             #fn_body
         }
     };
@@ -164,7 +174,7 @@ fn build_help_entry(struct_name: &Ident, entry_type: &TypePath) -> proc_macro2::
             // SAFETY: The member_id check ensures that `any` contains a value of type `#entry_type`,
             // so downcasting to `#entry_type` is safe.
             let value = unsafe { any.downcast::<#entry_type>().unwrap_unchecked() };
-            <#struct_name as ::mingling::HelpRequest>::render_help(value, __renderer_inner_result);
+            <#struct_name as ::mingling::HelpRequest>::render_help(value)
         }
     }
 }

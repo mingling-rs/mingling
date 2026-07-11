@@ -2,18 +2,19 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 use mingling::{
-    Groupped,
-    macros::{chain, pack, r_print, r_println, renderer},
+    macros::{chain, pack, renderer},
+    Groupped, RenderResult,
 };
 use serde::Serialize;
+use std::io::Write as _;
 
 use crate::{
-    Next,
     proj_mgr::{
+        metadata::{read_metadata, CargoLockFile},
         EntryShowBinaries,
-        metadata::{CargoLockFile, read_metadata},
     },
     res::ResManifestPath,
+    Next,
 };
 
 #[derive(Serialize, Groupped)]
@@ -58,16 +59,20 @@ pub fn handle_show_binaries(_args: EntryShowBinaries, manifest_path: &ResManifes
 }
 
 #[renderer]
-pub fn render_binaries(binaries: ResultBinaries) -> String {
-    r_println!("{}", "Binaries:".bright_cyan().bold());
+pub fn render_binaries(binaries: ResultBinaries) -> RenderResult {
+    let mut result = RenderResult::default();
+    writeln!(result, "{}", "Binaries:".bright_cyan().bold()).ok();
     if let Some(max_name_len) = binaries.binaries.iter().map(|b| b.name.len()).max() {
         for binary in &binaries.binaries {
-            r_println!(
+            writeln!(
+                result,
                 "  {:width$} `{}`",
                 binary.name.bright_yellow().bold(),
                 binary.path.display().to_string().italic(),
                 width = max_name_len
-            );
+            )
+            .ok();
         }
     }
+    result
 }

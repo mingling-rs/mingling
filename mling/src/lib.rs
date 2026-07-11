@@ -1,7 +1,7 @@
 #![allow(unused_imports)]
 
 use mingling::{
-    macros::{chain, gen_program, pack, r_println, renderer},
+    macros::{chain, gen_program, pack, renderer},
     res::ResExitCode,
 };
 

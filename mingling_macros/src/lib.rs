@@ -68,7 +68,6 @@
 //! | [`#[help]`](attr.help.html) | Defines help output for a command entry type |
 //! | [`route!`] | Routes execution depending on a condition |
 //! | [`empty_result!`] | Returns an empty result for early termination |
-//! | [`r_print!`] / [`r_println!`] | Print to the `RenderResult` buffer inside a renderer |
 //! | [`#[completion]`](attr.completion.html) | Registers a shell completion handler |
 //!
 //! ## Phase 3: Program Generation
@@ -170,7 +169,6 @@ mod pack;
 mod pack_err;
 #[cfg(feature = "extra_macros")]
 mod program_setup;
-mod render;
 mod renderer;
 mod res_injection;
 #[cfg(feature = "structural_renderer")]
@@ -704,95 +702,6 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
     dispatcher::dispatcher(input)
 }
 
-/// Prints formatted text to the current [`RenderResult`] buffer within a
-/// `#[renderer]` function.
-///
-/// Unlike `print!`, this macro writes to the in-memory `RenderResult` buffer
-/// rather than directly to stdout. The buffered output is flushed automatically
-/// when the renderer returns, allowing the framework to control output timing
-/// and capture (e.g., for testing or structural rendering to JSON/YAML).
-///
-/// This macro requires a mutable reference to a [`RenderResult`] named
-/// `__renderer_inner_result` to be in scope, which is automatically provided
-/// inside `#[renderer]` and `#[help]` functions.
-///
-/// # Syntax
-///
-/// Same as [`format!`] / [`print!`]:
-///
-/// ```rust,ignore
-/// r_print!("Hello, {}!", name);
-/// r_print!("Value: {value}");
-/// ```
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use mingling::macros::{renderer, r_print};
-///
-/// #[renderer]
-/// fn show_greeting(prev: Greeting) {
-///     r_print!("Hello, {}!", *prev);
-/// }
-/// ```
-///
-/// # Difference from `r_println!`
-///
-/// `r_print!` does **not** append a newline. Use [`r_println!`] for newline-terminated output.
-///
-/// # Panics
-///
-/// Does not panic under normal circumstances. The underlying `RenderResult`
-/// buffer operations are infallible.
-///
-/// [`RenderResult`]: https://docs.rs/mingling/latest/mingling/struct.RenderResult.html
-#[proc_macro]
-pub fn r_print(input: TokenStream) -> TokenStream {
-    render::r_print(input)
-}
-
-/// Prints formatted text followed by a newline to the current [`RenderResult`] buffer
-/// within a `#[renderer]` or `#[help]` function.
-///
-/// Unlike `println!`, this macro writes to the in-memory `RenderResult` buffer
-/// rather than directly to stdout. The buffered output is flushed automatically
-/// when the renderer returns.
-///
-/// This macro requires a mutable reference to a [`RenderResult`] named
-/// `__renderer_inner_result` to be in scope, which is automatically provided
-/// inside `#[renderer]` and `#[help]` functions.
-///
-/// # Syntax
-///
-/// Same as [`println!`]:
-///
-/// ```rust,ignore
-/// r_println!("Hello, {}!", name);
-/// r_println!("Value: {value}");
-/// r_println!();  // just a newline
-/// ```
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use mingling::macros::{renderer, r_println};
-///
-/// #[renderer]
-/// fn show_greeting(prev: Greeting) {
-///     r_println!("Hello, {}!", *prev);
-/// }
-/// ```
-///
-/// # See also
-///
-/// - [`r_print!`] for output without a trailing newline.
-///
-/// [`RenderResult`]: https://docs.rs/mingling/latest/mingling/struct.RenderResult.html
-#[proc_macro]
-pub fn r_println(input: TokenStream) -> TokenStream {
-    render::r_println(input)
-}
-
 /// Declares a chain processing step that transforms one type into another
 /// within a Mingling pipeline.
 ///
@@ -893,7 +802,7 @@ pub fn r_println(input: TokenStream) -> TokenStream {
 /// # Sync Example with Resource Injection
 ///
 /// ```rust,ignore
-/// use mingling::macros::{chain, pack, gen_program, r_println};
+/// use mingling::macros::{chain, pack, gen_program};
 ///
 /// #[derive(Default, Clone)]
 /// struct UserName(String);
@@ -903,7 +812,6 @@ pub fn r_println(input: TokenStream) -> TokenStream {
 ///
 /// #[chain]
 /// fn greet(prev: HelloEntry, user_name: &UserName, count: &mut u64) -> Next {
-///     r_println!("User: {:?}", user_name);
 ///     *count += 1;
 ///     Greeting::new(format!("Hello, {}!", user_name.0))
 /// }
@@ -971,32 +879,31 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// The `#[renderer]` attribute converts a function into a renderer by:
 /// 1. Generating a hidden struct implementing the `Renderer` trait.
 /// 2. Registering the renderer mapping in the global renderer registry.
-/// 3. Keeping the original function for direct calls. When called directly,
-///    a new `RenderResult` is created and the renderer function writes its
-///    output directly to the current terminal output buffer.
-///
-/// Inside a `#[renderer]` function, you can use `r_print!` and `r_println!`
-/// to write output to the `RenderResult` buffer.
+/// 3. Keeping the original function for direct calls.
 ///
 /// # Syntax
 ///
 /// ```rust,ignore
 /// #[renderer]
-/// fn render_my_type(prev: MyType) {
-///     r_println!("Output: {:?}", *prev);
+/// fn render_my_type(prev: MyType) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "Output: {:?}", *prev);
+///     result
 /// }
 /// ```
 ///
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{renderer, r_println, pack, gen_program};
+/// use mingling::macros::{renderer, pack, gen_program};
 ///
 /// pack!(Greeting = String);
 ///
 /// #[renderer]
-/// fn render_greeting(prev: Greeting) {
-///     r_println!("Hello, {}!", *prev);
+/// fn render_greeting(prev: Greeting) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "Hello, {}!", *prev);
+///     result
 /// }
 /// ```
 ///
@@ -1015,13 +922,17 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// #[renderer]
-/// fn fallback_dispatcher_not_found(prev: ErrorDispatcherNotFound) {
-///     r_println!("Unknown command: {}", prev.join(", "));
+/// fn fallback_dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "Unknown command: {}", prev.join(", "));
+///     result
 /// }
 ///
 /// #[renderer]
-/// fn fallback_renderer_not_found(prev: ErrorRendererNotFound) {
-///     r_println!("No renderer for `{}`", *prev);
+/// fn fallback_renderer_not_found(prev: ErrorRendererNotFound) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "No renderer for `{}`", *prev);
+///     result
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -1275,33 +1186,38 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 /// The macro works by:
 /// 1. Generating a hidden struct implementing the `HelpRequest` trait.
 /// 2. Registering the help mapping in the global `HELP_REQUESTS` registry.
-/// 3. Keeping the original function for direct calls (with a dummy `RenderResult`).
+/// 3. Keeping the original function for direct calls.
 ///
-/// Inside a `#[help]` function, you can use [`r_print!`] and [`r_println!`]
-/// to write help text to the `RenderResult` buffer.
+/// Inside a `#[help]` function, you must manually create a `RenderResult`
+/// and return it. Use [`writeln!`](std::fmt::writeln) on the result to
+/// write help text.
 ///
 /// # Syntax
 ///
 /// ```rust,ignore
 /// #[help]
-/// fn help_my_entry(prev: MyEntry) {
-///     r_println!("Usage: myapp myentry [options]");
-///     r_println!("  Does something useful.");
+/// fn help_my_entry(prev: MyEntry) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "Usage: myapp myentry [options]");
+///     writeln!(result, "  Does something useful.");
+///     result
 /// }
 /// ```
 ///
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{help, r_println, pack, gen_program};
-/// use mingling::{prelude::*, setup::BasicProgramSetup};
+/// use mingling::macros::{help, pack, gen_program};
+/// use mingling::{prelude::*, setup::BasicProgramSetup, RenderResult};
 ///
 /// pack!(MyEntry = Vec<String>);
 ///
 /// #[help]
-/// fn help_my_entry(prev: MyEntry) {
-///     r_println!("Usage: myapp greet [name]");
-///     r_println!("Greets the user.");
+/// fn help_my_entry(prev: MyEntry) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "Usage: myapp greet [name]");
+///     writeln!(result, "Greets the user.");
+///     result
 /// }
 ///
 /// fn main() {
@@ -1316,13 +1232,13 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 ///
 /// - The function must have exactly one parameter (the entry type to provide help for).
 /// - The parameter type must be a single-segment type path (e.g., `MyEntry`, not `other::MyEntry`).
-/// - The function must return `()`.
+/// - The function must return [`RenderResult`].
 /// - The function cannot be async.
 ///
 /// # See also
 ///
 /// - [`BasicProgramSetup`] — The setup that enables `--help` and `-h` flag processing.
-/// - [`r_print!`] / [`r_println!`] — For outputting help text.
+/// - [`RenderResult`] — The return type for help functions.
 /// - [`#[chain]`](attr.chain.html) — For processing the dispatched entry after help.
 ///
 /// [`BasicProgramSetup`]: https://docs.rs/mingling/latest/mingling/setup/struct.BasicProgramSetup.html
@@ -1496,7 +1412,7 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{dispatcher, chain, renderer, gen_program};
+/// use mingling::macros::{dispatcher, chain, renderer, gen_program, RenderResult};
 ///
 /// dispatcher!("hello", HelloCommand => HelloEntry);
 ///
@@ -1506,8 +1422,10 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
 /// }
 ///
 /// #[renderer]
-/// fn render(prev: /* ... */) {
-///     r_println!("Done!");
+/// fn render(prev: /* ... */) -> RenderResult {
+///     let result = RenderResult::new();
+///     writeln!(result, "Done!");
+///     result
 /// }
 ///
 /// // Collect everything:
@@ -1612,9 +1530,11 @@ pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
         #[allow(unused)]
         #[doc(hidden)]
         #[::mingling::macros::renderer]
-        pub fn __render_completion(prev: CompletionSuggest) {
+        pub fn __render_completion(prev: CompletionSuggest) -> ::mingling::RenderResult {
+            let result = ::mingling::RenderResult::default();
             let (ctx, suggest) = prev.inner;
             ::mingling::CompletionHelper::render_suggest::<crate::ThisProgram>(ctx, suggest);
+            result
         }
     };
 
@@ -1783,9 +1703,9 @@ pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
 /// impl ProgramCollect for MyProgram {
 ///     type Enum = MyProgram;
 ///     type ResultEmpty = ResultEmpty;
-///     fn render(any, r) { /* dispatches to all registered renderers */ }
+///     fn render(any) -> RenderResult { /* dispatches to all registered renderers */ }
 ///     fn do_chain(any) -> ChainProcess { /* dispatches to all registered chain steps */ }
-///     fn render_help(any, r) { /* dispatches to all registered help handlers */ }
+///     fn render_help(any) -> RenderResult { /* dispatches to all registered help handlers */ }
 ///     fn has_renderer(any) -> bool { /* checks renderer registry */ }
 ///     fn has_chain(any) -> bool { /* checks chain registry */ }
 ///     // (with comp feature) fn do_comp(...)
@@ -2020,12 +1940,15 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
     let comp = quote! {};
 
     // Build render function arms from stored entries
-    let render_fn = if renderer_tokens.is_empty() {
-        quote! {
-            fn render(_any: ::mingling::AnyOutput<Self::Enum>, _renderer_inner_result: &mut ::mingling::RenderResult) {}
-        }
-    } else {
-        let render_arms: Vec<_> = renderer_tokens.iter().map(|entry| {
+    let render_fn =
+        if renderer_tokens.is_empty() {
+            quote! {
+                fn render(_any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::RenderResult {
+                    ::mingling::RenderResult::default()
+                }
+            }
+        } else {
+            let render_arms: Vec<_> = renderer_tokens.iter().map(|entry| {
             let (struct_ident, variant_ident) = parse_entry_pair(entry);
             let downcast_ty = resolve_type(&variant_ident.to_string(), &pathf_map);
             let resolved_struct = resolve_type(&struct_ident.to_string(), &pathf_map);
@@ -2034,19 +1957,19 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
                     // SAFETY: The `type_id` check ensures that `any` contains a value of type `#variant_ident`,
                     // so downcasting to `#variant_ident` is safe.
                     let value = unsafe { any.downcast::<#downcast_ty>().unwrap_unchecked() };
-                    <#resolved_struct as ::mingling::Renderer>::render(value, __renderer_inner_result);
+                    <#resolved_struct as ::mingling::Renderer>::render(value)
                 }
             }
         }).collect();
-        quote! {
-            fn render(any: ::mingling::AnyOutput<Self::Enum>, __renderer_inner_result: &mut ::mingling::RenderResult) {
-                match any.member_id {
-                    #(#render_arms)*
-                    _ => (),
+            quote! {
+                fn render(any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::RenderResult {
+                    match any.member_id {
+                        #(#render_arms)*
+                        _ => ::mingling::RenderResult::default(),
+                    }
                 }
             }
-        }
-    };
+        };
 
     // Build do_chain function (async and sync versions)
     let chain_arms_async: Vec<_> = chain_tokens.iter().map(|entry| {
@@ -2162,12 +2085,12 @@ pub fn program_final_gen(_input: TokenStream) -> TokenStream {
             }
             #render_fn
             #do_chain_fn
-            fn render_help(any: ::mingling::AnyOutput<Self::Enum>, __renderer_inner_result: &mut ::mingling::RenderResult) {
+            fn render_help(any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::RenderResult {
                 #[allow(unused_imports)]
                 #(#pathf_uses)*
                 match any.member_id {
                     #(#help_tokens)*
-                    _ => (),
+                    _ => ::mingling::RenderResult::default(),
                 }
             }
             fn has_renderer(any: &::mingling::AnyOutput<Self::Enum>) -> bool {

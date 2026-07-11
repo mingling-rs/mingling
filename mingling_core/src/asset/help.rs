@@ -6,5 +6,5 @@ pub trait HelpRequest {
     type Entry;
 
     /// Process the previous value and write the result into the provided [`RenderResult`](./struct.RenderResult.html)
-    fn render_help(p: Self::Entry, r: &mut RenderResult);
+    fn render_help(p: Self::Entry) -> RenderResult;
 }

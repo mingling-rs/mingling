@@ -8,13 +8,13 @@ use crate::{
 };
 use colored::Colorize;
 use mingling::{
-    Groupped, Program,
+    Groupped, Program, RenderResult,
     hook::ProgramHook,
-    macros::{chain, help, pack, program_setup, r_println, renderer},
+    macros::{chain, help, pack, program_setup, renderer},
     res::ResExitCode,
     setup::{ExitCodeSetup, HelpFlagSetup, QuietFlagSetup, StructuralRendererSetup},
 };
-use std::{env::current_dir, path::PathBuf, process::exit, str::FromStr};
+use std::{env::current_dir, io::Write, path::PathBuf, process::exit, str::FromStr};
 
 pub fn run() {
     #[cfg(windows)]
@@ -167,21 +167,20 @@ pub fn handle_error_dispatcher_not_found(err: ErrorDispatcherNotFound) -> Next {
 }
 
 #[renderer]
-pub fn render_mling_help(_prev: ResultMlingHelp, ec: &mut ResExitCode) {
-    r_println!("{}", markdown(include_str!("helps/mling_help.txt")));
+pub fn render_mling_help(_prev: ResultMlingHelp, ec: &mut ResExitCode) -> RenderResult {
+    let mut result = RenderResult::default();
+    writeln!(result, "{}", markdown(include_str!("helps/mling_help.txt"))).ok();
     ec.exit_code = 0;
+    result
 }
 
 #[renderer]
-pub fn render_unknown_command(prev: ResultUnknownCommand, ec: &mut ResExitCode) {
-    r_println!(
-        "{}",
-        eformat_cargo!("no such command: `{}`", prev.bright_yellow().bold())
-    );
-    r_println!();
-    r_println!(
-        "{}",
-        hformat_cargo!("view all commands with `cargo help mling`")
-    );
+pub fn render_unknown_command(prev: ResultUnknownCommand, ec: &mut ResExitCode) -> RenderResult {
+    let mut result = RenderResult::default();
+    writeln!(result, "{}", eformat_cargo!("no such command: `{}`", prev.bright_yellow().bold())).ok();
+    writeln!(result).ok();
+    writeln!(result, "{}", hformat_cargo!("view all commands with `cargo help mling`"))
+        .ok();
     ec.exit_code = 101;
+    result
 }

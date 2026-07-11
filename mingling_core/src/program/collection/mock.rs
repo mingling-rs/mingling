@@ -7,7 +7,7 @@ use crate::Dispatcher;
 use crate::{AnyOutput, ChainProcess, Groupped, ProgramCollect, RenderResult};
 
 #[cfg(feature = "structural_renderer")]
-use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
+use crate::{error::StructuralRendererSerializeError, StructuralRendererSetting};
 
 #[cfg(feature = "comp")]
 use crate::{ShellContext, Suggest};
@@ -59,11 +59,11 @@ impl ProgramCollect for MockProgramCollect {
         unreachable!()
     }
 
-    fn render(_any: AnyOutput<Self::Enum>, _r: &mut RenderResult) {
+    fn render(_any: AnyOutput<Self::Enum>) -> RenderResult {
         unreachable!()
     }
 
-    fn render_help(_any: AnyOutput<Self::Enum>, _r: &mut RenderResult) {
+    fn render_help(_any: AnyOutput<Self::Enum>) -> RenderResult {
         unreachable!()
     }
 

@@ -1,23 +1,38 @@
 use proc_macro::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{quote, ToTokens};
 use syn::spanned::Spanned;
-use syn::{ItemFn, ReturnType, Signature, Type, TypePath, parse_macro_input};
+use syn::{parse_macro_input, ItemFn, ReturnType, Signature, Type, TypePath};
 
 use crate::get_global_set;
 use crate::res_injection::{extract_args_info, generate_immut_resource_bindings};
 
-/// Extracts and returns the return type from the function signature (or None for `()` / no return type).
-fn extract_return_type(sig: &Signature) -> Option<syn::Type> {
+/// Validates that the function returns `::mingling::RenderResult`.
+fn validate_render_result_return(sig: &Signature) -> syn::Result<()> {
     match &sig.output {
         ReturnType::Type(_, ty) => {
+            // Check if the return type is RenderResult
             match &**ty {
-                // `()` means no custom return type
-                Type::Tuple(tuple) if tuple.elems.is_empty() => None,
-                // Any other return type is allowed
-                custom_ty => Some((*custom_ty).clone()),
+                Type::Path(type_path) => {
+                    let segments = &type_path.path.segments;
+                    let last_seg = segments.last().map(|s| s.ident.to_string());
+                    match last_seg.as_deref() {
+                        Some("RenderResult") => Ok(()),
+                        _ => Err(syn::Error::new(
+                            ty.span(),
+                            "Renderer function must return `RenderResult`",
+                        )),
+                    }
+                }
+                _ => Err(syn::Error::new(
+                    ty.span(),
+                    "Renderer function must return `RenderResult`",
+                )),
             }
         }
-        ReturnType::Default => None,
+        ReturnType::Default => Err(syn::Error::new(
+            sig.span(),
+            "Renderer function must have a return type `-> RenderResult`",
+        )),
     }
 }
 
@@ -44,8 +59,10 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
     };
 
-    // Validate return type – now returns Some(type) if custom type, None if ()
-    let return_type = extract_return_type(&input_fn.sig);
+    // Validate that the function returns RenderResult
+    if let Err(e) = validate_render_result_return(&input_fn.sig) {
+        return e.to_compile_error().into();
+    }
 
     // Get function body statements
     let fn_body_stmts: Vec<syn::Stmt> = input_fn.block.stmts.clone();
@@ -76,23 +93,6 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), program_type);
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
 
-    // Determine public return type and the expression to return dummy_r
-    let (public_return_type, result_return) = if let Some(custom_ty) = &return_type {
-        // User specified a custom return type (e.g. -> String)
-        let ret_ty = quote! { #custom_ty };
-        let expr = quote! { dummy_r.into() };
-        (ret_ty, expr)
-    } else {
-        // Return type is () — no custom return type specified
-        let ret_ty = quote! { () };
-        let expr = quote! {
-            if !dummy_r.is_empty() {
-                ::std::println!("{}", &*dummy_r);
-            }
-        };
-        (ret_ty, expr)
-    };
-
     let inner_body_with_resources = if has_mut_resources {
         let mut wrapped = quote! { #(#fn_body_stmts)* };
         for res in mut_resources.iter().rev() {
@@ -110,8 +110,7 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     // Build the Renderer::render body with resource injection
-    // Renderer::render returns (), output goes through __renderer_inner_result parameter.
-    // Resources are injected from the program context here.
+    // The user's body now directly creates and returns a RenderResult.
     let render_fn_body = if has_resources {
         quote! {
             #(#immut_resource_stmts)*
@@ -121,22 +120,13 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! { #inner_body_with_resources }
     };
 
-    // Build the original function body
-    // The original function preserves the user's signature and return type.
+    // The original function preserves the user's exact signature and body.
     // Resource parameters are passed directly by the caller, NOT injected from context.
-    let original_fn_body = {
-        quote! {
-            let mut dummy_r = ::mingling::RenderResult::default();
-            {
-                let __renderer_inner_result = &mut dummy_r;
-                #(#fn_body_stmts)*
-            }
-            #result_return
-        }
-    };
-
-    // Keep the original function signature unchanged (same params as user wrote)
     let original_inputs = input_fn.sig.inputs.clone();
+    let original_return_type = match &input_fn.sig.output {
+        ReturnType::Type(_, ty) => quote! { #ty },
+        ReturnType::Default => unreachable!("Already validated that return type is RenderResult"),
+    };
 
     let expanded = quote! {
         #(#fn_attrs)*
@@ -149,15 +139,15 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         impl ::mingling::Renderer for #struct_name {
             type Previous = #previous_type;
 
-            fn render(#prev_param: Self::Previous, __renderer_inner_result: &mut ::mingling::RenderResult) {
+            fn render(#prev_param: Self::Previous) -> ::mingling::RenderResult {
                 #render_fn_body
             }
         }
 
-        // Keep the original function for internal use (without r parameter)
+        // Keep the original function unchanged
         #(#fn_attrs)*
-        #vis fn #fn_name(#original_inputs) -> #public_return_type {
-            #original_fn_body
+        #vis fn #fn_name(#original_inputs) -> #original_return_type {
+            #(#fn_body_stmts)*
         }
     };
 

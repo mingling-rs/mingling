@@ -1,14 +1,15 @@
 use colored::Colorize;
 use mingling::{
-    Groupped,
-    macros::{chain, pack, r_println, renderer},
+    macros::{chain, pack, renderer},
+    Groupped, RenderResult,
 };
 use serde::Serialize;
+use std::io::Write as _;
 
 use crate::{
-    Next,
-    proj_mgr::{EntryShowTargetDirectories, EntryShowWorkspaceDirectory, metadata::read_metadata},
+    proj_mgr::{metadata::read_metadata, EntryShowTargetDirectories, EntryShowWorkspaceDirectory},
     res::ResManifestPath,
+    Next,
 };
 
 #[derive(Serialize, Groupped)]
@@ -46,11 +47,15 @@ pub fn handle_show_target_directory(
 }
 
 #[renderer]
-pub fn render_workspace_directory(prev: ResultWorkspaceDirectory) {
-    r_println!("{}", prev.path.bright_cyan().bold());
+pub fn render_workspace_directory(prev: ResultWorkspaceDirectory) -> RenderResult {
+    let mut result = RenderResult::default();
+    writeln!(result, "{}", prev.path.bright_cyan().bold()).ok();
+    result
 }
 
 #[renderer]
-pub fn render_target_directory(prev: ResultTargetDirectory) {
-    r_println!("{}", prev.path.bright_cyan().bold());
+pub fn render_target_directory(prev: ResultTargetDirectory) -> RenderResult {
+    let mut result = RenderResult::default();
+    writeln!(result, "{}", prev.path.bright_cyan().bold()).ok();
+    result
 }
