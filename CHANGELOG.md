@@ -62,11 +62,34 @@ None
 
 #### Features:
 
-None
+1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.
+
+   ```rust
+   let mut result = RenderResult::new();
+   writeln!(result, "Hello!").ok();
+   result
+   ```
+
+   The method is equivalent to `RenderResult::default()` but serves as a more idiomatic entry point for renderer functions.
 
 #### **BREAKING CHANGES** (API CHANGES):
 
-None
+1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.
+
+   Renderers and help functions must now explicitly create and return a `RenderResult`:
+
+   ```rust
+   use mingling::prelude::*;
+
+   #[renderer]
+   fn render_greeting(greeting: ResultGreeting) -> RenderResult {
+       let mut result = RenderResult::new();
+       writeln!(result, "Hello, {}!", *greeting).ok();
+       result
+   }
+   ```
+
+   All examples, docs, and test cases across the repository have been updated to use the new pattern: creating a `RenderResult` with `RenderResult::new()` or `RenderResult::default()`, writing with `write!`/`writeln!` from `std::io::Write`, and returning the result.
 
 ---
 

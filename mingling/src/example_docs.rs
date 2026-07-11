@@ -765,7 +765,7 @@ pub mod example_completion {}
 /// #[renderer]
 /// pub fn render_address(addr: Address) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
-///     write!(render_result, "Connected to \"{}\"", addr.to_string()).ok();
+///     write!(render_result, "Connected to \"{}\"", addr).ok();
 ///     render_result
 /// }
 ///
@@ -1705,7 +1705,7 @@ pub mod example_lazy_resources {}
 /// #[renderer] //          vvvvvvv
 /// fn render_error_io(err: ErrorIo) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
-///     write!(render_result, "IO_ERROR: {}", err.to_string()).ok();
+///     write!(render_result, "IO_ERROR: {}", err).ok();
 ///     render_result
 /// }
 ///
