@@ -10,4 +10,5 @@
   * [Markdown Code Verification System](pages/abouts/code-verify-system)
   * [About Nightly Features](pages/abouts/nightly-features)
 * 📄 Templates
+  * [Changelog Template](pages/templates/changelog)
   * [Helpdoc Template](pages/templates/doc)
