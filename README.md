@@ -18,6 +18,7 @@
 	<img src="https://img.shields.io/crates/size/mingling">
 	<img src="https://img.shields.io/crates/v/mingling?style=flat">
 	<img src="https://img.shields.io/docsrs/mingling?style=flat">
+	<img src="https://img.shields.io/github/actions/workflow/status/mingling-rs/mingling/ci.yml">
 </p>
 
 > [!WARNING]
