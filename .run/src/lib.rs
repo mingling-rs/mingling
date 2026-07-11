@@ -125,7 +125,7 @@ pub fn wprintln_cargo_style(str: impl Into<String>) {
     );
 }
 
-/// Run a shell command and return its exit status.
+/// Run a shell command in the current directory and return its exit status.
 ///
 /// # Panics
 ///
@@ -135,6 +135,20 @@ pub fn wprintln_cargo_style(str: impl Into<String>) {
 ///
 /// Returns `Err` with the exit code if the command finishes with a non-zero exit code.
 pub fn run_cmd(cmd: impl Into<String>) -> Result<(), i32> {
+    let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    run_cmd_with_dir(cmd.into(), &cwd)
+}
+
+/// Run a shell command in the specified directory and return its exit status.
+///
+/// # Panics
+///
+/// Panics if the shell command cannot be spawned (e.g. the shell binary is not found).
+///
+/// # Errors
+///
+/// Returns `Err` with the exit code if the command finishes with a non-zero exit code.
+pub fn run_cmd_with_dir(cmd: impl Into<String>, dir: &std::path::Path) -> Result<(), i32> {
     let shell = if cfg!(target_os = "windows") {
         "powershell"
     } else {
@@ -143,7 +157,7 @@ pub fn run_cmd(cmd: impl Into<String>) -> Result<(), i32> {
     let status = std::process::Command::new(shell)
         .arg("-c")
         .arg(cmd.into())
-        .current_dir(std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")))
+        .current_dir(dir)
         .status()
         .expect("failed to execute command");
 
@@ -160,6 +174,18 @@ pub fn run_cmd(cmd: impl Into<String>) -> Result<(), i32> {
 /// On success returns `Ok(combined_output)`. On failure returns `Err((exit_code, stderr))`.
 /// Stderr falls back to stdout if stderr is empty.
 pub fn run_cmd_capture(cmd: impl Into<String>) -> Result<String, (i32, String)> {
+    let cwd = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+    run_cmd_capture_with_dir(cmd.into(), &cwd)
+}
+
+/// Run a shell command in the specified directory and capture its combined stdout+stderr output.
+///
+/// On success returns `Ok(combined_output)`. On failure returns `Err((exit_code, stderr))`.
+/// Stderr falls back to stdout if stderr is empty.
+pub fn run_cmd_capture_with_dir(
+    cmd: impl Into<String>,
+    dir: &std::path::Path,
+) -> Result<String, (i32, String)> {
     let shell = if cfg!(target_os = "windows") {
         "powershell"
     } else {
@@ -168,7 +194,7 @@ pub fn run_cmd_capture(cmd: impl Into<String>) -> Result<String, (i32, String)> 
     let output = std::process::Command::new(shell)
         .arg("-c")
         .arg(cmd.into())
-        .current_dir(std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from(".")))
+        .current_dir(dir)
         .output()
         .expect("failed to execute command");
 

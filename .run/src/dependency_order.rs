@@ -121,7 +121,7 @@ fn topological_sort(
 
 /// Find the workspace root by looking for a Cargo.toml with `[workspace]` members.
 /// Starts from `start` and walks up the directory tree.
-fn find_workspace_root(start: &std::path::Path) -> Option<PathBuf> {
+pub fn find_workspace_root(start: &std::path::Path) -> Option<PathBuf> {
     let mut current = Some(std::fs::canonicalize(start).unwrap_or_else(|_| start.to_path_buf()));
     while let Some(dir) = current {
         let members = get_workspace_members(&dir);
