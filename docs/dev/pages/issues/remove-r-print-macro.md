@@ -93,5 +93,5 @@ As for rendering in logic functions like `#[chain]`, that should be handled by a
   - [x] Modify `#[renderer]` and `#[help]` macros, remove implicit injection
   - [x] Provide **no-return-value mode** and **RenderResult return value mode** for `#[renderer]` and `#[help]` macros
   - [ ] Add new simplified syntax
-  - [ ] Update documentation and test cases, ensure **all pass**
+  - [x] Update documentation and test cases, ensure **all pass**
 - [ ] Complete
