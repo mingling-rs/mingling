@@ -757,8 +757,10 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
 
 #[renderer]
-fn render_greeting(greeting: ResultGreeting) {
-    r_println!("Hello, {}!", *greeting);
+fn render_greet(result: ResultGreeting) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *result).ok();
+    r
 }
 
 gen_program!();
