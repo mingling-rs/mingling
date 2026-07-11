@@ -886,7 +886,7 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// #[renderer]
 /// fn render_my_type(prev: MyType) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "Output: {:?}", *prev);
 ///     result
 /// }
@@ -896,12 +896,13 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// use mingling::macros::{renderer, pack, gen_program};
+/// use std::io::Write;
 ///
 /// pack!(Greeting = String);
 ///
 /// #[renderer]
 /// fn render_greeting(prev: Greeting) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "Hello, {}!", *prev);
 ///     result
 /// }
@@ -923,14 +924,14 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// #[renderer]
 /// fn fallback_dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "Unknown command: {}", prev.join(", "));
 ///     result
 /// }
 ///
 /// #[renderer]
 /// fn fallback_renderer_not_found(prev: ErrorRendererNotFound) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "No renderer for `{}`", *prev);
 ///     result
 /// }
@@ -1197,7 +1198,7 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// #[help]
 /// fn help_my_entry(prev: MyEntry) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "Usage: myapp myentry [options]");
 ///     writeln!(result, "  Does something useful.");
 ///     result
@@ -1209,12 +1210,13 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// use mingling::macros::{help, pack, gen_program};
 /// use mingling::{prelude::*, setup::BasicProgramSetup, RenderResult};
+/// use std::io::Write;
 ///
 /// pack!(MyEntry = Vec<String>);
 ///
 /// #[help]
 /// fn help_my_entry(prev: MyEntry) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "Usage: myapp greet [name]");
 ///     writeln!(result, "Greets the user.");
 ///     result
@@ -1413,6 +1415,7 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
 ///
 /// ```rust,ignore
 /// use mingling::macros::{dispatcher, chain, renderer, gen_program, RenderResult};
+/// use std::io::Write;
 ///
 /// dispatcher!("hello", HelloCommand => HelloEntry);
 ///
@@ -1423,7 +1426,7 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
 ///
 /// #[renderer]
 /// fn render(prev: /* ... */) -> RenderResult {
-///     let result = RenderResult::new();
+///     let mut result = RenderResult::new();
 ///     writeln!(result, "Done!");
 ///     result
 /// }
