@@ -465,6 +465,9 @@ dependencies = [
 [[package]]
 name = "mingling_picker"
 version = "0.3.0"
+dependencies = [
+ "mingling_core",
+]
 
 [[package]]
 name = "mingling_picker_macros"

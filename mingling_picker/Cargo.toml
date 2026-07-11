@@ -9,3 +9,4 @@ readme = "README.md"
 description = "Mingling's lightweight argument parser"
 
 [dependencies]
+mingling_core.workspace = true
