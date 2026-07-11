@@ -168,7 +168,7 @@ pub mod macros {
     /// `suggest_enum!(EnumNames)` - Used to generate enum suggestions
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest_enum;
-
+    /// New Parser provided by the `picker` feature
     #[cfg(feature = "picker")]
     pub use mingling_macros::*;
 }
@@ -259,4 +259,7 @@ pub mod prelude {
 
     #[cfg(feature = "picker")]
     pub use mingling_picker::prelude::*;
+
+    /// Used to enable the `writeln!` macro for `RenderResult`
+    pub use std::io::Write;
 }
