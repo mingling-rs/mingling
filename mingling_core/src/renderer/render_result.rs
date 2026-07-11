@@ -52,6 +52,23 @@ impl From<&RenderResult> for String {
 }
 
 impl RenderResult {
+    /// Creates a new `RenderResult` with default values (empty text and exit code 0).
+    ///
+    /// Equivalent to `RenderResult::default()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let result = RenderResult::new();
+    /// assert_eq!(result.exit_code, 0);
+    /// assert!(result.is_empty());
+    /// ```
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Appends the given text to the rendered content.
     ///
     /// # Examples
