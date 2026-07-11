@@ -1,7 +1,7 @@
 use mingling::{
+    RenderResult,
     macros::{group, renderer},
     res::ResExitCode,
-    RenderResult,
 };
 use std::io::Write as _;
 

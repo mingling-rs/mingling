@@ -177,10 +177,19 @@ pub fn render_mling_help(_prev: ResultMlingHelp, ec: &mut ResExitCode) -> Render
 #[renderer]
 pub fn render_unknown_command(prev: ResultUnknownCommand, ec: &mut ResExitCode) -> RenderResult {
     let mut result = RenderResult::default();
-    writeln!(result, "{}", eformat_cargo!("no such command: `{}`", prev.bright_yellow().bold())).ok();
+    writeln!(
+        result,
+        "{}",
+        eformat_cargo!("no such command: `{}`", prev.bright_yellow().bold())
+    )
+    .ok();
     writeln!(result).ok();
-    writeln!(result, "{}", hformat_cargo!("view all commands with `cargo help mling`"))
-        .ok();
+    writeln!(
+        result,
+        "{}",
+        hformat_cargo!("view all commands with `cargo help mling`")
+    )
+    .ok();
     ec.exit_code = 101;
     result
 }

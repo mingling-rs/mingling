@@ -467,9 +467,7 @@ fn render<C: ProgramCollect<Enum = C>>(program: &Program<C>, any: AnyOutput<C>) 
     {
         #[allow(unreachable_patterns)]
         match program.structural_renderer_name {
-            super::StructuralRendererSetting::Disable => {
-                C::render(any)
-            }
+            super::StructuralRendererSetting::Disable => C::render(any),
             _ => C::structural_render(any, &program.structural_renderer_name).unwrap(),
         }
     }
@@ -489,9 +487,7 @@ fn render_help<C: ProgramCollect<Enum = C>>(
     {
         #[allow(unreachable_patterns)]
         match program.structural_renderer_name {
-            super::StructuralRendererSetting::Disable => {
-                C::render_help(entry)
-            }
+            super::StructuralRendererSetting::Disable => C::render_help(entry),
             _ => RenderResult::default(),
         }
     }

@@ -1,12 +1,12 @@
 use std::path::{self, PathBuf};
 
 use mingling::{
-    macros::{chain, pack, renderer, route},
     Groupped, RenderResult,
+    macros::{chain, pack, renderer, route},
 };
 use std::io::Write as _;
 
-use crate::{proj_mgr::EntryGenerateProject, res::ResCurrentDir, Next};
+use crate::{Next, proj_mgr::EntryGenerateProject, res::ResCurrentDir};
 
 pack!(StateGenerateProjectReady = PathBuf);
 pack!(ResultGenerateProjectChecklistCreated = PathBuf);

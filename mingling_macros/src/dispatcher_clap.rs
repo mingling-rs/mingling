@@ -1,8 +1,9 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
+    Ident, ItemStruct, LitBool, LitStr, Token,
     parse::{Parse, ParseStream},
-    parse_macro_input, Ident, ItemStruct, LitBool, LitStr, Token,
+    parse_macro_input,
 };
 
 /// Parsed key-value options after the first positional arguments

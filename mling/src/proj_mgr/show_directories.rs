@@ -1,15 +1,15 @@
 use colored::Colorize;
 use mingling::{
-    macros::{chain, pack, renderer},
     Groupped, RenderResult,
+    macros::{chain, pack, renderer},
 };
 use serde::Serialize;
 use std::io::Write as _;
 
 use crate::{
-    proj_mgr::{metadata::read_metadata, EntryShowTargetDirectories, EntryShowWorkspaceDirectory},
-    res::ResManifestPath,
     Next,
+    proj_mgr::{EntryShowTargetDirectories, EntryShowWorkspaceDirectory, metadata::read_metadata},
+    res::ResManifestPath,
 };
 
 #[derive(Serialize, Groupped)]

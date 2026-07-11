@@ -2,19 +2,19 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 use mingling::{
-    macros::{chain, pack, renderer},
     Groupped, RenderResult,
+    macros::{chain, pack, renderer},
 };
 use serde::Serialize;
 use std::io::Write as _;
 
 use crate::{
+    Next,
     proj_mgr::{
-        metadata::{read_metadata, CargoLockFile},
         EntryShowBinaries,
+        metadata::{CargoLockFile, read_metadata},
     },
     res::ResManifestPath,
-    Next,
 };
 
 #[derive(Serialize, Groupped)]
