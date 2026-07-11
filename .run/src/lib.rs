@@ -1,3 +1,4 @@
+pub mod dependency_order;
 pub mod verify;
 
 use colored::Colorize;
