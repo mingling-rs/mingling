@@ -1,5 +1,6 @@
-use mingling::prelude::*;
 use crate::Next;
+use mingling::prelude::*;
+use std::io::Write;
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 pack!(ResultName = String);
@@ -15,7 +16,11 @@ pub fn handle_greet(args: EntryGreet) -> Next {
     name
 }
 
+/// Renders the name.
 #[renderer]
-pub fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+// But renderers cannot use the `async` keyword
+pub fn render_name(name: ResultName) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Hello, {}!", *name).ok();
+    render_result
 }

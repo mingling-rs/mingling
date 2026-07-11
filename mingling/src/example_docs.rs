@@ -39,6 +39,7 @@
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{macros::route, prelude::*};
+/// use std::io::Write;
 ///
 /// dispatcher!("transfer", CMDTransfer => EntryTransfer);
 /// dispatcher!("strict-transfer", CMDStrictTransfer => EntryStrictTransfer);
@@ -91,20 +92,26 @@
 ///
 /// /// Renders the parsed transfer result (file/dir, size, name).
 /// #[renderer]
-/// fn render_result_file(result: ResultFile) {
+/// fn render_result_file(result: ResultFile) -> RenderResult {
 ///     let (is_dir, size, name) = result.into();
-///     r_println!(
+///     let mut result = RenderResult::new();
+///     writeln!(
+///         result,
 ///         "{}: {} ({})",
 ///         if is_dir { "dir" } else { "file" },
 ///         name,
 ///         size
 ///     )
+///     .ok();
+///     result
 /// }
 ///
 /// /// Renders the error when no name is provided.
 /// #[renderer]
-/// fn render_error_no_name_provided(_: ErrorNoNameProvided) {
-///     r_println!("Error: name is not provided")
+/// fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
+///     let mut result = RenderResult::new();
+///     writeln!(result, "Error: name is not provided").ok();
+///     result
 /// }
 ///
 /// gen_program!();
@@ -166,6 +173,7 @@ pub mod example_argument_parse {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{hook::ProgramHook, prelude::*};
+/// use std::io::Write;
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -197,8 +205,10 @@ pub mod example_argument_parse {}
 /// /// Renders the downloaded file name.
 /// #[renderer]
 /// // But renderers cannot use the `async` keyword
-/// pub fn render_downloaded(result: ResultDownloaded) {
-///     r_println!("\"{}\" downloaded.", *result);
+/// pub fn render_downloaded(result: ResultDownloaded) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "\"{}\" downloaded.", *result).ok();
+///     render_result
 /// }
 /// // --------- IMPORTANT ---------
 ///
@@ -241,6 +251,7 @@ pub mod example_async_support {}
 /// ```ignore
 /// // Import commonly used Mingling modules
 /// use mingling::prelude::*;
+/// use std::io::Write;
 ///
 /// // Define the `greet` subcommand
 /// //            _____________________________ subcmd name, can be nested (e.g. "remote.add" "remote.rm")
@@ -287,8 +298,10 @@ pub mod example_async_support {}
 /// // Define renderer `render_name`, used to render `ResultName`
 /// /// Renders the greeting message with the provided name.
 /// #[renderer]
-/// fn render_name(name: ResultName) {
-///     r_println!("Hello, {}!", *name);
+/// fn render_name(name: ResultName) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Hello, {}!", *name).ok();
+///     render_result
 /// }
 ///
 /// // Note: This macro generates the program entry point.
@@ -365,7 +378,8 @@ pub mod example_basic {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::{macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup, Groupped};
+/// use mingling::{Groupped, macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup};
+/// use std::io::Write;
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -416,24 +430,29 @@ pub mod example_basic {}
 ///
 /// /// Renders the greet output with optional repetition.
 /// #[renderer]
-/// fn render_greet(greet: EntryGreet) {
+/// fn render_greet(greet: EntryGreet) -> RenderResult {
 ///     let name = greet.name;
 ///     let count = greet.repeat.max(0) as usize;
 ///
-///     r_print!("Hello, ");
+///     let mut render_result = RenderResult::default();
+///     write!(render_result, "Hello, ").ok();
 ///     for i in 0..count {
-///         r_print!("{name}");
+///         write!(render_result, "{name}").ok();
 ///         if i < count - 1 {
-///             r_print!(", ");
+///             write!(render_result, ", ").ok();
 ///         }
 ///     }
-///     r_println!("!");
+///     writeln!(render_result, "!").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error message when greet argument parsing fails.
 /// #[renderer]
-/// fn render_greet_parse_failed(err: ErrorGreetParsed) {
-///     r_println!("{}", *err);
+/// // renderers can return a RenderResult instead of using r_println!
+/// pub fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
+///     let mut render_result = RenderResult::default();
+///     writeln!(render_result, "{}", *err).ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -584,6 +603,7 @@ pub mod example_combine_pathf_dispatch_tree {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{macros::suggest, prelude::*, ShellContext, Suggest};
+/// use std::io::Write;
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -657,13 +677,15 @@ pub mod example_combine_pathf_dispatch_tree {}
 ///
 /// /// Renders the greeting with the result name and repeat count.
 /// #[renderer]
-/// fn render_name(result: ResultName) {
+/// fn render_name(result: ResultName) -> RenderResult {
 ///     let (repeat, name) = result.inner;
+///     let mut render_result = RenderResult::new();
 ///     let mut parts = Vec::with_capacity(repeat as usize);
 ///     for _ in 0..repeat {
 ///         parts.push(name.clone());
 ///     }
-///     r_println!("Hello, {}!", parts.join(", "));
+///     writeln!(render_result, "Hello, {}!", parts.join(", ")).ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -703,6 +725,7 @@ pub mod example_completion {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{macros::route, parser::Pickable, prelude::*, Groupped};
+/// use std::io::Write;
 ///
 /// // Define types that can be recognized by Mingling
 /// //               ________________________ `Pickable` trait needs to implement Default
@@ -740,14 +763,18 @@ pub mod example_completion {}
 ///
 /// /// Renders the connected address.
 /// #[renderer]
-/// fn render_address(addr: Address) {
-///     r_println!("Connected to \"{}\"", addr.to_string());
+/// pub fn render_address(addr: Address) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     write!(render_result, "Connected to \"{}\"", addr.to_string()).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error message when address parsing fails.
 /// #[renderer]
-/// fn render_error_parse_address_failed(_: ErrorParseAddressFailed) {
-///     r_println!("Failed to parse address");
+/// pub fn render_error_parse_address_failed(_: ErrorParseAddressFailed) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     write!(render_result, "Failed to parse address").ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -856,6 +883,7 @@ pub mod example_custom_pickable {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::prelude::*;
+/// use std::io::Write;
 ///
 /// // --------- IMPORTANT ---------
 /// // You have a large number of subcommands
@@ -888,8 +916,10 @@ pub mod example_custom_pickable {}
 ///
 /// /// Renders the confirmation message for the `cmd5` command.
 /// #[renderer]
-/// fn render_cmd5(_: Entry5) {
-///     r_println!("It's works!");
+/// fn render_cmd5(_: Entry5) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "It's works!").ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -936,6 +966,7 @@ pub mod example_dispatch_tree {}
 ///     macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Groupped, ShellContext,
 ///     Suggest,
 /// };
+/// use std::io::Write;
 ///
 /// // Define the enum and derive the EnumTag trait
 /// //                        ________ adds metadata to the enum, enabling it to:
@@ -1000,10 +1031,11 @@ pub mod example_dispatch_tree {}
 ///
 /// /// Renders the selected programming language with its name and description.
 /// #[renderer]
-/// fn render_programming_language(lang: ProgrammingLanguages) {
-///     // You can use `enum_info()` to get the name and description of the current enum
+/// pub fn render_programming_language(lang: ProgrammingLanguages) -> RenderResult {
+///     let mut render_result = RenderResult::new();
 ///     let (name, desc) = lang.enum_info();
-///     r_println!("Selected: {} ({})", name, desc)
+///     writeln!(render_result, "Selected: {} ({})", name, desc).ok();
+///     render_result
 /// }
 ///
 /// #[completion(EntryLanguageSelection)]
@@ -1060,6 +1092,7 @@ pub mod example_enum_tag {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::prelude::*;
+/// use std::io::Write;
 ///
 /// // In Mingling, instead of using ? to propagate errors upward,
 /// // errors are treated as branches that continue execution.
@@ -1100,36 +1133,47 @@ pub mod example_enum_tag {}
 ///
 /// /// Renders a successful greeting with the given name.
 /// #[renderer]
-/// fn render_result_name(name: ResultName) {
-///     r_println!("Hello, {}", *name);
+/// fn render_result_name(name: ResultName) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Hello, {}", *name).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when no name is provided.
 /// #[renderer]
-/// fn render_error_no_name_provided(_: ErrorNoNameProvided) {
-///     // Prompt when no name is provided
-///     r_println!("No name provided");
+/// fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "No name provided").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the name is already taken.
 /// #[renderer]
-/// fn render_error_name_not_available(_: ErrorNameNotAvailable) {
-///     // Prompt when name is already taken
-///     r_println!("Name not available");
+/// fn render_error_name_not_available(_: ErrorNameNotAvailable) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Name not available").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the name exceeds the maximum length.
 /// #[renderer]
-/// fn render_error_name_too_long(len: ErrorNameTooLong) {
-///     // Prompt when name is too long, showing actual length
-///     r_println!("Name too long: {} > 10", *len);
+/// fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Name too long: {} > 10", *len).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the dispatcher (subcommand) is not found.
 /// #[renderer]
-/// fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
-///     // Prompt when command is not found, showing the input command
-///     r_println!("Command not found: \"{}\"", err.inner.join(" "));
+/// fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(
+///         render_result,
+///         "Command not found: \"{}\"",
+///         err.inner.join(" ")
+///     )
+///     .ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -1178,6 +1222,7 @@ pub mod example_error_handling {}
 ///     res::ResExitCode,
 ///     setup::{BasicProgramSetup, ExitCodeSetup},
 /// };
+/// use std::io::Write;
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -1210,25 +1255,32 @@ pub mod example_error_handling {}
 ///
 /// /// Renders a successful greeting with the given name.
 /// #[renderer]
-/// fn render_result_name(name: ResultName) {
-///     r_println!("Hello, {}", *name);
+/// fn render_result_name(name: ResultName) -> RenderResult {
+///     let mut result = RenderResult::new();
+///     writeln!(result, "Hello, {}", *name).ok();
+///     result
 /// }
 ///
 /// #[help]
-/// fn help_hello(_p: EntryHello, ec: &mut ResExitCode) {
-///     r_println!("Usage: hello <NAME>");
+/// fn help_hello(_p: EntryHello, ec: &mut ResExitCode) -> RenderResult {
+///     let mut result = RenderResult::new();
+///     writeln!(result, "Usage: hello <NAME>").ok();
 ///     ec.exit_code = 2;
+///     result
 /// }
 ///
 /// // Define renderer, render error message                      _______________ Inject exit code resource
 /// //                                                           /
 /// /// Renders the error when no name is provided               |
 /// #[renderer] //                                               vvvvvvvvvvvvvvvv
-/// fn render_error_no_name_provided(_: ErrorNoNameProvided, ec: &mut ResExitCode) {
+/// fn render_error_no_name_provided(_: ErrorNoNameProvided, ec: &mut ResExitCode) -> RenderResult {
 ///     ec.exit_code = 1;
 ///
+///     let mut result = RenderResult::new();
+///
 ///     // Prompt when no name is provided
-///     r_println!("No name provided (with exit code 1)");
+///     writeln!(result, "No name provided (with exit code 1)").ok();
+///     result
 /// }
 ///
 /// gen_program!();
@@ -1265,14 +1317,17 @@ pub mod example_exitcode {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
+/// use std::io::Write;
 ///
 /// dispatcher!("greet", CMDGreet => EntryGreet);
 ///
 /// // Define help        _________ When `program.user_context.help` is `true`
 /// //                   /            the command will not enter `#[chain]` / `#[renderer]`
 /// #[help] //           vvvvvvvvvv   but instead enter this `#[help]` function
-/// fn help_greet(_prev: EntryGreet) {
-///     r_println!("Usage: greet <NAME>");
+/// fn help_greet(_prev: EntryGreet) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Usage: greet <NAME>").ok();
+///     render_result
 /// }
 ///
 /// fn main() {
@@ -1333,6 +1388,7 @@ pub mod example_help {}
 ///     hook::{ProgramControlUnit, ProgramHook},
 ///     prelude::*,
 /// };
+/// use std::io::Write;
 ///
 /// dispatcher!("greet", CMDGreet => EntryGreet);
 ///
@@ -1376,9 +1432,12 @@ pub mod example_help {}
 /// }
 ///
 /// /// Renders the greeting message with the provided name.
+/// /// Renders the greeting message with the provided name.
 /// #[renderer]
-/// fn render_name(name: ResultName) {
-///     r_println!("Hello, {}!", *name);
+/// fn render_name(name: ResultName) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Hello, {}!", *name).ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -1465,6 +1524,7 @@ pub mod example_implicit_dispatcher {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use std::collections::BTreeMap;
+/// use std::io::Write;
 ///
 /// use mingling::{LazyInit, LazyRes, prelude::*};
 ///
@@ -1516,20 +1576,25 @@ pub mod example_implicit_dispatcher {}
 /// //                                          |     _____________________ Use LazyRes<ResLargeData>
 /// //                                          |    /                        instead of ResLargeData
 /// #[renderer] //                              vvvv vvvvvvvvvvvvvvvvvvvvv
-/// fn render_entry_show(_args: EntryShow, res: &mut LazyRes<ResLargeData>) {
+/// fn render_entry_show(_args: EntryShow, res: &mut LazyRes<ResLargeData>) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///
 ///     //             _______ Initialization happens here
 ///     //            /
 ///     //            vvvvvvv
 ///     let res = res.get_ref();
 ///     for (key, value) in &res.data {
-///         r_println!("{}: {}", key, value);
+///         writeln!(render_result, "{}: {}", key, value).ok();
 ///     }
+///     render_result
 /// }
 ///
 /// // When not using LazyRes<ResLargeData>, it will not be initialized
 /// #[renderer]
-/// fn render_entry_none(_args: EntryNone) {
-///     r_println!("None");
+/// fn render_entry_none(_args: EntryNone) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "None").ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -1574,6 +1639,7 @@ pub mod example_lazy_resources {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{macros::group, prelude::*};
+/// use std::io::Write;
 /// use std::{io::ErrorKind::Other, num::ParseIntError};
 ///
 /// dispatcher!("parse");
@@ -1616,8 +1682,10 @@ pub mod example_lazy_resources {}
 /// //                     _____________ Using std::num::ParseIntError as a chain input
 /// //                    /
 /// #[renderer] //        vvvvvvvvvvvv
-/// fn render_number(num: ParsedNumber) {
-///     r_println!("Parsed number: {}", *num);
+/// fn render_number(num: ParsedNumber) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     write!(render_result, "Parsed number: {}", *num).ok();
+///     render_result
 /// }
 ///
 /// /// Renderer for parse errors — using the outside `ParseIntError` type.
@@ -1625,16 +1693,20 @@ pub mod example_lazy_resources {}
 /// /// The `ParseIntError` type is registered via `group!` above, so it implements
 /// /// `Groupped<ThisProgram>` and can be used directly in a `#[renderer]` function.
 /// #[renderer]
-/// fn render_parse_error(err: ParseIntError) {
-///     r_println!("Parse error: {}", err);
+/// fn render_parse_error(err: ParseIntError) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     write!(render_result, "Parse error: {}", err).ok();
+///     render_result
 /// }
 ///
 /// /// Renderer for IO errors — using `std::io::Error` registered as `ErrorIo`.
 /// //                       ________ Must use alias `ErrorIo` here, not bare `std::io::Error`
 /// //                      /
 /// #[renderer] //          vvvvvvv
-/// fn render_error_io(err: ErrorIo) {
-///     r_println!("IO_ERROR: {}", err.to_string());
+/// fn render_error_io(err: ErrorIo) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     write!(render_result, "IO_ERROR: {}", err.to_string()).ok();
+///     render_result
 /// }
 ///
 /// fn main() {
@@ -1699,6 +1771,7 @@ pub mod example_outside_type {}
 /// ```ignore
 /// use mingling::prelude::*;
 /// use mingling::setup::StructuralRendererSetup;
+/// use std::io::Write;
 /// use std::path::PathBuf;
 ///
 /// dispatcher!("find", CMDFind => EntryFind);
@@ -1771,32 +1844,42 @@ pub mod example_outside_type {}
 ///
 /// /// Renders the successful result with the found directory path.
 /// #[renderer]
-/// fn render_result_path(path: ResultPath) {
-///     r_println!("Found directory: {}", path.display());
+/// fn render_result_path(path: ResultPath) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Found directory: {}", path.display()).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when no search path is provided.
 /// #[renderer]
-/// fn render_error_not_found(_: ErrorNotFound) {
-///     r_println!("Search path not provided");
+/// fn render_error_not_found(_: ErrorNotFound) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Search path not provided").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the given path is not a directory.
 /// #[renderer]
-/// fn render_error_not_dir(err: ErrorNotDir) {
-///     r_println!("Not a directory: {}", err.info.display());
+/// fn render_error_not_dir(err: ErrorNotDir) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Not a directory: {}", err.info.display()).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the structural error when no search path is provided.
 /// #[renderer]
-/// fn render_error_not_found_structural(_: ErrorNotFoundStructural) {
-///     r_println!("Search path not provided");
+/// fn render_error_not_found_structural(_: ErrorNotFoundStructural) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Search path not provided").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the structural error when the given path is not a directory.
 /// #[renderer]
-/// fn render_error_not_dir_structural(err: ErrorNotDirStructural) {
-///     r_println!("Not a directory: {}", err.info.display());
+/// fn render_error_not_dir_structural(err: ErrorNotDirStructural) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Not a directory: {}", err.info.display()).ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -1853,6 +1936,7 @@ pub mod example_pack_err {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{hook::ProgramHook, prelude::*};
+/// use std::io::Write;
 ///
 /// dispatcher!("panic", CMDPanic => EntryPanic);
 /// pack!(NotPanic = ());
@@ -1888,9 +1972,12 @@ pub mod example_pack_err {}
 /// }
 ///
 /// /// Renders the message when no panic occurs.
+/// /// Renders the message when no panic occurs.
 /// #[renderer]
-/// fn render(_: NotPanic) {
-///     r_println!("Program not panic");
+/// pub fn render(_: NotPanic) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Program not panic").ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -1994,6 +2081,7 @@ pub mod example_pathfinder {}
 ///     setup::{BasicREPLOutputSetup, BasicREPLPromptSetup, BasicREPLReadlineSetup},
 ///     this,
 /// };
+/// use std::io::Write;
 /// use std::{env::current_dir, path::PathBuf};
 ///
 /// // Resource to store the current directory
@@ -2116,10 +2204,12 @@ pub mod example_pathfinder {}
 ///
 /// /// Render ResultList data
 /// #[renderer]
-/// fn render_list(list: ResultList) {
+/// fn render_list(list: ResultList) -> RenderResult {
+///     let mut render_result = RenderResult::new();
 ///     for item in list.inner {
-///         r_println!("{}", item);
+///         writeln!(render_result, "{}", item).ok();
 ///     }
+///     render_result
 /// }
 ///
 /// // Handle exit command event
@@ -2141,15 +2231,24 @@ pub mod example_pathfinder {}
 ///
 /// /// Handle path not found event
 /// #[renderer]
-/// fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) {
-///     r_println!("Directory not found: {}", err.inner.display())
+/// fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(
+///         render_result,
+///         "Directory not found: {}",
+///         err.inner.display()
+///     )
+///     .ok();
+///     render_result
 /// }
 ///
 /// /// Handle dispatcher not found event
 /// /// Renders the error when a command is not found.
 /// #[renderer]
-/// fn dispatcher_not_found(prev: ErrorDispatcherNotFound) {
-///     r_println!("Command not found: \"{}\"", prev.join(", "))
+/// fn dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Command not found: \"{}\"", prev.join(", ")).ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -2187,9 +2286,9 @@ pub mod example_repl_basic {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use std::path::PathBuf;
-///
 /// use mingling::prelude::*;
+/// use std::io::Write;
+/// use std::path::PathBuf;
 ///
 /// // Create resource
 /// //        ______________ Resource needs to
@@ -2231,8 +2330,15 @@ pub mod example_repl_basic {}
 /// //                                              /
 /// /// Renders the current directory path.         |
 /// #[renderer] //                                  vvvvvvvvvvvvvv
-/// fn render_current(_: EntryCurrent, current_dir: &ResCurrentDir) {
-///     r_println!("Current directory: {}", current_dir.current_dir.display());
+/// fn render_current(_: EntryCurrent, current_dir: &ResCurrentDir) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     write!(
+///         render_result,
+///         "Current directory: {}",
+///         current_dir.current_dir.display()
+///     )
+///     .ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -2330,8 +2436,9 @@ pub mod example_setup {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::prelude::*;
-/// use mingling::{parser::Picker, setup::StructuralRendererSetup, StructuralData, Groupped};
+/// use mingling::{Groupped, StructuralData, parser::Picker, setup::StructuralRendererSetup};
 /// use serde::Serialize;
+/// use std::io::Write;
 ///
 /// dispatcher!("render", CMDRender => EntryRender);
 ///
@@ -2376,8 +2483,10 @@ pub mod example_setup {}
 ///
 /// /// Implement default renderer for when structural_renderer is not specified
 /// #[renderer]
-/// fn render_info(prev: Info) {
-///     r_println!("{} is {} years old", prev.name, prev.age);
+/// fn render_info(prev: Info) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "{} is {} years old", prev.name, prev.age).ok();
+///     render_result
 /// }
 ///
 /// gen_program!();
@@ -2407,6 +2516,7 @@ pub mod example_structural_renderer {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::prelude::*;
+/// use std::io::Write;
 ///
 /// #[cfg(test)]
 /// mod tests {
@@ -2441,25 +2551,25 @@ pub mod example_structural_renderer {}
 ///     #[test]
 ///     fn test_render_result_name() {
 ///         let r = render_result_name(ResultName::new("Peter".into()));
-///         assert_eq!(r, "Hello, Peter!\n")
+///         assert_eq!(r.to_string().as_str(), "Hello, Peter!\n")
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_error_no_name_provided() {
 ///         let r = render_error_no_name_provided(ErrorNoNameProvided::default());
-///         assert_eq!(r, "No name provided\n")
+///         assert_eq!(r.to_string().as_str(), "No name provided\n")
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_error_name_not_available() {
 ///         let r = render_error_name_not_available(ErrorNameNotAvailable::default());
-///         assert_eq!(r, "Name not available\n")
+///         assert_eq!(r.to_string().as_str(), "Name not available\n")
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_error_name_too_long() {
 ///         let r = render_error_name_too_long(ErrorNameTooLong::new(17));
-///         assert_eq!(r, "Name too long: 17 > 10\n")
+///         assert_eq!(r.to_string().as_str(), "Name too long: 17 > 10\n")
 ///     }
 ///     // --------- IMPORTANT ---------
 /// }
@@ -2493,32 +2603,47 @@ pub mod example_structural_renderer {}
 ///
 /// /// Renders a successful greeting with the given name.
 /// #[renderer]
-/// fn render_result_name(name: ResultName) -> String {
-///     r_println!("Hello, {}!", *name);
+/// fn render_result_name(name: ResultName) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Hello, {}!", *name).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when no name is provided.
 /// #[renderer]
-/// fn render_error_no_name_provided(_: ErrorNoNameProvided) -> String {
-///     r_println!("No name provided");
+/// fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "No name provided").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the name is already taken.
 /// #[renderer]
-/// fn render_error_name_not_available(_: ErrorNameNotAvailable) -> String {
-///     r_println!("Name not available");
+/// fn render_error_name_not_available(_: ErrorNameNotAvailable) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Name not available").ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the name exceeds the maximum length.
 /// #[renderer]
-/// fn render_error_name_too_long(len: ErrorNameTooLong) -> String {
-///     r_println!("Name too long: {} > 10", *len);
+/// fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Name too long: {} > 10", *len).ok();
+///     render_result
 /// }
 ///
 /// /// Renders the error when the dispatcher (subcommand) is not found.
 /// #[renderer]
-/// fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
-///     r_println!("Command not found: \"{}\"", err.inner.join(" "));
+/// fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(
+///         render_result,
+///         "Command not found: \"{}\"",
+///         err.inner.join(" ")
+///     )
+///     .ok();
+///     render_result
 /// }
 ///
 /// gen_program!();

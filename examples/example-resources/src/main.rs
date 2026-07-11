@@ -14,9 +14,9 @@
 //! Current directory: /home/alice/mingling/src
 //! ```
 
-use std::path::PathBuf;
-
 use mingling::prelude::*;
+use std::io::Write;
+use std::path::PathBuf;
 
 // Create resource
 //        ______________ Resource needs to
@@ -58,8 +58,15 @@ fn render_modify_current(args: EntryModifyCurrent, current_dir: &mut ResCurrentD
 //                                              /
 /// Renders the current directory path.         |
 #[renderer] //                                  vvvvvvvvvvvvvv
-fn render_current(_: EntryCurrent, current_dir: &ResCurrentDir) {
-    r_println!("Current directory: {}", current_dir.current_dir.display());
+fn render_current(_: EntryCurrent, current_dir: &ResCurrentDir) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    write!(
+        render_result,
+        "Current directory: {}",
+        current_dir.current_dir.display()
+    )
+    .ok();
+    render_result
 }
 
 gen_program!();

@@ -38,7 +38,8 @@
 //! For more information, try '--help'.
 //! ```
 
-use mingling::{macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup, Groupped};
+use mingling::{Groupped, macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup};
+use std::io::Write;
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -89,24 +90,29 @@ pub struct EntryGreet {
 
 /// Renders the greet output with optional repetition.
 #[renderer]
-fn render_greet(greet: EntryGreet) {
+fn render_greet(greet: EntryGreet) -> RenderResult {
     let name = greet.name;
     let count = greet.repeat.max(0) as usize;
 
-    r_print!("Hello, ");
+    let mut render_result = RenderResult::default();
+    write!(render_result, "Hello, ").ok();
     for i in 0..count {
-        r_print!("{name}");
+        write!(render_result, "{name}").ok();
         if i < count - 1 {
-            r_print!(", ");
+            write!(render_result, ", ").ok();
         }
     }
-    r_println!("!");
+    writeln!(render_result, "!").ok();
+    render_result
 }
 
 /// Renders the error message when greet argument parsing fails.
 #[renderer]
-fn render_greet_parse_failed(err: ErrorGreetParsed) {
-    r_println!("{}", *err);
+// renderers can return a RenderResult instead of using r_println!
+pub fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
+    let mut render_result = RenderResult::default();
+    writeln!(render_result, "{}", *err).ok();
+    render_result
 }
 
 gen_program!();

@@ -16,6 +16,7 @@
 //! ```
 
 use mingling::{hook::ProgramHook, prelude::*};
+use std::io::Write;
 
 dispatcher!("panic", CMDPanic => EntryPanic);
 pack!(NotPanic = ());
@@ -51,9 +52,12 @@ fn handle_panic(prev: EntryPanic) -> Next {
 }
 
 /// Renders the message when no panic occurs.
+/// Renders the message when no panic occurs.
 #[renderer]
-fn render(_: NotPanic) {
-    r_println!("Program not panic");
+pub fn render(_: NotPanic) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Program not panic").ok();
+    render_result
 }
 
 gen_program!();

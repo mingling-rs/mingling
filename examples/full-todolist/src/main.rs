@@ -7,12 +7,13 @@
 //! > This is truly a cliché example, as common as `Hello World`!
 
 use mingling::{
+    LazyInit, LazyRes,
     macros::route,
     prelude::*,
     res::ResExitCode,
-    setup::{ExitCodeSetup, StructuralRendererSetup, HelpFlagSetup},
-    LazyInit, LazyRes,
+    setup::{ExitCodeSetup, HelpFlagSetup, StructuralRendererSetup},
 };
+use std::io::Write;
 
 mod help;
 pub use help::*;
@@ -160,38 +161,47 @@ fn handle_clean(
     }
 }
 
+/// Renders error when no task description is provided.
 #[renderer]
-fn render_error_no_task_description_provided(
+pub fn render_error_no_task_description_provided(
     _err: ErrorNoTaskDescriptionProvided,
     // ExitCode
     ec: &mut ResExitCode,
-) {
-    r_println!("No task description provided!");
-    r_println!("");
-    r_println!("Use `todolist add <desc>` to add a task");
+) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "No task description provided!").ok();
+    writeln!(render_result).ok();
+    writeln!(render_result, "Use `todolist add <desc>` to add a task").ok();
     ec.exit_code = 1;
+    render_result
 }
 
+/// Renders error when no index is provided.
 #[renderer]
-fn render_error_no_index_provided(
+pub fn render_error_no_index_provided(
     _err: ErrorNoIndexProvided,
     // ExitCode
     ec: &mut ResExitCode,
-) {
-    r_println!("No index provided!");
-    r_println!("");
-    r_println!("Use `todolist list` to query indexes");
+) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "No index provided!").ok();
+    writeln!(render_result).ok();
+    writeln!(render_result, "Use `todolist list` to query indexes").ok();
     ec.exit_code = 2;
+    render_result
 }
 
+/// Renders error when index is out of bounds.
 #[renderer]
-fn render_error_index_out_of_bounds(
+pub fn render_error_index_out_of_bounds(
     _err: ErrorIndexOutOfBounds,
     // ExitCode
     ec: &mut ResExitCode,
-) {
-    r_println!("Index out of bounds!");
+) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Index out of bounds!").ok();
     ec.exit_code = 3;
+    render_result
 }
 
 gen_program!();

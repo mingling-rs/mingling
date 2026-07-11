@@ -14,6 +14,7 @@
 
 // Import commonly used Mingling modules
 use mingling::prelude::*;
+use std::io::Write;
 
 // Define the `greet` subcommand
 //            _____________________________ subcmd name, can be nested (e.g. "remote.add" "remote.rm")
@@ -60,8 +61,10 @@ fn handle_greet(args: EntryGreet) -> Next {
 // Define renderer `render_name`, used to render `ResultName`
 /// Renders the greeting message with the provided name.
 #[renderer]
-fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+fn render_name(name: ResultName) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Hello, {}!", *name).ok();
+    render_result
 }
 
 // Note: This macro generates the program entry point.

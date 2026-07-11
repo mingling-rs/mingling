@@ -24,6 +24,7 @@ use mingling::{
     hook::{ProgramControlUnit, ProgramHook},
     prelude::*,
 };
+use std::io::Write;
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 
@@ -67,9 +68,12 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
 
 /// Renders the greeting message with the provided name.
+/// Renders the greeting message with the provided name.
 #[renderer]
-fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+fn render_name(name: ResultName) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Hello, {}!", *name).ok();
+    render_result
 }
 
 gen_program!();

@@ -24,6 +24,7 @@
 //! ```
 
 use mingling::{hook::ProgramHook, prelude::*};
+use std::io::Write;
 
 #[tokio::main]
 async fn main() {
@@ -55,8 +56,10 @@ pub async fn handle_download(args: EntryDownload) -> Next {
 /// Renders the downloaded file name.
 #[renderer]
 // But renderers cannot use the `async` keyword
-pub fn render_downloaded(result: ResultDownloaded) {
-    r_println!("\"{}\" downloaded.", *result);
+pub fn render_downloaded(result: ResultDownloaded) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "\"{}\" downloaded.", *result).ok();
+    render_result
 }
 // --------- IMPORTANT ---------
 

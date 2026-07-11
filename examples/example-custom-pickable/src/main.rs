@@ -15,6 +15,7 @@
 //! ```
 
 use mingling::{macros::route, parser::Pickable, prelude::*, Groupped};
+use std::io::Write;
 
 // Define types that can be recognized by Mingling
 //               ________________________ `Pickable` trait needs to implement Default
@@ -52,14 +53,18 @@ fn handle_connect(prev: EntryConnect) -> Next {
 
 /// Renders the connected address.
 #[renderer]
-fn render_address(addr: Address) {
-    r_println!("Connected to \"{}\"", addr.to_string());
+pub fn render_address(addr: Address) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    write!(render_result, "Connected to \"{}\"", addr).ok();
+    render_result
 }
 
 /// Renders the error message when address parsing fails.
 #[renderer]
-fn render_error_parse_address_failed(_: ErrorParseAddressFailed) {
-    r_println!("Failed to parse address");
+pub fn render_error_parse_address_failed(_: ErrorParseAddressFailed) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    write!(render_result, "Failed to parse address").ok();
+    render_result
 }
 
 gen_program!();

@@ -14,14 +14,17 @@
 //! ```
 
 use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
+use std::io::Write;
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 // Define help        _________ When `program.user_context.help` is `true`
 //                   /            the command will not enter `#[chain]` / `#[renderer]`
 #[help] //           vvvvvvvvvv   but instead enter this `#[help]` function
-fn help_greet(_prev: EntryGreet) {
-    r_println!("Usage: greet <NAME>");
+fn help_greet(_prev: EntryGreet) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Usage: greet <NAME>").ok();
+    render_result
 }
 
 fn main() {

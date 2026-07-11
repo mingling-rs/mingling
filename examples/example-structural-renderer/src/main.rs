@@ -18,8 +18,9 @@
 //! ```
 
 use mingling::prelude::*;
-use mingling::{parser::Picker, setup::StructuralRendererSetup, StructuralData, Groupped};
+use mingling::{Groupped, StructuralData, parser::Picker, setup::StructuralRendererSetup};
 use serde::Serialize;
+use std::io::Write;
 
 dispatcher!("render", CMDRender => EntryRender);
 
@@ -64,8 +65,10 @@ fn parse_render(prev: EntryRender) -> Next {
 
 /// Implement default renderer for when structural_renderer is not specified
 #[renderer]
-fn render_info(prev: Info) {
-    r_println!("{} is {} years old", prev.name, prev.age);
+fn render_info(prev: Info) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "{} is {} years old", prev.name, prev.age).ok();
+    render_result
 }
 
 gen_program!();

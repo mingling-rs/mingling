@@ -21,6 +21,7 @@
 //! ```
 
 use mingling::prelude::*;
+use std::io::Write;
 
 // In Mingling, instead of using ? to propagate errors upward,
 // errors are treated as branches that continue execution.
@@ -61,36 +62,47 @@ fn handle_hello(args: EntryHello) -> Next {
 
 /// Renders a successful greeting with the given name.
 #[renderer]
-fn render_result_name(name: ResultName) {
-    r_println!("Hello, {}", *name);
+fn render_result_name(name: ResultName) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Hello, {}", *name).ok();
+    render_result
 }
 
 /// Renders the error when no name is provided.
 #[renderer]
-fn render_error_no_name_provided(_: ErrorNoNameProvided) {
-    // Prompt when no name is provided
-    r_println!("No name provided");
+fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "No name provided").ok();
+    render_result
 }
 
 /// Renders the error when the name is already taken.
 #[renderer]
-fn render_error_name_not_available(_: ErrorNameNotAvailable) {
-    // Prompt when name is already taken
-    r_println!("Name not available");
+fn render_error_name_not_available(_: ErrorNameNotAvailable) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Name not available").ok();
+    render_result
 }
 
 /// Renders the error when the name exceeds the maximum length.
 #[renderer]
-fn render_error_name_too_long(len: ErrorNameTooLong) {
-    // Prompt when name is too long, showing actual length
-    r_println!("Name too long: {} > 10", *len);
+fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Name too long: {} > 10", *len).ok();
+    render_result
 }
 
 /// Renders the error when the dispatcher (subcommand) is not found.
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
-    // Prompt when command is not found, showing the input command
-    r_println!("Command not found: \"{}\"", err.inner.join(" "));
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(
+        render_result,
+        "Command not found: \"{}\"",
+        err.inner.join(" ")
+    )
+    .ok();
+    render_result
 }
 
 gen_program!();

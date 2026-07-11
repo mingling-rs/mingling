@@ -1,10 +1,8 @@
 //! Data structures, read and write logic for the todo list
 
-use mingling::{
-    macros::{r_println, renderer},
-    Groupped,
-};
+use mingling::{Groupped, RenderResult, macros::renderer};
 use serde::{Deserialize, Serialize};
+use std::io::Write;
 use std::{env::current_dir, path::PathBuf};
 
 use crate::ResProgramFlags;
@@ -37,22 +35,30 @@ pub fn read_todo_list() -> ResTodoList {
     serde_json::from_reader(reader).unwrap_or_default()
 }
 
+/// Renders the todo list.
 #[renderer]
-pub fn render_res_todo_list(todo_list: ResTodoList, program_flags: &ResProgramFlags) {
+pub fn render_res_todo_list(
+    todo_list: ResTodoList,
+    program_flags: &ResProgramFlags,
+) -> RenderResult {
+    let mut render_result = RenderResult::new();
     let mut idx = 0;
-    r_println!("TODO: ");
+    writeln!(render_result, "TODO: ").ok();
     for item in &todo_list.items {
         if item.completed && !program_flags.all {
             idx += 1;
             continue;
         }
-        r_println!(
+        writeln!(
+            render_result,
             "  {idx}. [{}] - \"{}\"",
             if item.completed { "x" } else { " " },
             item.item
-        );
+        )
+        .ok();
         idx += 1;
     }
+    render_result
 }
 
 pub fn write_todo_list(todo_list: ResTodoList) {

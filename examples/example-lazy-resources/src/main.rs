@@ -22,6 +22,7 @@
 //! ```
 
 use std::collections::BTreeMap;
+use std::io::Write;
 
 use mingling::{LazyInit, LazyRes, prelude::*};
 
@@ -73,20 +74,25 @@ fn main() {
 //                                          |     _____________________ Use LazyRes<ResLargeData>
 //                                          |    /                        instead of ResLargeData
 #[renderer] //                              vvvv vvvvvvvvvvvvvvvvvvvvv
-fn render_entry_show(_args: EntryShow, res: &mut LazyRes<ResLargeData>) {
+fn render_entry_show(_args: EntryShow, res: &mut LazyRes<ResLargeData>) -> RenderResult {
+    let mut render_result = RenderResult::new();
+
     //             _______ Initialization happens here
     //            /
     //            vvvvvvv
     let res = res.get_ref();
     for (key, value) in &res.data {
-        r_println!("{}: {}", key, value);
+        writeln!(render_result, "{}: {}", key, value).ok();
     }
+    render_result
 }
 
 // When not using LazyRes<ResLargeData>, it will not be initialized
 #[renderer]
-fn render_entry_none(_args: EntryNone) {
-    r_println!("None");
+fn render_entry_none(_args: EntryNone) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "None").ok();
+    render_result
 }
 
 gen_program!();

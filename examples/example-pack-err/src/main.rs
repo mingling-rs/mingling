@@ -28,6 +28,7 @@
 
 use mingling::prelude::*;
 use mingling::setup::StructuralRendererSetup;
+use std::io::Write;
 use std::path::PathBuf;
 
 dispatcher!("find", CMDFind => EntryFind);
@@ -100,32 +101,42 @@ fn handle_find_structural(args: EntryFindStructural) -> Next {
 
 /// Renders the successful result with the found directory path.
 #[renderer]
-fn render_result_path(path: ResultPath) {
-    r_println!("Found directory: {}", path.display());
+fn render_result_path(path: ResultPath) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Found directory: {}", path.display()).ok();
+    render_result
 }
 
 /// Renders the error when no search path is provided.
 #[renderer]
-fn render_error_not_found(_: ErrorNotFound) {
-    r_println!("Search path not provided");
+fn render_error_not_found(_: ErrorNotFound) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Search path not provided").ok();
+    render_result
 }
 
 /// Renders the error when the given path is not a directory.
 #[renderer]
-fn render_error_not_dir(err: ErrorNotDir) {
-    r_println!("Not a directory: {}", err.info.display());
+fn render_error_not_dir(err: ErrorNotDir) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Not a directory: {}", err.info.display()).ok();
+    render_result
 }
 
 /// Renders the structural error when no search path is provided.
 #[renderer]
-fn render_error_not_found_structural(_: ErrorNotFoundStructural) {
-    r_println!("Search path not provided");
+fn render_error_not_found_structural(_: ErrorNotFoundStructural) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Search path not provided").ok();
+    render_result
 }
 
 /// Renders the structural error when the given path is not a directory.
 #[renderer]
-fn render_error_not_dir_structural(err: ErrorNotDirStructural) {
-    r_println!("Not a directory: {}", err.info.display());
+fn render_error_not_dir_structural(err: ErrorNotDirStructural) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Not a directory: {}", err.info.display()).ok();
+    render_result
 }
 
 gen_program!();

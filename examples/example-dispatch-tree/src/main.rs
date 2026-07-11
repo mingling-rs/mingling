@@ -21,6 +21,7 @@
 //!
 
 use mingling::prelude::*;
+use std::io::Write;
 
 // --------- IMPORTANT ---------
 // You have a large number of subcommands
@@ -53,8 +54,10 @@ fn main() {
 
 /// Renders the confirmation message for the `cmd5` command.
 #[renderer]
-fn render_cmd5(_: Entry5) {
-    r_println!("It's works!");
+fn render_cmd5(_: Entry5) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "It's works!").ok();
+    render_result
 }
 
 gen_program!();

@@ -14,6 +14,7 @@ use mingling::{
     setup::{BasicREPLOutputSetup, BasicREPLPromptSetup, BasicREPLReadlineSetup},
     this,
 };
+use std::io::Write;
 use std::{env::current_dir, path::PathBuf};
 
 // Resource to store the current directory
@@ -136,10 +137,12 @@ fn handle_ls(_prev: EntryLs, current_dir: &ResCurrentDir) -> Next {
 
 /// Render ResultList data
 #[renderer]
-fn render_list(list: ResultList) {
+fn render_list(list: ResultList) -> RenderResult {
+    let mut render_result = RenderResult::new();
     for item in list.inner {
-        r_println!("{}", item);
+        writeln!(render_result, "{}", item).ok();
     }
+    render_result
 }
 
 // Handle exit command event
@@ -161,15 +164,24 @@ fn handle_clear(_prev: EntryClear) {
 
 /// Handle path not found event
 #[renderer]
-fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) {
-    r_println!("Directory not found: {}", err.inner.display())
+fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(
+        render_result,
+        "Directory not found: {}",
+        err.inner.display()
+    )
+    .ok();
+    render_result
 }
 
 /// Handle dispatcher not found event
 /// Renders the error when a command is not found.
 #[renderer]
-fn dispatcher_not_found(prev: ErrorDispatcherNotFound) {
-    r_println!("Command not found: \"{}\"", prev.join(", "))
+fn dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Command not found: \"{}\"", prev.join(", ")).ok();
+    render_result
 }
 
 gen_program!();

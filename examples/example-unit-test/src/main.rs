@@ -7,6 +7,7 @@
 //! ```
 
 use mingling::prelude::*;
+use std::io::Write;
 
 #[cfg(test)]
 mod tests {
@@ -41,25 +42,25 @@ mod tests {
     #[test]
     fn test_render_result_name() {
         let r = render_result_name(ResultName::new("Peter".into()));
-        assert_eq!(r, "Hello, Peter!\n")
+        assert_eq!(r.to_string().as_str(), "Hello, Peter!\n")
     }
 
     #[test]
     fn test_render_error_no_name_provided() {
         let r = render_error_no_name_provided(ErrorNoNameProvided::default());
-        assert_eq!(r, "No name provided\n")
+        assert_eq!(r.to_string().as_str(), "No name provided\n")
     }
 
     #[test]
     fn test_render_error_name_not_available() {
         let r = render_error_name_not_available(ErrorNameNotAvailable::default());
-        assert_eq!(r, "Name not available\n")
+        assert_eq!(r.to_string().as_str(), "Name not available\n")
     }
 
     #[test]
     fn test_render_error_name_too_long() {
         let r = render_error_name_too_long(ErrorNameTooLong::new(17));
-        assert_eq!(r, "Name too long: 17 > 10\n")
+        assert_eq!(r.to_string().as_str(), "Name too long: 17 > 10\n")
     }
     // --------- IMPORTANT ---------
 }
@@ -93,32 +94,47 @@ fn handle_hello(args: EntryHello) -> Next {
 
 /// Renders a successful greeting with the given name.
 #[renderer]
-fn render_result_name(name: ResultName) -> String {
-    r_println!("Hello, {}!", *name);
+fn render_result_name(name: ResultName) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Hello, {}!", *name).ok();
+    render_result
 }
 
 /// Renders the error when no name is provided.
 #[renderer]
-fn render_error_no_name_provided(_: ErrorNoNameProvided) -> String {
-    r_println!("No name provided");
+fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "No name provided").ok();
+    render_result
 }
 
 /// Renders the error when the name is already taken.
 #[renderer]
-fn render_error_name_not_available(_: ErrorNameNotAvailable) -> String {
-    r_println!("Name not available");
+fn render_error_name_not_available(_: ErrorNameNotAvailable) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Name not available").ok();
+    render_result
 }
 
 /// Renders the error when the name exceeds the maximum length.
 #[renderer]
-fn render_error_name_too_long(len: ErrorNameTooLong) -> String {
-    r_println!("Name too long: {} > 10", *len);
+fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Name too long: {} > 10", *len).ok();
+    render_result
 }
 
 /// Renders the error when the dispatcher (subcommand) is not found.
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
-    r_println!("Command not found: \"{}\"", err.inner.join(" "));
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(
+        render_result,
+        "Command not found: \"{}\"",
+        err.inner.join(" ")
+    )
+    .ok();
+    render_result
 }
 
 gen_program!();

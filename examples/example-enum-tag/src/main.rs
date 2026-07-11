@@ -19,6 +19,7 @@ use mingling::{
     macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Groupped, ShellContext,
     Suggest,
 };
+use std::io::Write;
 
 // Define the enum and derive the EnumTag trait
 //                        ________ adds metadata to the enum, enabling it to:
@@ -83,10 +84,11 @@ fn handle_language_selection(args: EntryLanguageSelection) -> Next {
 
 /// Renders the selected programming language with its name and description.
 #[renderer]
-fn render_programming_language(lang: ProgrammingLanguages) {
-    // You can use `enum_info()` to get the name and description of the current enum
+pub fn render_programming_language(lang: ProgrammingLanguages) -> RenderResult {
+    let mut render_result = RenderResult::new();
     let (name, desc) = lang.enum_info();
-    r_println!("Selected: {} ({})", name, desc)
+    writeln!(render_result, "Selected: {} ({})", name, desc).ok();
+    render_result
 }
 
 #[completion(EntryLanguageSelection)]

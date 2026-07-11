@@ -1,9 +1,8 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
-    Ident, ItemStruct, LitBool, LitStr, Token,
     parse::{Parse, ParseStream},
-    parse_macro_input,
+    parse_macro_input, Ident, ItemStruct, LitBool, LitStr, Token,
 };
 
 /// Parsed key-value options after the first positional arguments
@@ -144,7 +143,7 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         Some(quote! {
             #[allow(non_snake_case)]
             #[::mingling::macros::help]
-            pub fn #help_fn_name(_prev: #struct_name) {
+            pub fn #help_fn_name(_prev: #struct_name) -> ::mingling::RenderResult {
                 use std::io::Write;
                 use clap::ColorChoice;
 
@@ -154,11 +153,14 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
                         let mut cmd = <#struct_name as ::clap::CommandFactory>::command()
                             .color(ColorChoice::Always);
                         let styled = cmd.render_help();
-                        write!(__renderer_inner_result, "{}", styled.ansi()).unwrap();
+                        let mut result = ::mingling::RenderResult::new();
+                        let _ = write!(result, "{}", styled.ansi());
+                        result
                     }
                     ::mingling::ClapHelpPrintBehaviour::PrintDirectly => {
                         let mut command = <#struct_name as ::clap::CommandFactory>::command();
                         command.print_help().unwrap();
+                        ::mingling::RenderResult::new()
                     }
                 }
             }

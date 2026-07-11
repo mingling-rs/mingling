@@ -45,6 +45,7 @@
 //! ```
 
 use mingling::{macros::suggest, prelude::*, ShellContext, Suggest};
+use std::io::Write;
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -118,13 +119,15 @@ fn handle_greet(args: EntryGreet) -> Next {
 
 /// Renders the greeting with the result name and repeat count.
 #[renderer]
-fn render_name(result: ResultName) {
+fn render_name(result: ResultName) -> RenderResult {
     let (repeat, name) = result.inner;
+    let mut render_result = RenderResult::new();
     let mut parts = Vec::with_capacity(repeat as usize);
     for _ in 0..repeat {
         parts.push(name.clone());
     }
-    r_println!("Hello, {}!", parts.join(", "));
+    writeln!(render_result, "Hello, {}!", parts.join(", ")).ok();
+    render_result
 }
 
 gen_program!();

@@ -19,6 +19,7 @@
 //! ```
 
 use mingling::{macros::route, prelude::*};
+use std::io::Write;
 
 dispatcher!("transfer", CMDTransfer => EntryTransfer);
 dispatcher!("strict-transfer", CMDStrictTransfer => EntryStrictTransfer);
@@ -71,20 +72,26 @@ fn handle_strict_transfer_parse(args: EntryStrictTransfer) -> Next {
 
 /// Renders the parsed transfer result (file/dir, size, name).
 #[renderer]
-fn render_result_file(result: ResultFile) {
+fn render_result_file(result: ResultFile) -> RenderResult {
     let (is_dir, size, name) = result.into();
-    r_println!(
+    let mut result = RenderResult::new();
+    writeln!(
+        result,
         "{}: {} ({})",
         if is_dir { "dir" } else { "file" },
         name,
         size
     )
+    .ok();
+    result
 }
 
 /// Renders the error when no name is provided.
 #[renderer]
-fn render_error_no_name_provided(_: ErrorNoNameProvided) {
-    r_println!("Error: name is not provided")
+fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Error: name is not provided").ok();
+    result
 }
 
 gen_program!();

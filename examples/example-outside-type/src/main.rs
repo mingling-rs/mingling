@@ -19,6 +19,7 @@
 //! ```
 
 use mingling::{macros::group, prelude::*};
+use std::io::Write;
 use std::{io::ErrorKind::Other, num::ParseIntError};
 
 dispatcher!("parse");
@@ -61,8 +62,10 @@ fn parse_number(args: EntryParse) -> Next {
 //                     _____________ Using std::num::ParseIntError as a chain input
 //                    /
 #[renderer] //        vvvvvvvvvvvv
-fn render_number(num: ParsedNumber) {
-    r_println!("Parsed number: {}", *num);
+fn render_number(num: ParsedNumber) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    write!(render_result, "Parsed number: {}", *num).ok();
+    render_result
 }
 
 /// Renderer for parse errors — using the outside `ParseIntError` type.
@@ -70,16 +73,20 @@ fn render_number(num: ParsedNumber) {
 /// The `ParseIntError` type is registered via `group!` above, so it implements
 /// `Groupped<ThisProgram>` and can be used directly in a `#[renderer]` function.
 #[renderer]
-fn render_parse_error(err: ParseIntError) {
-    r_println!("Parse error: {}", err);
+fn render_parse_error(err: ParseIntError) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    write!(render_result, "Parse error: {}", err).ok();
+    render_result
 }
 
 /// Renderer for IO errors — using `std::io::Error` registered as `ErrorIo`.
 //                       ________ Must use alias `ErrorIo` here, not bare `std::io::Error`
 //                      /
 #[renderer] //          vvvvvvv
-fn render_error_io(err: ErrorIo) {
-    r_println!("IO_ERROR: {}", err.to_string());
+fn render_error_io(err: ErrorIo) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    write!(render_result, "IO_ERROR: {}", err).ok();
+    render_result
 }
 
 fn main() {

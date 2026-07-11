@@ -20,6 +20,7 @@ use mingling::{
     res::ResExitCode,
     setup::{BasicProgramSetup, ExitCodeSetup},
 };
+use std::io::Write;
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -52,25 +53,32 @@ fn handle_hello(args: EntryHello) -> Next {
 
 /// Renders a successful greeting with the given name.
 #[renderer]
-fn render_result_name(name: ResultName) {
-    r_println!("Hello, {}", *name);
+fn render_result_name(name: ResultName) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}", *name).ok();
+    result
 }
 
 #[help]
-fn help_hello(_p: EntryHello, ec: &mut ResExitCode) {
-    r_println!("Usage: hello <NAME>");
+fn help_hello(_p: EntryHello, ec: &mut ResExitCode) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Usage: hello <NAME>").ok();
     ec.exit_code = 2;
+    result
 }
 
 // Define renderer, render error message                      _______________ Inject exit code resource
 //                                                           /
 /// Renders the error when no name is provided               |
 #[renderer] //                                               vvvvvvvvvvvvvvvv
-fn render_error_no_name_provided(_: ErrorNoNameProvided, ec: &mut ResExitCode) {
+fn render_error_no_name_provided(_: ErrorNoNameProvided, ec: &mut ResExitCode) -> RenderResult {
     ec.exit_code = 1;
 
+    let mut result = RenderResult::new();
+
     // Prompt when no name is provided
-    r_println!("No name provided (with exit code 1)");
+    writeln!(result, "No name provided (with exit code 1)").ok();
+    result
 }
 
 gen_program!();

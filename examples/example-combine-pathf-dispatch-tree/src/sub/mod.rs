@@ -1,5 +1,6 @@
 use crate::Next;
-use mingling::{macros::r_println, prelude::*};
+use mingling::prelude::*;
+use std::io::Write;
 
 dispatcher!("hello");
 
@@ -17,6 +18,8 @@ pub fn handle_my(args: EntryHello) -> Next {
 }
 
 #[renderer]
-pub fn render_my(msg: ResultMessage) {
-    r_println!("Hello, {}!", *msg);
+pub fn render_my(msg: ResultMessage) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "Hello, {}!", *msg).ok();
+    render_result
 }
