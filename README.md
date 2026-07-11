@@ -180,27 +180,36 @@ Key points:
 
 ### 3. The Renderer — "#[renderer]" — How Output Works
 
-The `#[renderer]` attribute turns a function into an output handler. It receives the final result of a chain and writes it to the terminal.
+The `#[renderer]` attribute turns a function into an output handler. It receives the final result of a chain and returns a `RenderResult`.
 
 ```rust
+use mingling::macros::pack;
+use mingling::prelude::*;
+use std::io::Write;
+
 pack!(ResultGreeting = String);
 
 #[renderer]
-fn render_greeting(greeting: ResultGreeting) {
-    r_println!("Hello, {}!", *greeting);
+fn render_greeting(greeting: ResultGreeting) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}!", *greeting).ok();
+    result
 }
 ```
 
-Inside a renderer, use `r_print!` / `r_println!` to write to the output buffer. This is not `println!` — it writes into Mingling's internal `RenderResult` buffer, which is flushed at the end of the pipeline.
+Inside a renderer, create a `RenderResult`, write to it using `write!` / `writeln!` (from [`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html)), and return it. The output is captured in the buffer and flushed by the framework at the end of the pipeline.
 
 You can write renderers for **any type** in your program, including error types:
 
 ```rust
 use mingling::prelude::*;
+use std::io::Write;
 
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
-    r_println!("Command not found: [{}]", err.join(" "));
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Command not found: [{}]", err.join(" ")).ok();
+    result
 }
 ```
 
@@ -282,14 +291,17 @@ Help is just another attribute macro. When the user passes `--help` or `-h`, the
 Enable it by adding `BasicProgramSetup`:
 
 ```rust
-use mingling::{macros::help, setup::BasicProgramSetup};
+use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
+use std::io::Write;
 
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 #[help]
-fn help_greet(_prev: EntryGreet) {
-    r_println!("Usage: greet <NAME>");
-    r_println!("Greets the user with the given name.");
+fn help_greet(_prev: EntryGreet) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Usage: greet <NAME>").ok();
+    writeln!(result, "Greets the user with the given name.").ok();
+    result
 }
 
 fn main() {
@@ -397,6 +409,10 @@ fn complete_lang(_: &ShellContext) -> Suggest {
 Mingling doesn't use `?` operator propagation. Instead, errors are just **alternative results** that flow through the same chain/render pipeline. Create error types with `pack!` and route to them with `.to_render()`:
 
 ```rust
+use mingling::macros::pack;
+use mingling::prelude::*;
+use std::io::Write;
+
 dispatcher!("hello", CMDHello => EntryHello);
 pack!(ResultName = String);
 pack!(ErrorNoNameProvided = ());
@@ -416,13 +432,17 @@ fn handle(args: EntryHello) -> Next {
 }
 
 #[renderer]
-fn render_no_name(_: ErrorNoNameProvided) {
-    r_println!("No name provided");
+fn render_no_name(_: ErrorNoNameProvided) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "No name provided").ok();
+    result
 }
 
 #[renderer]
-fn render_too_long(len: ErrorNameTooLong) {
-    r_println!("Name too long: {} > 10", *len);
+fn render_too_long(len: ErrorNameTooLong) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Name too long: {} > 10", *len).ok();
+    result
 }
 ```
 
@@ -479,6 +499,8 @@ fn change_dir(prev: EntryCd, current_dir: &mut ResCurrentDir) -> Next {
 Resources can also be injected into `#[renderer]`:
 
 ```rust
+use mingling::prelude::*;
+use std::io::Write;
 
 dispatcher!("current", CMDCurrent => EntryCurrent);
 
@@ -488,8 +510,10 @@ struct ResCurrentDir {
 }
 
 #[renderer]
-fn render_current(_: EntryCurrent, current_dir: &ResCurrentDir) {
-    r_println!("Current directory: {}", current_dir.current_dir.display());
+fn render_current(_: EntryCurrent, current_dir: &ResCurrentDir) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Current directory: {}", current_dir.current_dir.display()).ok();
+    result
 }
 ```
 
@@ -535,7 +559,8 @@ If you prefer clap's powerful argument parsing, use `#[dispatcher_clap]`. It gen
 // clap = "4"
 
 use mingling::macros::dispatcher_clap;
-use mingling::Groupped;
+use mingling::prelude::*;
+use std::io::Write;
 
 #[derive(Default, clap::Parser, Groupped)]
 #[dispatcher_clap(
@@ -552,15 +577,19 @@ pub struct EntryGreet {
 }
 
 #[renderer]
-fn render_greet(greet: EntryGreet) {
-    r_print!("Hello, ");
-    for _ in 0..greet.repeat { r_print!("{}", greet.name); }
-    r_println!("!");
+fn render_greet(greet: EntryGreet) -> RenderResult {
+    let mut result = RenderResult::new();
+    write!(result, "Hello, ").ok();
+    for _ in 0..greet.repeat { write!(result, "{}", greet.name).ok(); }
+    writeln!(result, "!").ok();
+    result
 }
 
 #[renderer]
-fn render_parse_error(err: ErrorGreetParsed) {
-    r_println!("{}", *err);
+fn render_parse_error(err: ErrorGreetParsed) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "{}", *err).ok();
+    result
 }
 ```
 
@@ -686,6 +715,7 @@ use mingling::{prelude::*, setup::StructuralRendererSetup};
 use mingling::Groupped;
 use mingling::StructuralData;
 use serde::Serialize;
+use std::io::Write;
 
 dispatcher!("render", CMDRender => EntryRender);
 
@@ -702,8 +732,10 @@ fn render_info(args: EntryRender) -> Next {
 }
 
 #[renderer]
-fn render_info_result(info: ResultInfo) {
-    r_println!("{} is {} years old", info.name, info.age);
+fn render_info_result(info: ResultInfo) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "{} is {} years old", info.name, info.age).ok();
+    result
 }
 
 fn main() {
@@ -739,6 +771,7 @@ Enable the `async` feature to use `async fn` inside `#[chain]`:
 // Dependencies:
 // tokio = { version = "1", features = ["full"] }
 
+use std::io::Write;
 use std::time::Duration;
 
 dispatcher!("download", CMDDownload => EntryDownload);
@@ -756,8 +789,10 @@ async fn download_file(name: String) -> ResultDownloaded {
 }
 
 #[renderer]
-fn render_downloaded(result: ResultDownloaded) {
-    r_println!("\"{}\" downloaded.", *result);
+fn render_downloaded(result: ResultDownloaded) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "\"{}\" downloaded.", *result).ok();
+    r
 }
 ```
 
@@ -786,6 +821,10 @@ It must be placed **after** all your `dispatcher!`, `pack!`, `#[chain]`, `#[rend
 Here's a complete, runnable program:
 
 ```rust
+use mingling::macros::pack;
+use mingling::prelude::*;
+use std::io::Write;
+
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
@@ -807,8 +846,10 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
 
 #[renderer]
-fn render_greeting(greeting: ResultGreeting) {
-    r_println!("Hello, {}!", *greeting);
+fn render_greeting(greeting: ResultGreeting) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}!", *greeting).ok();
+    result
 }
 
 gen_program!();
@@ -844,7 +885,7 @@ Hello, Alice!
     - [ ] **Mingling** Program Installer & Manager (For development)
     - [ ] Helpdoc Editor
   - [ ] [`picker`] A more efficient and intelligent argument parser
-  - [ ] [`macros`] Remove `r_print!` / `r_println!`macros
+  - [x] [`macros`] Remove `r_print!` / `r_println!` macros
 - [ ] Milestone.3 "Unplanned"
   - [ ] ...
 
