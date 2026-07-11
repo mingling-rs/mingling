@@ -60,7 +60,7 @@ Each hook callback receives a corresponding `Hook*Info` struct containing contex
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next {
 @@@    ResultName::new(args.inner.first().cloned().unwrap_or_default()).to_render()
 @@@}
-@@@#[renderer] fn render_name(r: ResultName) { r_println!("Hello, {}!", *r); }
+@@@#[renderer] fn render_name(r: ResultName) -> RenderResult { RenderResult::new() }
 fn main() {
     let mut program = ThisProgram::new();
  

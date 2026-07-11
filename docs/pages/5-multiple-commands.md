@@ -30,13 +30,17 @@ fn handle_add(args: EntryAdd) -> Next {
 }
  
 #[renderer]
-fn render_greet(result: ResultGreeting) {
-    r_println!("Hello, {}!", *result);
+fn render_greet(result: ResultGreeting) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *result).ok();
+    r
 }
  
 #[renderer]
-fn render_sum(result: ResultSum) {
-    r_println!("Sum: {}", *result);
+fn render_sum(result: ResultSum) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Sum: {}", *result).ok();
+    r
 }
  
 fn main() {
@@ -67,9 +71,9 @@ Notice `with_dispatchers`? When you need to register multiple dispatchers, just 
 @@@pack!(ResultGreeting = String);
 @@@pack!(ResultSum = i32);
 @@@#[chain] fn handle_greet(_args: EntryGreet) -> Next { ResultGreeting::new("ok".into()) }
-@@@#[renderer] fn render_greet(_greeting: ResultGreeting) { r_println!("hi"); }
+@@@#[renderer] fn render_greet(_greeting: ResultGreeting) -> RenderResult { RenderResult::new() }
 @@@#[chain] fn handle_add(_args: EntryAdd) -> Next { ResultSum::new(0) }
-@@@#[renderer] fn render_sum(_sum: ResultSum) { r_println!("sum"); }
+@@@#[renderer] fn render_sum(_sum: ResultSum) -> RenderResult { RenderResult::new() }
 fn main() {
     let mut program = ThisProgram::new();
     program.with_dispatchers((CMDGreet, CMDAdd));

@@ -13,16 +13,17 @@ Renderer 是最容易测试的——调用函数，断言返回结果：
 
 ```rust
 @@@pack!(ResultName = String);
-// 返回 String 而不是 ()
 #[renderer]
-fn render_name(name: ResultName) -> String {
-    r_println!("Hello, {}!", *name);
+fn render_greet(result: ResultName) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *result).ok();
+    r
 }
  
 #[test]
 fn test_render_name() {
     let result = render_name(ResultName::new("Alice".to_string()));
-    assert_eq!(result, "Hello, Alice!\n");
+    assert_eq!(result.to_string().as_str(), "Hello, Alice!\n");
 }
 ```
  

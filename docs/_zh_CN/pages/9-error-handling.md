@@ -44,13 +44,17 @@ fn handle_greet(args: EntryGreet) -> Next {
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting::new(args.inner.first().cloned().unwrap_or_default()).to_render() }
  
 #[renderer]
-fn render_greeting(result: ResultGreeting) {
-    r_println!("Hello, {}!", *result);
+fn render_greet(result: ResultGreeting) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *result).ok();
+    r
 }
  
 #[renderer]
-fn render_error_name_empty(err: ErrorNameEmpty) {
-    r_println!("Error: {}", *err);
+fn render_error_name_empty(err: ErrorNameEmpty) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Error: {}", *err).ok();
+    r
 }
 ```
  
@@ -75,13 +79,17 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
  
 #[renderer]
-fn render_greeting(result: ResultGreeting) {
-    r_println!("Hello, {}!", *result);
+fn render_greet(result: ResultGreeting) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *result).ok();
+    r
 }
  
 #[renderer]
-fn render_error_name_empty(err: ErrorNameEmpty) {
-    r_println!("Error: {}", *err);
+fn render_error_name_empty(err: ErrorNameEmpty) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Error: {}", *err).ok();
+    r
 }
  
 fn main() {

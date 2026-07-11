@@ -38,8 +38,10 @@ fn handle_pwd(_args: EntryPrintWorkingDir, cwd: &ResCurrentDir) -> Next {
 }
  
 #[renderer]
-fn render_path(result: ResultPath) {
-    r_println!("{}", *result);
+fn render_path(result: ResultPath) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "{}", *result).ok();
+    r
 }
 ```
  
@@ -59,8 +61,10 @@ fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
 }
  
 #[renderer]
-fn render_done(_done: ResultDone, counter: &ResVisitCount) {
-    r_println!("visit count is : {}", counter.0);
+fn render_done(_done: ResultDone, counter: &ResVisitCount) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "visit count is : {}", counter.0).ok();
+    r
 }
 ```
  

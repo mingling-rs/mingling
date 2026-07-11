@@ -15,9 +15,11 @@ Mingling 里用 `#[help]` 宏给命令添加帮助文本。
 @@@use mingling::macros::help;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 #[help]
-fn help_greet(_entry: EntryGreet) {
-    r_println!("Usage: greet [name]");
-    r_println!("Say hello to someone.");
+fn help_greet(_entry: EntryGreet) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Usage: greet [name]").ok();
+    writeln!(r, "Say hello to someone.").ok();
+    r
 }
 ```
  
@@ -32,10 +34,12 @@ fn help_greet(_entry: EntryGreet) {
 @@@use mingling::macros::help;
 // 用户直接输入 --help 时触发
 #[help]
-fn help_root(entry: ErrorDispatcherNotFound) {
-    r_println!("Usage: my-cli <command>");
-    r_println!("Commands:");
-    r_println!("  greet    Say hello");
+fn help_root(entry: ErrorDispatcherNotFound) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Usage: my-cli <command>").ok();
+    writeln!(r, "Commands:").ok();
+    writeln!(r, "  greet    Say hello").ok();
+    r
 }
 ```
  

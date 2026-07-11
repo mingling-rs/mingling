@@ -1,47 +1,50 @@
 <h1 align="center">Rendering Results</h1>
 <p align="center">
-    Use the <code>#[renderer]</code> macro to declare a renderer and output results
+    Declare a renderer using the <code>#[renderer]</code> macro to output results.
 </p>
 
-Now that we've created a Dispatcher and a Chain, and produced a Result type via `pack!`, there's one final step: **presenting the result to the user**.
+Now we've created a Dispatcher and a Chain, and produced a Result type via `pack!`. The final step: **present the result to the user**.
 
 ## The `#[renderer]` Macro
 
 Similar to `#[chain]`, `#[renderer]` marks an output function:
 
 ```rust
+use std::io::Write;
+ 
 pack!(ResultName = String);
 #[renderer]
-fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+fn render_name(name: ResultName) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}!", *name).ok();
+    result
 }
 ```
  
-A Renderer takes the result produced by a Chain and outputs it using `r_println!`. What's the difference between `r_println!` and the usual `println!`?
+A Renderer takes the result produced by a Chain and returns a `RenderResult`. Inside the function, create a `RenderResult`, write content using `write!` / `writeln!` (from [`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html)), and return it.
 
-## The `r_println!` and `r_print!` Macros
+## The `RenderResult` Type
 
-`r_println!` and `r_print!` are printing macros provided by Mingling. They write content into a `RenderResult` instead of printing directly to the terminal. This offers several benefits:
+`RenderResult` is a buffer type that holds rendered text and an exit code. Instead of writing directly to the terminal, it writes content into an internal buffer. This approach gives us:
 
-1. **RenderResult holds an exit code** — you can make the program exit with a specific code
-2. **Easier testing** — you can capture rendered output and make assertions
-3. **Post-processing** — you can capture results and apply uniform text post-processing
-
-> [!TIP]
-> For simple printing, you can think of it as a drop-in replacement for `println!`. Using `r_println!` instead of `println!` is a safe choice.
+1. **Exit code support**—you can set the program to exit with a specific exit code
+2. **Testability**—rendered output can be captured and asserted against
+3. **Post-processing**—the result can be captured and further processed uniformly
 
 ## A Complete Runnable Program
 
-Putting the content of all three tutorials together, here's your first complete Mingling program:
+Putting all three tutorials together, here's your first complete Mingling program:
 
 ```rust
-// 1. Declare a command with Dispatcher
+use std::io::Write;
+ 
+// 1. Declare commands with a Dispatcher
 dispatcher!("greet", CMDGreet => EntryGreet);
  
 // 2. Declare result data with pack!
 pack!(ResultName = String);
  
-// 3. Handle logic with Chain
+// 3. Handle logic with a Chain
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let name = args.inner
@@ -51,10 +54,12 @@ fn handle_greet(args: EntryGreet) -> Next {
     ResultName::new(name)
 }
  
-// 4. Output results with Renderer
+// 4. Output results with a Renderer
 #[renderer]
-fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+fn render_name(name: ResultName) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}!", *name).ok();
+    result
 }
  
 // 5. Assemble and run the program in main
@@ -64,7 +69,7 @@ fn main() {
     program.exec_and_exit();
 }
  
-// 6. Generate the complete program with gen_program!
+// 6. Use gen_program! to generate the full program
 gen_program!();
 ```
  
@@ -88,7 +93,7 @@ Try without arguments:
 Hello, World!
 ```
  
-Try an unknown command:
+Try a non-existent command:
 
 ```bash
 cargo run -- great
@@ -98,22 +103,26 @@ cargo run -- great
 # No output!
 ```
  
-## Add a Fallback
+## Adding a Fallback
 
-`gen_program!()` auto-generates an `ErrorDispatcherNotFound` type that wraps `Vec<String>` — it holds the user's unmatched input. You just need to write a Renderer for it:
+`gen_program!()` auto-generates an `ErrorDispatcherNotFound` type wrapping `Vec<String>`—it holds the user input that didn't match any command. You just need to write a Renderer for it:
 
 ```rust
+use std::io::Write;
+ 
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+    let mut result = RenderResult::new();
     if err.inner.is_empty() {
-        r_println!("Unknown command");
+        writeln!(result, "Unknown command").ok();
     } else {
-        r_println!("Command not found: \"{}\"", err.inner.join(" "));
+        writeln!(result, "Command not found: \"{}\"", err.inner.join(" ")).ok();
     }
+    result
 }
 ```
  
-With that added, try the unknown command again:
+With that added, try the non-existent command again:
 
 ```bash
 cargo run -- great
@@ -125,17 +134,17 @@ Command not found: "great"
  
 ## Congratulations
 
-You've completed your first full Mingling program! Here's a recap of what you've learned:
+You've completed your first full Mingling program! Let's recap what you've learned:
 
-| Concept         | Macro/Function   | In a Nutshell                         |
-| --------------- | ---------------- | ------------------------------------- |
-| Declare command | `dispatcher!`    | Tell the program what users can input |
-| Handle logic    | `#[chain]`       | What to do with the arguments         |
-| Output results  | `#[renderer]`    | How to present results to users       |
-| Type wrapper    | `pack!`          | Give your data a meaningful name      |
-| Program entry   | `gen_program!()` | Auto-generate the pipeline wiring     |
+| Concept        | Macro / Function | One-liner                               |
+| -------------- | ---------------- | --------------------------------------- |
+| Declare cmds   | `dispatcher!`    | Tell the program what the user can type |
+| Handle logic   | `#[chain]`       | What to do when args are received       |
+| Output results | `#[renderer]`    | How to present results to the user      |
+| Type wrapping  | `pack!`          | Give your data a meaningful name        |
+| Program entry  | `gen_program!()` | Auto-generate the pipeline wiring       |
 
-In real projects you'll also use advanced features like resource injection, hooks, autocompletion, REPL, etc., but the core skeleton stays the same: **Dispatcher → Chain → Renderer**.
+In real projects you'll also use advanced features like resource injection, hooks, completions, REPL, etc., but the core skeleton stays the same: **Dispatcher → Chain → Renderer**.
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass

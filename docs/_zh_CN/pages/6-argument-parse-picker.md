@@ -156,13 +156,10 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 }
  
 #[renderer]
-fn render_no_name(_prev: ErrorNoName) {
-    r_println!("Error: No name provided.");
-}
- 
-#[renderer]
-fn render_name(prev: ResultName) {
-    r_println!("Hello, {}!", *prev);
+fn render_greet(result: ResultName) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *result).ok();
+    r
 }
 ```
  
@@ -251,14 +248,18 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 }
  
 #[renderer]
-fn render_name_too_long(prev: ErrorNameTooLong) {
+fn render_name_too_long(prev: ErrorNameTooLong) -> RenderResult {
+    let mut r = RenderResult::new();
     let len = *prev;
-    r_println!("Error: name too long (length: {} > 32)", len);
+    writeln!(r, "Error: name too long (length: {} > 32)", len).ok();
+    r
 }
  
 #[renderer]
-fn render_name(prev: ResultName) {
-    r_println!("Hello, {}!", *prev);
+fn render_name(prev: ResultName) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Hello, {}!", *prev).ok();
+    r
 }
 ```
  
@@ -315,7 +316,7 @@ fn parse_size() {
 // Features: ["parser"]
 @@@use mingling::parser::{Pickable, Argument};
 @@@use mingling::Flag;
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Address {
     ip: String,
     port: u16,
@@ -341,9 +342,10 @@ fn handle_connect_entry(prev: EntryConnect) -> Next {
 }
  
 #[renderer]
-fn render_connected(prev: ResultConnected) {
-    let addr = prev.inner;
-    r_println!("Connected: IP: {} PORT: {}", addr.ip, addr.port);
+fn render_connected(addr: ResultConnected) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Connected: IP: {} PORT: {}", addr.ip, addr.port).ok();
+    r
 }
 ```
  
@@ -381,8 +383,10 @@ fn handle_eat_entry(prev: EntryEat) -> Next {
 }
  
 #[renderer]
-fn render_fruit(prev: ResultFruit) {
-    r_println!("Picked fruit: {:?}", *prev);
+fn render_fruit(prev: ResultFruit) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "Picked fruit: {:?}", *prev).ok();
+    r
 }
 ```
  

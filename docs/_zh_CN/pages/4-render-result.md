@@ -10,31 +10,34 @@
 跟 `#[chain]` 类似，`#[renderer]` 用于标记一个输出函数：
 
 ```rust
+use std::io::Write;
+ 
 @@@pack!(ResultName = String);
 #[renderer]
-fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+fn render_name(name: ResultName) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}!", *name).ok();
+    result
 }
 ```
  
-Renderer 接收 Chain 产出的结果，然后用 `r_println!` 输出。这个 `r_println!` 跟我们平常用的 `println!` 有什么区别？
+Renderer 接收 Chain 产出的结果，然后返回一个 `RenderResult`。在函数内部，创建 `RenderResult`，用 `write!` / `writeln!`（来自 [`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html)）写入内容，最后返回它。
 
-## `r_println!` 和 `r_print!` 宏
+## `RenderResult` 类型
 
-`r_println!` 和 `r_print!` 是 Mingling 提供的打印宏，它们把内容写入 `RenderResult` 而不是直接输出到终端。这样做的好处是：
+`RenderResult` 是一个缓冲区类型，持有渲染后的文本和退出码。它不是直接输出到终端，而是把内容写入缓冲区。这样做的好处是：
 
-1. **RenderResult 持有退出码**——你可以设置程序以特定退出码结束
+1. **持有退出码**——你可以设置程序以特定退出码结束
 2. **方便测试**——可以捕获渲染结果做断言
 3. **便于后处理**——你可以将结果捕获，统一进行文本后处理
-
-> [!TIP]
-> 如果只是简单打印，你可以先把它理解为 `println!` 的平替。用 `r_println!` 替换 `println!` 不会错。
 
 ## 完整的可运行程序
 
 把三篇教程的内容合在一起，你的第一个 Mingling 程序就完整了：
 
 ```rust
+use std::io::Write;
+ 
 // 1. 用 Dispatcher 声明命令
 dispatcher!("greet", CMDGreet => EntryGreet);
  
@@ -53,8 +56,10 @@ fn handle_greet(args: EntryGreet) -> Next {
  
 // 4. 用 Renderer 输出结果
 #[renderer]
-fn render_name(name: ResultName) {
-    r_println!("Hello, {}!", *name);
+fn render_name(name: ResultName) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "Hello, {}!", *name).ok();
+    result
 }
  
 // 5. 在 main 函数内装配程序并运行
@@ -103,13 +108,17 @@ cargo run -- great
 `gen_program!()` 自动生成了一个 `ErrorDispatcherNotFound` 类型，包裹 `Vec<String>`——它存的是用户输入的那些没匹配到的命令。你只需要给它写一个 Renderer：
 
 ```rust
+use std::io::Write;
+ 
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+    let mut result = RenderResult::new();
     if err.inner.is_empty() {
-        r_println!("Unknown command");
+        writeln!(result, "Unknown command").ok();
     } else {
-        r_println!("Command not found: \"{}\"", err.inner.join(" "));
+        writeln!(result, "Command not found: \"{}\"", err.inner.join(" ")).ok();
     }
+    result
 }
 ```
  

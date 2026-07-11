@@ -41,8 +41,10 @@ fn handle_render(args: EntryRender) -> Next {
 }
  
 #[renderer]
-fn render_info(r: ResultInfo) {
-    r_println!("{:?}", *r);
+fn render_info(r: ResultInfo) -> RenderResult {
+    let mut result = RenderResult::new();
+    writeln!(result, "{:?}", *r).ok();
+    result
 }
 ```
  
@@ -86,8 +88,10 @@ fn handle_render(args: EntryRender) -> Next {
 }
  
 #[renderer]
-fn render_info(info: Info) {
-    r_println!("{} is {} years old", info.name, info.age);
+fn render_info(info: Info) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "{} is {} years old", info.name, info.age).ok();
+    r
 }
 @@@
 @@@fn main() {

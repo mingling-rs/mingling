@@ -35,18 +35,22 @@ pub struct EntryGreet {
 }
  
 #[renderer]
-fn render_greet(greet: EntryGreet) {
+fn render_greet(greet: EntryGreet) -> RenderResult {
+    let mut r = RenderResult::new();
     let count = greet.repeat.max(0) as usize;
-    r_print!("Hello, ");
+    write!(r, "Hello, ").ok();
     for _ in 0..count {
-        r_print!("{} ", greet.name);
+        write!(r, "{} ", greet.name).ok();
     }
-    r_println!("!");
+    writeln!(r, "!").ok();
+    r
 }
  
 #[renderer]
-fn render_greet_parse_failed(err: ErrorGreetParsed) {
-    r_println!("{}", *err);
+fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
+    let mut r = RenderResult::new();
+    writeln!(r, "{}", *err).ok();
+    r
 }
 ```
  
@@ -66,10 +70,11 @@ If you need `--help` support, register `BasicProgramSetup` in main and set the c
 @@@    name: String,
 @@@}
 @@@#[renderer]
-@@@fn render_greet(greet: EntryGreet) {
-@@@    r_println!("Hello, {}!", greet.name);
+@@@fn render_greet(greet: EntryGreet) -> RenderResult {
+@@@    let mut r = RenderResult::new();
+@@@    write!(r, "Hello, {}!", greet.name).ok();
+@@@    r
 @@@}
-@@@
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(BasicProgramSetup);
