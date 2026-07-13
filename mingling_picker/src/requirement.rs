@@ -1,4 +1,5 @@
-use crate::{Pickable, PickerResult};
+use crate::Pickable;
+use std::marker::PhantomData;
 
 /// Represents a constraint definition for a parameter selection.
 ///
@@ -19,25 +20,23 @@ use crate::{Pickable, PickerResult};
 ///     than by a `--name` or `-n` flag.
 ///   - `false`: The parameter is a named (flag-based) parameter.
 ///
-/// - `result`: The parsed result of this parameter requirement. Initially set to
-///   `PickerResult::Unparsed`. After parsing, contains either the successfully parsed value or an
-///   error.
-#[derive(Default)]
+/// - `_type`: PhantomData to hold the type parameter.
+#[derive(Default, Clone, Copy)]
 pub struct PickerRequirement<'a, Type>
 where
     Type: Default + Pickable,
 {
     /// Full name, may include variant names (aliases), e.g., `["config", "cfg"]`.
-    full: &'a [&'a str],
+    pub full: &'a [&'a str],
 
     /// Short name, e.g., `'c'`.
-    short: Option<char>,
+    pub short: Option<char>,
 
     /// Whether the parameter is positional (no flag, matched by position).
-    positional: bool,
+    pub positional: bool,
 
-    /// The parsed result of this parameter requirement.
-    result: PickerResult<Type>,
+    /// PhantomData to hold the type parameter.
+    pub internal_type: PhantomData<Type>,
 }
 
 impl<'a, Type> PickerRequirement<'a, Type>
@@ -50,7 +49,7 @@ where
             full,
             short,
             positional,
-            result: PickerResult::Unparsed,
+            internal_type: PhantomData,
         }
     }
 
@@ -118,33 +117,6 @@ where
     /// Sets whether the parameter is positional and returns self.
     pub fn with_positional(mut self, positional: bool) -> Self {
         self.positional = positional;
-        self
-    }
-
-    /// Returns a reference to the current parse result.
-    pub fn result(&self) -> &PickerResult<Type> {
-        &self.result
-    }
-
-    /// Returns a mutable reference to the current parse result.
-    pub fn result_mut(&mut self) -> &mut PickerResult<Type> {
-        &mut self.result
-    }
-
-    /// Sets the parse result.
-    pub fn set_result(&mut self, result: PickerResult<Type>) {
-        self.result = result;
-    }
-
-    /// Replaces the parse result with `PickerResult::Unparsed` and returns self.
-    pub fn reset_result(mut self) -> Self {
-        self.result = PickerResult::Unparsed;
-        self
-    }
-
-    /// Sets the parse result and returns self.
-    pub fn with_result(mut self, result: PickerResult<Type>) -> Self {
-        self.result = result;
         self
     }
 }

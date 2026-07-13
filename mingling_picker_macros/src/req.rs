@@ -68,50 +68,51 @@ pub(crate) fn req(input: TokenStream) -> TokenStream {
         None => aliases,
     };
 
-    // Generate code
-    let import = quote! { ::mingling::picker::PickerRequirement };
+    let path: TS2 = {
+        let ty_ts: TS2 = ty
+            .map(|t| {
+                let ts: TokenStream = t.iter().cloned().collect();
+                ts.to_string().parse().unwrap()
+            })
+            .unwrap_or(TS2::new());
 
-    // Type parameter
-    let ty_ts: TS2 = ty
-        .map(|t| {
-            let ts: TokenStream = t.iter().cloned().collect();
-            ts.to_string().parse().unwrap()
-        })
-        .unwrap_or(TS2::new());
-
-    let with_type = if ty.is_some() {
-        quote! { #import::<#ty_ts> }
-    } else {
-        quote! { #import::<_> }
+        let import = quote! { ::mingling::picker::PickerRequirement };
+        if ty.is_some() {
+            quote! { #import::<#ty_ts> }
+        } else {
+            quote! { #import::<_> }
+        }
     };
 
-    // .with_full(...)
-    let with_full = if !full_names.is_empty() {
+    // full: &["name", "alias", ...]  or  &[]
+    let full_value: TS2 = if !full_names.is_empty() {
         let strs: Vec<proc_macro2::Literal> = full_names
             .iter()
             .map(|s| proc_macro2::Literal::string(s))
             .collect();
-        quote! { .with_full(&[#(#strs),*]) }
+        quote! { &[#(#strs),*] }
     } else {
-        TS2::new()
+        quote! { &[] }
     };
 
-    // .with_short(...)
-    let with_short = short_char
-        .map(|c| {
+    // short: Some('c')  or  None
+    let short_value: TS2 = match short_char {
+        Some(c) => {
             let lit = proc_macro2::Literal::character(c);
-            quote! { .with_short(#lit) }
-        })
-        .unwrap_or_default();
+            quote! { ::std::option::Option::Some(#lit) }
+        }
+        None => quote! { ::std::option::Option::None },
+    };
 
-    // .with_positional(...)
-    let pos = !is_named;
+    let positional_value: bool = !is_named;
 
     let result = quote! {
-        #with_type::default()
-            #with_full
-            #with_short
-            .with_positional(#pos)
+        #path {
+            full: #full_value,
+            short: #short_value,
+            positional: #positional_value,
+            internal_type: ::std::marker::PhantomData,
+        }
     };
 
     result.into()
