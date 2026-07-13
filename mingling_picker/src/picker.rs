@@ -1,4 +1,4 @@
-use std::ops::Index;
+use std::ops::{Deref, Index};
 
 mod patterns;
 pub use patterns::*;
@@ -250,6 +250,15 @@ impl<'a> IntoPicker<'a> for &'a [&'a str] {
     }
 }
 
+impl<'a> IntoPicker<'a> for &'a [String] {
+    fn to_picker(self) -> Picker<'a> {
+        let vec: Vec<&str> = self.iter().map(|s| s.as_str()).collect();
+        Picker {
+            args: PickerArgs::Vec(vec),
+        }
+    }
+}
+
 impl<'a> IntoPicker<'a> for Vec<&'a str> {
     fn to_picker(self) -> Picker<'a> {
         Picker {
@@ -262,6 +271,18 @@ impl<'a> IntoPicker<'a> for Vec<String> {
     fn to_picker(self) -> Picker<'a> {
         Picker {
             args: PickerArgs::Owned(self),
+        }
+    }
+}
+
+impl<'a, T> IntoPicker<'a> for &'a T
+where
+    T: Deref<Target = Vec<String>>,
+{
+    fn to_picker(self) -> Picker<'a> {
+        let vec: Vec<&str> = self.iter().map(|s| s.as_str()).collect();
+        Picker {
+            args: PickerArgs::Vec(vec),
         }
     }
 }
