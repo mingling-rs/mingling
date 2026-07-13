@@ -170,7 +170,7 @@ pub mod macros {
     pub use mingling_macros::suggest_enum;
     /// New Parser provided by the `picker` feature
     #[cfg(feature = "picker")]
-    pub use mingling_macros::*;
+    pub use mingling_picker::macros::*;
 }
 
 /// derive macro `EnumTag`
@@ -222,10 +222,6 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
-    /// Re-export of the `Groupped` derive macro for grouping types.
-    pub use crate::Groupped;
-    /// Re-export of the `RenderResult` struct for outputting rendering result
-    pub use crate::RenderResult;
     /// Re-export of the `chain` macro for defining a chain of commands.
     pub use crate::macros::chain;
     /// Re-export of the `dispatcher` macro for routing commands.
@@ -242,6 +238,10 @@ pub mod prelude {
     pub use crate::macros::pack_err;
     /// Re-export of the `renderer` macro for defining renderer functions.
     pub use crate::macros::renderer;
+    /// Re-export of the `Groupped` derive macro for grouping types.
+    pub use crate::Groupped;
+    /// Re-export of the `RenderResult` struct for outputting rendering result
+    pub use crate::RenderResult;
     /// Like `pack_err!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;
