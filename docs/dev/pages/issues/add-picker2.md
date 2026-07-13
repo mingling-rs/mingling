@@ -84,3 +84,198 @@ pub struct PickerResult<Tuple> {
     pub remains_argument: Arguments,
 }
 ```
+ 
+---
+
+## Current Progress (2026-07-14)
+
+Picker2 has been significantly implemented. Here is the current status:
+
+### Completed
+
+#### Core Type System
+
+- **`PickerArgs`** — Three-tier ownership enum for CLI arguments:
+  - `Slice(&'a [&'a str])` — zero-copy borrow from `std::env::args()`
+  - `Vec(Vec<&'a str>)` — owned container, borrowed elements
+  - `Owned(Vec<String>)` — fully owned (constructed / manipulated args)
+
+- **`PickerResult`** — Four-state parse result:
+  - `Unparsed` — not yet parsed (default)
+  - `Parsed(Type)` — successfully parsed
+  - `NotFound` — requested value not found
+  - `FormatError` — input could not be parsed
+
+- **`PickerFlag`** — Const-compatible parameter constraint definition:
+  ```rust
+  pub struct PickerFlag<'a, Type: Pickable> {
+      pub full: &'a [&'a str],     // flag names & aliases
+      pub short: Option<char>,      // short name, e.g. 'n'
+      pub positional: bool,         // positional or named
+      pub internal_type: PhantomData<Type>,
+  }
+  ```
+  All fields are `pub`, enabling direct struct literal construction.
+
+#### `internal_repeat!` Template Engine
+
+A custom proc-macro template engine that generates repetitive code without nightly features or external dependencies.
+
+**Syntax:**
+
+```rust
+internal_repeat!(1..=32 => {
+    // $   — current counter (1, 2, ..., 32)
+    // $+  — current + 1
+    // $-  — current - 1
+    // $^  — loop minimum
+    // ^$  — loop maximum
+    // ident$     → ident{current}
+    // ident$+    → ident{current+1}
+    // ident$-    → ident{current-1}
+    // ident$^    → ident{min}
+    // (group,+)  — repeat * times (current), `,` separator
+    // (group,+)+ — repeat *+1 times (current + 1)
+    // (group,+)- — repeat *-1 times (current - 1)
+});
+```
+ 
+Generates `PickerPattern1` through `PickerPattern32` structs, each with `N` typed flag/result fields:
+
+```rust
+pub struct PickerPattern3<'a, T1, T2, T3> {
+    pub args: PickerArgs<'a>,
+    pub flag_1: &'a PickerFlag<'a, T1>,
+    pub result_1: PickerResult<T1>,
+    pub flag_2: &'a PickerFlag<'a, T2>,
+    pub result_2: PickerResult<T2>,
+    pub flag_3: &'a PickerFlag<'a, T3>,
+    pub result_3: PickerResult<T3>,
+}
+```
+ 
+#### `flag!` Macro
+
+Declarative parameter definition macro. Expands to a const-compatible struct literal:
+
+```rust
+// Syntax variants:
+flag![name: String]                     // named, no short
+flag![name: String, 'n']                // named, with short
+flag![name: String, 'n', "alias"]       // named, with short & alias
+flag![String]                           // positional, no name
+flag![String, 'F']                      // positional, with short
+flag![String, 'o', "output"]            // positional, with short & alias
+ 
+// Expansion (all const-compatible):
+::mingling::picker::PickerFlag::<String> {
+    full: &["name"],
+    short: ::std::option::Option::Some('n'),
+    positional: false,
+    internal_type: ::std::marker::PhantomData,
+}
+```
+ 
+The type part preserves original token spans for IDE support (Rust Analyzer).
+
+#### `Pickable` Trait
+
+Implemented for all numeric types, `String`, `PathBuf`, `Option<T>`.
+
+```rust
+pub trait Pickable {
+    fn pick(raw_str: &str) -> PickerResult<Self>;
+}
+```
+ 
+#### Type-Safe Chaining
+
+```rust
+let p4: PickerPattern4<String, i32, String, String> = args
+    .pick(&flag![name: String])
+    .pick(&flag![age: i32])
+    .pick(&flag![food: String, 'F'])
+    .pick(&flag![kind: String]);
+```
+ 
+Each `.pick()` call adds one type parameter to the pattern. Parameter count is compile-time enforced — writing 3 `.pick()` calls produces `PickerPattern3`, and trying to assign to `PickerPattern4` fails to compile.
+
+### ❌ Pending
+
+#### `.parse()` — Runtime Parsing Engine
+
+Not yet implemented. The proposed parsing flow:
+
+```rust
+let result: (String, i32) = args
+    .pick(&flag![name: String])
+    .pick(&flag![age: i32])
+    .parse();
+```
+ 
+Procedural steps:
+
+1. Allocate a `Vec<Box<dyn Any>>` indexed by type position
+2. Sort all flags: named flags first, positional flags after
+3. Each `PickerFlag`'s `Pickable` scans the argument list and marks its tokens
+4. Each `Pickable::pick()` resolves its value into the `Vec`
+5. Downcast each `Box<dyn Any>` to the concrete type
+6. Convert via `Into<(...)>` into the final tuple
+
+Planned companion code generation via `internal_repeat!`:
+
+```rust
+internal_repeat!(1..=32 => {
+    impl<'a, (T$,)+> PickerPattern$<'a, (T$,)+> {
+        pub fn parse(self) -> ((T$,)+) {
+            // ...
+        }
+    }
+});
+```
+ 
+#### `.pick_route()` — Error Routing
+
+Post-processing with route-on-error:
+
+```rust
+let parsed = args
+    .pick_route::<String, _>(flag![path: PathBuf], ErrorNotFound)
+    .parse();
+```
+ 
+#### `MultiFlag` — Combined Flags
+
+```rust
+#[derive(MultiFlag)]
+pub struct Toggles {
+    pub install: bool,      // -i
+    #[flag('U')]
+    pub uninstall: bool,    // -U
+    #[flag('X')]
+    pub execute: bool,      // -X
+}
+// Supports: `-iUX`
+```
+ 
+#### `PickerConfig` — Arg Format Configuration
+
+Support for `--key=value`, `/Key=Value`, etc.
+
+### Summary
+
+| Component                          | Status |
+| ---------------------------------- | ------ |
+| `PickerArgs` (3-tier ownership)    | ✅     |
+| `PickerResult` (4-state)           | ✅     |
+| `PickerFlag` (const-compatible)    | ✅     |
+| `Pickable` trait + impls           | ✅     |
+| `internal_repeat!` template engine | ✅     |
+| `flag!` macro                      | ✅     |
+| `PickerPattern1..32` structs       | ✅     |
+| Chainable `.pick()` (2→31)         | ✅     |
+| **`.parse()` runtime**             | ❌     |
+| `.pick_route()` error routing      | ❌     |
+| `MultiFlag` derive                 | ❌     |
+| `PickerConfig`                     | ❌     |
+| Integration with `#[chain]`        | ❌     |
