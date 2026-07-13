@@ -30,32 +30,25 @@ pub(crate) fn flag(input: TokenStream) -> TokenStream {
         .collect();
 
     // Parse first argument
+    //   flag![name: Type]  → name, with explicit type
+    //   flag![Type]        → positional type, no name
     let colon_pos = first
         .iter()
         .position(|t| matches!(t, TokenTree::Punct(p) if p.as_char() == ':'));
-    let has_generics = first
-        .iter()
-        .any(|t| matches!(t, TokenTree::Punct(p) if p.as_char() == '<'));
+    let has_named_colon = colon_pos.is_some_and(|pos| pos > 0 && !is_double_colon(first, pos));
 
     let first_slice = first.as_slice();
-    let (name, ty, is_named) = match colon_pos {
-        Some(pos) if pos > 0 && !is_double_colon(first, pos) => {
-            // `name : Type`
-            (
-                Some(&first_slice[..pos]),
-                Some(&first_slice[pos + 1..]),
-                true,
-            )
-        }
-        _ => {
-            if has_generics || !is_single_ident(first) || !has_char_or_string(rest) {
-                // Type path, generic type, or bare type (no more args)
-                (None, Some(first_slice), false)
-            } else {
-                // Single ident followed by char/string → bare name
-                (Some(first_slice), None, true)
-            }
-        }
+    let (name, ty, is_named) = if has_named_colon {
+        let pos = colon_pos.unwrap();
+        // `name : Type`
+        (
+            Some(&first_slice[..pos]),
+            Some(&first_slice[pos + 1..]),
+            true,
+        )
+    } else {
+        // No `name:` prefix → the entire first argument is the type
+        (None, Some(first_slice), false)
     };
 
     // Build full names
@@ -141,10 +134,6 @@ fn is_double_colon(tokens: &[TokenTree], pos: usize) -> bool {
     pos > 0 && matches!(&tokens[pos - 1], TokenTree::Punct(p) if p.as_char() == ':')
 }
 
-fn is_single_ident(tokens: &[TokenTree]) -> bool {
-    tokens.len() == 1 && matches!(&tokens[0], TokenTree::Ident(_))
-}
-
 fn is_char_literal(tokens: &[TokenTree]) -> bool {
     tokens.len() == 1
         && matches!(&tokens[0], TokenTree::Literal(l) if {
@@ -158,11 +147,6 @@ fn is_string_literal(tokens: &[TokenTree]) -> bool {
         && matches!(&tokens[0], TokenTree::Literal(l) if {
             l.to_string().starts_with('"')
         })
-}
-
-fn has_char_or_string(args: &[Vec<TokenTree>]) -> bool {
-    args.iter()
-        .any(|a| is_char_literal(a) || is_string_literal(a))
 }
 
 fn extract_char(tokens: &[TokenTree]) -> Option<char> {
