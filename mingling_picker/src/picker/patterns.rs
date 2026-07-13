@@ -1,25 +1,25 @@
-use crate::{Pickable, Picker, PickerArguments, PickerRequirement, PickerResult};
+use crate::{Pickable, Picker, PickerArgs, PickerFlag, PickerResult};
 
-mingling_picker_macros::internal_repeat! (1..=32 => {
+mingling_picker_macros::internal_repeat!(1..=32 => {
     pub struct PickerPattern$<'a, (T$,)+>
     where (T$: Pickable + Default,)+
     {
-        pub args: PickerArguments<'a>,
+        pub args: PickerArgs<'a>,
         (
-            pub require_$: &'a PickerRequirement<'a, T$>,
+            pub flag_$: &'a PickerFlag<'a, T$>,
             pub result_$: PickerResult<T$>,
         )+
     }
 });
 
 impl<'a> Picker<'a> {
-    pub fn pick<N>(self, req: &'a PickerRequirement<'a, N>) -> PickerPattern1<'a, N>
+    pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N>
     where
         N: Pickable + Default,
     {
         PickerPattern1 {
             args: self.args,
-            require_1: req,
+            flag_1: flag,
             result_1: PickerResult::Unparsed,
         }
     }

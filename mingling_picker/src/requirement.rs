@@ -22,7 +22,7 @@ use std::marker::PhantomData;
 ///
 /// - `_type`: PhantomData to hold the type parameter.
 #[derive(Default, Clone, Copy)]
-pub struct PickerRequirement<'a, Type>
+pub struct PickerFlag<'a, Type>
 where
     Type: Default + Pickable,
 {
@@ -39,11 +39,11 @@ where
     pub internal_type: PhantomData<Type>,
 }
 
-impl<'a, Type> PickerRequirement<'a, Type>
+impl<'a, Type> PickerFlag<'a, Type>
 where
     Type: Default + Pickable,
 {
-    /// Creates a new `PickerRequirement` with the provided parameters.
+    /// Creates a new `PickerFlag` with the provided parameters.
     pub fn new(full: &'a [&'a str], short: Option<char>, positional: bool) -> Self {
         Self {
             full,

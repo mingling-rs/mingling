@@ -12,7 +12,7 @@ pub use patterns::*;
 /// - Parsing results
 pub struct Picker<'a> {
     /// Internal arguments of Picker
-    args: PickerArguments<'a>,
+    args: PickerArgs<'a>,
 }
 
 /// Internal arguments of Picker
@@ -20,7 +20,7 @@ pub struct Picker<'a> {
 /// - `Slice` - borrowed slice of string slices
 /// - `Vec` - owned vector of borrowed string slices
 /// - `Owned` - owned vector of owned strings
-pub enum PickerArguments<'a> {
+pub enum PickerArgs<'a> {
     /// Borrowed slice of string slices
     Slice(&'a [&'a str]),
     /// Owned vector of borrowed string slices
@@ -32,7 +32,7 @@ pub enum PickerArguments<'a> {
 impl<'a> From<&'a [&'a str]> for Picker<'a> {
     fn from(value: &'a [&'a str]) -> Self {
         Picker {
-            args: PickerArguments::Slice(value),
+            args: PickerArgs::Slice(value),
         }
     }
 }
@@ -40,7 +40,7 @@ impl<'a> From<&'a [&'a str]> for Picker<'a> {
 impl<'a> From<Vec<&'a str>> for Picker<'a> {
     fn from(value: Vec<&'a str>) -> Self {
         Picker {
-            args: PickerArguments::Vec(value),
+            args: PickerArgs::Vec(value),
         }
     }
 }
@@ -48,7 +48,7 @@ impl<'a> From<Vec<&'a str>> for Picker<'a> {
 impl<'a> From<Vec<String>> for Picker<'a> {
     fn from(value: Vec<String>) -> Self {
         Picker {
-            args: PickerArguments::Owned(value),
+            args: PickerArgs::Owned(value),
         }
     }
 }
@@ -75,9 +75,9 @@ impl<'a> Picker<'a> {
     /// ```
     pub fn len(&self) -> usize {
         match &self.args {
-            PickerArguments::Slice(items) => items.len(),
-            PickerArguments::Vec(items) => items.len(),
-            PickerArguments::Owned(items) => items.len(),
+            PickerArgs::Slice(items) => items.len(),
+            PickerArgs::Vec(items) => items.len(),
+            PickerArgs::Owned(items) => items.len(),
         }
     }
 
@@ -119,9 +119,9 @@ impl<'a> Picker<'a> {
     /// ```
     pub fn iter(&'a self) -> PickerIter<'a> {
         match &self.args {
-            PickerArguments::Slice(items) => PickerIter::Slice(items.iter()),
-            PickerArguments::Vec(items) => PickerIter::Vec(items.iter()),
-            PickerArguments::Owned(items) => PickerIter::Owned(items.iter()),
+            PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
+            PickerArgs::Vec(items) => PickerIter::Vec(items.iter()),
+            PickerArgs::Owned(items) => PickerIter::Owned(items.iter()),
         }
     }
 }
@@ -131,9 +131,9 @@ impl<'a> Index<usize> for Picker<'a> {
 
     fn index(&self, index: usize) -> &Self::Output {
         match &self.args {
-            PickerArguments::Slice(items) => items[index],
-            PickerArguments::Vec(items) => items[index],
-            PickerArguments::Owned(items) => &items[index],
+            PickerArgs::Slice(items) => items[index],
+            PickerArgs::Vec(items) => items[index],
+            PickerArgs::Owned(items) => &items[index],
         }
     }
 }
@@ -143,9 +143,9 @@ impl<'a> Index<usize> for &Picker<'a> {
 
     fn index(&self, index: usize) -> &Self::Output {
         match &self.args {
-            PickerArguments::Slice(items) => items[index],
-            PickerArguments::Vec(items) => items[index],
-            PickerArguments::Owned(items) => &items[index],
+            PickerArgs::Slice(items) => items[index],
+            PickerArgs::Vec(items) => items[index],
+            PickerArgs::Owned(items) => &items[index],
         }
     }
 }
@@ -156,9 +156,9 @@ impl<'a> IntoIterator for &'a Picker<'a> {
 
     fn into_iter(self) -> Self::IntoIter {
         match &self.args {
-            PickerArguments::Slice(items) => PickerIter::Slice(items.iter()),
-            PickerArguments::Vec(items) => PickerIter::Vec(items.iter()),
-            PickerArguments::Owned(items) => PickerIter::Owned(items.iter()),
+            PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
+            PickerArgs::Vec(items) => PickerIter::Vec(items.iter()),
+            PickerArgs::Owned(items) => PickerIter::Owned(items.iter()),
         }
     }
 }
@@ -166,7 +166,7 @@ impl<'a> IntoIterator for &'a Picker<'a> {
 /// Iterator for `Picker`, yielding owned `String` values.
 ///
 /// This enum wraps the underlying slice iterators for each variant of
-/// `PickerArguments`, allowing uniform iteration over borrowed or owned data.
+/// `PickerArgs`, allowing uniform iteration over borrowed or owned data.
 pub enum PickerIter<'a> {
     /// Iterates over a borrowed slice (`&[&str]`)
     Slice(std::slice::Iter<'a, &'a str>),
@@ -227,7 +227,7 @@ pub trait IntoPicker<'a> {
 impl<'a> IntoPicker<'a> for &'a [&'a str] {
     fn to_picker(self) -> Picker<'a> {
         Picker {
-            args: PickerArguments::Slice(self),
+            args: PickerArgs::Slice(self),
         }
     }
 }
@@ -235,7 +235,7 @@ impl<'a> IntoPicker<'a> for &'a [&'a str] {
 impl<'a> IntoPicker<'a> for Vec<&'a str> {
     fn to_picker(self) -> Picker<'a> {
         Picker {
-            args: PickerArguments::Vec(self),
+            args: PickerArgs::Vec(self),
         }
     }
 }
@@ -243,7 +243,7 @@ impl<'a> IntoPicker<'a> for Vec<&'a str> {
 impl<'a> IntoPicker<'a> for Vec<String> {
     fn to_picker(self) -> Picker<'a> {
         Picker {
-            args: PickerArguments::Owned(self),
+            args: PickerArgs::Owned(self),
         }
     }
 }

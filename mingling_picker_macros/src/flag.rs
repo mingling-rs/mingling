@@ -2,11 +2,11 @@ use proc_macro::{TokenStream, TokenTree};
 use proc_macro2::TokenStream as TS2;
 use quote::quote;
 
-pub(crate) fn req(input: TokenStream) -> TokenStream {
+pub(crate) fn flag(input: TokenStream) -> TokenStream {
     let tokens: Vec<TokenTree> = input.into_iter().collect();
     let args = split_at_commas(&tokens);
     if args.is_empty() {
-        return quote! { compile_error!("req! requires at least one argument") }.into();
+        return quote! { compile_error!("flag! flaguires at least one argument") }.into();
     }
 
     let first = &args[0];
@@ -15,7 +15,7 @@ pub(crate) fn req(input: TokenStream) -> TokenStream {
     // Validate: at most one char literal
     let char_count = rest.iter().filter(|a| is_char_literal(a)).count();
     if char_count > 1 {
-        return quote! { compile_error!("req! only supports at most one short name") }.into();
+        return quote! { compile_error!("flag! only supports at most one short name") }.into();
     }
 
     // Extract short char and string aliases
@@ -76,7 +76,7 @@ pub(crate) fn req(input: TokenStream) -> TokenStream {
             })
             .unwrap_or(TS2::new());
 
-        let import = quote! { ::mingling::picker::PickerRequirement };
+        let import = quote! { ::mingling::picker::PickerFlag };
         if ty.is_some() {
             quote! { #import::<#ty_ts> }
         } else {
