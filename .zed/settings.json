@@ -4,7 +4,7 @@
       "initialization_options": {
         "checkOnSave": true,
         "check": { "command": "clippy" },
-        "linkedProjects": [".run/Cargo.toml"],
+        "linkedProjects": [".run/Cargo.toml", "mingling_picker/Cargo.toml"],
       },
     },
   },
