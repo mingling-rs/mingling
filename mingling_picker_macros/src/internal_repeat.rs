@@ -5,12 +5,11 @@ pub(crate) fn internal_repeat(input: TokenStream) -> TokenStream {
     let (range_start, range_end, body_start) = parse_range(&tokens);
 
     let mut body: Vec<TokenTree> = tokens[body_start..].to_vec();
-    if body.len() == 1 {
-        if let TokenTree::Group(g) = &body[0] {
-            if g.delimiter() == Delimiter::Brace {
-                body = g.stream().into_iter().collect();
-            }
-        }
+    if body.len() == 1
+        && let TokenTree::Group(g) = &body[0]
+        && g.delimiter() == Delimiter::Brace
+    {
+        body = g.stream().into_iter().collect();
     }
 
     let mut result = Vec::new();
@@ -49,10 +48,10 @@ fn parse_range(tokens: &[TokenTree]) -> (usize, usize, usize) {
         let after_dd = &before[dd + 2..];
 
         // Check for `..=` (inclusive range)
-        let (inclusive, end_tokens) = if after_dd.first().map_or(
-            false,
-            |t| matches!(t, TokenTree::Punct(p) if p.as_char() == '='),
-        ) {
+        let (inclusive, end_tokens) = if after_dd
+            .first()
+            .is_some_and(|t| matches!(t, TokenTree::Punct(p) if p.as_char() == '='))
+        {
             (true, &after_dd[1..])
         } else {
             (false, after_dd)
@@ -109,15 +108,14 @@ fn expand_body(tokens: &[TokenTree], outer: usize) -> Vec<TokenTree> {
 
         // Identifier followed by `$` → combined ident + number
         if let TokenTree::Ident(id) = &tokens[i] {
-            if i + 1 < tokens.len() {
-                if let TokenTree::Punct(p) = &tokens[i + 1] {
-                    if p.as_char() == '$' {
-                        let name = format!("{}{outer}", id.to_string());
-                        out.push(TokenTree::Ident(Ident::new(&name, id.span())));
-                        i += 2;
-                        continue;
-                    }
-                }
+            if i + 1 < tokens.len()
+                && let TokenTree::Punct(p) = &tokens[i + 1]
+                && p.as_char() == '$'
+            {
+                let name = format!("{}{outer}", id);
+                out.push(TokenTree::Ident(Ident::new(&name, id.span())));
+                i += 2;
+                continue;
             }
             out.push(tokens[i].clone());
             i += 1;
@@ -189,13 +187,13 @@ fn try_expand_paren_group(
 
     let mut out = Vec::new();
     for n in 1..=outer {
-        if n > 1 {
-            if let Some(s) = sep {
-                out.push(TokenTree::Punct(proc_macro::Punct::new(
-                    s.chars().next().unwrap(),
-                    proc_macro::Spacing::Alone,
-                )));
-            }
+        if n > 1
+            && let Some(s) = sep
+        {
+            out.push(TokenTree::Punct(proc_macro::Punct::new(
+                s.chars().next().unwrap(),
+                proc_macro::Spacing::Alone,
+            )));
         }
         out.extend(expand_body(&inner, n));
     }

@@ -102,7 +102,7 @@ pub(crate) fn req(input: TokenStream) -> TokenStream {
             let lit = proc_macro2::Literal::character(c);
             quote! { .with_short(#lit) }
         })
-        .unwrap_or(TS2::new());
+        .unwrap_or_default();
 
     // .with_positional(...)
     let pos = !is_named;

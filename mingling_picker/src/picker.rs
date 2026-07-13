@@ -81,6 +81,23 @@ impl<'a> Picker<'a> {
         }
     }
 
+    /// Returns `true` if the picker contains no arguments.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_picker::Picker;
+    ///
+    /// let empty: Picker = Picker::from(&[][..]);
+    /// assert!(empty.is_empty());
+    ///
+    /// let args = Picker::from(&["hello"][..]);
+    /// assert!(!args.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Returns an iterator over the arguments, yielding owned `String` values.
     ///
     /// # Examples
