@@ -65,7 +65,7 @@ pub(crate) fn flag(input: TokenStream) -> TokenStream {
         let ty_ts: TS2 = ty
             .map(|t| {
                 let ts: TokenStream = t.iter().cloned().collect();
-                ts.to_string().parse().unwrap()
+                TS2::from(ts)
             })
             .unwrap_or(TS2::new());
 
