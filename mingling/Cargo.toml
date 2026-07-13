@@ -27,6 +27,7 @@ features = [
     "repl",
     "comp",
     "parser",
+    "picker",
     "clap",
     "extra_macros",
 ]
@@ -44,7 +45,7 @@ dispatch_tree = ["mingling_core/dispatch_tree", "mingling_macros/dispatch_tree"]
 repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
 parser = ["dep:size"]
-picker = ["dep:mingling_picker", "dep:mingling_picker_macros"]
+picker = ["dep:mingling_picker"]
 pathf = ["mingling_core/pathf", "mingling_macros/pathf"]
 
 structural_renderer = [
@@ -85,6 +86,5 @@ extra_macros = ["mingling_macros/extra_macros"]
 mingling_core.workspace = true
 mingling_macros.workspace = true
 mingling_picker = { workspace = true, optional = true }
-mingling_picker_macros = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 size = { version = "0.5", optional = true }

@@ -407,7 +407,6 @@ dependencies = [
  "mingling_core",
  "mingling_macros",
  "mingling_picker",
- "mingling_picker_macros",
  "serde",
  "size",
  "tokio",
@@ -467,6 +466,7 @@ name = "mingling_picker"
 version = "0.3.0"
 dependencies = [
  "mingling_core",
+ "mingling_picker_macros",
 ]
 
 [[package]]

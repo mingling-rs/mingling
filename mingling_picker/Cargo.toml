@@ -10,3 +10,4 @@ description = "Mingling's lightweight argument parser"
 
 [dependencies]
 mingling_core.workspace = true
+mingling_picker_macros.workspace = true
