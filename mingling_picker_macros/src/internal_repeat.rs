@@ -14,7 +14,7 @@ pub(crate) fn internal_repeat(input: TokenStream) -> TokenStream {
 
     let mut result = Vec::new();
     for i in range_start..=range_end {
-        result.extend(expand_body(&body, i));
+        result.extend(expand_body(&body, i, range_start, range_end));
     }
     result.into_iter().collect()
 }
@@ -92,27 +92,74 @@ fn parse_usize_tokens(tokens: &[&TokenTree]) -> usize {
     s.parse().unwrap_or(12)
 }
 
-/// Walk tokens, replacing `$` in identifier tails, and expanding
-/// `( … )+` / `( … ,)+` / `( … ;)+` groups.
-fn expand_body(tokens: &[TokenTree], outer: usize) -> Vec<TokenTree> {
+/// Walk tokens, replacing:
+///   `$`   → current
+///   `^$`  → max
+///   `$^`  → min
+///   `$+`  → current + 1 (clamped)
+///   `$-`  → current - 1 (clamped)
+///   `ident$` → ident{current}
+/// and expanding `( … )+` / `( … ,)+` / `( … ;)+` groups.
+fn expand_body(tokens: &[TokenTree], current: usize, min: usize, max: usize) -> Vec<TokenTree> {
     let mut out = Vec::new();
     let mut i = 0;
     while i < tokens.len() {
         // Check for a parenthesized repetition group: ( ... ) sep? +
-        if let Some(exp) = try_expand_paren_group(tokens, i, outer) {
+        if let Some(exp) = try_expand_paren_group(tokens, i, current, min, max) {
             let (items, consumed) = exp;
             out.extend(items);
             i += consumed;
             continue;
         }
 
-        // Identifier followed by `$` → combined ident + number
+        // `^$` — max value
+        if let TokenTree::Punct(p) = &tokens[i]
+            && p.as_char() == '^'
+            && i + 1 < tokens.len()
+            && let TokenTree::Punct(p2) = &tokens[i + 1]
+            && p2.as_char() == '$'
+        {
+            out.push(TokenTree::Literal(Literal::usize_suffixed(max)));
+            i += 2;
+            continue;
+        }
+
+        // `ident$` / `ident$+` / `ident$-` / `ident$^`
+        // → {ident}{current} / {ident}{current+1} / {ident}{current-1} / {ident}{min}
         if let TokenTree::Ident(id) = &tokens[i] {
             if i + 1 < tokens.len()
                 && let TokenTree::Punct(p) = &tokens[i + 1]
                 && p.as_char() == '$'
             {
-                let name = format!("{}{outer}", id);
+                // Check for ident$+ / ident$- / ident$^
+                if i + 2 < tokens.len() {
+                    match &tokens[i + 2] {
+                        TokenTree::Punct(p2) if p2.as_char() == '+' => {
+                            // ident$+ → {ident}{current+1}
+                            let name = format!("{}{}", id, current + 1);
+                            out.push(TokenTree::Ident(Ident::new(&name, id.span())));
+                            i += 3;
+                            continue;
+                        }
+                        TokenTree::Punct(p2) if p2.as_char() == '-' => {
+                            // ident$- → {ident}{current-1}
+                            let val = current.saturating_sub(1);
+                            let name = format!("{}{}", id, val);
+                            out.push(TokenTree::Ident(Ident::new(&name, id.span())));
+                            i += 3;
+                            continue;
+                        }
+                        TokenTree::Punct(p2) if p2.as_char() == '^' => {
+                            let name = format!("{}{}", id, min);
+                            out.push(TokenTree::Ident(Ident::new(&name, id.span())));
+                            i += 3;
+                            continue;
+                        }
+                        _ => {}
+                    }
+                }
+                // ident$ alone → {ident}{current}
+                let name = format!("{}{}", id, current);
                 out.push(TokenTree::Ident(Ident::new(&name, id.span())));
                 i += 2;
                 continue;
@@ -124,10 +171,38 @@ fn expand_body(tokens: &[TokenTree], outer: usize) -> Vec<TokenTree> {
 
         match &tokens[i] {
             TokenTree::Punct(p) if p.as_char() == '$' => {
-                out.push(TokenTree::Literal(Literal::usize_suffixed(outer)));
+                // lookahead for $^, $+, $-
+                if i + 1 < tokens.len() {
+                    match &tokens[i + 1] {
+                        TokenTree::Punct(p2) if p2.as_char() == '^' => {
+                            // $^ → min
+                            out.push(TokenTree::Literal(Literal::usize_suffixed(min)));
+                            i += 2;
+                            continue;
+                        }
+                        TokenTree::Punct(p2) if p2.as_char() == '+' => {
+                            // $+ → current + 1
+                            out.push(TokenTree::Literal(Literal::usize_suffixed(current + 1)));
+                            i += 2;
+                            continue;
+                        }
+                        TokenTree::Punct(p2) if p2.as_char() == '-' => {
+                            // $- → current - 1
+                            let val = current.saturating_sub(1);
+                            out.push(TokenTree::Literal(Literal::usize_suffixed(val)));
+                            i += 2;
+                            continue;
+                        }
+                        _ => {}
+                    }
+                }
+                // `$` alone → current
+                out.push(TokenTree::Literal(Literal::usize_suffixed(current)));
+                i += 1;
+                continue;
             }
             TokenTree::Group(g) => {
-                let inner = expand_body_vec(&g.stream(), outer);
+                let inner = expand_body_vec(&g.stream(), current, min, max);
                 out.push(TokenTree::Group(Group::new(
                     g.delimiter(),
                     inner.into_iter().collect(),
@@ -140,62 +215,100 @@ fn expand_body(tokens: &[TokenTree], outer: usize) -> Vec<TokenTree> {
     out
 }
 
-fn expand_body_vec(stream: &TokenStream, outer: usize) -> Vec<TokenTree> {
+fn expand_body_vec(stream: &TokenStream, current: usize, min: usize, max: usize) -> Vec<TokenTree> {
     let v: Vec<TokenTree> = stream.clone().into_iter().collect();
-    expand_body(&v, outer)
+    expand_body(&v, current, min, max)
 }
 
-/// Try to expand `( … )+` / `( … ,)+` / `( … ;)+` at position `i`.
+/// Try to expand a repetition group.
 ///
-/// The `+` is AFTER the closing paren. An optional separator (`,` or `;`)
-/// may appear between `)` and `+`.
-/// Returns `(expanded_tokens, consumed_count)` or `None`.
+/// New syntax (repetition marker `+` is the LAST token INSIDE the parens):
+/// - `(group,+)`    — repeat `*` times (current), `,` is the separator
+/// - `(group,+)`    — repeat `*` times, `,` is the separator
+/// - `(group,+)`    — repeat `*` times, `;` is the separator
+/// - `(group +)`    — repeat `*` times, no separator
+/// - `(group,+)+`   — repeat `*+1` times (with separator)
+/// - `(group,+)--`   — repeat `*-1` times (with separator) [not yet used]
+///
+/// The `*` is the current counter value. An optional `+` or `-` immediately
+/// after the closing paren shifts the repeat count up or down by one.
 fn try_expand_paren_group(
     tokens: &[TokenTree],
     i: usize,
-    outer: usize,
+    current: usize,
+    _min: usize,
+    _max: usize,
 ) -> Option<(Vec<TokenTree>, usize)> {
     let group = match tokens.get(i)? {
         TokenTree::Group(g) if g.delimiter() == Delimiter::Parenthesis => g,
         _ => return None,
     };
 
-    // Check tokens AFTER the group for `+` (optionally preceded by `,` or `;`)
-    let rest = &tokens[i + 1..];
-    let sep: Option<&str> = match rest.first() {
-        Some(TokenTree::Punct(p)) if p.as_char() == ',' => {
-            if matches!(rest.get(1), Some(TokenTree::Punct(p)) if p.as_char() == '+') {
-                Some(",")
-            } else {
-                return None;
+    let stream: Vec<TokenTree> = group.stream().into_iter().collect();
+
+    // Repetition syntax: the LAST token inside the parens MUST be `+`.
+    //   `(content,+)`      — repeat * times, `,` separator
+    //   `(content;+)`      — repeat * times, `;` separator
+    //   `(content,+)`      — repeat * times, no separator
+    //   `(content,+)+`     — repeat *+1 times
+    //   `(content,+)-`     — repeat *-1 times
+    // An optional `+` / `-` right after `)` shifts the count by ±1.
+    //
+    // Any `+` tokens inside `content` are treated as regular Rust syntax
+    // (trait bounds, etc.) — the repetition marker is ONLY the final `+`.
+
+    let last_is_plus = stream
+        .last()
+        .is_some_and(|t| matches!(t, TokenTree::Punct(p) if p.as_char() == '+'));
+    if !last_is_plus {
+        return None;
+    }
+
+    // Determine separator and inner content.
+    let (inner, sep_str): (Vec<TokenTree>, &str) = {
+        if stream.len() >= 2 {
+            let sep_idx = stream.len() - 2;
+            match &stream[sep_idx] {
+                TokenTree::Punct(p) if p.as_char() == ',' => {
+                    // (...,content,+) — inner is everything before the last `,`
+                    let content: Vec<TokenTree> = stream[..sep_idx].into();
+                    (content, ",")
+                }
+                TokenTree::Punct(p) if p.as_char() == ';' => {
+                    let content: Vec<TokenTree> = stream[..sep_idx].into();
+                    (content, ";")
+                }
+                _ => {
+                    // (content+) — no separator, the `+` is the only special token
+                    let content: Vec<TokenTree> = stream[..stream.len() - 1].into();
+                    (content, "")
+                }
             }
+        } else {
+            // (+) — bare repetition marker, empty content
+            (vec![], "")
         }
-        Some(TokenTree::Punct(p)) if p.as_char() == ';' => {
-            if matches!(rest.get(1), Some(TokenTree::Punct(p)) if p.as_char() == '+') {
-                Some(";")
-            } else {
-                return None;
-            }
-        }
-        Some(TokenTree::Punct(p)) if p.as_char() == '+' => None,
-        _ => return None,
     };
 
-    let consumed = if sep.is_some() { 3 } else { 2 }; // group + sep? + +
-
-    let inner: Vec<TokenTree> = group.stream().into_iter().collect();
+    // Handle modifier after `)`
+    let rest = &tokens[i + 1..];
+    let modifier: isize = match rest.first() {
+        Some(TokenTree::Punct(p)) if p.as_char() == '+' => 1,
+        Some(TokenTree::Punct(p)) if p.as_char() == '-' => -1,
+        _ => 0,
+    };
+    let consumed = if modifier != 0 { 2 } else { 1 };
+    let repeat_count = (current as isize + modifier) as usize;
 
     let mut out = Vec::new();
-    for n in 1..=outer {
-        if n > 1
-            && let Some(s) = sep
-        {
+    for n in 1..=repeat_count {
+        if n > 1 && !sep_str.is_empty() {
             out.push(TokenTree::Punct(proc_macro::Punct::new(
-                s.chars().next().unwrap(),
+                sep_str.chars().next().unwrap(),
                 proc_macro::Spacing::Alone,
             )));
         }
-        out.extend(expand_body(&inner, n));
+        out.extend(expand_body(&inner, n, 1, repeat_count));
     }
 
     Some((out, consumed))
