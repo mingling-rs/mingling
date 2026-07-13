@@ -3,6 +3,8 @@ use std::ops::Index;
 mod patterns;
 pub use patterns::*;
 
+use crate::{Pickable, PickerFlag, PickerResult};
+
 /// Picker, used to record all states of a parameter parsing
 ///
 /// Includes the following:
@@ -222,6 +224,22 @@ pub trait IntoPicker<'a> {
     /// assert_eq!(args.len(), 2);
     /// ```
     fn to_picker(self) -> Picker<'a>;
+
+    /// Creates a `PickerPattern1` from the given flag for the `pick` method.
+    ///
+    /// This method converts the value into a `Picker` and starts a parameter
+    /// picking chain with one flag. The result is initially `Unparsed`.
+    fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N>
+    where
+        Self: Sized,
+        N: Pickable + Default + Sized,
+    {
+        PickerPattern1 {
+            args: self.to_picker().args,
+            flag_1: flag,
+            result_1: PickerResult::Unparsed,
+        }
+    }
 }
 
 impl<'a> IntoPicker<'a> for &'a [&'a str] {

@@ -19,6 +19,11 @@ internal_repeat!(1..32 => {
    where (T$: Pickable + Default,+)
    {
        #[allow(clippy::type_complexity)]
+       /// Adds a new flag to the picking chain, returning a new `PickerPattern` with one more type parameter.
+       ///
+       /// This method extends the current picking pattern by appending an additional flag.
+       /// The previous flags and their results are preserved as part of the new pattern.
+       /// The new flag's result is initially `Unparsed`.
        pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern$+<'a, (T$,+), N>
        where
            N: Pickable + Default,
@@ -42,6 +47,10 @@ internal_repeat!(1..32 => {
 });
 
 impl<'a> Picker<'a> {
+    /// Creates a `PickerPattern1` from the given flag to start a picking chain.
+    ///
+    /// This method initiates a parameter picking chain with one flag.
+    /// The result is initially `Unparsed`.
     pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N>
     where
         N: Pickable + Default,
