@@ -75,12 +75,8 @@ impl<'a> ParserStyle<'a> {
         }
     }
 
-    /// Returns the global parser style, or `None` if not yet set.
-    pub fn global_style() -> Option<&'static ParserStyle<'static>> {
-        if GLOBAL_STYLE_SET.load(Ordering::Acquire) {
-            GLOBAL_STYLE.get()
-        } else {
-            None
-        }
+    /// Returns the global parser style, falling back to `UNIX_STYLE` if not set.
+    pub fn global_style() -> &'static ParserStyle<'static> {
+        GLOBAL_STYLE.get().unwrap_or(&UNIX_STYLE)
     }
 }
