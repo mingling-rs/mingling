@@ -7,11 +7,8 @@ pub use pickable::*;
 mod flag;
 pub use flag::*;
 
-mod result;
-pub use result::*;
-
-mod tag;
-pub use tag::*;
+mod infos;
+pub use infos::*;
 
 pub mod parselib;
 
