@@ -1,47 +1,88 @@
-use crate::{PickerFlag, PickerResult, PickerTag};
+use crate::{PickerArgInfo, PickerArgs, PickerFlag, PickerFlagAttr, PickerResult};
 
 mod implements;
 
-/// A trait for types that can be constructed from a raw string representation.
+/// `Pickable` trait defines how to parse a type instance from command-line arguments.
 ///
-/// Implementing this trait allows a type to be "picked" or parsed from a string,
-/// enabling deserialization or configuration loading from textual input.
+/// This trait is the core abstraction of the `Picker` argument parsing system, dividing the
+/// parsing process into two phases:
 ///
-/// # Requirements
+/// 1. **Tag phase ([`Pickable::tag`])**: Determines which argument positions the `Pickable` needs to handle.
+/// 2. **Pick phase ([`Pickable::pick`])**: Converts the raw strings at the tagged positions into the actual type.
 ///
-/// - The implementing type must be [`Sized`] and implement [`Default`].
-/// - The [`pick`] method performs the actual parsing and may fail.
+/// Types implementing this trait must also implement [`Default`], so that a default value
+/// can be used as a fallback when parsing fails.
 ///
-/// # Errors
+/// # Type Parameters
 ///
-/// Returns a [`PickerResult`] which encapsulates either a successful parse
-/// or an error indicating why the input could not be parsed.
-///
-/// # Examples
-///
-/// ```
-/// # use mingling_picker::{Pickable, PickerResult, PickerFlag, PickerTag};
-/// #[derive(Default)]
-/// struct MyType(String);
-///
-/// impl<'a> Pickable<'a> for MyType {
-///     fn tag(flag: &'a PickerFlag<'a, Self>) -> PickerTag<'a> {
-///         let tag = PickerTag::from(flag);
-///     }
-///
-///     fn pick(raw_strs: &[&str]) -> PickerResult<Self> {
-///         PickerResult::Parsed(MyType(raw_strs.join(" ")))
-///     }
-/// }
-/// ```
+/// * `'a` - Lifetime parameter, used to associate references in [`PickerFlag`].
 pub trait Pickable<'a>
 where
     Self: Sized + Default,
 {
-    /// Given a [`PickerFlag`], returns a [`PickerTag`] that tells the parser
-    /// about the argument's characteristics (e.g., positional, optional, multi).
-    fn tag(flag: &'a PickerFlag<'a, Self>) -> PickerTag<'a>;
+    /// Returns the parse-order attribute of this flag.
+    ///
+    /// This attribute is used to inform the parser about the parse order
+    /// between different `Pickable` types.
+    /// See [`PickerFlagAttr`] for specific ordering definitions.
+    ///
+    /// # Parameters
+    ///
+    /// * `flag` - The current flag instance, which contains a reference to `Self`.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`PickerFlagAttr`] describing the parse-order attribute of this flag.
+    fn get_attr(flag: &'a PickerFlag<'a, Self>) -> PickerFlagAttr;
 
-    /// Parses a `Self` value from the given raw string input.
+    /// Tag phase: Determines which argument positions the `Pickable` needs to handle.
+    ///
+    /// This function receives a [`TagPhaseContext`] containing argument context information.
+    /// During this phase, the parser invokes each `Pickable` and collects the position indices
+    /// they return, in order to determine which arguments to parse later.
+    ///
+    /// # Parameters
+    ///
+    /// * `ctx` - The tag phase context, containing argument information, all parameters of the
+    ///   current Picker, and an availability mask.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Vec<usize>` representing the indices of the arguments in the argument list
+    /// that this `Pickable` needs to handle.
+    fn tag(ctx: TagPhaseContext) -> Vec<usize>;
+
+    /// Pick phase: Converts the raw string arguments tagged during the `tag` phase into
+    /// the actual expected type.
+    ///
+    /// This function receives a slice of the raw strings that were tagged in the `tag` step
+    /// and converts them into an instance of `Self`.
+    ///
+    /// # Parameters
+    ///
+    /// * `raw_strs` - A slice of strings containing the raw argument values to parse.
+    ///
+    /// # Returns
+    ///
+    /// Returns [`PickerResult<Self>`], i.e., the `Self` instance on success, or an appropriate
+    /// error message on failure.
     fn pick(raw_strs: &[&str]) -> PickerResult<Self>;
+}
+
+/// Tag phase context, providing the necessary argument and state information for
+/// [`Pickable::tag`].
+pub struct TagPhaseContext<'a> {
+    /// Argument information describing the structure and metadata of the argument
+    /// to be parsed.
+    pub arg_info: &'a PickerArgInfo<'a>,
+
+    /// A read-only list of all arguments in the current [`Picker`].
+    pub args: &'a PickerArgs<'a>,
+
+    /// Availability mask, recording positions already occupied by other `Pickable` tags.
+    ///
+    /// `mask.len()` equals `args.len()`. Where:
+    /// - `0` means the position is currently available (unoccupied);
+    /// - `1` means the position is already occupied and cannot be used again.
+    pub mask: &'a [usize],
 }

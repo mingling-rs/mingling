@@ -246,21 +246,7 @@ impl<Type> PickerResult<Type> {
     }
 }
 
-/// Represents a command-line argument/flag tag for a picker.
-///
-/// This struct defines how a picker argument should be parsed from the command line,
-/// including its short name (e.g., `-n`), long name (e.g., `--name`), and aliases.
-///
-/// # Fields
-///
-/// * `short` - The short form of the tag, typically a single character (e.g., `-n`).
-/// * `long` - The long form of the tag (e.g., `--name`).
-/// * `alias` - Alternative names for the tag (e.g., `["-N", "--nickname"]`).
-/// * `positional` - Whether this tag is a positional argument (no `-` or `--` prefix).
-/// * `optional` - Whether this tag is optional or required.
-/// * `multi` - Whether this tag can accept multiple values.
-/// * `is_flag` - Whether this tag participates in parsing after a `--` separator.
-pub struct PickerTag<'a> {
+pub struct PickerArgInfo<'a> {
     /// The short form of the tag, e.g. `'n'` for `-n`.
     pub short: Option<char>,
     /// The long form of the tag, e.g. `"name"` for `--name`.
@@ -277,7 +263,7 @@ pub struct PickerTag<'a> {
     pub is_flag: bool,
 }
 
-impl<'a, T> From<PickerFlag<'a, T>> for PickerTag<'a>
+impl<'a, T> From<PickerFlag<'a, T>> for PickerArgInfo<'a>
 where
     T: Pickable<'a> + Default,
 {
@@ -307,7 +293,7 @@ where
     }
 }
 
-impl<'a, T: Pickable<'a> + Default> From<&'a PickerFlag<'a, T>> for PickerTag<'a> {
+impl<'a, T: Pickable<'a> + Default> From<&'a PickerFlag<'a, T>> for PickerArgInfo<'a> {
     fn from(value: &'a PickerFlag<'a, T>) -> Self {
         let (long, alias) = match value.full.len() {
             0 => (None, None),
@@ -334,7 +320,7 @@ impl<'a, T: Pickable<'a> + Default> From<&'a PickerFlag<'a, T>> for PickerTag<'a
     }
 }
 
-impl<'a> PickerTag<'a> {
+impl<'a> PickerArgInfo<'a> {
     /// Create a new `PickerTag` with default values.
     pub fn new() -> Self {
         Self {
@@ -433,7 +419,7 @@ impl<'a> PickerTag<'a> {
     }
 }
 
-impl<'a> Default for PickerTag<'a> {
+impl<'a> Default for PickerArgInfo<'a> {
     fn default() -> Self {
         Self::new()
     }

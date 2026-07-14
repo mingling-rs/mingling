@@ -123,31 +123,49 @@ where
 
 /// Describes the attribute (behavior) of a command-line parameter.
 ///
-/// This enum specifies how a parameter is parsed and processed:
-///
-/// - `Single`: The parameter accepts a single value. For example, `--name Alice`.
-///
-/// - `Multi`: The parameter accepts multiple values. For example, `--file a.txt --file b.txt`.
-///
-/// - `Flag`: The parameter is a boolean flag with no associated value.
-///   For example, `--verbose` sets a flag to `true`.
-///
-/// - `Positional`: The parameter is matched by its position in the command line,
-///   without requiring a `--name` or `-n` flag. For example, an input filename as the first argument.
+/// The ordering reflects parse priority (higher = parsed first):
+/// `Positional < Flag < Single < Multi`
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PickerFlagAttr {
-    /// Accepts multiple values (e.g., `--file a.txt --file b.txt`).
-    Multi,
-
-    /// Accepts a single value (e.g., `--name Alice`).
-    Single,
+    /// Positional argument matched by its position (e.g., an input file).
+    #[default]
+    Positional,
 
     /// Boolean flag with no associated value (e.g., `--verbose`).
     Flag,
 
-    /// Positional argument matched by its position (e.g., an input file).
-    #[default]
-    Positional,
+    /// Accepts a single value (e.g., `--name Alice`).
+    Single,
+
+    /// Accepts multiple values (e.g., `--file a.txt --file b.txt`).
+    Multi,
+}
+
+impl PickerFlagAttr {
+    /// Determines if the given `PickerFlag` represents a positional parameter.
+    ///
+    /// If the flag is positional (determined by `flag.is_positional()`), returns
+    /// `PickerFlagAttr::Positional`. Otherwise, invokes the `other` closure to
+    /// produce and return a `PickerFlagAttr`.
+    ///
+    /// # Parameters
+    ///
+    /// - `flag`: A reference to the [`PickerFlag`] to evaluate.
+    /// - `other`: A closure that returns a [`PickerFlagAttr`] when the flag is
+    ///   **not** positional.
+    pub fn positional_or_else<'a, T>(
+        flag: &PickerFlag<'a, T>,
+        other: fn() -> PickerFlagAttr,
+    ) -> PickerFlagAttr
+    where
+        T: Pickable<'a> + Default,
+    {
+        if flag.is_positional() {
+            PickerFlagAttr::Positional
+        } else {
+            other()
+        }
+    }
 }
 
 #[cfg(test)]
