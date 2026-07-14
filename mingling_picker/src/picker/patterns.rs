@@ -10,6 +10,8 @@ internal_repeat!(1..=32 => {
         (
             pub flag_$: &'a PickerFlag<'a, T$>,
             pub result_$: PickerResult<T$>,
+            pub default_$: Option<Box<dyn FnMut() -> T$>>,
+            pub post_$: Option<Box<dyn FnMut(T$) -> T$>>,
         +)
     }
 });
@@ -35,11 +37,15 @@ internal_repeat!(1..32 => {
                // Current
                flag_$+: flag,
                result_$+: PickerResult::Unparsed,
+               default_$+: None,
+               post_$+: None,
 
                // Prev
                (
                    flag_$: self.flag_$,
                    result_$: self.result_$,
+                   default_$: self.default_$,
+                   post_$: self.post_$,
                 +)
            }
        }
@@ -59,6 +65,8 @@ impl<'a> Picker<'a> {
             args: self.args,
             flag_1: flag,
             result_1: PickerResult::Unparsed,
+            default_1: None,
+            post_1: None,
         }
     }
 }

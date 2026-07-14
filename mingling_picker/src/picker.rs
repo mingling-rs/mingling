@@ -34,6 +34,12 @@ pub enum PickerArgs<'a> {
     Owned(Vec<String>),
 }
 
+impl<'a> Default for PickerArgs<'a> {
+    fn default() -> Self {
+        Self::Vec(vec![])
+    }
+}
+
 impl<'a> From<&'a [&'a str]> for Picker<'a> {
     fn from(value: &'a [&'a str]) -> Self {
         Picker {
@@ -241,6 +247,8 @@ pub trait IntoPicker<'a> {
             args: self.to_picker().args,
             flag_1: flag,
             result_1: PickerResult::Unparsed,
+            default_1: None,
+            post_1: None,
         }
     }
 }
