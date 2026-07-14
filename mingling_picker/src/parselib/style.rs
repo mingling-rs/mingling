@@ -5,25 +5,25 @@ use std::sync::atomic::{AtomicBool, Ordering};
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ParserStyle<'a> {
     /// End-of-options marker (e.g., `--`)
-    end_of_options: &'a str,
+    pub end_of_options: &'a str,
 
     /// Prefix for long options (e.g., `--` or `/`)
-    long_prefix: &'a str,
+    pub long_prefix: &'a str,
 
     /// Prefix for short options (e.g., `-` or `/`)
-    short_prefix: &'a str,
+    pub short_prefix: &'a str,
 
     /// Prefix for combined short flags (e.g., `-abc`)
-    combine_prefix: &'a str,
+    pub combine_prefix: &'a str,
 
     /// Separator between name and value (e.g., `=` or `:`)
-    value_separator: char,
+    pub value_separator: char,
 
     /// Whether option names are case-sensitive
-    case_sensitive: bool,
+    pub case_sensitive: bool,
 
     /// Whether combining short flags is allowed (e.g., `-abc` for `-a -b -c`)
-    allow_combine: bool,
+    pub allow_combine: bool,
 }
 
 /// Unix-like style (e.g., `--verbose`, `-v`, `--name=value`)
