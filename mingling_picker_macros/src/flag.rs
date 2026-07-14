@@ -69,7 +69,12 @@ pub(crate) fn flag(input: TokenStream) -> TokenStream {
             })
             .unwrap_or(TS2::new());
 
+        #[cfg(feature = "mingling_support")]
         let import = quote! { ::mingling::picker::PickerFlag };
+
+        #[cfg(not(feature = "mingling_support"))]
+        let import = quote! { ::mingling_picker::PickerFlag };
+
         if ty.is_some() {
             quote! { #import::<#ty_ts> }
         } else {

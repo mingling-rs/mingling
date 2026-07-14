@@ -13,6 +13,7 @@ use crate::{Pickable, PickerFlag};
 /// * `positional` - Whether this tag is a positional argument (no `-` or `--` prefix).
 /// * `optional` - Whether this tag is optional or required.
 /// * `multi` - Whether this tag can accept multiple values.
+/// * `is_flag` - Whether this tag participates in parsing after a `--` separator.
 pub struct PickerTag<'a> {
     /// The short form of the tag, e.g. `'n'` for `-n`.
     pub short: Option<char>,
@@ -26,6 +27,8 @@ pub struct PickerTag<'a> {
     pub optional: bool,
     /// Whether this tag can accept multiple values.
     pub multi: bool,
+    /// Whether this tag participates in parsing after a `--` separator.
+    pub is_flag: bool,
 }
 
 impl<'a, T> From<PickerFlag<'a, T>> for PickerTag<'a>
@@ -53,6 +56,7 @@ where
             positional: value.positional,
             optional: false,
             multi: false,
+            is_flag: false,
         }
     }
 }
@@ -79,6 +83,7 @@ impl<'a, T: Pickable<'a> + Default> From<&'a PickerFlag<'a, T>> for PickerTag<'a
             positional: value.positional,
             optional: false,
             multi: false,
+            is_flag: false,
         }
     }
 }
@@ -93,6 +98,7 @@ impl<'a> PickerTag<'a> {
             positional: false,
             optional: false,
             multi: false,
+            is_flag: false,
         }
     }
 
@@ -132,6 +138,12 @@ impl<'a> PickerTag<'a> {
         self
     }
 
+    /// Mark the tag as a flag that participates in parsing after `--`.
+    pub fn with_is_flag(mut self, is_flag: bool) -> Self {
+        self.is_flag = is_flag;
+        self
+    }
+
     /// Set the short flag (e.g., `'n'` for `-n`).
     pub fn set_short(&mut self, short: char) -> &mut Self {
         self.short = Some(short);
@@ -165,6 +177,12 @@ impl<'a> PickerTag<'a> {
     /// Set whether this tag accepts multiple values.
     pub fn set_multi(&mut self, multi: bool) -> &mut Self {
         self.multi = multi;
+        self
+    }
+
+    /// Set whether this tag participates in parsing after a `--` separator.
+    pub fn set_is_flag(&mut self, is_flag: bool) -> &mut Self {
+        self.is_flag = is_flag;
         self
     }
 }

@@ -23,8 +23,8 @@ pub mod macros {
     pub use mingling_picker_macros::*;
 }
 
-#[cfg(feature = "core")]
+#[cfg(feature = "mingling_support")]
 mod corebind;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "mingling_support")]
 pub use corebind::*;

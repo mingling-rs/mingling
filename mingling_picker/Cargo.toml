@@ -9,7 +9,7 @@ readme = "README.md"
 description = "Mingling's lightweight argument parser"
 
 [features]
-core = ["dep:mingling_core"]
+mingling_support = ["dep:mingling_core", "mingling_picker_macros/mingling_support"]
 
 [dependencies]
 mingling_core = { workspace = true, optional = true }
