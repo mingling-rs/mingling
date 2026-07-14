@@ -22,6 +22,8 @@ mingling = { path = ".", features = [
 
 [package.metadata.docs.rs]
 features = [
+    "core",
+    "macros",
     "builds",
     "structural_renderer",
     "repl",
@@ -33,12 +35,15 @@ features = [
 ]
 
 [features]
+core = ["dep:mingling_core", "mingling_core/default"]
+macros = ["dep:mingling_macros", "mingling_macros/default"]
+
 nightly = ["mingling_core/nightly", "mingling_macros/nightly"]
 debug = ["mingling_core/debug"]
 async = ["mingling_core/async", "mingling_macros/async"]
 builds = ["mingling_core/builds"]
 
-default = ["mingling_core/default", "mingling_macros/default"]
+default = ["core", "macros"]
 
 clap = ["mingling_core/clap", "mingling_macros/clap"]
 dispatch_tree = ["mingling_core/dispatch_tree", "mingling_macros/dispatch_tree"]
@@ -83,8 +88,8 @@ ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 extra_macros = ["mingling_macros/extra_macros"]
 
 [dependencies]
-mingling_core.workspace = true
-mingling_macros.workspace = true
+mingling_core = { workspace = true, optional = true }
+mingling_macros = { workspace = true, optional = true }
 mingling_picker = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 size = { version = "0.5", optional = true }

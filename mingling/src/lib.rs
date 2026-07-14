@@ -69,10 +69,14 @@
 //! # About Features
 //! All features of `Mingling` are opt-in. To learn what each feature provides, see [Features](feature/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/doc.html#/pages/other/features)
 
+#[cfg(feature = "core")]
 mod example_docs;
 
 // Re-export Core lib
+#[cfg(feature = "core")]
 pub use mingling::*;
+
+#[cfg(feature = "core")]
 pub use mingling_core as mingling;
 
 /// `Mingling` argument parser (Built-in)
@@ -101,6 +105,7 @@ pub mod picker {
 ///
 /// <https://docs.rs/mingling_macros/latest/mingling_macros/>
 #[allow(unused_imports)]
+#[cfg(feature = "macros")]
 pub mod macros {
     /// `#[chain]` - Used to generate a struct implementing the `Chain` trait via a method
     pub use mingling_macros::chain;
@@ -178,9 +183,11 @@ pub mod macros {
 }
 
 /// derive macro `EnumTag`
+#[cfg(feature = "macros")]
 pub use mingling_macros::EnumTag;
 
 /// derive macro Groupped
+#[cfg(feature = "macros")]
 pub use mingling_macros::Groupped;
 
 /// derive macro `StructuralData` — marks a type as supporting structured output
@@ -188,10 +195,12 @@ pub use mingling_macros::Groupped;
 pub use mingling_macros::StructuralData;
 
 /// Example projects for `Mingling`, for learning how to use `Mingling`
+#[cfg(feature = "core")]
 pub mod _mingling_examples {
     pub use crate::example_docs::*;
 }
 
+#[cfg(feature = "core")]
 mod features;
 
 /// Module for checking which features are enabled at compile time.
@@ -199,19 +208,23 @@ mod features;
 /// Each constant re-exported from this module corresponds to a Cargo feature flag.
 /// They can be used for conditional compilation or runtime branching based on
 /// feature availability.
+#[cfg(feature = "core")]
 pub mod feature {
     include!("./features.rs");
 }
 
+#[cfg(feature = "core")]
 mod setups;
 
 /// Setups provided by Mingling, which can extend command-line programs.
+#[cfg(feature = "core")]
 pub mod setup {
     pub use crate::setups::*;
     pub use mingling_core::setup::*;
 }
 
 /// Mutable global resources provided within Mingling
+#[cfg(feature = "core")]
 pub mod res;
 
 /// The prelude module provides convenient re-exports of commonly used macros and traits.
@@ -227,34 +240,45 @@ pub mod res;
 /// ```
 pub mod prelude {
     /// Re-export of the `Groupped` derive macro for grouping types.
+    #[cfg(feature = "core")]
     pub use crate::Groupped;
     /// Re-export of the `RenderResult` struct for outputting rendering result
+    #[cfg(feature = "core")]
     pub use crate::RenderResult;
     /// Re-export of the `chain` macro for defining a chain of commands.
+    #[cfg(feature = "macros")]
     pub use crate::macros::chain;
     /// Re-export of the `dispatcher` macro for routing commands.
+    #[cfg(feature = "macros")]
     pub use crate::macros::dispatcher;
     /// Re-export of the `empty_result` macro for creating an empty result value for early return.
-    #[cfg(feature = "extra_macros")]
+    #[cfg(all(feature = "extra_macros", feature = "macros"))]
     pub use crate::macros::empty_result;
     /// Re-export of the `gen_program` macro for generating the program entry point.
+    #[cfg(feature = "macros")]
     pub use crate::macros::gen_program;
     /// Re-export of the `pack` macro for creating wrapper types.
+    #[cfg(feature = "macros")]
     pub use crate::macros::pack;
     /// Re-export of the `pack_err` macro for creating error types.
-    #[cfg(feature = "extra_macros")]
+    #[cfg(all(feature = "extra_macros", feature = "macros"))]
     pub use crate::macros::pack_err;
     /// Re-export of the `renderer` macro for defining renderer functions.
+    #[cfg(feature = "macros")]
     pub use crate::macros::renderer;
     /// Like `pack_err!` but also marks the type for structured output
-    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
+    #[cfg(all(
+        feature = "macros",
+        feature = "structural_renderer",
+        feature = "extra_macros"
+    ))]
     pub use mingling_macros::pack_err_structural;
     /// Like `pack!` but also marks the type for structured output
-    #[cfg(feature = "structural_renderer")]
+    #[cfg(all(feature = "macros", feature = "structural_renderer"))]
     pub use mingling_macros::pack_structural;
 
     /// Re-export of the `completion` macro for generating completion entries.
-    #[cfg(feature = "comp")]
+    #[cfg(all(feature = "macros", feature = "comp"))]
     pub use crate::macros::completion;
 
     /// Re-export of the `AsPicker` trait for picker functionality.
@@ -265,5 +289,6 @@ pub mod prelude {
     pub use mingling_picker::prelude::*;
 
     /// Used to enable the `writeln!` macro for `RenderResult`
+    #[cfg(feature = "core")]
     pub use std::io::Write;
 }

@@ -3,6 +3,7 @@ use mingling_picker_macros::internal_repeat;
 use crate::{Pickable, Picker, PickerArgs, PickerFlag, PickerResult};
 
 internal_repeat!(1..=32 => {
+    #[doc(hidden)]
     pub struct PickerPattern$<'a, (T$,+)>
     where (T$: Pickable + Default,+)
     {
