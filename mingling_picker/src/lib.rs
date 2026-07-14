@@ -10,6 +10,8 @@ pub use flag::*;
 mod result;
 pub use result::*;
 
+pub mod parselib;
+
 pub mod prelude {
     pub use crate::IntoPicker;
 }
