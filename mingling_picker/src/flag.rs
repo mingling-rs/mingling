@@ -120,3 +120,77 @@ where
         self
     }
 }
+
+/// Describes the attribute (behavior) of a command-line parameter.
+///
+/// This enum specifies how a parameter is parsed and processed:
+///
+/// - `Single`: The parameter accepts a single value. For example, `--name Alice`.
+///
+/// - `Multi`: The parameter accepts multiple values. For example, `--file a.txt --file b.txt`.
+///
+/// - `Flag`: The parameter is a boolean flag with no associated value.
+///   For example, `--verbose` sets a flag to `true`.
+///
+/// - `Positional`: The parameter is matched by its position in the command line,
+///   without requiring a `--name` or `-n` flag. For example, an input filename as the first argument.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum PickerFlagAttr {
+    /// Accepts multiple values (e.g., `--file a.txt --file b.txt`).
+    Multi,
+
+    /// Accepts a single value (e.g., `--name Alice`).
+    Single,
+
+    /// Boolean flag with no associated value (e.g., `--verbose`).
+    Flag,
+
+    /// Positional argument matched by its position (e.g., an input file).
+    #[default]
+    Positional,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_picker_flag_attr_ordering() {
+        // Multi > Single > Flag > Positional
+        assert!(PickerFlagAttr::Multi > PickerFlagAttr::Single);
+        assert!(PickerFlagAttr::Multi > PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Multi > PickerFlagAttr::Positional);
+
+        assert!(PickerFlagAttr::Single > PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Single > PickerFlagAttr::Positional);
+
+        assert!(PickerFlagAttr::Flag > PickerFlagAttr::Positional);
+
+        // PartialOrd
+        assert!(PickerFlagAttr::Multi >= PickerFlagAttr::Single);
+        assert!(PickerFlagAttr::Single >= PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Flag >= PickerFlagAttr::Positional);
+
+        assert!(PickerFlagAttr::Positional < PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Flag < PickerFlagAttr::Single);
+        assert!(PickerFlagAttr::Single < PickerFlagAttr::Multi);
+
+        // Sort
+        let mut values = vec![
+            PickerFlagAttr::Flag,
+            PickerFlagAttr::Single,
+            PickerFlagAttr::Positional,
+            PickerFlagAttr::Multi,
+        ];
+        values.sort();
+        assert_eq!(
+            values,
+            vec![
+                PickerFlagAttr::Positional,
+                PickerFlagAttr::Flag,
+                PickerFlagAttr::Single,
+                PickerFlagAttr::Multi,
+            ]
+        );
+    }
+}
