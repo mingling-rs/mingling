@@ -10,9 +10,60 @@ internal_repeat!(1..=32 => {
         (
             pub flag_$: &'a PickerFlag<'a, T$>,
             pub result_$: PickerResult<T$>,
-            pub default_$: Option<Box<dyn FnMut() -> T$>>,
-            pub post_$: Option<Box<dyn FnMut(T$) -> T$>>,
+            pub default_$: Option<Box<dyn FnOnce() -> T$>>,
+            pub post_$: Option<Box<dyn FnOnce(T$) -> T$>>,
         +)
+    }
+});
+
+internal_repeat!(1..=32 => {
+    impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
+    where (T$: Pickable + Default,+)
+    {
+        /// Sets a default value provider for this flag.
+        ///
+        /// If the flag is not provided by the user at runtime, the given closure will be
+        /// called to produce a default value. The closure is expected to return `T$`.
+        ///
+        /// # Example
+        ///
+        /// ```ignore
+        /// let pattern = picker
+        ///     .pick(&my_flag)
+        ///     .or(|| 42);
+        /// ```
+        #[allow(clippy::type_complexity)]
+        pub fn or<F>(mut self, func: F) -> Self
+        where
+            F: FnMut() -> T$,
+            F: 'static,
+        {
+            self.default_$ = Some(Box::new(func));
+            self
+        }
+
+        /// Attaches a post-processing function to this flag.
+        ///
+        /// After the flag's value is parsed (or defaulted), the given closure will be
+        /// invoked with the parsed value and its return value will be used as the final
+        /// result. This allows transforming or validating the parsed value.
+        ///
+        /// # Example
+        ///
+        /// ```ignore
+        /// let pattern = picker
+        ///     .pick(&my_flag)
+        ///     .post(|val| val * 2);
+        /// ```
+        #[allow(clippy::type_complexity)]
+        pub fn post<F>(mut self, func: F) -> Self
+        where
+            F: FnMut(T$) -> T$,
+            F: 'static,
+        {
+            self.post_$ = Some(Box::new(func));
+            self
+        }
     }
 });
 
