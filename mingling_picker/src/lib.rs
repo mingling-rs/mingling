@@ -10,6 +10,9 @@ pub use flag::*;
 mod result;
 pub use result::*;
 
+mod tag;
+pub use tag::*;
+
 pub mod parselib;
 
 pub mod prelude {

@@ -24,7 +24,7 @@ use std::marker::PhantomData;
 #[derive(Default, Clone, Copy)]
 pub struct PickerFlag<'a, Type>
 where
-    Type: Default + Pickable,
+    Type: Default + Pickable<'a>,
 {
     /// Full name, may include variant names (aliases), e.g., `["config", "cfg"]`.
     pub full: &'a [&'a str],
@@ -41,7 +41,7 @@ where
 
 impl<'a, Type> PickerFlag<'a, Type>
 where
-    Type: Default + Pickable,
+    Type: Default + Pickable<'a>,
 {
     /// Creates a new `PickerFlag` with the provided parameters.
     pub fn new(full: &'a [&'a str], short: Option<char>, positional: bool) -> Self {

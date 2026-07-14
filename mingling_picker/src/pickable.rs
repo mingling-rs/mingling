@@ -1,4 +1,4 @@
-use crate::PickerResult;
+use crate::{PickerFlag, PickerResult, PickerTag};
 
 mod implements;
 
@@ -20,20 +20,28 @@ mod implements;
 /// # Examples
 ///
 /// ```
-/// # use mingling_picker::{Pickable, PickerResult};
+/// # use mingling_picker::{Pickable, PickerResult, PickerFlag, PickerTag};
 /// #[derive(Default)]
 /// struct MyType(String);
 ///
-/// impl Pickable for MyType {
-///     fn pick(raw_str: &str) -> PickerResult<Self> {
-///         PickerResult::Parsed(MyType(raw_str.to_string()))
+/// impl<'a> Pickable<'a> for MyType {
+///     fn tag(flag: &'a PickerFlag<'a, Self>) -> PickerTag<'a> {
+///         let tag = PickerTag::from(flag);
+///     }
+///
+///     fn pick(raw_strs: &[&str]) -> PickerResult<Self> {
+///         PickerResult::Parsed(MyType(raw_strs.join(" ")))
 ///     }
 /// }
 /// ```
-pub trait Pickable
+pub trait Pickable<'a>
 where
     Self: Sized + Default,
 {
+    /// Given a [`PickerFlag`], returns a [`PickerTag`] that tells the parser
+    /// about the argument's characteristics (e.g., positional, optional, multi).
+    fn tag(flag: &'a PickerFlag<'a, Self>) -> PickerTag<'a>;
+
     /// Parses a `Self` value from the given raw string input.
-    fn pick(raw_str: &str) -> PickerResult<Self>;
+    fn pick(raw_strs: &[&str]) -> PickerResult<Self>;
 }

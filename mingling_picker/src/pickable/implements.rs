@@ -1,15 +1,20 @@
-use crate::{Pickable, PickerResult};
-use std::path::PathBuf;
+use crate::{Pickable, PickerFlag, PickerResult, PickerTag};
 
 macro_rules! impl_pickable {
     ($($t:ty),*) => {
-        $(
-            impl Pickable for $t {
-                fn pick(raw_str: &str) -> PickerResult<Self> {
-                    raw_str.parse::<$t>().into()
-                }
+        $(impl<'a> Pickable<'a> for $t {
+            fn tag(flag: &'a PickerFlag<'a, Self>) -> PickerTag<'a> {
+                flag.into()
             }
-        )*
+
+            fn pick(raw_strs: &[&str]) -> PickerResult<Self> {
+                raw_strs
+                    .first()
+                    .and_then(|s| s.parse().ok())
+                    .map(PickerResult::Parsed)
+                    .unwrap_or(PickerResult::NotFound)
+            }
+        })*
     };
 }
 
@@ -17,27 +22,18 @@ impl_pickable!(
     i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, usize, f32, f64, isize
 );
 
-impl Pickable for String {
-    fn pick(raw_str: &str) -> PickerResult<Self> {
-        PickerResult::Parsed(raw_str.to_string())
+impl<'a> Pickable<'a> for String {
+    fn tag(flag: &'a PickerFlag<'a, Self>) -> PickerTag<'a> {
+        let mut tag: PickerTag = flag.into();
+        tag.set_optional(false);
+        tag.set_multi(false);
+        tag
     }
-}
 
-impl Pickable for PathBuf {
-    fn pick(raw_str: &str) -> PickerResult<Self> {
-        PickerResult::Parsed(PathBuf::from(raw_str))
-    }
-}
-
-impl<T: Pickable> Pickable for Option<T> {
-    fn pick(raw_str: &str) -> PickerResult<Self> {
-        if raw_str.is_empty() {
-            PickerResult::Parsed(None)
-        } else {
-            match T::pick(raw_str) {
-                PickerResult::Parsed(v) => PickerResult::Parsed(Some(v)),
-                _ => PickerResult::Parsed(None),
-            }
-        }
+    fn pick(raw_strs: &[&str]) -> PickerResult<Self> {
+        raw_strs
+            .first()
+            .map(|s| PickerResult::Parsed(s.to_string()))
+            .unwrap_or(PickerResult::NotFound)
     }
 }

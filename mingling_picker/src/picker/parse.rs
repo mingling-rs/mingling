@@ -7,7 +7,7 @@ internal_repeat!(1..=32 => {
 
 internal_repeat!(1..=32 => {
     impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
-    where (T$: Pickable + Default,+)
+    where (T$: Pickable<'a> + Default,+)
     {
         #[allow(clippy::type_complexity)]
         pub fn parse(self) -> PickerResult<((T$,+))> {

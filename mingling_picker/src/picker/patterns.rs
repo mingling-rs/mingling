@@ -5,7 +5,7 @@ use crate::{Pickable, Picker, PickerArgs, PickerFlag, PickerResult};
 internal_repeat!(1..=32 => {
     #[doc(hidden)]
     pub struct PickerPattern$<'a, (T$,+)>
-    where (T$: Pickable + Default,+)
+    where (T$: Pickable<'a> + Default,+)
     {
         pub args: PickerArgs<'a>,
         (
@@ -19,7 +19,7 @@ internal_repeat!(1..=32 => {
 
 internal_repeat!(1..=32 => {
     impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
-    where (T$: Pickable + Default,+)
+    where (T$: Pickable<'a> + Default,+)
     {
         /// Sets a default value provider for this flag.
         ///
@@ -70,7 +70,7 @@ internal_repeat!(1..=32 => {
 
 internal_repeat!(1..32 => {
    impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
-   where (T$: Pickable + Default,+)
+   where (T$: Pickable<'a> + Default,+)
    {
        #[allow(clippy::type_complexity)]
        /// Adds a new flag to the picking chain, returning a new `PickerPattern` with one more type parameter.
@@ -80,7 +80,7 @@ internal_repeat!(1..32 => {
        /// The new flag's result is initially `Unparsed`.
        pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern$+<'a, (T$,+), N>
        where
-           N: Pickable + Default,
+           N: Pickable<'a> + Default,
        {
            PickerPattern$+ {
                // Args
@@ -111,7 +111,7 @@ impl<'a> Picker<'a> {
     /// The result is initially `Unparsed`.
     pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N>
     where
-        N: Pickable + Default,
+        N: Pickable<'a> + Default,
     {
         PickerPattern1 {
             args: self.args,

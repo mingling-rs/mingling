@@ -241,7 +241,7 @@ pub trait IntoPicker<'a> {
     fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N>
     where
         Self: Sized,
-        N: Pickable + Default + Sized,
+        N: Pickable<'a> + Default + Sized,
     {
         PickerPattern1 {
             args: self.to_picker().args,
