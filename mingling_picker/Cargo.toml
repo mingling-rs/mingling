@@ -8,6 +8,9 @@ authors = ["Weicao-CatilGrass"]
 readme = "README.md"
 description = "Mingling's lightweight argument parser"
 
+[features]
+core = ["dep:mingling_core"]
+
 [dependencies]
-mingling_core.workspace = true
+mingling_core = { workspace = true, optional = true }
 mingling_picker_macros.workspace = true

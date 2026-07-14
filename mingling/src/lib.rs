@@ -91,6 +91,9 @@ pub mod picker {
     pub mod parselib {
         pub use mingling_picker::parselib::*;
     }
+
+    #[cfg(feature = "core")]
+    pub use mingling_picker::corebind::*;
 }
 
 /// Re-export of all macros from `mingling_macros`.

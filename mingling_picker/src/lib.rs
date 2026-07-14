@@ -19,3 +19,9 @@ pub mod prelude {
 pub mod macros {
     pub use mingling_picker_macros::*;
 }
+
+#[cfg(feature = "core")]
+mod corebind;
+
+#[cfg(feature = "core")]
+pub use corebind::*;
