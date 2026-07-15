@@ -14,14 +14,15 @@ use mingling_picker_macros::internal_repeat;
 
 internal_repeat!(1..=32 => {
     use crate::PickerPattern$;
+    use crate::PickerResult$;
 });
 
 internal_repeat!(1..=32 => {
-    impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
+    impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
     where (T$: Pickable<'a>,+)
     {
         #[allow(clippy::type_complexity)]
-        pub fn parse(mut self) -> PickerArgResult<((T$,+))> {
+        pub fn parse(mut self) -> PickerResult$<(T$,+), Route> {
             // ArgInfos
             let arg_infos: [PickerArgInfo; $] = [
               (
@@ -35,10 +36,10 @@ internal_repeat!(1..=32 => {
                     PickerFlagAttr,
 
                     // Tag Func
-                    Option<Box<dyn FnOnce(&PickerArgs<'a>) -> Vec<usize>>>,
+                    Box<dyn FnOnce(&PickerArgs<'a>) -> Vec<usize>>,
 
                     // Pick Func
-                    Option<Box<dyn FnOnce(&[&str])>>,
+                    Box<dyn FnOnce(&[&str], &mut Option<Route>)>,
 
                     // Index
                     usize
@@ -50,16 +51,16 @@ internal_repeat!(1..=32 => {
                         T$::get_attr(self.flag_$),
 
                         // Tag Func
-                        Some(Box::new(|args| {
+                        Box::new(|args| {
                             let ctx = TagPhaseContext {
                                 arg_info: &arg_infos[$],
                                 args,
                             };
                             T$::tag(ctx)
-                        })),
+                        }),
 
                         // Pick Func
-                        Some(Box::new(|args| {
+                        Box::new(|args, error_route| {
                             self.result_$ = match T$::pick(args) {
                                 PickerArgResult::Parsed(mut value) => {
                                     // Postprocess
@@ -79,12 +80,17 @@ internal_repeat!(1..=32 => {
 
                                         PickerArgResult::Parsed(value)
                                     } else {
+                                        if error_route.is_none() {
+                                            if let Some(get_route) = self.route_$ {
+                                                *error_route = Some(get_route());
+                                            }
+                                        }
                                         other
                                     }
                                 },
 
                             }
-                        })),
+                        }),
 
                         // Index
                         $
@@ -99,7 +105,7 @@ internal_repeat!(1..=32 => {
             for (_, tag_func, pick_func, _idx) in bundle {
 
                 // Tag phase
-                let tagged = (tag_func.unwrap())(&self.args);
+                let tagged = tag_func(&self.args);
                 let mut args_to_pick: Vec<&str> = vec![];
 
                 for i in tagged {
@@ -108,10 +114,17 @@ internal_repeat!(1..=32 => {
                 }
 
                 // Pick phase
-                (pick_func.unwrap())(args_to_pick.as_slice());
+                pick_func(args_to_pick.as_slice(), &mut self.error_route);
             }
 
-
+            // Combine Result
+            let result: PickerResult$<(T$,+), Route> = PickerResult$ {
+                route: self.error_route,
+                (
+                    v$: self.result_$.to_option(),
+                +)
+            };
+            result
         }
     }
 });

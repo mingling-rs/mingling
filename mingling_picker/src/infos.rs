@@ -234,6 +234,31 @@ impl<Type> PickerArgResult<Type> {
             _ => Type::default(),
         }
     }
+
+    /// Converts `PickerArgResult<Type>` into `Option<Type>`.
+    ///
+    /// Returns `Some(Type)` if [`Parsed`](PickerArgResult::Parsed), otherwise `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_picker::PickerArgResult;
+    ///
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
+    /// assert_eq!(result.to_option(), Some(42));
+    ///
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
+    /// assert_eq!(result.to_option(), None);
+    ///
+    /// let result: PickerArgResult<i32> = PickerArgResult::Unparsed;
+    /// assert_eq!(result.to_option(), None);
+    /// ```
+    pub fn to_option(self) -> Option<Type> {
+        match self {
+            PickerArgResult::Parsed(value) => Some(value),
+            _ => None,
+        }
+    }
 }
 
 pub struct PickerArgInfo<'a> {

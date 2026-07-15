@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)] // Aha, Type Gymnastics!
+
 use mingling_picker_macros::internal_repeat;
 
 internal_repeat!(1..=32 => {

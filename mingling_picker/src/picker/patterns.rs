@@ -13,6 +13,7 @@ internal_repeat!(1..=32 => {
             pub flag_$: &'a PickerFlag<'a, T$>,
             pub result_$: PickerArgResult<T$>,
             pub default_$: Option<Box<dyn FnOnce() -> T$>>,
+            pub route_$: Option<Box<dyn FnOnce() -> Route>>,
             pub post_$: Option<Box<dyn FnOnce(T$) -> T$>>,
         +)
     }
@@ -65,6 +66,27 @@ internal_repeat!(1..=32 => {
             self
         }
 
+        /// Sets a route for when the flag is not provided.
+        ///
+        /// If the flag is not provided by the user at runtime, the given closure will be
+        /// called to produce a route value that will be returned early.
+        ///
+        /// # Example
+        ///
+        /// ```ignore
+        /// let pattern = picker
+        ///     .pick(&my_flag)
+        ///     .or_route(|| Redirect::home());
+        /// ```
+        pub fn or_route<F>(mut self, func: F) -> Self
+        where
+            F: FnMut() -> Route,
+            F: 'static,
+        {
+            self.route_$ = Some(Box::new(func));
+            self
+        }
+
         /// Attaches a post-processing function to this flag.
         ///
         /// After the flag's value is parsed (or defaulted), the given closure will be
@@ -113,6 +135,7 @@ internal_repeat!(1..32 => {
                flag_$+: flag,
                result_$+: PickerArgResult::Unparsed,
                default_$+: None,
+               route_$+: None,
                post_$+: None,
 
                // Prev
@@ -120,6 +143,7 @@ internal_repeat!(1..32 => {
                    flag_$: self.flag_$,
                    result_$: self.result_$,
                    default_$: self.default_$,
+                   route_$: self.route_$,
                    post_$: self.post_$,
                 +)
            }
@@ -141,6 +165,7 @@ impl<'a, Route> Picker<'a, Route> {
             error_route: None::<Route>,
             flag_1: flag,
             result_1: PickerArgResult::Unparsed,
+            route_1: None,
             default_1: None,
             post_1: None,
         }

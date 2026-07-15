@@ -259,6 +259,7 @@ pub trait IntoPicker<'a, Route> {
             flag_1: flag,
             result_1: PickerArgResult::Unparsed,
             default_1: None,
+            route_1: None,
             post_1: None,
             error_route: None,
         }
