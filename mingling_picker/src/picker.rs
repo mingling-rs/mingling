@@ -1,7 +1,6 @@
-use std::ops::{Deref, Index};
+use std::ops::Index;
 
 mod parse;
-// pub use parse::*;
 
 mod patterns;
 pub use patterns::*;
@@ -40,6 +39,65 @@ impl<'a> Default for PickerArgs<'a> {
     }
 }
 
+impl<'a> PickerArgs<'a> {
+    /// Returns the number of arguments.
+    pub fn len(&self) -> usize {
+        match self {
+            PickerArgs::Slice(items) => items.len(),
+            PickerArgs::Vec(items) => items.len(),
+            PickerArgs::Owned(items) => items.len(),
+        }
+    }
+
+    /// Returns `true` if there are no arguments.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Returns an iterator over the arguments, yielding owned `String` values.
+    pub fn iter(&'a self) -> PickerIter<'a> {
+        match self {
+            PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
+            PickerArgs::Vec(items) => PickerIter::Vec(items.iter()),
+            PickerArgs::Owned(items) => PickerIter::Owned(items.iter()),
+        }
+    }
+
+    /// Returns a reference to the argument at `index`, if it exists.
+    pub fn get(&self, index: usize) -> Option<&str> {
+        match self {
+            PickerArgs::Slice(items) => items.get(index).copied(),
+            PickerArgs::Vec(items) => items.get(index).copied(),
+            PickerArgs::Owned(items) => items.get(index).map(|s| s.as_str()),
+        }
+    }
+}
+
+impl<'a> Index<usize> for PickerArgs<'a> {
+    type Output = str;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        match self {
+            PickerArgs::Slice(items) => items[index],
+            PickerArgs::Vec(items) => items[index],
+            PickerArgs::Owned(items) => &items[index],
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a PickerArgs<'a> {
+    type Item = String;
+    type IntoIter = PickerIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
+            PickerArgs::Vec(items) => PickerIter::Vec(items.iter()),
+            PickerArgs::Owned(items) => PickerIter::Owned(items.iter()),
+        }
+    }
+}
+
 impl<'a> From<&'a [&'a str]> for Picker<'a> {
     fn from(value: &'a [&'a str]) -> Self {
         Picker {
@@ -65,75 +123,34 @@ impl<'a> From<Vec<String>> for Picker<'a> {
 }
 
 impl<'a> Picker<'a> {
-    /// Returns the number of arguments in the picker.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mingling_picker::Picker;
-    ///
-    /// let args = Picker::from(&["hello", "world"][..]);
-    /// assert_eq!(args.len(), 2);
-    ///
-    /// let args = Picker::from(vec!["foo", "bar"]);
-    /// assert_eq!(args.len(), 2);
-    ///
-    /// let args = Picker::from(vec!["a".to_string(), "b".to_string()]);
-    /// assert_eq!(args.len(), 2);
-    ///
-    /// let empty: Picker = Picker::from(&[][..]);
-    /// assert_eq!(empty.len(), 0);
-    /// ```
-    pub fn len(&self) -> usize {
-        match &self.args {
-            PickerArgs::Slice(items) => items.len(),
-            PickerArgs::Vec(items) => items.len(),
-            PickerArgs::Owned(items) => items.len(),
-        }
+    /// Returns a reference to the internal `PickerArgs`.
+    pub fn args(&self) -> &PickerArgs<'a> {
+        &self.args
     }
 
-    /// Returns `true` if the picker contains no arguments.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mingling_picker::Picker;
-    ///
-    /// let empty: Picker = Picker::from(&[][..]);
-    /// assert!(empty.is_empty());
-    ///
-    /// let args = Picker::from(&["hello"][..]);
-    /// assert!(!args.is_empty());
-    /// ```
+    /// Returns a mutable reference to the internal `PickerArgs`.
+    pub fn args_mut(&mut self) -> &mut PickerArgs<'a> {
+        &mut self.args
+    }
+
+    /// Consumes `self` and returns the internal `PickerArgs`.
+    pub fn into_args(self) -> PickerArgs<'a> {
+        self.args
+    }
+
+    /// Returns the number of arguments.
+    pub fn len(&self) -> usize {
+        self.args.len()
+    }
+
+    /// Returns `true` if there are no arguments.
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.args.is_empty()
     }
 
     /// Returns an iterator over the arguments, yielding owned `String` values.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use mingling_picker::Picker;
-    ///
-    /// let args = Picker::from(&["hello", "world"][..]);
-    /// let collected: Vec<String> = args.iter().collect();
-    /// assert_eq!(collected, vec!["hello", "world"]);
-    ///
-    /// let args = Picker::from(vec!["foo", "bar"]);
-    /// let collected: Vec<String> = args.iter().collect();
-    /// assert_eq!(collected, vec!["foo", "bar"]);
-    ///
-    /// let args = Picker::from(vec!["a".to_string(), "b".to_string()]);
-    /// let collected: Vec<String> = args.iter().collect();
-    /// assert_eq!(collected, vec!["a", "b"]);
-    /// ```
     pub fn iter(&'a self) -> PickerIter<'a> {
-        match &self.args {
-            PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
-            PickerArgs::Vec(items) => PickerIter::Vec(items.iter()),
-            PickerArgs::Owned(items) => PickerIter::Owned(items.iter()),
-        }
+        self.args.iter()
     }
 }
 
@@ -141,11 +158,7 @@ impl<'a> Index<usize> for Picker<'a> {
     type Output = str;
 
     fn index(&self, index: usize) -> &Self::Output {
-        match &self.args {
-            PickerArgs::Slice(items) => items[index],
-            PickerArgs::Vec(items) => items[index],
-            PickerArgs::Owned(items) => &items[index],
-        }
+        &self.args[index]
     }
 }
 
@@ -153,11 +166,7 @@ impl<'a> Index<usize> for &Picker<'a> {
     type Output = str;
 
     fn index(&self, index: usize) -> &Self::Output {
-        match &self.args {
-            PickerArgs::Slice(items) => items[index],
-            PickerArgs::Vec(items) => items[index],
-            PickerArgs::Owned(items) => &items[index],
-        }
+        &self.args[index]
     }
 }
 
@@ -166,18 +175,11 @@ impl<'a> IntoIterator for &'a Picker<'a> {
     type IntoIter = PickerIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        match &self.args {
-            PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
-            PickerArgs::Vec(items) => PickerIter::Vec(items.iter()),
-            PickerArgs::Owned(items) => PickerIter::Owned(items.iter()),
-        }
+        self.args.iter()
     }
 }
 
-/// Iterator for `Picker`, yielding owned `String` values.
-///
-/// This enum wraps the underlying slice iterators for each variant of
-/// `PickerArgs`, allowing uniform iteration over borrowed or owned data.
+/// Iterator for `Picker` (and `PickerArgs`), yielding owned `String` values.
 pub enum PickerIter<'a> {
     /// Iterates over a borrowed slice (`&[&str]`)
     Slice(std::slice::Iter<'a, &'a str>),
@@ -282,18 +284,6 @@ impl<'a> IntoPicker<'a> for Vec<String> {
     fn to_picker(self) -> Picker<'a> {
         Picker {
             args: PickerArgs::Owned(self),
-        }
-    }
-}
-
-impl<'a, T> IntoPicker<'a> for &'a T
-where
-    T: Deref<Target = Vec<String>>,
-{
-    fn to_picker(self) -> Picker<'a> {
-        let vec: Vec<&str> = self.iter().map(|s| s.as_str()).collect();
-        Picker {
-            args: PickerArgs::Vec(vec),
         }
     }
 }
