@@ -261,6 +261,11 @@ impl<Type> PickerArgResult<Type> {
     }
 }
 
+/// Represents metadata about a command-line argument or flag.
+///
+/// This struct stores all relevant information about a tag/argument that can be used
+/// for parsing command-line inputs. It includes the short form (e.g., `-n`), long form
+/// (e.g., `--name`), aliases, and various flags that control parsing behavior.
 pub struct PickerArgInfo<'a> {
     /// The short form of the tag, e.g. `'n'` for `-n`.
     pub short: Option<char>,

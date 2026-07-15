@@ -14,3 +14,4 @@ mingling_support = ["dep:mingling_core", "mingling_picker_macros/mingling_suppor
 [dependencies]
 mingling_core = { workspace = true, optional = true }
 mingling_picker_macros.workspace = true
+just_fmt.workspace = true

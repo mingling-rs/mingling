@@ -59,7 +59,7 @@ impl<'a> PickerArgs<'a> {
         self.len() == 0
     }
 
-    /// Returns an iterator over the arguments, yielding owned `String` values.
+    /// Returns an iterator over the arguments, yielding `&str` values.
     pub fn iter(&'a self) -> PickerIter<'a> {
         match self {
             PickerArgs::Slice(items) => PickerIter::Slice(items.iter()),
@@ -91,7 +91,7 @@ impl<'a> Index<usize> for PickerArgs<'a> {
 }
 
 impl<'a> IntoIterator for &'a PickerArgs<'a> {
-    type Item = String;
+    type Item = &'a str;
     type IntoIter = PickerIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -156,7 +156,7 @@ impl<'a, Route> Picker<'a, Route> {
         self.args.is_empty()
     }
 
-    /// Returns an iterator over the arguments, yielding owned `String` values.
+    /// Returns an iterator over the arguments, yielding `&str` values.
     pub fn iter(&'a self) -> PickerIter<'a> {
         self.args.iter()
     }
@@ -179,7 +179,7 @@ impl<'a, Route> Index<usize> for &Picker<'a, Route> {
 }
 
 impl<'a, Route> IntoIterator for &'a Picker<'a, Route> {
-    type Item = String;
+    type Item = &'a str;
     type IntoIter = PickerIter<'a>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -187,7 +187,7 @@ impl<'a, Route> IntoIterator for &'a Picker<'a, Route> {
     }
 }
 
-/// Iterator for `Picker` (and `PickerArgs`), yielding owned `String` values.
+/// Iterator for `Picker` (and `PickerArgs`), yielding `&'a str` values.
 pub enum PickerIter<'a> {
     /// Iterates over a borrowed slice (`&[&str]`)
     Slice(std::slice::Iter<'a, &'a str>),
@@ -198,13 +198,13 @@ pub enum PickerIter<'a> {
 }
 
 impl<'a> Iterator for PickerIter<'a> {
-    type Item = String;
+    type Item = &'a str;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
-            PickerIter::Slice(iter) => iter.next().map(|s| s.to_string()),
-            PickerIter::Vec(iter) => iter.next().map(|s| s.to_string()),
-            PickerIter::Owned(iter) => iter.next().cloned(),
+            PickerIter::Slice(iter) => iter.next().copied(),
+            PickerIter::Vec(iter) => iter.next().copied(),
+            PickerIter::Owned(iter) => iter.next().map(|s| s.as_str()),
         }
     }
 

@@ -1,3 +1,5 @@
+mod builtin;
+
 mod picker;
 pub use picker::*;
 
@@ -18,6 +20,17 @@ pub mod prelude {
 
 pub mod macros {
     pub use mingling_picker_macros::*;
+}
+
+/// Provides the types necessary for implementing the `Pickable` trait
+pub mod pickable_needed {
+    pub use crate::{Pickable, PickerArgResult, PickerFlag, PickerFlagAttr, TagPhaseContext};
+}
+
+/// Provides the types necessary for implementing the `Matcher` trait
+pub mod matcher_needed {
+    pub use crate::PickerArgInfo;
+    pub use crate::parselib::{MaskedArg, Matcher, ParserStyle};
 }
 
 #[cfg(feature = "mingling_support")]

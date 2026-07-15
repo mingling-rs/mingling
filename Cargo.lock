@@ -465,6 +465,7 @@ dependencies = [
 name = "mingling_picker"
 version = "0.3.0"
 dependencies = [
+ "just_fmt",
  "mingling_core",
  "mingling_picker_macros",
 ]
