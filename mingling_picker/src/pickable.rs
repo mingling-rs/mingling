@@ -1,7 +1,5 @@
 use crate::{PickerArgInfo, PickerArgResult, PickerArgs, PickerFlag, PickerFlagAttr};
 
-mod implements;
-
 /// `Pickable` trait defines how to parse a type instance from command-line arguments.
 ///
 /// This trait is the core abstraction of the `Picker` argument parsing system, dividing the

@@ -6,6 +6,9 @@
 //
 // P.S. If there's a better way, please let me know. Thanks!
 // --------------------------------------------------------------------------------------------
+//
+// Then, I must disable `clippy::type_complexity` — this guy is way too noisy.
+#![allow(clippy::type_complexity)]
 
 use crate::{
     Pickable, PickerArgInfo, PickerArgResult, PickerArgs, PickerFlagAttr, TagPhaseContext,
@@ -19,9 +22,49 @@ internal_repeat!(1..=32 => {
 
 internal_repeat!(1..=32 => {
     impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
+    where (T$: Pickable<'a>,+) {
+        /// Unwraps the result, panicking if a route was selected.
+        ///
+        /// # Panics
+        ///
+        /// Panics if a route was selected.
+        pub fn unwrap(self) -> ((T$,+)) {
+            let p = self.parse();
+            ((p.v$.unwrap(),+))
+        }
+
+        /// Returns the individual option values without checking the route.
+        pub fn unpack(self) -> ((Option<T$>,+)) {
+            let p = self.parse();
+            ((p.v$,+))
+        }
+
+        /// Converts to a `Result`, returning `Err(route)` if a route was selected,
+        /// or `Ok(values)` otherwise.
+        pub fn to_result(self) -> Result<((T$,+)), Route> {
+            let p = self.parse();
+            if let Some(r) = p.route {
+                return Err(r);
+            }
+            Ok(p.unwrap())
+        }
+
+        /// Converts to an `Option`, returning `None` if a route was selected,
+        /// or `Some(values)` otherwise.
+        pub fn to_option(self) -> Option<((T$,+))> {
+            let p = self.parse();
+            if p.route.is_some() {
+                return None;
+            }
+            Some(p.unwrap())
+        }
+    }
+});
+
+internal_repeat!(1..=32 => {
+    impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
     where (T$: Pickable<'a>,+)
     {
-        #[allow(clippy::type_complexity)]
         pub fn parse(mut self) -> PickerResult$<(T$,+), Route> {
             // ArgInfos
             let arg_infos: [PickerArgInfo; $] = [
