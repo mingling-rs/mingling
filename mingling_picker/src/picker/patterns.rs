@@ -4,10 +4,11 @@ use crate::{Pickable, Picker, PickerArgResult, PickerArgs, PickerFlag};
 
 internal_repeat!(1..=32 => {
     #[doc(hidden)]
-    pub struct PickerPattern$<'a, (T$,+)>
+    pub struct PickerPattern$<'a, (T$,+), Route>
     where (T$: Pickable<'a>,+)
     {
         pub args: PickerArgs<'a>,
+        pub error_route: Option<Route>,
         (
             pub flag_$: &'a PickerFlag<'a, T$>,
             pub result_$: PickerArgResult<T$>,
@@ -18,7 +19,7 @@ internal_repeat!(1..=32 => {
 });
 
 internal_repeat!(1..=32 => {
-    impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
+    impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
     where (T$: Pickable<'a>,+)
     {
         /// Sets a default value provider for this flag.
@@ -90,7 +91,7 @@ internal_repeat!(1..=32 => {
 });
 
 internal_repeat!(1..32 => {
-   impl<'a, (T$,+)> PickerPattern$<'a, (T$,+)>
+   impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
    where (T$: Pickable<'a>,+)
    {
        #[allow(clippy::type_complexity)]
@@ -99,13 +100,14 @@ internal_repeat!(1..32 => {
        /// This method extends the current picking pattern by appending an additional flag.
        /// The previous flags and their results are preserved as part of the new pattern.
        /// The new flag's result is initially `Unparsed`.
-       pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern$+<'a, (T$,+), N>
+       pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern$+<'a, (T$,+), N, Route>
        where
            N: Pickable<'a>,
        {
            PickerPattern$+ {
                // Args
                args: self.args,
+               error_route: self.error_route,
 
                // Current
                flag_$+: flag,
@@ -125,17 +127,18 @@ internal_repeat!(1..32 => {
    }
 });
 
-impl<'a> Picker<'a> {
+impl<'a, Route> Picker<'a, Route> {
     /// Creates a `PickerPattern1` from the given flag to start a picking chain.
     ///
     /// This method initiates a parameter picking chain with one flag.
     /// The result is initially `Unparsed`.
-    pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N>
+    pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N, Route>
     where
         N: Pickable<'a>,
     {
         PickerPattern1 {
             args: self.args,
+            error_route: None::<Route>,
             flag_1: flag,
             result_1: PickerArgResult::Unparsed,
             default_1: None,

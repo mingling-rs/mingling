@@ -7,7 +7,9 @@
 // P.S. If there's a better way, please let me know. Thanks!
 // --------------------------------------------------------------------------------------------
 
-use crate::{Pickable, PickerArgInfo, PickerArgs, PickerFlagAttr, PickerResult, TagPhaseContext};
+use crate::{
+    Pickable, PickerArgInfo, PickerArgResult, PickerArgs, PickerFlagAttr, TagPhaseContext,
+};
 use mingling_picker_macros::internal_repeat;
 
 internal_repeat!(1..=32 => {
@@ -19,7 +21,7 @@ internal_repeat!(1..=32 => {
     where (T$: Pickable<'a>,+)
     {
         #[allow(clippy::type_complexity)]
-        pub fn parse(mut self) -> PickerResult<((T$,+))> {
+        pub fn parse(mut self) -> PickerArgResult<((T$,+))> {
             // ArgInfos
             let arg_infos: [PickerArgInfo; $] = [
               (
@@ -27,17 +29,16 @@ internal_repeat!(1..=32 => {
               +)
             ];
 
-            // Read & sort attrs
-            let mut attrs: [
+            let mut bundle: [
                 (
                     // Flag Attr
                     PickerFlagAttr,
 
                     // Tag Func
-                    Box<dyn FnOnce(&PickerArgs<'a>) -> Vec<usize>>,
+                    Option<Box<dyn FnOnce(&PickerArgs<'a>) -> Vec<usize>>>,
 
                     // Pick Func
-                    Box<dyn FnOnce(&[&str])>,
+                    Option<Box<dyn FnOnce(&[&str])>>,
 
                     // Index
                     usize
@@ -49,23 +50,23 @@ internal_repeat!(1..=32 => {
                         T$::get_attr(self.flag_$),
 
                         // Tag Func
-                        Box::new(|args| {
+                        Some(Box::new(|args| {
                             let ctx = TagPhaseContext {
                                 arg_info: &arg_infos[$],
                                 args,
                             };
                             T$::tag(ctx)
-                        }),
+                        })),
 
                         // Pick Func
-                        Box::new(|args| {
+                        Some(Box::new(|args| {
                             self.result_$ = match T$::pick(args) {
-                                PickerResult::Parsed(mut value) => {
+                                PickerArgResult::Parsed(mut value) => {
                                     // Postprocess
                                     if let Some(post) = self.post_$ {
                                         value = post(value);
                                     }
-                                    PickerResult::Parsed(value)
+                                    PickerArgResult::Parsed(value)
                                 },
                                 other => {
                                     if let Some(get_default) = self.default_$ {
@@ -76,14 +77,14 @@ internal_repeat!(1..=32 => {
                                             value = post(value);
                                         }
 
-                                        PickerResult::Parsed(value)
+                                        PickerArgResult::Parsed(value)
                                     } else {
                                         other
                                     }
                                 },
 
                             }
-                        }),
+                        })),
 
                         // Index
                         $
@@ -91,14 +92,14 @@ internal_repeat!(1..=32 => {
                 +)
             ];
 
-            // Sort by Attr Ord (descending)
-            attrs.sort_by(|a, b| b.0.cmp(&a.0));
+            // Sort by Bundle Ord (descending)
+            bundle.sort_by(|a, b| b.0.cmp(&a.0));
 
             // Parsing
-            for (_, tag_func, pick_func, _idx) in attrs {
+            for (_, tag_func, pick_func, _idx) in bundle {
 
                 // Tag phase
-                let tagged = tag_func(&self.args);
+                let tagged = (tag_func.unwrap())(&self.args);
                 let mut args_to_pick: Vec<&str> = vec![];
 
                 for i in tagged {
@@ -107,13 +108,10 @@ internal_repeat!(1..=32 => {
                 }
 
                 // Pick phase
-                pick_func(args_to_pick.as_slice());
+                (pick_func.unwrap())(args_to_pick.as_slice());
             }
 
-            // Sort by Index Ord
-            attrs.sort_by(|a, b| a.3.cmp(&b.3));
 
-            PickerResult::NotFound
         }
     }
 });
