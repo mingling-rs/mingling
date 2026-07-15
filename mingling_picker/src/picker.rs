@@ -17,7 +17,7 @@ use crate::{Pickable, PickerArgResult, PickerFlag};
 /// - Basic arguments
 /// - Parsing states
 /// - Parsing results
-pub struct Picker<'a, Route> {
+pub struct Picker<'a, Route = ()> {
     route_phantom: PhantomData<Route>,
 
     /// Internal arguments of Picker

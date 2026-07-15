@@ -144,10 +144,10 @@ impl ParserStyleNamingCase {
     /// use mingling_picker::parselib::ParserStyleNamingCase;
     ///
     /// let camel = ParserStyleNamingCase::Camel;
-    /// assert_eq!(camel.convert("brew_coffee"), "brewCoffee");
+    /// assert_eq!(camel.convert("brew_coffee".to_string()), "brewCoffee");
     ///
     /// let kebab = ParserStyleNamingCase::Kebab;
-    /// assert_eq!(kebab.convert("BrewCoffee"), "brew-coffee");
+    /// assert_eq!(kebab.convert("BrewCoffee".to_string()), "brew-coffee");
     /// ```
     pub fn convert<S>(&self, s: S) -> S
     where
