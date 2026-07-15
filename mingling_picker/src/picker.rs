@@ -24,6 +24,31 @@ pub struct Picker<'a, Route = ()> {
     args: PickerArgs<'a>,
 }
 
+impl<'a> Picker<'a> {
+    /// Creates a new `Picker` from the command-line arguments (excluding the program name).
+    ///
+    /// This is equivalent to calling `std::env::args().skip(1)`, which
+    /// collects all arguments passed to the program except the first one
+    /// (the executable path).
+    pub fn from_args() -> Picker<'a, ()> {
+        Self::from_args_skip(1)
+    }
+
+    /// Creates a new `Picker` from the command-line arguments, skipping the
+    /// first `skip` entries.
+    ///
+    /// This method is useful when you want more control over which arguments
+    /// are included. For example, pass `skip = 2` to skip both the program
+    /// name and the first argument.
+    pub fn from_args_skip(skip: usize) -> Picker<'a, ()> {
+        let args = std::env::args().skip(skip).collect::<Vec<String>>();
+        Picker {
+            route_phantom: PhantomData,
+            args: PickerArgs::Owned(args),
+        }
+    }
+}
+
 /// Internal arguments of Picker
 ///
 /// - `Slice` - borrowed slice of string slices
