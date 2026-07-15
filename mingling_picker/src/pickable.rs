@@ -78,4 +78,10 @@ pub struct TagPhaseContext<'a> {
 
     /// A read-only list of all arguments in the current [`Picker`].
     pub args: &'a PickerArgs<'a>,
+
+    /// Mask indicating which argument positions have already been claimed.
+    ///
+    /// For example, if the mask is `[0, 0, 1, 0]`, then the argument at index `2`
+    /// has already been tagged by another `Pickable`.
+    pub mask: &'a [u8],
 }

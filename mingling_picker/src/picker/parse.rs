@@ -36,7 +36,7 @@ internal_repeat!(1..=32 => {
                     PickerFlagAttr,
 
                     // Tag Func
-                    Box<dyn FnOnce(&PickerArgs<'a>) -> Vec<usize>>,
+                    Box<dyn FnOnce(&PickerArgs<'a>, &[u8]) -> Vec<usize>>,
 
                     // Pick Func
                     Box<dyn FnOnce(&[&str], &mut Option<Route>)>,
@@ -51,10 +51,11 @@ internal_repeat!(1..=32 => {
                         T$::get_attr(self.flag_$),
 
                         // Tag Func
-                        Box::new(|args| {
+                        Box::new(|args, mask| {
                             let ctx = TagPhaseContext {
                                 arg_info: &arg_infos[$],
                                 args,
+                                mask
                             };
                             T$::tag(ctx)
                         }),
@@ -104,11 +105,16 @@ internal_repeat!(1..=32 => {
             // Parsing
             for (_, tag_func, pick_func, _idx) in bundle {
 
+                // Mask
+                let mut mask: Vec<u8> = vec![0u8; $];
+
                 // Tag phase
-                let tagged = tag_func(&self.args);
+                let tagged = tag_func(&self.args, mask.as_slice());
                 let mut args_to_pick: Vec<&str> = vec![];
 
                 for i in tagged {
+                    mask[i] = 1;
+
                     // Update args to pick
                     args_to_pick.push(self.args.get(i).unwrap_or_default());
                 }
