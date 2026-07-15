@@ -3,12 +3,12 @@ use crate::{Pickable, PickerFlag};
 /// Represents the result of parsing or looking up a value.
 ///
 /// This enum is generic over the type being parsed. It models four possible outcomes:
-/// - [`Unparsed`](PickerResult::Unparsed): The value has not yet been parsed (default).
-/// - [`Parsed`](PickerResult::Parsed): The value was successfully parsed into `Type`.
-/// - [`NotFound`](PickerResult::NotFound): The requested value could not be found.
-/// - [`ParseError`](PickerResult::ParseError): The input could not be parsed due to a format error.
+/// - [`Unparsed`](PickerArgResult::Unparsed): The value has not yet been parsed (default).
+/// - [`Parsed`](PickerArgResult::Parsed): The value was successfully parsed into `Type`.
+/// - [`NotFound`](PickerArgResult::NotFound): The requested value could not be found.
+/// - [`ParseError`](PickerArgResult::ParseError): The input could not be parsed due to a format error.
 #[derive(Default)]
-pub enum PickerResult<Type> {
+pub enum PickerArgResult<Type> {
     /// The value has not yet been parsed (default).
     #[default]
     Unparsed,
@@ -23,216 +23,216 @@ pub enum PickerResult<Type> {
     ParseError,
 }
 
-impl<Type, E> From<Result<Type, E>> for PickerResult<Type> {
-    /// Converts a `Result<Type, E>` into a `PickerResult<Type>`.
+impl<Type, E> From<Result<Type, E>> for PickerArgResult<Type> {
+    /// Converts a `Result<Type, E>` into a `PickerArgResult<Type>`.
     ///
-    /// - `Ok(value)` maps to [`Parsed(value)`](PickerResult::Parsed).
-    /// - `Err(_)` maps to [`ParseError`](PickerResult::ParseError).
+    /// - `Ok(value)` maps to [`Parsed(value)`](PickerArgResult::Parsed).
+    /// - `Err(_)` maps to [`ParseError`](PickerArgResult::ParseError).
     fn from(result: Result<Type, E>) -> Self {
         match result {
-            Ok(value) => PickerResult::Parsed(value),
-            Err(_) => PickerResult::ParseError,
+            Ok(value) => PickerArgResult::Parsed(value),
+            Err(_) => PickerArgResult::ParseError,
         }
     }
 }
 
-impl<Type> From<Option<Type>> for PickerResult<Type> {
-    /// Converts an `Option<Type>` into a `PickerResult<Type>`.
+impl<Type> From<Option<Type>> for PickerArgResult<Type> {
+    /// Converts an `Option<Type>` into a `PickerArgResult<Type>`.
     ///
-    /// - `Some(value)` maps to [`Parsed(value)`](PickerResult::Parsed).
-    /// - `None` maps to [`NotFound`](PickerResult::NotFound).
+    /// - `Some(value)` maps to [`Parsed(value)`](PickerArgResult::Parsed).
+    /// - `None` maps to [`NotFound`](PickerArgResult::NotFound).
     fn from(option: Option<Type>) -> Self {
         match option {
-            Some(value) => PickerResult::Parsed(value),
-            None => PickerResult::NotFound,
+            Some(value) => PickerArgResult::Parsed(value),
+            None => PickerArgResult::NotFound,
         }
     }
 }
 
-impl<Type> PickerResult<Type> {
-    /// Returns `true` if the result is [`Parsed`](PickerResult::Parsed).
+impl<Type> PickerArgResult<Type> {
+    /// Returns `true` if the result is [`Parsed`](PickerArgResult::Parsed).
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert!(result.is_parsed());
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert!(!result.is_parsed());
     /// ```
     pub fn is_parsed(&self) -> bool {
-        matches!(self, PickerResult::Parsed(_))
+        matches!(self, PickerArgResult::Parsed(_))
     }
 
-    /// Returns `true` if the result is [`Parsed`](PickerResult::Parsed) or [`NotFound`](PickerResult::NotFound).
+    /// Returns `true` if the result is [`Parsed`](PickerArgResult::Parsed) or [`NotFound`](PickerArgResult::NotFound).
     /// i.e., the value exists (was either found or not yet parsed, but not a parse error).
     /// Typically indicates the value was "found" in some sense.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert!(result.is_found());
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert!(result.is_found());
     ///
-    /// let result: PickerResult<i32> = PickerResult::ParseError;
+    /// let result: PickerArgResult<i32> = PickerArgResult::ParseError;
     /// assert!(!result.is_found());
     /// ```
     pub fn is_found(&self) -> bool {
-        matches!(self, PickerResult::Parsed(_) | PickerResult::NotFound)
+        matches!(self, PickerArgResult::Parsed(_) | PickerArgResult::NotFound)
     }
 
-    /// Returns `true` if the result is [`ParseError`](PickerResult::ParseError).
+    /// Returns `true` if the result is [`ParseError`](PickerArgResult::ParseError).
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::ParseError;
+    /// let result: PickerArgResult<i32> = PickerArgResult::ParseError;
     /// assert!(result.is_err());
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(10);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(10);
     /// assert!(!result.is_err());
     /// ```
     pub fn is_err(&self) -> bool {
-        matches!(self, PickerResult::ParseError)
+        matches!(self, PickerArgResult::ParseError)
     }
 
-    /// Returns `Some(&Type)` if [`Parsed`](PickerResult::Parsed), otherwise `None`.
+    /// Returns `Some(&Type)` if [`Parsed`](PickerArgResult::Parsed), otherwise `None`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert_eq!(result.parsed(), Some(&42));
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert_eq!(result.parsed(), None);
     /// ```
     pub fn parsed(&self) -> Option<&Type> {
-        if let PickerResult::Parsed(value) = self {
+        if let PickerArgResult::Parsed(value) = self {
             Some(value)
         } else {
             None
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerResult::Parsed) value or panics with a given message.
+    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or panics with a given message.
     ///
     /// # Panics
-    /// Panics if the value is not [`Parsed`](PickerResult::Parsed), with a message including the provided `msg`.
+    /// Panics if the value is not [`Parsed`](PickerArgResult::Parsed), with a message including the provided `msg`.
     ///
     /// # Examples
     ///
     /// ```should_panic
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// result.expect("expected a parsed value");
     /// ```
     pub fn expect(self, msg: &str) -> Type {
         match self {
-            PickerResult::Parsed(value) => value,
+            PickerArgResult::Parsed(value) => value,
             _ => panic!("{}", msg),
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerResult::Parsed) value or panics.
+    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or panics.
     ///
     /// # Panics
-    /// Panics if the value is not [`Parsed`](PickerResult::Parsed).
+    /// Panics if the value is not [`Parsed`](PickerArgResult::Parsed).
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert_eq!(result.unwrap(), 42);
     /// ```
     ///
     /// ```should_panic
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// result.unwrap();
     /// ```
     pub fn unwrap(self) -> Type {
         match self {
-            PickerResult::Parsed(value) => value,
-            PickerResult::Unparsed => {
-                panic!("called `PickerResult::unwrap()` on an `Unparsed` value")
+            PickerArgResult::Parsed(value) => value,
+            PickerArgResult::Unparsed => {
+                panic!("called `PickerArgResult::unwrap()` on an `Unparsed` value")
             }
-            PickerResult::NotFound => {
-                panic!("called `PickerResult::unwrap()` on a `NotFound` value")
+            PickerArgResult::NotFound => {
+                panic!("called `PickerArgResult::unwrap()` on a `NotFound` value")
             }
-            PickerResult::ParseError => {
-                panic!("called `PickerResult::unwrap()` on a `ParseError` value")
+            PickerArgResult::ParseError => {
+                panic!("called `PickerArgResult::unwrap()` on a `ParseError` value")
             }
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerResult::Parsed) value or a provided `default`.
+    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or a provided `default`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert_eq!(result.unwrap_or(0), 42);
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert_eq!(result.unwrap_or(0), 0);
     /// ```
     pub fn unwrap_or(self, default: Type) -> Type {
         match self {
-            PickerResult::Parsed(value) => value,
+            PickerArgResult::Parsed(value) => value,
             _ => default,
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerResult::Parsed) value or computes it from a closure.
+    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or computes it from a closure.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert_eq!(result.unwrap_or_else(|| 0), 42);
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert_eq!(result.unwrap_or_else(|| 0), 0);
     /// ```
     pub fn unwrap_or_else<F: FnOnce() -> Type>(self, f: F) -> Type {
         match self {
-            PickerResult::Parsed(value) => value,
+            PickerArgResult::Parsed(value) => value,
             _ => f(),
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerResult::Parsed) value or the default value of `Type`.
+    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or the default value of `Type`.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling_picker::PickerResult;
+    /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerResult<i32> = PickerResult::Parsed(42);
+    /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(42);
     /// assert_eq!(result.unwrap_or_default(), 42);
     ///
-    /// let result: PickerResult<i32> = PickerResult::NotFound;
+    /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert_eq!(result.unwrap_or_default(), 0);
     /// ```
     pub fn unwrap_or_default(self) -> Type
@@ -240,7 +240,7 @@ impl<Type> PickerResult<Type> {
         Type: Default,
     {
         match self {
-            PickerResult::Parsed(value) => value,
+            PickerArgResult::Parsed(value) => value,
             _ => Type::default(),
         }
     }

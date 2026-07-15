@@ -1,4 +1,4 @@
-use crate::{PickerArgInfo, PickerArgs, PickerFlag, PickerFlagAttr, PickerResult};
+use crate::{PickerArgInfo, PickerArgResult, PickerArgs, PickerFlag, PickerFlagAttr};
 
 mod implements;
 
@@ -64,9 +64,9 @@ where
     ///
     /// # Returns
     ///
-    /// Returns [`PickerResult<Self>`], i.e., the `Self` instance on success, or an appropriate
+    /// Returns [`PickerArgResult<Self>`], i.e., the `Self` instance on success, or an appropriate
     /// error message on failure.
-    fn pick(raw_strs: &[&str]) -> PickerResult<Self>;
+    fn pick(raw_strs: &[&str]) -> PickerArgResult<Self>;
 }
 
 /// Tag phase context, providing the necessary argument and state information for

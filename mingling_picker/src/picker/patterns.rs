@@ -1,6 +1,6 @@
 use mingling_picker_macros::internal_repeat;
 
-use crate::{Pickable, Picker, PickerArgs, PickerFlag, PickerResult};
+use crate::{Pickable, Picker, PickerArgResult, PickerArgs, PickerFlag};
 
 internal_repeat!(1..=32 => {
     #[doc(hidden)]
@@ -10,7 +10,7 @@ internal_repeat!(1..=32 => {
         pub args: PickerArgs<'a>,
         (
             pub flag_$: &'a PickerFlag<'a, T$>,
-            pub result_$: PickerResult<T$>,
+            pub result_$: PickerArgResult<T$>,
             pub default_$: Option<Box<dyn FnOnce() -> T$>>,
             pub post_$: Option<Box<dyn FnOnce(T$) -> T$>>,
         +)
@@ -40,6 +40,27 @@ internal_repeat!(1..=32 => {
             F: 'static,
         {
             self.default_$ = Some(Box::new(func));
+            self
+        }
+
+        /// Uses the default value for this flag's type if the flag is not provided.
+        ///
+        /// If the flag is not provided by the user at runtime, the default value for `T$`
+        /// (as defined by the `Default` trait) will be used.
+        ///
+        /// # Example
+        ///
+        /// ```ignore
+        /// let pattern = picker
+        ///     .pick(&my_flag)
+        ///     .or_default();
+        /// ```
+        #[allow(clippy::type_complexity)]
+        pub fn or_default(mut self) -> Self
+        where
+            T$: Default,
+        {
+            self.default_$ = Some(Box::new(|| T$::default()));
             self
         }
 
@@ -88,7 +109,7 @@ internal_repeat!(1..32 => {
 
                // Current
                flag_$+: flag,
-               result_$+: PickerResult::Unparsed,
+               result_$+: PickerArgResult::Unparsed,
                default_$+: None,
                post_$+: None,
 
@@ -116,7 +137,7 @@ impl<'a> Picker<'a> {
         PickerPattern1 {
             args: self.args,
             flag_1: flag,
-            result_1: PickerResult::Unparsed,
+            result_1: PickerArgResult::Unparsed,
             default_1: None,
             post_1: None,
         }

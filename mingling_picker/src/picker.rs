@@ -5,7 +5,10 @@ mod parse;
 mod patterns;
 pub use patterns::*;
 
-use crate::{Pickable, PickerFlag, PickerResult};
+mod result;
+pub use result::*;
+
+use crate::{Pickable, PickerArgResult, PickerFlag};
 
 /// Picker, used to record all states of a parameter parsing
 ///
@@ -248,7 +251,7 @@ pub trait IntoPicker<'a> {
         PickerPattern1 {
             args: self.to_picker().args,
             flag_1: flag,
-            result_1: PickerResult::Unparsed,
+            result_1: PickerArgResult::Unparsed,
             default_1: None,
             post_1: None,
         }

@@ -9,7 +9,7 @@ impl<'a> Pickable<'a> for String {
         vec![]
     }
 
-    fn pick(_raw_strs: &[&str]) -> crate::PickerResult<Self> {
+    fn pick(_raw_strs: &[&str]) -> crate::PickerArgResult<Self> {
         todo!()
     }
 }
@@ -23,7 +23,7 @@ impl<'a> Pickable<'a> for Vec<String> {
         vec![]
     }
 
-    fn pick(_raw_strs: &[&str]) -> crate::PickerResult<Self> {
+    fn pick(_raw_strs: &[&str]) -> crate::PickerArgResult<Self> {
         todo!()
     }
 }
