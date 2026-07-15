@@ -96,7 +96,7 @@ internal_repeat!(1..=32 => {
                         // Tag Func
                         Box::new(|args, mask| {
                             let ctx = TagPhaseContext {
-                                arg_info: &arg_infos[$],
+                                arg_info: &arg_infos[$-],
                                 args,
                                 mask
                             };
@@ -145,8 +145,8 @@ internal_repeat!(1..=32 => {
             // Sort by Bundle Ord (descending)
             bundle.sort_by(|a, b| b.0.cmp(&a.0));
 
-            // Mask
-            let mut mask: Vec<u8> = vec![0u8; $];
+            // Mask — size = number of args (not flags), so use args length
+            let mut mask: Vec<u8> = vec![0u8; self.args.len()];
 
             // Parsing
             for (_, tag_func, pick_func, _idx) in bundle {
