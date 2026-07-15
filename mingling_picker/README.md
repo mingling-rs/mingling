@@ -10,6 +10,13 @@ features = [
 ]
 ```
 
+Of course, you can also use it as a standalone crate by replacing `mingling::picker` with `mingling_picker`:
+
+```toml
+[dependencies]
+mingling_picker = "0.3.0"
+```
+
 ## Chained Argument Parser
 
 Provides a clean chained-call API for declaring arguments to parse:
