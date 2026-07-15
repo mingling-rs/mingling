@@ -41,9 +41,9 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "just_fmt"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5454cda0d57db59778608d7a47bff5b16c6705598265869fb052b657f66cf05e"
+checksum = "6170dccbc3ea15dfb7f2da964097f814aba1dd8f746d4ffc56f33245c38e6d96"
 
 [[package]]
 name = "memchr"

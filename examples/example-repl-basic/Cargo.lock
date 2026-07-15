@@ -6,7 +6,7 @@ version = 4
 name = "example-repl-basic"
 version = "0.1.0"
 dependencies = [
- "just_fmt",
+ "just_fmt 0.1.2",
  "mingling",
 ]
 
@@ -15,6 +15,12 @@ name = "just_fmt"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5454cda0d57db59778608d7a47bff5b16c6705598265869fb052b657f66cf05e"
+
+[[package]]
+name = "just_fmt"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6170dccbc3ea15dfb7f2da964097f814aba1dd8f746d4ffc56f33245c38e6d96"
 
 [[package]]
 name = "mingling"
@@ -29,14 +35,14 @@ dependencies = [
 name = "mingling_core"
 version = "0.3.0"
 dependencies = [
- "just_fmt",
+ "just_fmt 0.2.0",
 ]
 
 [[package]]
 name = "mingling_macros"
 version = "0.3.0"
 dependencies = [
- "just_fmt",
+ "just_fmt 0.2.0",
  "proc-macro2",
  "quote",
  "syn",
