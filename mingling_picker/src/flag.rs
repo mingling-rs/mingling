@@ -124,12 +124,15 @@ where
 /// Describes the attribute (behavior) of a command-line parameter.
 ///
 /// The ordering reflects parse priority (higher = parsed first):
-/// `Positional < Flag < Single < Multi`
+/// `Positional < PositionalMulti < Flag < Single < Multi`
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PickerFlagAttr {
     /// Positional argument matched by its position (e.g., an input file).
     #[default]
     Positional,
+
+    /// Positional argument that accepts multiple values (e.g., multiple input files).
+    PositionalMulti,
 
     /// Boolean flag with no associated value (e.g., `--verbose`).
     Flag,
@@ -153,6 +156,7 @@ impl PickerFlagAttr {
     /// - `flag`: A reference to the [`PickerFlag`] to evaluate.
     /// - `other`: A closure that returns a [`PickerFlagAttr`] when the flag is
     ///   **not** positional.
+    #[inline(always)]
     pub fn positional_or_else<'a, T>(
         flag: &PickerFlag<'a, T>,
         other: fn() -> PickerFlagAttr,
@@ -166,6 +170,61 @@ impl PickerFlagAttr {
             other()
         }
     }
+
+    /// Determines if the given `PickerFlag` represents a positional parameter and returns
+    /// `PickerFlagAttr::Positional` if so. Otherwise, returns the provided `default` attribute.
+    ///
+    /// # Parameters
+    ///
+    /// - `flag`: A reference to the [`PickerFlag`] to evaluate.
+    /// - `default`: The [`PickerFlagAttr`] to return if the flag is not positional.
+    #[inline(always)]
+    pub fn positional_or<'a, T>(flag: &PickerFlag<'a, T>, default: PickerFlagAttr) -> PickerFlagAttr
+    where
+        T: Pickable<'a> + Default,
+    {
+        if flag.is_positional() {
+            PickerFlagAttr::Positional
+        } else {
+            default
+        }
+    }
+
+    /// Determines if the given `PickerFlag` represents a positional parameter and returns
+    /// `PickerFlagAttr::Positional` if so. Otherwise, returns `PickerFlagAttr::Single`.
+    ///
+    /// # Parameters
+    ///
+    /// - `flag`: A reference to the [`PickerFlag`] to evaluate.
+    #[inline(always)]
+    pub fn positional_or_single<'a, T>(flag: &PickerFlag<'a, T>) -> PickerFlagAttr
+    where
+        T: Pickable<'a> + Default,
+    {
+        if flag.is_positional() {
+            PickerFlagAttr::Positional
+        } else {
+            PickerFlagAttr::Single
+        }
+    }
+
+    /// Determines if the given `PickerFlag` represents a positional parameter and returns
+    /// `PickerFlagAttr::PositionalMulti` if so. Otherwise, returns `PickerFlagAttr::Multi`.
+    ///
+    /// # Parameters
+    ///
+    /// - `flag`: A reference to the [`PickerFlag`] to evaluate.
+    #[inline(always)]
+    pub fn positional_or_multi<'a, T>(flag: &PickerFlag<'a, T>) -> PickerFlagAttr
+    where
+        T: Pickable<'a> + Default,
+    {
+        if flag.is_positional() {
+            PickerFlagAttr::PositionalMulti
+        } else {
+            PickerFlagAttr::Multi
+        }
+    }
 }
 
 #[cfg(test)]
@@ -174,37 +233,49 @@ mod tests {
 
     #[test]
     fn test_picker_flag_attr_ordering() {
-        // Multi > Single > Flag > Positional
+        // Multi > Single > Flag > PositionalMulti > Positional
         assert!(PickerFlagAttr::Multi > PickerFlagAttr::Single);
         assert!(PickerFlagAttr::Multi > PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Multi > PickerFlagAttr::PositionalMulti);
         assert!(PickerFlagAttr::Multi > PickerFlagAttr::Positional);
 
         assert!(PickerFlagAttr::Single > PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Single > PickerFlagAttr::PositionalMulti);
         assert!(PickerFlagAttr::Single > PickerFlagAttr::Positional);
 
+        assert!(PickerFlagAttr::Flag > PickerFlagAttr::PositionalMulti);
         assert!(PickerFlagAttr::Flag > PickerFlagAttr::Positional);
+
+        assert!(PickerFlagAttr::PositionalMulti > PickerFlagAttr::Positional);
 
         // PartialOrd
         assert!(PickerFlagAttr::Multi >= PickerFlagAttr::Single);
         assert!(PickerFlagAttr::Single >= PickerFlagAttr::Flag);
-        assert!(PickerFlagAttr::Flag >= PickerFlagAttr::Positional);
+        assert!(PickerFlagAttr::Flag >= PickerFlagAttr::PositionalMulti);
+        assert!(PickerFlagAttr::PositionalMulti >= PickerFlagAttr::Positional);
 
-        assert!(PickerFlagAttr::Positional < PickerFlagAttr::Flag);
+        assert!(PickerFlagAttr::Positional < PickerFlagAttr::PositionalMulti);
+        assert!(PickerFlagAttr::PositionalMulti < PickerFlagAttr::Flag);
         assert!(PickerFlagAttr::Flag < PickerFlagAttr::Single);
         assert!(PickerFlagAttr::Single < PickerFlagAttr::Multi);
+    }
 
+    #[test]
+    fn test_picker_flag_attr_sorting() {
         // Sort
         let mut values = vec![
             PickerFlagAttr::Flag,
             PickerFlagAttr::Single,
             PickerFlagAttr::Positional,
             PickerFlagAttr::Multi,
+            PickerFlagAttr::PositionalMulti,
         ];
         values.sort();
         assert_eq!(
             values,
             vec![
                 PickerFlagAttr::Positional,
+                PickerFlagAttr::PositionalMulti,
                 PickerFlagAttr::Flag,
                 PickerFlagAttr::Single,
                 PickerFlagAttr::Multi,
