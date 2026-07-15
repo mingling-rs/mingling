@@ -1,4 +1,5 @@
-use crate::{parselib::Matcher, pickable_needed::*};
+use crate::parselib::{FlagMatcher, Matcher};
+use crate::pickable_needed::*;
 
 impl<'a> Pickable<'a> for bool {
     fn get_attr(_: &'a PickerFlag<'a, Self>) -> PickerFlagAttr {
@@ -6,7 +7,7 @@ impl<'a> Pickable<'a> for bool {
     }
 
     fn tag(ctx: TagPhaseContext) -> Vec<usize> {
-        <bool as Matcher>::match_all(ctx.into())
+        FlagMatcher::match_all(ctx.into())
     }
 
     fn pick(raw_strs: &[&str]) -> PickerArgResult<Self> {

@@ -4,7 +4,15 @@ use crate::{
     vec_string_slice,
 };
 
-impl Matcher for bool {
+/// `FlagMatcher` is used to match flags in command-line arguments.
+///
+/// Flags typically start with `-` or `--` (e.g., `-h`, `--help`),
+/// and do not carry additional values. This matcher is responsible for finding
+/// these flags in the argument list, taking into account that flags after `--`
+/// (end-of-options marker) should not be matched.
+pub struct FlagMatcher;
+
+impl Matcher for FlagMatcher {
     fn on_match_one(
         args: &[MaskedArg],
         style: &ParserStyle,

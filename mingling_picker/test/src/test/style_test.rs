@@ -1,7 +1,7 @@
 use mingling_picker::PickerArgInfo;
 use mingling_picker::parselib::{
-    MaskedArg, Matcher, POWERSHELL_STYLE, ParserStyle, ParserStyleNamingCase, UNIX_STYLE,
-    WINDOWS_STYLE, build_possible_flags,
+    FlagMatcher, MaskedArg, Matcher, POWERSHELL_STYLE, ParserStyle, ParserStyleNamingCase,
+    UNIX_STYLE, WINDOWS_STYLE, build_possible_flags,
 };
 
 // Style: formatting utilities
@@ -56,7 +56,7 @@ fn test_windows_style_match() {
     info.set_long("verbose");
 
     let args = vec![make_masked("/verbose", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &WINDOWS_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &WINDOWS_STYLE, &info);
     assert_eq!(result, Some(0));
 }
 
@@ -67,7 +67,7 @@ fn test_windows_style_match_case_insensitive() {
     info.set_long("verbose");
 
     let args = vec![make_masked("/VERBOSE", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &WINDOWS_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &WINDOWS_STYLE, &info);
     assert_eq!(result, Some(0));
 }
 
@@ -78,7 +78,7 @@ fn test_windows_style_no_match_on_unrelated_flag() {
     info.set_long("verbose");
 
     let args = vec![make_masked("/output", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &WINDOWS_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &WINDOWS_STYLE, &info);
     assert_eq!(result, None);
 }
 
@@ -89,7 +89,7 @@ fn test_powershell_style_match() {
     info.set_long("Verbose");
 
     let args = vec![make_masked("-Verbose", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &POWERSHELL_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &POWERSHELL_STYLE, &info);
     assert_eq!(result, Some(0));
 }
 
@@ -99,7 +99,7 @@ fn test_powershell_style_match_case_insensitive() {
     info.set_long("Verbose");
 
     let args = vec![make_masked("-VERBOSE", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &POWERSHELL_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &POWERSHELL_STYLE, &info);
     assert_eq!(result, Some(0));
 }
 
@@ -110,7 +110,7 @@ fn test_unix_style_case_sensitive_no_match() {
     info.set_long("verbose");
 
     let args = vec![make_masked("--VERBOSE", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &UNIX_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &UNIX_STYLE, &info);
     assert_eq!(result, None);
 }
 
@@ -126,7 +126,7 @@ fn test_windows_style_match_all() {
         make_masked("/output", 1),
         make_masked("/VERBOSE", 2),
     ];
-    let result = <bool as Matcher>::on_match_all(&args, &WINDOWS_STYLE, &info);
+    let result = FlagMatcher::on_match_all(&args, &WINDOWS_STYLE, &info);
     assert_eq!(result, vec![0, 2]);
 }
 
@@ -142,7 +142,7 @@ fn test_windows_style_match_after_end_of_options() {
         make_masked("--", 1),
         make_masked("/verbose", 2),
     ];
-    let result = <bool as Matcher>::on_match_all(&args, &WINDOWS_STYLE, &info);
+    let result = FlagMatcher::on_match_all(&args, &WINDOWS_STYLE, &info);
     // end_of_options is always "--" regardless of style
     assert_eq!(result, vec![0]);
 }
@@ -162,7 +162,7 @@ fn test_kebab_case_naming_for_multiword_flag() {
     info.set_long("flag_a");
 
     let args = vec![make_masked("--flag-a", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &KEBAB_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &KEBAB_STYLE, &info);
     assert_eq!(
         result,
         Some(0),
@@ -177,7 +177,7 @@ fn test_snake_case_should_not_match_as_long_flag() {
     info.set_long("flag_a");
 
     let args = vec![make_masked("--flag_a", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &KEBAB_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &KEBAB_STYLE, &info);
     assert_eq!(
         result, None,
         "--flag_a should NOT match in kebab-style context"
@@ -191,7 +191,7 @@ fn test_snake_case_naming_for_unix_style() {
     info.set_long("flag_a");
 
     let args = vec![make_masked("--flag_a", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &UNIX_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &UNIX_STYLE, &info);
     assert_eq!(
         result,
         Some(0),
@@ -206,7 +206,7 @@ fn test_powershell_pascal_case_naming() {
     info.set_long("verbose");
 
     let args = vec![make_masked("-Verbose", 0)];
-    let result = <bool as Matcher>::on_match_one(&args, &POWERSHELL_STYLE, &info);
+    let result = FlagMatcher::on_match_one(&args, &POWERSHELL_STYLE, &info);
     assert_eq!(
         result,
         Some(0),

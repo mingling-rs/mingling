@@ -1,4 +1,5 @@
-mod bool_matcher;
+mod flag_matcher;
+pub use flag_matcher::*;
 
 mod style;
 pub use style::*;
