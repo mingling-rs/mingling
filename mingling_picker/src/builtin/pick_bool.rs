@@ -10,6 +10,12 @@ impl<'a> Pickable<'a> for bool {
     }
 
     fn pick(raw_strs: &[&str]) -> PickerArgResult<Self> {
-        PickerArgResult::Parsed(!raw_strs.is_empty())
+        if raw_strs.is_empty() {
+            // No matching flag found — signal NotFound so the fallback chain
+            // (default → route) gets a chance to run.
+            PickerArgResult::NotFound
+        } else {
+            PickerArgResult::Parsed(true)
+        }
     }
 }

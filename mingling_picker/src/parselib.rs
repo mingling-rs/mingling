@@ -116,7 +116,9 @@ fn build_masked_args<'a>(args: &'a PickerArgs, mask: &'a [u8]) -> Vec<MaskedArg<
         .filter_map(|r| {
             let idx = cidx;
             cidx += 1;
-            if is_masked(mask, cidx) {
+            // Include args where mask is 0 (available/not yet claimed).
+            // mask[i] = 0 means available; mask[i] != 0 means already claimed.
+            if !is_masked(mask, idx) {
                 Some(MaskedArg {
                     raw: r,
                     raw_idx: idx,
