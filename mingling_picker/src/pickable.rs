@@ -18,7 +18,7 @@ mod implements;
 /// * `'a` - Lifetime parameter, used to associate references in [`PickerFlag`].
 pub trait Pickable<'a>
 where
-    Self: Sized + Default,
+    Self: Sized,
 {
     /// Returns the parse-order attribute of this flag.
     ///
@@ -78,11 +78,4 @@ pub struct TagPhaseContext<'a> {
 
     /// A read-only list of all arguments in the current [`Picker`].
     pub args: &'a PickerArgs<'a>,
-
-    /// Availability mask, recording positions already occupied by other `Pickable` tags.
-    ///
-    /// `mask.len()` equals `args.len()`. Where:
-    /// - `0` means the position is currently available (unoccupied);
-    /// - `1` means the position is already occupied and cannot be used again.
-    pub mask: &'a [usize],
 }

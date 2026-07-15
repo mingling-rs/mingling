@@ -24,7 +24,7 @@ use std::marker::PhantomData;
 #[derive(Default, Clone, Copy)]
 pub struct PickerFlag<'a, Type>
 where
-    Type: Default + Pickable<'a>,
+    Type: Pickable<'a>,
 {
     /// Full name, may include variant names (aliases), e.g., `["config", "cfg"]`.
     pub full: &'a [&'a str],
@@ -41,7 +41,7 @@ where
 
 impl<'a, Type> PickerFlag<'a, Type>
 where
-    Type: Default + Pickable<'a>,
+    Type: Pickable<'a>,
 {
     /// Creates a new `PickerFlag` with the provided parameters.
     pub fn new(full: &'a [&'a str], short: Option<char>, positional: bool) -> Self {
@@ -162,7 +162,7 @@ impl PickerFlagAttr {
         other: fn() -> PickerFlagAttr,
     ) -> PickerFlagAttr
     where
-        T: Pickable<'a> + Default,
+        T: Pickable<'a>,
     {
         if flag.is_positional() {
             PickerFlagAttr::Positional
@@ -181,7 +181,7 @@ impl PickerFlagAttr {
     #[inline(always)]
     pub fn positional_or<'a, T>(flag: &PickerFlag<'a, T>, default: PickerFlagAttr) -> PickerFlagAttr
     where
-        T: Pickable<'a> + Default,
+        T: Pickable<'a>,
     {
         if flag.is_positional() {
             PickerFlagAttr::Positional
@@ -199,7 +199,7 @@ impl PickerFlagAttr {
     #[inline(always)]
     pub fn positional_or_single<'a, T>(flag: &PickerFlag<'a, T>) -> PickerFlagAttr
     where
-        T: Pickable<'a> + Default,
+        T: Pickable<'a>,
     {
         if flag.is_positional() {
             PickerFlagAttr::Positional
@@ -217,7 +217,7 @@ impl PickerFlagAttr {
     #[inline(always)]
     pub fn positional_or_multi<'a, T>(flag: &PickerFlag<'a, T>) -> PickerFlagAttr
     where
-        T: Pickable<'a> + Default,
+        T: Pickable<'a>,
     {
         if flag.is_positional() {
             PickerFlagAttr::PositionalMulti

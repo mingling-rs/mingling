@@ -265,7 +265,7 @@ pub struct PickerArgInfo<'a> {
 
 impl<'a, T> From<PickerFlag<'a, T>> for PickerArgInfo<'a>
 where
-    T: Pickable<'a> + Default,
+    T: Pickable<'a>,
 {
     fn from(value: PickerFlag<'a, T>) -> Self {
         let (long, alias) = match value.full.len() {
@@ -293,7 +293,7 @@ where
     }
 }
 
-impl<'a, T: Pickable<'a> + Default> From<&'a PickerFlag<'a, T>> for PickerArgInfo<'a> {
+impl<'a, T: Pickable<'a>> From<&'a PickerFlag<'a, T>> for PickerArgInfo<'a> {
     fn from(value: &'a PickerFlag<'a, T>) -> Self {
         let (long, alias) = match value.full.len() {
             0 => (None, None),
