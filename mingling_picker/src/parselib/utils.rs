@@ -12,12 +12,14 @@ pub fn build_possible_flags(style: &ParserStyle, arg_info: &PickerArgInfo) -> Ve
     }
 
     if let Some(long) = arg_info.long {
-        possible_flags.push(style.flag_string(long));
+        let converted = style.naming_case.convert(long.to_string());
+        possible_flags.push(style.flag_string(&converted));
     }
 
     if let Some(aliases) = &arg_info.alias {
         for alias in aliases {
-            possible_flags.push(style.flag_string(*alias));
+            let converted = style.naming_case.convert(alias.to_string());
+            possible_flags.push(style.flag_string(&converted));
         }
     }
 
