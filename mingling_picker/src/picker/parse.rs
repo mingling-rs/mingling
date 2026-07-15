@@ -102,11 +102,11 @@ internal_repeat!(1..=32 => {
             // Sort by Bundle Ord (descending)
             bundle.sort_by(|a, b| b.0.cmp(&a.0));
 
+            // Mask
+            let mut mask: Vec<u8> = vec![0u8; $];
+
             // Parsing
             for (_, tag_func, pick_func, _idx) in bundle {
-
-                // Mask
-                let mut mask: Vec<u8> = vec![0u8; $];
 
                 // Tag phase
                 let tagged = tag_func(&self.args, mask.as_slice());
