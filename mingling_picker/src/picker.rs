@@ -226,7 +226,7 @@ impl<'a> ExactSizeIterator for PickerIter<'a> {}
 /// - `&[String]` (borrowed slice of owned strings)
 /// - `Vec<&str>` (owned vector of borrowed strings)
 /// - `Vec<String>` (owned vector of owned strings)
-pub trait IntoPicker<'a, Route> {
+pub trait IntoPicker<'a> {
     /// Converts the value into a `Picker`
     ///
     /// # Examples
@@ -243,13 +243,13 @@ pub trait IntoPicker<'a, Route> {
     /// let args: Picker = vec!["a".to_string(), "b".to_string()].to_picker();
     /// assert_eq!(args.len(), 2);
     /// ```
-    fn to_picker(self) -> Picker<'a, Route>;
+    fn to_picker(self) -> Picker<'a, ()>;
 
     /// Creates a `PickerPattern1` from the given flag for the `pick` method.
     ///
     /// This method converts the value into a `Picker` and starts a parameter
     /// picking chain with one flag. The result is initially `Unparsed`.
-    fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N, Route>
+    fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N, ()>
     where
         Self: Sized,
         N: Pickable<'a> + Default + Sized,
@@ -264,10 +264,25 @@ pub trait IntoPicker<'a, Route> {
             error_route: None,
         }
     }
+
+    /// Converts the value into a `Picker` with a specified route type.
+    ///
+    /// This method allows changing the route (phantom type parameter) of the picker.
+    /// The route type is typically used to distinguish different parsing contexts or
+    /// to carry compile-time state information through the picking chain.
+    fn with_route<NewRoute>(self) -> Picker<'a, NewRoute>
+    where
+        Self: Sized,
+    {
+        Picker {
+            route_phantom: PhantomData,
+            args: self.to_picker().args,
+        }
+    }
 }
 
-impl<'a, Route> IntoPicker<'a, Route> for &'a [&'a str] {
-    fn to_picker(self) -> Picker<'a, Route> {
+impl<'a> IntoPicker<'a> for &'a [&'a str] {
+    fn to_picker(self) -> Picker<'a, ()> {
         Picker {
             route_phantom: PhantomData,
             args: PickerArgs::Slice(self),
@@ -275,8 +290,8 @@ impl<'a, Route> IntoPicker<'a, Route> for &'a [&'a str] {
     }
 }
 
-impl<'a, Route> IntoPicker<'a, Route> for &'a [String] {
-    fn to_picker(self) -> Picker<'a, Route> {
+impl<'a> IntoPicker<'a> for &'a [String] {
+    fn to_picker(self) -> Picker<'a, ()> {
         let vec: Vec<&str> = self.iter().map(|s| s.as_str()).collect();
         Picker {
             route_phantom: PhantomData,
@@ -285,8 +300,8 @@ impl<'a, Route> IntoPicker<'a, Route> for &'a [String] {
     }
 }
 
-impl<'a, Route> IntoPicker<'a, Route> for Vec<&'a str> {
-    fn to_picker(self) -> Picker<'a, Route> {
+impl<'a> IntoPicker<'a> for Vec<&'a str> {
+    fn to_picker(self) -> Picker<'a, ()> {
         Picker {
             route_phantom: PhantomData,
             args: PickerArgs::Vec(self),
@@ -294,8 +309,8 @@ impl<'a, Route> IntoPicker<'a, Route> for Vec<&'a str> {
     }
 }
 
-impl<'a, Route> IntoPicker<'a, Route> for Vec<String> {
-    fn to_picker(self) -> Picker<'a, Route> {
+impl<'a> IntoPicker<'a> for Vec<String> {
+    fn to_picker(self) -> Picker<'a, ()> {
         Picker {
             route_phantom: PhantomData,
             args: PickerArgs::Owned(self),

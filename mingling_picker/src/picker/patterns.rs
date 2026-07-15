@@ -87,6 +87,32 @@ internal_repeat!(1..=32 => {
             self
         }
 
+
+        /// Resets the route for this picker pattern, allowing a different route type.
+        ///
+        /// This method converts the current `PickerPattern` into a new one with a different
+        /// route type `NewRoute`. All existing flag configurations, defaults, and post-
+        /// processing functions are preserved, but the `error_route` and individual
+        /// `route_$` fields are cleared (set to `None`).
+        ///
+        /// This is useful when you want to change the error/redirect route type mid-chain,
+        /// for example when composing patterns from different contexts that use different
+        /// route enums.
+        #[allow(clippy::type_complexity)]
+        pub fn with_route<NewRoute>(self) -> PickerPattern$<'a, (T$,+), NewRoute> {
+            PickerPattern$ {
+                args: self.args,
+                error_route: None,
+                (
+                    flag_$: self.flag_$,
+                    result_$: self.result_$,
+                    default_$: self.default_$,
+                    route_$: None,
+                    post_$: self.post_$,
+                +)
+            }
+        }
+
         /// Attaches a post-processing function to this flag.
         ///
         /// After the flag's value is parsed (or defaulted), the given closure will be
