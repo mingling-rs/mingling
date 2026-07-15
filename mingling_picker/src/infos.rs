@@ -2,11 +2,10 @@ use crate::{Pickable, PickerFlag};
 
 /// Represents the result of parsing or looking up a value.
 ///
-/// This enum is generic over the type being parsed. It models four possible outcomes:
+/// This enum is generic over the type being parsed. It models three possible outcomes:
 /// - [`Unparsed`](PickerArgResult::Unparsed): The value has not yet been parsed (default).
 /// - [`Parsed`](PickerArgResult::Parsed): The value was successfully parsed into `Type`.
 /// - [`NotFound`](PickerArgResult::NotFound): The requested value could not be found.
-/// - [`ParseError`](PickerArgResult::ParseError): The input could not be parsed due to a format error.
 #[derive(Default)]
 pub enum PickerArgResult<Type> {
     /// The value has not yet been parsed (default).
@@ -18,20 +17,17 @@ pub enum PickerArgResult<Type> {
 
     /// The requested value could not be found.
     NotFound,
-
-    /// The input could not be parsed due to a format error.
-    ParseError,
 }
 
 impl<Type, E> From<Result<Type, E>> for PickerArgResult<Type> {
     /// Converts a `Result<Type, E>` into a `PickerArgResult<Type>`.
     ///
     /// - `Ok(value)` maps to [`Parsed(value)`](PickerArgResult::Parsed).
-    /// - `Err(_)` maps to [`ParseError`](PickerArgResult::ParseError).
+    /// - `Err(_)` maps to [`NotFound`](PickerArgResult::NotFound).
     fn from(result: Result<Type, E>) -> Self {
         match result {
             Ok(value) => PickerArgResult::Parsed(value),
-            Err(_) => PickerArgResult::ParseError,
+            Err(_) => PickerArgResult::NotFound,
         }
     }
 }
@@ -68,7 +64,7 @@ impl<Type> PickerArgResult<Type> {
     }
 
     /// Returns `true` if the result is [`Parsed`](PickerArgResult::Parsed) or [`NotFound`](PickerArgResult::NotFound).
-    /// i.e., the value exists (was either found or not yet parsed, but not a parse error).
+    /// i.e., the value exists (was either found or not yet parsed).
     /// Typically indicates the value was "found" in some sense.
     ///
     /// # Examples
@@ -81,29 +77,26 @@ impl<Type> PickerArgResult<Type> {
     ///
     /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert!(result.is_found());
-    ///
-    /// let result: PickerArgResult<i32> = PickerArgResult::ParseError;
-    /// assert!(!result.is_found());
     /// ```
     pub fn is_found(&self) -> bool {
         matches!(self, PickerArgResult::Parsed(_) | PickerArgResult::NotFound)
     }
 
-    /// Returns `true` if the result is [`ParseError`](PickerArgResult::ParseError).
+    /// Returns `true` if the result is [`Unparsed`](PickerArgResult::Unparsed) or [`NotFound`](PickerArgResult::NotFound).
     ///
     /// # Examples
     ///
     /// ```
     /// use mingling_picker::PickerArgResult;
     ///
-    /// let result: PickerArgResult<i32> = PickerArgResult::ParseError;
+    /// let result: PickerArgResult<i32> = PickerArgResult::Unparsed;
     /// assert!(result.is_err());
     ///
     /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(10);
     /// assert!(!result.is_err());
     /// ```
     pub fn is_err(&self) -> bool {
-        matches!(self, PickerArgResult::ParseError)
+        !matches!(self, PickerArgResult::Parsed(_))
     }
 
     /// Returns `Some(&Type)` if [`Parsed`](PickerArgResult::Parsed), otherwise `None`.
@@ -175,9 +168,6 @@ impl<Type> PickerArgResult<Type> {
             }
             PickerArgResult::NotFound => {
                 panic!("called `PickerArgResult::unwrap()` on a `NotFound` value")
-            }
-            PickerArgResult::ParseError => {
-                panic!("called `PickerArgResult::unwrap()` on a `ParseError` value")
             }
         }
     }
