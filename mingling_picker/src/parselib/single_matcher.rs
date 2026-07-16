@@ -15,8 +15,9 @@ pub struct SingleMatcher;
 impl SingleMatcher {
     /// Match a single positional value or a named flag+value pair.
     ///
-    /// For named args, returns `[]` when the flag has no following
-    /// value and no inline separator — indicating a missing value.
+    /// For named args, only complete pairs (flag + value) are kept.
+    /// Flag occurrences without a following value or inline separator
+    /// are dropped so they remain available for other matchers.
     #[inline(always)]
     pub fn tag(ctx: TagPhaseContext) -> Vec<usize> {
         if ctx.arg_info.positional {
@@ -26,14 +27,33 @@ impl SingleMatcher {
         } else {
             let args = ctx.args;
             let positions = ArgMatcher::match_all(ctx.into());
-            if positions.len() == 1 {
-                let sep = ParserStyle::global_style().value_separator;
-                if let Some(raw) = args.get(positions[0])
-                    && !raw.contains(sep) {
-                        return vec![];
-                    }
+            let sep = ParserStyle::global_style().value_separator;
+
+            // Walk pairs: [flag, value, flag, value, ...]
+            // Drop any flag that has no following value and no inline separator.
+            let mut i = 0;
+            let mut result = Vec::with_capacity(positions.len());
+            while i < positions.len() {
+                let flag_idx = positions[i];
+                if let Some(raw) = args.get(flag_idx)
+                    && raw.contains(sep)
+                {
+                    // Eq mode: value is inline, keep just the flag.
+                    result.push(flag_idx);
+                    i += 1;
+                    continue;
+                }
+                if i + 1 < positions.len() {
+                    // Pair: flag + value.
+                    result.push(flag_idx);
+                    result.push(positions[i + 1]);
+                    i += 2;
+                } else {
+                    // Flag without value — drop it.
+                    i += 1;
+                }
             }
-            positions
+            result
         }
     }
 }
