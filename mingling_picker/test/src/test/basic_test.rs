@@ -1,4 +1,4 @@
-use mingling_picker::{IntoPicker, macros::flag};
+use mingling_picker::{IntoPicker, macros::arg};
 
 // Basic bool flag — present / absent
 
