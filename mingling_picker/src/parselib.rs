@@ -7,6 +7,9 @@ pub use arg_matcher::*;
 mod pos_matcher;
 pub use pos_matcher::*;
 
+mod single_matcher;
+pub use single_matcher::*;
+
 mod style;
 pub use style::*;
 
