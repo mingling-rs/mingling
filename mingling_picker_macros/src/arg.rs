@@ -161,11 +161,12 @@ fn extract_char(tokens: &[TokenTree]) -> Option<char> {
             let cs: Vec<char> = s.chars().collect();
             if cs.len() >= 3 && cs[0] == '\'' && cs[cs.len() - 1] == '\'' {
                 let inner: String = cs[1..cs.len() - 1].iter().collect();
+                // inner is the character between the quotes of a char literal.
+                // For a literal `'n'`, inner is `"n"` (the character n).
+                // For an escape `'\n'`, inner is the actual newline character.
+                // The catch-all handles both literal single chars and escape
+                // sequences (the escaped char IS the actual control character).
                 match inner.as_str() {
-                    "n" => Some('\n'),
-                    "t" => Some('\t'),
-                    "r" => Some('\r'),
-                    "0" => Some('\0'),
                     "\\\\" => Some('\\'),
                     "\\'" => Some('\''),
                     _ => inner.chars().next(),

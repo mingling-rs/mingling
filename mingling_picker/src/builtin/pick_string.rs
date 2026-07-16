@@ -8,12 +8,10 @@ impl<'a> Pickable<'a> for String {
 
     fn tag(ctx: TagPhaseContext) -> Vec<usize> {
         if ctx.arg_info.positional {
-            // Positional: take the first available position only.
             ArgMatcher::match_one(ctx.into())
                 .map(|i| vec![i])
                 .unwrap_or_default()
         } else {
-            // Named: find each flag + its single value.
             ArgMatcher::match_all(ctx.into())
         }
     }
