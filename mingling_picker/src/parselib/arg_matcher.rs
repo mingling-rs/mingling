@@ -120,7 +120,10 @@ impl Matcher for ArgMatcher {
                 result.push(args[i].raw_idx);
 
                 if !Self::is_inline_value(args[i].raw, flag_str, sep) {
-                    if i + 1 < args.len() {
+                    if i + 1 < args.len()
+                        // Don't consume `--` (end-of-options marker) as a value.
+                        && end.is_none_or(|e| args[i + 1].raw_idx < e)
+                    {
                         result.push(args[i + 1].raw_idx);
                         i += 2;
                         continue;

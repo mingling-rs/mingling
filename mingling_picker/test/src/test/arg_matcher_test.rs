@@ -248,3 +248,42 @@ fn test_match_all_end_of_options_not_matched() {
     let result = ArgMatcher::on_match_all(&args, &UNIX_STYLE, &info);
     assert!(result.is_empty());
 }
+
+// `--` should never be consumed as a value by a named flag.
+
+#[test]
+fn test_match_all_named_does_not_consume_end_marker() {
+    // `--flag` before `--`, but the next position IS `--`.
+    // Only tag the flag, don't consume the end-of-options marker.
+    let mut info = PickerArgInfo::new();
+    info.set_long("flag");
+    let args = make_args(&[("--flag", 0), ("--", 1), ("value", 2)]);
+    let result = ArgMatcher::on_match_all(&args, &UNIX_STYLE, &info);
+    assert_eq!(result, vec![0], "should NOT consume -- as a value");
+}
+
+#[test]
+fn test_match_all_named_does_not_consume_end_marker_flag_before_end() {
+    // Simulates: --flag -- you  where -- is end-of-options.
+    // The flag should be tagged but -- should NOT be consumed as its value.
+    let mut info = PickerArgInfo::new();
+    info.set_long("flag");
+
+    let args = make_args(&[("--flag", 0), ("--", 1), ("you", 2)]);
+    let result = ArgMatcher::on_match_all(&args, &UNIX_STYLE, &info);
+    assert_eq!(
+        result,
+        vec![0],
+        "flag before --: only tag flag, leave -- for positional"
+    );
+}
+
+#[test]
+fn test_match_all_flag_after_end_has_value() {
+    // Flag after `--` should not match at all.
+    let mut info = PickerArgInfo::new();
+    info.set_long("flag");
+    let args = make_args(&[("--", 0), ("--flag", 1), ("value", 2)]);
+    let result = ArgMatcher::on_match_all(&args, &UNIX_STYLE, &info);
+    assert!(result.is_empty());
+}
