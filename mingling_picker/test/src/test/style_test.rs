@@ -1,8 +1,10 @@
 use mingling_picker::PickerArgInfo;
 use mingling_picker::parselib::{
-    FlagMatcher, MaskedArg, Matcher, POWERSHELL_STYLE, ParserStyle, ParserStyleNamingCase,
-    UNIX_STYLE, WINDOWS_STYLE, build_possible_flags,
+    FlagMatcher, Matcher, POWERSHELL_STYLE, ParserStyle, ParserStyleNamingCase, UNIX_STYLE,
+    WINDOWS_STYLE, build_possible_flags,
 };
+
+use crate::make_masked;
 
 // Style: formatting utilities
 
@@ -44,10 +46,6 @@ fn test_build_possible_flags_with_short_and_alias() {
 }
 
 // Style: matching with different styles via Matcher trait
-
-fn make_masked(raw: &str, idx: usize) -> MaskedArg<'_> {
-    MaskedArg { raw, raw_idx: idx }
-}
 
 #[test]
 fn test_windows_style_match() {

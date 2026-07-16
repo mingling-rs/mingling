@@ -1,4 +1,7 @@
-use crate::{matcher_needed::*, parselib::build_possible_flags};
+use crate::{
+    matcher_needed::*,
+    parselib::{build_possible_flags, seek_end_of_options},
+};
 
 /// `ArgMatcher` is used for parameters that carry a single value.
 ///
@@ -53,7 +56,6 @@ impl Matcher for ArgMatcher {
         arg_info: &PickerArgInfo,
     ) -> Option<usize> {
         if arg_info.positional {
-            // Positional: first available position.
             return args.first().map(|a| a.raw_idx);
         }
 
@@ -61,7 +63,6 @@ impl Matcher for ArgMatcher {
         let end = seek_end_of_options(args, style);
 
         for arg in args {
-            // Stop at end-of-options marker.
             if end.is_some_and(|e| arg.raw_idx >= e) {
                 break;
             }
@@ -83,7 +84,6 @@ impl Matcher for ArgMatcher {
         arg_info: &PickerArgInfo,
     ) -> Vec<usize> {
         if arg_info.positional {
-            // Positional: all available positions before `--`.
             let end = seek_end_of_options(args, style);
             return args
                 .iter()
@@ -98,7 +98,6 @@ impl Matcher for ArgMatcher {
         let mut result = Vec::new();
         let mut i = 0;
         while i < args.len() {
-            // Stop at end-of-options marker.
             if end.is_some_and(|e| args[i].raw_idx >= e) {
                 break;
             }
@@ -108,28 +107,22 @@ impl Matcher for ArgMatcher {
                 .any(|f| Self::matches(args[i].raw, f, style.case_sensitive));
 
             if matched {
-                // Find which flag matched to check eq mode.
                 let flag_str = possible_flags
                     .iter()
                     .find(|f| Self::matches(args[i].raw, f, style.case_sensitive))
                     .expect("already matched");
 
-                result.push(args[i].raw_idx); // flag position
+                result.push(args[i].raw_idx);
 
                 if !Self::is_eq_mode(args[i].raw, flag_str) {
-                    // Non-eq mode: the next argument is the value.
-                    // Always tag it — even if it looks like a flag — so that
-                    // the mask reserves it. Validation is the Pickable's job.
                     if i + 1 < args.len() {
                         result.push(args[i + 1].raw_idx);
-                        i += 2; // skip flag + value
+                        i += 2;
                         continue;
                     }
-                    // No value available: tag just the flag.
                     i += 1;
                     continue;
                 }
-                // eq mode: value is inline, no extra slot.
                 i += 1;
                 continue;
             }
@@ -138,17 +131,4 @@ impl Matcher for ArgMatcher {
 
         result
     }
-}
-
-/// Locate the end-of-options marker (`--`) in the argument list.
-fn seek_end_of_options(args: &[MaskedArg], style: &ParserStyle) -> Option<usize> {
-    args.iter()
-        .find(|arg| {
-            if style.case_sensitive {
-                arg.raw == style.end_of_options
-            } else {
-                arg.raw.eq_ignore_ascii_case(style.end_of_options)
-            }
-        })
-        .map(|arg| arg.raw_idx)
 }

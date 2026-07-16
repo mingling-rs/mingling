@@ -1,6 +1,6 @@
 use crate::{
     matcher_needed::*,
-    parselib::{build_possible_flags, get_seeked_first, multi_seek_eq},
+    parselib::{build_possible_flags, get_seeked_first, multi_seek_eq, seek_end_of_options},
 };
 
 /// `FlagMatcher` is used to match flags in command-line arguments.
@@ -79,20 +79,4 @@ fn single_pass_match_all(
     }
 
     matches
-}
-
-/// Locate the end-of-options marker (`--`) in the argument list.
-fn seek_end_of_options(args: &[MaskedArg], style: &ParserStyle) -> Option<usize> {
-    get_seeked_first(
-        args.iter()
-            .filter(|arg| {
-                if style.case_sensitive {
-                    arg.raw == style.end_of_options
-                } else {
-                    arg.raw.eq_ignore_ascii_case(style.end_of_options)
-                }
-            })
-            .map(|arg| arg.raw_idx)
-            .collect(),
-    )
 }

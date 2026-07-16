@@ -1,16 +1,9 @@
 use mingling_picker::PickerArgInfo;
-use mingling_picker::parselib::{ArgMatcher, MaskedArg, Matcher, POWERSHELL_STYLE, UNIX_STYLE};
+use mingling_picker::parselib::{ArgMatcher, Matcher, POWERSHELL_STYLE, UNIX_STYLE};
 
-fn make_args<'a>(pairs: &'a [(&'a str, usize)]) -> Vec<MaskedArg<'a>> {
-    pairs
-        .iter()
-        .map(|&(raw, idx)| MaskedArg { raw, raw_idx: idx })
-        .collect()
-}
+use crate::make_args;
 
-// ============================================================
 // on_match_one — Named
-// ============================================================
 
 #[test]
 fn test_match_one_named_basic() {
@@ -59,9 +52,7 @@ fn test_match_one_named_after_end_of_options() {
     assert_eq!(result, None);
 }
 
-// ============================================================
 // on_match_one — Positional
-// ============================================================
 
 #[test]
 fn test_match_one_positional_basic() {
@@ -81,9 +72,7 @@ fn test_match_one_positional_takes_first() {
     assert_eq!(result, Some(0));
 }
 
-// ============================================================
 // on_match_all — Named, single occurrence
-// ============================================================
 
 #[test]
 fn test_match_all_named_flag_plus_value() {
@@ -125,9 +114,7 @@ fn test_match_all_named_value_looks_like_flag() {
     assert_eq!(result, vec![0, 1]);
 }
 
-// ============================================================
 // on_match_all — Named, multiple occurrences (Single per flag)
-// ============================================================
 
 #[test]
 fn test_match_all_named_two_occurrences() {
@@ -149,9 +136,7 @@ fn test_match_all_named_skips_non_matching_args() {
     assert_eq!(result, vec![0, 1, 3, 4]);
 }
 
-// ============================================================
 // on_match_all — Named, short flag
-// ============================================================
 
 #[test]
 fn test_match_all_named_short_flag() {
@@ -163,9 +148,7 @@ fn test_match_all_named_short_flag() {
     assert_eq!(result, vec![0, 1]);
 }
 
-// ============================================================
 // on_match_all — Named, eq + non-eq mixed
-// ============================================================
 
 #[test]
 fn test_match_all_named_mixed_eq_and_regular() {
@@ -176,9 +159,7 @@ fn test_match_all_named_mixed_eq_and_regular() {
     assert_eq!(result, vec![0, 1, 2]);
 }
 
-// ============================================================
 // on_match_all — Named, case insensitive (PowerShell)
-// ============================================================
 
 #[test]
 fn test_match_all_named_powershell_case_insensitive() {
@@ -189,9 +170,7 @@ fn test_match_all_named_powershell_case_insensitive() {
     assert_eq!(result, vec![0, 1]);
 }
 
-// ============================================================
 // on_match_all — Positional
-// ============================================================
 
 #[test]
 fn test_match_all_positional_single() {
@@ -211,9 +190,7 @@ fn test_match_all_positional_multiple() {
     assert_eq!(result, vec![0, 1]);
 }
 
-// ============================================================
 // End-of-options marker (`--`)
-// ============================================================
 
 #[test]
 fn test_match_all_named_stops_at_end_of_options() {
@@ -240,9 +217,7 @@ fn test_match_all_positional_stops_at_end_of_options() {
     assert_eq!(result, vec![0]);
 }
 
-// ============================================================
 // Empty args
-// ============================================================
 
 #[test]
 fn test_match_one_empty() {
@@ -262,9 +237,7 @@ fn test_match_all_empty() {
     assert!(result.is_empty());
 }
 
-// ============================================================
 // Verify that -- itself is never matched as a flag
-// ============================================================
 
 #[test]
 fn test_match_all_end_of_options_not_matched() {
