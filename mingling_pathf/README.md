@@ -18,16 +18,16 @@ Enable the `pathf` feature in `Cargo.toml`:
 ```toml
 [dependencies.mingling]
 # Used to modify the generation behavior of `gen_program!`
-features = ["pathf"] 
+features = ["pathf"]
 
 [build-dependencies.mingling]
 # Provides the `analyze_and_build_type_mapping` function
-features = ["builds", "pathf"] 
+features = ["builds", "pathf"]
 ```
 
 Create a `build.rs` in the project root:
 
-```rust
+```rust,ignore
 fn main() {
     mingling::build::analyze_and_build_type_mapping();
 }

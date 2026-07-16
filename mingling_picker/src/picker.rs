@@ -10,13 +10,7 @@ pub use result::*;
 
 use crate::{Pickable, PickerArg, PickerArgResult};
 
-/// Picker, used to record all states of a parameter parsing
-///
-/// Includes the following:
-///
-/// - Basic arguments
-/// - Parsing states
-/// - Parsing results
+#[doc = include_str!("../README.md")]
 pub struct Picker<'a, Route = ()> {
     route_phantom: PhantomData<Route>,
 
