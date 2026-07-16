@@ -251,6 +251,7 @@ pub fn vec_string_to_vec_str(input: &[String]) -> Vec<&str> {
 /// This is useful for converting owned `String` vectors into borrowed `&str` slices
 /// for functions that take `&[&str]` or similar parameters.
 #[macro_export]
+#[doc(hidden)]
 macro_rules! vec_string_slice {
     ($v:expr) => {
         $v.iter()
