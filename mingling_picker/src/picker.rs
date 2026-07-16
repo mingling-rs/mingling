@@ -47,6 +47,22 @@ impl<'a> Picker<'a> {
             args: PickerArgs::Owned(args),
         }
     }
+
+    /// Changes the route (phantom type parameter) of the `Picker`.
+    ///
+    /// This method allows converting a `Picker` from one route type to another,
+    /// while preserving the same underlying arguments. The route type is typically
+    /// used to distinguish different parsing contexts or to carry compile-time
+    /// state information through the picking chain.
+    pub fn with_route<NewRoute>(self) -> Picker<'a, NewRoute>
+    where
+        Self: Sized,
+    {
+        Picker {
+            route_phantom: PhantomData,
+            args: self.args,
+        }
+    }
 }
 
 /// Internal arguments of Picker
