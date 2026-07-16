@@ -1,6 +1,6 @@
 use std::{
     fmt::{Debug, Display},
-    ops::Deref,
+    ops::{Deref, Not},
 };
 
 /// Parsed result of a boolean-style command-line flag.
@@ -129,6 +129,17 @@ impl Deref for Flag {
         match self {
             Flag::Active => &true,
             Flag::Inactive => &false,
+        }
+    }
+}
+
+impl Not for Flag {
+    type Output = Flag;
+
+    fn not(self) -> Flag {
+        match self {
+            Flag::Active => Flag::Inactive,
+            Flag::Inactive => Flag::Active,
         }
     }
 }
