@@ -1,6 +1,6 @@
 use mingling_picker_macros::internal_repeat;
 
-use crate::{Pickable, Picker, PickerArgResult, PickerArgs, PickerFlag};
+use crate::{Pickable, Picker, PickerArg, PickerArgResult, PickerArgs};
 
 internal_repeat!(1..=32 => {
     #[doc(hidden)]
@@ -10,7 +10,7 @@ internal_repeat!(1..=32 => {
         pub args: PickerArgs<'a>,
         pub error_route: Option<Route>,
         (
-            pub flag_$: &'a PickerFlag<'a, T$>,
+            pub flag_$: &'a PickerArg<'a, T$>,
             pub result_$: PickerArgResult<T$>,
             pub default_$: Option<Box<dyn FnOnce() -> T$>>,
             pub route_$: Option<Box<dyn FnOnce() -> Route>>,
@@ -148,7 +148,7 @@ internal_repeat!(1..32 => {
        /// This method extends the current picking pattern by appending an additional flag.
        /// The previous flags and their results are preserved as part of the new pattern.
        /// The new flag's result is initially `Unparsed`.
-       pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern$+<'a, (T$,+), N, Route>
+       pub fn pick<N>(self, flag: &'a PickerArg<'a, N>) -> PickerPattern$+<'a, (T$,+), N, Route>
        where
            N: Pickable<'a>,
        {
@@ -182,7 +182,7 @@ impl<'a, Route> Picker<'a, Route> {
     ///
     /// This method initiates a parameter picking chain with one flag.
     /// The result is initially `Unparsed`.
-    pub fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N, Route>
+    pub fn pick<N>(self, flag: &'a PickerArg<'a, N>) -> PickerPattern1<'a, N, Route>
     where
         N: Pickable<'a>,
     {

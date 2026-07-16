@@ -7,7 +7,7 @@ fn test_bool_flag_present() {
     let args = vec!["--verbose"];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .unwrap();
     assert_eq!(parsed, true);
@@ -18,7 +18,7 @@ fn test_bool_flag_absent() {
     let args: Vec<&str> = vec![];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .unwrap();
     assert_eq!(parsed, false);
@@ -31,7 +31,7 @@ fn test_bool_short_flag_present() {
     let args = vec!["-v"];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool, 'v'])
+        .pick(&arg![verbose: bool, 'v'])
         .or_default()
         .unwrap();
     assert_eq!(parsed, true);
@@ -41,13 +41,13 @@ fn test_bool_short_flag_present() {
 
 #[test]
 fn test_two_bool_flags_both_present() {
-    // The `flag!` macro expands the identifier `flag_a` into the string "flag_a" → --flag_a
+    // The `arg!` macro expands the identifier `flag_a` into the string "flag_a" → --flag_a
     let args = vec!["--flag_a", "--flag_b"];
     let (a, b) = args
         .to_picker()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         .or_default()
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_default()
         .unwrap();
     assert_eq!(a, true);
@@ -59,9 +59,9 @@ fn test_two_bool_flags_one_present() {
     let args = vec!["--flag_a"];
     let (a, b) = args
         .to_picker()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         .or_default()
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_default()
         .unwrap();
     assert_eq!(a, true);
@@ -73,9 +73,9 @@ fn test_two_bool_flags_neither_present() {
     let args: Vec<&str> = vec![];
     let (a, b) = args
         .to_picker()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         .or_default()
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_default()
         .unwrap();
     assert_eq!(a, false);
@@ -89,9 +89,9 @@ fn test_short_and_long_flags() {
     let args = vec!["-a", "--long_b"];
     let (a, b) = args
         .to_picker()
-        .pick(&flag![flag_a: bool, 'a'])
+        .pick(&arg![flag_a: bool, 'a'])
         .or_default()
-        .pick(&flag![long_b: bool])
+        .pick(&arg![long_b: bool])
         .or_default()
         .unwrap();
     assert_eq!(a, true);
@@ -105,7 +105,7 @@ fn test_flag_after_end_of_options() {
     let args = vec!["--", "--verbose"];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .unwrap();
     assert_eq!(parsed, false);
@@ -118,7 +118,7 @@ fn test_bool_flag_with_alias() {
     let args = vec!["--cfg"];
     let parsed = args
         .to_picker()
-        .pick(&flag![config: bool, "cfg"])
+        .pick(&arg![config: bool, "cfg"])
         .or_default()
         .unwrap();
     assert_eq!(parsed, true);
@@ -129,7 +129,7 @@ fn test_bool_flag_primary_name() {
     let args = vec!["--config"];
     let parsed = args
         .to_picker()
-        .pick(&flag![config: bool, "cfg"])
+        .pick(&arg![config: bool, "cfg"])
         .or_default()
         .unwrap();
     assert_eq!(parsed, true);
@@ -142,7 +142,7 @@ fn test_bool_flag_short_and_alias() {
     let args = vec!["-v"];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool, 'v', "cfg"])
+        .pick(&arg![verbose: bool, 'v', "cfg"])
         .or_default()
         .unwrap();
     assert_eq!(parsed, true);
@@ -155,7 +155,7 @@ fn test_or_default_without_args() {
     let args: Vec<&str> = vec![];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .unwrap();
     assert_eq!(parsed, false);
@@ -166,7 +166,7 @@ fn test_or_custom_default() {
     let args: Vec<&str> = vec![];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or(|| true)
         .unwrap();
     assert_eq!(parsed, true);
@@ -179,7 +179,7 @@ fn test_to_result_ok() {
     let args = vec!["--verbose"];
     let result = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .to_result();
     assert_eq!(result, Ok(true));
@@ -190,7 +190,7 @@ fn test_to_option_some() {
     let args = vec!["--verbose"];
     let opt = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .to_option();
     assert_eq!(opt, Some(true));
@@ -203,7 +203,7 @@ fn test_with_route_chain() {
     let args = vec!["--flag"];
     let parsed = args
         .with_route::<String>()
-        .pick(&flag![flag: bool])
+        .pick(&arg![flag: bool])
         .or_default()
         .unwrap();
     assert_eq!(parsed, true);
@@ -216,7 +216,7 @@ fn test_unrelated_flag_does_not_match() {
     let args = vec!["--other"];
     let parsed = args
         .to_picker()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .unwrap();
     assert_eq!(parsed, false);

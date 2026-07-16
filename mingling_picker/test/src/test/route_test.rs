@@ -8,7 +8,7 @@ fn test_or_route_triggered_to_result() {
     let args: Vec<&str> = vec![];
     let result: Result<bool, &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "missing_verbose")
         .to_result();
     assert_eq!(result, Err("missing_verbose"));
@@ -20,7 +20,7 @@ fn test_or_route_not_triggered_when_flag_present() {
     let args = vec!["--verbose"];
     let result: Result<bool, &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "missing_verbose")
         .to_result();
     assert_eq!(result, Ok(true));
@@ -33,7 +33,7 @@ fn test_or_default_priority_over_or_route() {
     let args: Vec<&str> = vec![];
     let result: Result<bool, &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_default()
         .or_route(|| "should_not_reach")
         .to_result();
@@ -46,7 +46,7 @@ fn test_or_route_to_option_returns_none() {
     let args: Vec<&str> = vec![];
     let opt: Option<bool> = args
         .with_route::<&'static str>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "missing")
         .to_option();
     assert_eq!(opt, None);
@@ -57,7 +57,7 @@ fn test_or_route_to_option_returns_none() {
 fn test_or_route_unwrap_panics() {
     let args: Vec<&str> = vec![];
     args.with_route::<&'static str>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "missing")
         .unwrap();
 }
@@ -68,7 +68,7 @@ fn test_or_route_with_string_route() {
     let args: Vec<&str> = vec![];
     let result: Result<bool, String> = args
         .with_route::<String>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "route_hit".to_string())
         .to_result();
     assert_eq!(result, Err("route_hit".to_string()));
@@ -87,7 +87,7 @@ fn test_or_route_with_custom_enum() {
     let args: Vec<&str> = vec![];
     let result: Result<bool, Redirect> = args
         .with_route::<Redirect>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| Redirect::Help)
         .to_result();
     assert_eq!(result, Err(Redirect::Help));
@@ -102,9 +102,9 @@ fn test_two_flags_first_missing_triggers_route() {
     let args: Vec<&str> = vec![];
     let result: Result<(bool, bool), &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         .or_route(|| "first_missing")
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_route(|| "second_missing")
         .to_result();
     assert_eq!(result, Err("first_missing"));
@@ -116,9 +116,9 @@ fn test_two_flags_second_missing_triggers_route() {
     let args: Vec<&str> = vec![];
     let result: Result<(bool, bool), &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         .or_default()
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_route(|| "second_missing")
         .to_result();
     assert_eq!(result, Err("second_missing"));
@@ -130,9 +130,9 @@ fn test_two_flags_both_present_route_not_triggered() {
     let args = vec!["--flag_a", "--flag_b"];
     let result: Result<(bool, bool), &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         .or_route(|| "first_missing")
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_route(|| "second_missing")
         .to_result();
     assert_eq!(result, Ok((true, true)));
@@ -145,9 +145,9 @@ fn test_two_flags_first_missing_no_route_second_has_route() {
     let args: Vec<&str> = vec![];
     let result: Result<(bool, bool), &'static str> = args
         .with_route::<&'static str>()
-        .pick(&flag![flag_a: bool])
+        .pick(&arg![flag_a: bool])
         // No or_default, no or_route either
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_b: bool])
         .or_route(|| "second_missing")
         .to_result();
     assert_eq!(result, Err("second_missing"));
@@ -160,8 +160,8 @@ fn test_two_flags_only_second_has_default() {
     let args: Vec<&str> = vec![];
     let (a, b) = args
         .to_picker()
-        .pick(&flag![flag_a: bool])
-        .pick(&flag![flag_b: bool])
+        .pick(&arg![flag_a: bool])
+        .pick(&arg![flag_b: bool])
         .or_default()
         .unpack();
     assert_eq!(a, None);
@@ -176,7 +176,7 @@ fn test_with_route_and_or_route() {
     let args: Vec<&str> = vec![];
     let result: Result<bool, String> = args
         .with_route::<String>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "redirected".to_string())
         .to_result();
     assert_eq!(result, Err("redirected".to_string()));
@@ -188,10 +188,10 @@ fn test_with_route_type_switch() {
     let args: Vec<&str> = vec![];
     let result: Result<(bool, bool), i32> = args
         .with_route::<String>()
-        .pick(&flag![verbose: bool])
+        .pick(&arg![verbose: bool])
         .or_route(|| "string_route".to_string())
         .with_route::<i32>()
-        .pick(&flag![other: bool])
+        .pick(&arg![other: bool])
         .or_route(|| -1)
         .to_result();
     // The first flag is missing, but its or_route is cleared when with_route switches (route_$ = None)

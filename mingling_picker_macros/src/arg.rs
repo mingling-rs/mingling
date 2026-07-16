@@ -2,11 +2,11 @@ use proc_macro::{TokenStream, TokenTree};
 use proc_macro2::TokenStream as TS2;
 use quote::quote;
 
-pub(crate) fn flag(input: TokenStream) -> TokenStream {
+pub(crate) fn arg(input: TokenStream) -> TokenStream {
     let tokens: Vec<TokenTree> = input.into_iter().collect();
     let args = split_at_commas(&tokens);
     if args.is_empty() {
-        return quote! { compile_error!("flag! flaguires at least one argument") }.into();
+        return quote! { compile_error!("arg! flaguires at least one argument") }.into();
     }
 
     let first = &args[0];
@@ -15,7 +15,7 @@ pub(crate) fn flag(input: TokenStream) -> TokenStream {
     // Validate: at most one char literal
     let char_count = rest.iter().filter(|a| is_char_literal(a)).count();
     if char_count > 1 {
-        return quote! { compile_error!("flag! only supports at most one short name") }.into();
+        return quote! { compile_error!("arg! only supports at most one short name") }.into();
     }
 
     // Extract short char and string aliases
@@ -30,8 +30,8 @@ pub(crate) fn flag(input: TokenStream) -> TokenStream {
         .collect();
 
     // Parse first argument
-    //   flag![name: Type]  → name, with explicit type
-    //   flag![Type]        → positional type, no name
+    //   arg![name: Type]  → name, with explicit type
+    //   arg![Type]        → positional type, no name
     let colon_pos = first
         .iter()
         .position(|t| matches!(t, TokenTree::Punct(p) if p.as_char() == ':'));
@@ -70,10 +70,10 @@ pub(crate) fn flag(input: TokenStream) -> TokenStream {
             .unwrap_or(TS2::new());
 
         #[cfg(feature = "mingling_support")]
-        let import = quote! { ::mingling::picker::PickerFlag };
+        let import = quote! { ::mingling::picker::PickerArg };
 
         #[cfg(not(feature = "mingling_support"))]
-        let import = quote! { ::mingling_picker::PickerFlag };
+        let import = quote! { ::mingling_picker::PickerArg };
 
         if ty.is_some() {
             quote! { #import::<#ty_ts> }

@@ -24,7 +24,7 @@ pub mod macros {
 
 /// Provides the types necessary for implementing the `Pickable` trait
 pub mod pickable_needed {
-    pub use crate::{Pickable, PickerArgResult, PickerFlag, PickerFlagAttr, TagPhaseContext};
+    pub use crate::{Pickable, PickerArg, PickerArgAttr, PickerArgResult, TagPhaseContext};
 }
 
 /// Provides the types necessary for implementing the `Matcher` trait

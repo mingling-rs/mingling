@@ -10,9 +10,7 @@
 // Then, I must disable `clippy::type_complexity` — this guy is way too noisy.
 #![allow(clippy::type_complexity)]
 
-use crate::{
-    Pickable, PickerArgInfo, PickerArgResult, PickerArgs, PickerFlagAttr, TagPhaseContext,
-};
+use crate::{Pickable, PickerArgAttr, PickerArgInfo, PickerArgResult, PickerArgs, TagPhaseContext};
 use mingling_picker_macros::internal_repeat;
 
 internal_repeat!(1..=32 => {
@@ -76,7 +74,7 @@ internal_repeat!(1..=32 => {
             let mut bundle: [
                 (
                     // Flag Attr
-                    PickerFlagAttr,
+                    PickerArgAttr,
 
                     // Tag Func
                     Box<dyn FnOnce(&PickerArgs<'a>, &[u8]) -> Vec<usize>>,

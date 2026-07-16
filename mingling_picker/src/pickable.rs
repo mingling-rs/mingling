@@ -1,4 +1,4 @@
-use crate::{PickerArgInfo, PickerArgResult, PickerArgs, PickerFlag, PickerFlagAttr};
+use crate::{PickerArg, PickerArgAttr, PickerArgInfo, PickerArgResult, PickerArgs};
 
 /// `Pickable` trait defines how to parse a type instance from command-line arguments.
 ///
@@ -13,7 +13,7 @@ use crate::{PickerArgInfo, PickerArgResult, PickerArgs, PickerFlag, PickerFlagAt
 ///
 /// # Type Parameters
 ///
-/// * `'a` - Lifetime parameter, used to associate references in [`PickerFlag`].
+/// * `'a` - Lifetime parameter, used to associate references in [`PickerArg`].
 pub trait Pickable<'a>
 where
     Self: Sized,
@@ -22,7 +22,7 @@ where
     ///
     /// This attribute is used to inform the parser about the parse order
     /// between different `Pickable` types.
-    /// See [`PickerFlagAttr`] for specific ordering definitions.
+    /// See [`PickerArgAttr`] for specific ordering definitions.
     ///
     /// # Parameters
     ///
@@ -30,8 +30,8 @@ where
     ///
     /// # Returns
     ///
-    /// Returns a [`PickerFlagAttr`] describing the parse-order attribute of this flag.
-    fn get_attr(flag: &'a PickerFlag<'a, Self>) -> PickerFlagAttr;
+    /// Returns a [`PickerArgAttr`] describing the parse-order attribute of this flag.
+    fn get_attr(flag: &'a PickerArg<'a, Self>) -> PickerArgAttr;
 
     /// Tag phase: Determines which argument positions the `Pickable` needs to handle.
     ///

@@ -8,7 +8,7 @@ pub use patterns::*;
 mod result;
 pub use result::*;
 
-use crate::{Pickable, PickerArgResult, PickerFlag};
+use crate::{Pickable, PickerArg, PickerArgResult};
 
 /// Picker, used to record all states of a parameter parsing
 ///
@@ -274,7 +274,7 @@ pub trait IntoPicker<'a> {
     ///
     /// This method converts the value into a `Picker` and starts a parameter
     /// picking chain with one flag. The result is initially `Unparsed`.
-    fn pick<N>(self, flag: &'a PickerFlag<'a, N>) -> PickerPattern1<'a, N, ()>
+    fn pick<N>(self, flag: &'a PickerArg<'a, N>) -> PickerPattern1<'a, N, ()>
     where
         Self: Sized,
         N: Pickable<'a> + Default + Sized,

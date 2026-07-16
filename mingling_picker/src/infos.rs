@@ -1,4 +1,4 @@
-use crate::{Pickable, PickerFlag};
+use crate::{Pickable, PickerArg};
 
 /// Represents the result of parsing or looking up a value.
 ///
@@ -283,11 +283,11 @@ pub struct PickerArgInfo<'a> {
     pub is_flag: bool,
 }
 
-impl<'a, T> From<PickerFlag<'a, T>> for PickerArgInfo<'a>
+impl<'a, T> From<PickerArg<'a, T>> for PickerArgInfo<'a>
 where
     T: Pickable<'a>,
 {
-    fn from(value: PickerFlag<'a, T>) -> Self {
+    fn from(value: PickerArg<'a, T>) -> Self {
         let (long, alias) = match value.full.len() {
             0 => (None, None),
             _ => {
@@ -313,8 +313,8 @@ where
     }
 }
 
-impl<'a, T: Pickable<'a>> From<&'a PickerFlag<'a, T>> for PickerArgInfo<'a> {
-    fn from(value: &'a PickerFlag<'a, T>) -> Self {
+impl<'a, T: Pickable<'a>> From<&'a PickerArg<'a, T>> for PickerArgInfo<'a> {
+    fn from(value: &'a PickerArg<'a, T>) -> Self {
         let (long, alias) = match value.full.len() {
             0 => (None, None),
             _ => {

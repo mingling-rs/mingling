@@ -2,8 +2,8 @@ use crate::parselib::{FlagMatcher, Matcher};
 use crate::pickable_needed::*;
 
 impl<'a> Pickable<'a> for bool {
-    fn get_attr(_: &'a PickerFlag<'a, Self>) -> PickerFlagAttr {
-        PickerFlagAttr::Flag
+    fn get_attr(_: &'a PickerArg<'a, Self>) -> PickerArgAttr {
+        PickerArgAttr::Flag
     }
 
     fn tag(ctx: TagPhaseContext) -> Vec<usize> {
