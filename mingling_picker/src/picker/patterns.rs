@@ -10,7 +10,7 @@ internal_repeat!(1..=32 => {
         pub args: PickerArgs<'a>,
         pub error_route: Option<Route>,
         (
-            pub flag_$: &'a PickerArg<'a, T$>,
+            pub arg_$: &'a PickerArg<'a, T$>,
             pub result_$: PickerArgResult<T$>,
             pub default_$: Option<Box<dyn FnOnce() -> T$>>,
             pub route_$: Option<Box<dyn FnOnce() -> Route>>,
@@ -23,16 +23,16 @@ internal_repeat!(1..=32 => {
     impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
     where (T$: Pickable<'a>,+)
     {
-        /// Sets a default value provider for this flag.
+        /// Sets a default value provider for this arg.
         ///
-        /// If the flag is not provided by the user at runtime, the given closure will be
+        /// If the arg is not provided by the user at runtime, the given closure will be
         /// called to produce a default value. The closure is expected to return `T$`.
         ///
         /// # Example
         ///
         /// ```ignore
         /// let pattern = picker
-        ///     .pick(&my_flag)
+        ///     .pick(&my_arg)
         ///     .or(|| 42);
         /// ```
         #[allow(clippy::type_complexity)]
@@ -45,16 +45,16 @@ internal_repeat!(1..=32 => {
             self
         }
 
-        /// Uses the default value for this flag's type if the flag is not provided.
+        /// Uses the default value for this arg's type if the arg is not provided.
         ///
-        /// If the flag is not provided by the user at runtime, the default value for `T$`
+        /// If the arg is not provided by the user at runtime, the default value for `T$`
         /// (as defined by the `Default` trait) will be used.
         ///
         /// # Example
         ///
         /// ```ignore
         /// let pattern = picker
-        ///     .pick(&my_flag)
+        ///     .pick(&my_arg)
         ///     .or_default();
         /// ```
         #[allow(clippy::type_complexity)]
@@ -66,16 +66,16 @@ internal_repeat!(1..=32 => {
             self
         }
 
-        /// Sets a route for when the flag is not provided.
+        /// Sets a route for when the arg is not provided.
         ///
-        /// If the flag is not provided by the user at runtime, the given closure will be
+        /// If the arg is not provided by the user at runtime, the given closure will be
         /// called to produce a route value that will be returned early.
         ///
         /// # Example
         ///
         /// ```ignore
         /// let pattern = picker
-        ///     .pick(&my_flag)
+        ///     .pick(&my_arg)
         ///     .or_route(|| Redirect::home());
         /// ```
         pub fn or_route<F>(mut self, func: F) -> Self
@@ -91,7 +91,7 @@ internal_repeat!(1..=32 => {
         /// Resets the route for this picker pattern, allowing a different route type.
         ///
         /// This method converts the current `PickerPattern` into a new one with a different
-        /// route type `NewRoute`. All existing flag configurations, defaults, and post-
+        /// route type `NewRoute`. All existing arg configurations, defaults, and post-
         /// processing functions are preserved, but the `error_route` and individual
         /// `route_$` fields are cleared (set to `None`).
         ///
@@ -104,7 +104,7 @@ internal_repeat!(1..=32 => {
                 args: self.args,
                 error_route: None,
                 (
-                    flag_$: self.flag_$,
+                    arg_$: self.arg_$,
                     result_$: self.result_$,
                     default_$: self.default_$,
                     route_$: None,
@@ -113,9 +113,9 @@ internal_repeat!(1..=32 => {
             }
         }
 
-        /// Attaches a post-processing function to this flag.
+        /// Attaches a post-processing function to this arg.
         ///
-        /// After the flag's value is parsed (or defaulted), the given closure will be
+        /// After the arg's value is parsed (or defaulted), the given closure will be
         /// invoked with the parsed value and its return value will be used as the final
         /// result. This allows transforming or validating the parsed value.
         ///
@@ -123,7 +123,7 @@ internal_repeat!(1..=32 => {
         ///
         /// ```ignore
         /// let pattern = picker
-        ///     .pick(&my_flag)
+        ///     .pick(&my_arg)
         ///     .post(|val| val * 2);
         /// ```
         #[allow(clippy::type_complexity)]
@@ -143,12 +143,12 @@ internal_repeat!(1..32 => {
    where (T$: Pickable<'a>,+)
    {
        #[allow(clippy::type_complexity)]
-       /// Adds a new flag to the picking chain, returning a new `PickerPattern` with one more type parameter.
+       /// Adds a new arg to the picking chain, returning a new `PickerPattern` with one more type parameter.
        ///
-       /// This method extends the current picking pattern by appending an additional flag.
-       /// The previous flags and their results are preserved as part of the new pattern.
-       /// The new flag's result is initially `Unparsed`.
-       pub fn pick<N>(self, flag: &'a PickerArg<'a, N>) -> PickerPattern$+<'a, (T$,+), N, Route>
+       /// This method extends the current picking pattern by appending an additional arg.
+       /// The previous args and their results are preserved as part of the new pattern.
+       /// The new arg's result is initially `Unparsed`.
+       pub fn pick<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern$+<'a, (T$,+), N, Route>
        where
            N: Pickable<'a>,
        {
@@ -158,7 +158,7 @@ internal_repeat!(1..32 => {
                error_route: self.error_route,
 
                // Current
-               flag_$+: flag,
+               arg_$+: arg.into(),
                result_$+: PickerArgResult::Unparsed,
                default_$+: None,
                route_$+: None,
@@ -166,7 +166,7 @@ internal_repeat!(1..32 => {
 
                // Prev
                (
-                   flag_$: self.flag_$,
+                   arg_$: self.arg_$,
                    result_$: self.result_$,
                    default_$: self.default_$,
                    route_$: self.route_$,
@@ -178,18 +178,18 @@ internal_repeat!(1..32 => {
 });
 
 impl<'a, Route> Picker<'a, Route> {
-    /// Creates a `PickerPattern1` from the given flag to start a picking chain.
+    /// Creates a `PickerPattern1` from the given arg to start a picking chain.
     ///
-    /// This method initiates a parameter picking chain with one flag.
+    /// This method initiates a parameter picking chain with one arg.
     /// The result is initially `Unparsed`.
-    pub fn pick<N>(self, flag: &'a PickerArg<'a, N>) -> PickerPattern1<'a, N, Route>
+    pub fn pick<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern1<'a, N, Route>
     where
         N: Pickable<'a>,
     {
         PickerPattern1 {
             args: self.args,
             error_route: None::<Route>,
-            flag_1: flag,
+            arg_1: arg.into(),
             result_1: PickerArgResult::Unparsed,
             route_1: None,
             default_1: None,

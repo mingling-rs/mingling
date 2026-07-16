@@ -41,8 +41,8 @@ fn test_bool_short_flag_present() {
 
 #[test]
 fn test_two_bool_flags_both_present() {
-    // The `arg!` macro expands the identifier `flag_a` into the string "flag_a" → --flag_a
-    let args = vec!["--flag_a", "--flag_b"];
+    // UNIX_STYLE now uses Kebab naming: `flag_a` → "flag-a" → --flag-a
+    let args = vec!["--flag-a", "--flag-b"];
     let (a, b) = args
         .to_picker()
         .pick(&arg![flag_a: bool])
@@ -56,7 +56,7 @@ fn test_two_bool_flags_both_present() {
 
 #[test]
 fn test_two_bool_flags_one_present() {
-    let args = vec!["--flag_a"];
+    let args = vec!["--flag-a"];
     let (a, b) = args
         .to_picker()
         .pick(&arg![flag_a: bool])
@@ -86,7 +86,7 @@ fn test_two_bool_flags_neither_present() {
 
 #[test]
 fn test_short_and_long_flags() {
-    let args = vec!["-a", "--long_b"];
+    let args = vec!["-a", "--long-b"];
     let (a, b) = args
         .to_picker()
         .pick(&arg![flag_a: bool, 'a'])

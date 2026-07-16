@@ -1,7 +1,7 @@
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::parselib::ParserStyleNamingCase::{Pascal, Snake};
+use crate::parselib::ParserStyleNamingCase::{Kebab, Pascal};
 
 /// Defines the style of command-line argument parsing (prefixes, separators, etc.).
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -175,7 +175,7 @@ pub const UNIX_STYLE: ParserStyle = ParserStyle {
     value_separator: '=',
     case_sensitive: true,
     allow_combine: true,
-    naming_case: Snake,
+    naming_case: Kebab,
 };
 
 /// PowerShell style (e.g., `-Verbose`, `-Name:value`)

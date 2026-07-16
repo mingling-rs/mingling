@@ -270,18 +270,18 @@ pub trait IntoPicker<'a> {
     /// ```
     fn to_picker(self) -> Picker<'a, ()>;
 
-    /// Creates a `PickerPattern1` from the given flag for the `pick` method.
+    /// Creates a `PickerPattern1` from the given arg for the `pick` method.
     ///
     /// This method converts the value into a `Picker` and starts a parameter
-    /// picking chain with one flag. The result is initially `Unparsed`.
-    fn pick<N>(self, flag: &'a PickerArg<'a, N>) -> PickerPattern1<'a, N, ()>
+    /// picking chain with one arg. The result is initially `Unparsed`.
+    fn pick<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern1<'a, N, ()>
     where
         Self: Sized,
         N: Pickable<'a> + Default + Sized,
     {
         PickerPattern1 {
             args: self.to_picker().args,
-            flag_1: flag,
+            arg_1: arg.into(),
             result_1: PickerArgResult::Unparsed,
             default_1: None,
             route_1: None,

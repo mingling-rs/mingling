@@ -39,6 +39,20 @@ where
     pub internal_type: PhantomData<Type>,
 }
 
+impl<'a, Type> From<&'a PickerArg<'a, Type>> for PickerArg<'a, Type>
+where
+    Type: Pickable<'a>,
+{
+    fn from(value: &'a PickerArg<'a, Type>) -> Self {
+        PickerArg {
+            full: value.full,
+            short: value.short,
+            positional: value.positional,
+            internal_type: PhantomData,
+        }
+    }
+}
+
 impl<'a, Type> PickerArg<'a, Type>
 where
     Type: Pickable<'a>,

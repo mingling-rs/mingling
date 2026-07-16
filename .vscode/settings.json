@@ -7,4 +7,5 @@
     "mingling_pathf/test/Cargo.toml",
     "mingling_picker/test/Cargo.toml",
   ],
+  "rust-analyzer.cargo.features": ["mingling_support"],
 }

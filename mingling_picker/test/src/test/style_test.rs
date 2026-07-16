@@ -185,17 +185,31 @@ fn test_snake_case_should_not_match_as_long_flag() {
 }
 
 #[test]
-fn test_snake_case_naming_for_unix_style() {
-    // UNIX_STYLE uses snake case: `flag_a` stays `flag_a` → `--flag_a`
+fn test_kebab_case_naming_for_unix_style() {
+    // UNIX_STYLE now uses Kebab case: `flag_a` → `flag-a` → `--flag-a`
+    let mut info = PickerArgInfo::new();
+    info.set_long("flag_a");
+
+    let args = vec![make_masked("--flag-a", 0)];
+    let result = FlagMatcher::on_match_one(&args, &UNIX_STYLE, &info);
+    assert_eq!(
+        result,
+        Some(0),
+        "--flag-a should match with kebab-style UNIX_STYLE"
+    );
+}
+
+#[test]
+fn test_snake_case_rejected_by_unix_style() {
+    // UNIX_STYLE uses Kebab: `--flag_a` (snake) should NOT match
     let mut info = PickerArgInfo::new();
     info.set_long("flag_a");
 
     let args = vec![make_masked("--flag_a", 0)];
     let result = FlagMatcher::on_match_one(&args, &UNIX_STYLE, &info);
     assert_eq!(
-        result,
-        Some(0),
-        "--flag_a should match with snake-style UNIX_STYLE"
+        result, None,
+        "--flag_a should NOT match under kebab-style UNIX_STYLE"
     );
 }
 
@@ -211,5 +225,78 @@ fn test_powershell_pascal_case_naming() {
         result,
         Some(0),
         "-Verbose should match verbose via Pascal case"
+    );
+}
+
+#[test]
+fn test_flag_naming_kebab_matches_my_name() {
+    // UNIX_STYLE now uses Kebab: `my_name` → `my-name` → `--my-name`
+    let mut info = PickerArgInfo::new();
+    info.set_long("my_name");
+
+    let args = vec![make_masked("--my-name", 0)];
+    let result = FlagMatcher::on_match_one(&args, &UNIX_STYLE, &info);
+    assert_eq!(
+        result,
+        Some(0),
+        "--my-name should match via kebab conversion"
+    );
+}
+
+#[test]
+fn test_flag_naming_kebab_rejects_my_name_underscore() {
+    // Kebab style: `--my_name` (snake) should NOT match
+    let mut info = PickerArgInfo::new();
+    info.set_long("my_name");
+
+    let args = vec![make_masked("--my_name", 0)];
+    let result = FlagMatcher::on_match_one(&args, &UNIX_STYLE, &info);
+    assert_eq!(
+        result, None,
+        "--my_name should NOT match under kebab-style UNIX_STYLE"
+    );
+}
+
+#[test]
+fn test_flag_naming_pascal_matches_my_name() {
+    // `my_name` under Pascal → `MyName` → `-MyName`
+    let mut info = PickerArgInfo::new();
+    info.set_long("my_name");
+
+    let args = vec![make_masked("-MyName", 0)];
+    let result = FlagMatcher::on_match_one(&args, &POWERSHELL_STYLE, &info);
+    assert_eq!(
+        result,
+        Some(0),
+        "-MyName should match via Pascal conversion"
+    );
+}
+
+#[test]
+fn test_flag_naming_pascal_matches_lowercase() {
+    // PowerShell is case-insensitive: `-myname` should also match
+    let mut info = PickerArgInfo::new();
+    info.set_long("my_name");
+
+    let args = vec![make_masked("-myname", 0)];
+    let result = FlagMatcher::on_match_one(&args, &POWERSHELL_STYLE, &info);
+    assert_eq!(
+        result,
+        Some(0),
+        "-myname (lowercase) should match via case-insensitive Pascal"
+    );
+}
+
+#[test]
+fn test_flag_naming_pascal_rejects_my_name_underscore() {
+    // Pascal style: `-my_name` (underscore) should NOT match
+    let mut info = PickerArgInfo::new();
+    info.set_long("my_name");
+
+    let args = vec![make_masked("-my_name", 0)];
+    let result = FlagMatcher::on_match_one(&args, &POWERSHELL_STYLE, &info);
+    assert_eq!(
+        result, None,
+        "-my_name should NOT match under Pascal-style naming"
     );
 }

@@ -14,6 +14,8 @@ pub use infos::*;
 
 pub mod parselib;
 
+pub mod value;
+
 pub mod prelude {
     pub use crate::IntoPicker;
 }
@@ -36,5 +38,6 @@ pub mod matcher_needed {
 #[cfg(feature = "mingling_support")]
 mod corebind;
 
+#[allow(unused_imports)]
 #[cfg(feature = "mingling_support")]
 pub use corebind::*;

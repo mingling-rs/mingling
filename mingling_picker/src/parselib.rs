@@ -1,6 +1,9 @@
 mod flag_matcher;
 pub use flag_matcher::*;
 
+mod arg_matcher;
+pub use arg_matcher::*;
+
 mod style;
 pub use style::*;
 

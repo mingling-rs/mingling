@@ -67,13 +67,13 @@ internal_repeat!(1..=32 => {
             // ArgInfos
             let arg_infos: [PickerArgInfo; $] = [
               (
-                  PickerArgInfo::from(self.flag_$),
+                  PickerArgInfo::from(self.arg_$),
               +)
             ];
 
             let mut bundle: [
                 (
-                    // Flag Attr
+                    // Arg Attr
                     PickerArgAttr,
 
                     // Tag Func
@@ -88,8 +88,8 @@ internal_repeat!(1..=32 => {
                 ; $] = [
                 (
                     (
-                        // Flag Attr
-                        T$::get_attr(self.flag_$),
+                        // Arg Attr
+                        T$::get_attr(self.arg_$),
 
                         // Tag Func
                         Box::new(|args, mask| {
@@ -143,7 +143,7 @@ internal_repeat!(1..=32 => {
             // Sort by Bundle Ord (descending)
             bundle.sort_by(|a, b| b.0.cmp(&a.0));
 
-            // Mask — size = number of args (not flags), so use args length
+            // Mask — size = number of args (not args), so use args length
             let mut mask: Vec<u8> = vec![0u8; self.args.len()];
 
             // Parsing
