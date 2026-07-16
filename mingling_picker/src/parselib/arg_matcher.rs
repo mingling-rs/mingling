@@ -27,25 +27,28 @@ use crate::{
 pub struct ArgMatcher;
 
 impl ArgMatcher {
-    /// Check whether `raw` matches `flag_str` (exact or eq-separated).
+    /// Check whether `raw` matches `flag_str`, optionally with an inline value
+    /// separated by the style's value separator (`=` for Unix, `:` for PowerShell).
     #[inline(always)]
-    fn matches(raw: &str, flag_str: &str, case_sensitive: bool) -> bool {
+    fn matches(raw: &str, flag_str: &str, case_sensitive: bool, sep: char) -> bool {
+        let eq_match =
+            |r: &str, f: &str| r.len() > f.len() && r.as_bytes().get(f.len()) == Some(&(sep as u8));
+
         if case_sensitive {
-            raw == flag_str
-                || raw.starts_with(flag_str) && raw.as_bytes().get(flag_str.len()) == Some(&b'=')
+            raw == flag_str || (raw.starts_with(flag_str) && eq_match(raw, flag_str))
         } else {
             raw.eq_ignore_ascii_case(flag_str)
                 || (raw.len() > flag_str.len()
                     && raw[..flag_str.len()].eq_ignore_ascii_case(flag_str)
-                    && raw.as_bytes()[flag_str.len()] == b'=')
+                    && raw.as_bytes()[flag_str.len()] == sep as u8)
         }
     }
 
-    /// Check whether the argument at the given position (in the masked slice)
-    /// contains its value inline (eq mode), so no extra slot is needed.
+    /// Check whether the argument contains its value inline via the style's
+    /// value separator (eq mode), so no extra mask slot is needed.
     #[inline(always)]
-    fn is_eq_mode(raw: &str, flag_str: &str) -> bool {
-        raw.len() > flag_str.len() && raw.as_bytes().get(flag_str.len()) == Some(&b'=')
+    fn is_inline_value(raw: &str, flag_str: &str, sep: char) -> bool {
+        raw.len() > flag_str.len() && raw.as_bytes().get(flag_str.len()) == Some(&(sep as u8))
     }
 }
 
@@ -61,6 +64,7 @@ impl Matcher for ArgMatcher {
 
         let possible_flags = build_possible_flags(style, arg_info);
         let end = seek_end_of_options(args, style);
+        let sep = style.value_separator;
 
         for arg in args {
             if end.is_some_and(|e| arg.raw_idx >= e) {
@@ -69,7 +73,7 @@ impl Matcher for ArgMatcher {
 
             let matched = possible_flags
                 .iter()
-                .any(|f| Self::matches(arg.raw, f, style.case_sensitive));
+                .any(|f| Self::matches(arg.raw, f, style.case_sensitive, sep));
             if matched {
                 return Some(arg.raw_idx);
             }
@@ -94,6 +98,7 @@ impl Matcher for ArgMatcher {
 
         let possible_flags = build_possible_flags(style, arg_info);
         let end = seek_end_of_options(args, style);
+        let sep = style.value_separator;
 
         let mut result = Vec::new();
         let mut i = 0;
@@ -104,17 +109,17 @@ impl Matcher for ArgMatcher {
 
             let matched = possible_flags
                 .iter()
-                .any(|f| Self::matches(args[i].raw, f, style.case_sensitive));
+                .any(|f| Self::matches(args[i].raw, f, style.case_sensitive, sep));
 
             if matched {
                 let flag_str = possible_flags
                     .iter()
-                    .find(|f| Self::matches(args[i].raw, f, style.case_sensitive))
+                    .find(|f| Self::matches(args[i].raw, f, style.case_sensitive, sep))
                     .expect("already matched");
 
                 result.push(args[i].raw_idx);
 
-                if !Self::is_eq_mode(args[i].raw, flag_str) {
+                if !Self::is_inline_value(args[i].raw, flag_str, sep) {
                     if i + 1 < args.len() {
                         result.push(args[i + 1].raw_idx);
                         i += 2;
