@@ -1,9 +1,15 @@
 use crate::parser::Pickable;
 
+/// Represents a boolean-like value with `Yes` and `No` variants.
+///
+/// `Yes` can be parsed from command-line arguments using positive keywords such as `"y"` or `"yes"`,
+/// and defaults to `No`.
 #[derive(Debug, Default)]
 #[repr(u8)]
 pub enum Yes {
+    /// The affirmative/positive variant.
     Yes,
+    /// The negative/default variant.
     #[default]
     No,
 }
@@ -57,10 +63,16 @@ impl Pickable for Yes {
     }
 }
 
+/// Represents a boolean-like value with `True` and `False` variants.
+///
+/// `True` can be parsed from command-line arguments using positive keywords such as `"t"` or `"true"`,
+/// and defaults to `False`.
 #[derive(Debug, Default)]
 #[repr(u8)]
 pub enum True {
+    /// The affirmative/positive variant.
     True,
+    /// The negative/default variant.
     #[default]
     False,
 }

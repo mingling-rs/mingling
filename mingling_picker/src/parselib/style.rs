@@ -109,25 +109,58 @@ impl<'a> From<&'a String> for FlagStr<'a> {
     }
 }
 
+/// Defines the naming convention for command-line option names.
+///
+/// Each variant represents a different case format that can be applied
+/// to option names (e.g., long option names) during parsing or generation.
+///
+/// # Examples
+///
+/// ```
+/// # use mingling_picker::IntoPicker;
+/// use mingling_picker::parselib::ParserStyleNamingCase;
+///
+/// let case = ParserStyleNamingCase::Kebab;
+/// assert_eq!(
+///     case.convert("brew_coffee".to_string()),
+///     "brew-coffee".to_string()
+/// );
+/// ```
 #[repr(u8)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum ParserStyleNamingCase {
-    /// snake_case format (e.g., `brew_coffee`)
+    /// snake_case format: words are separated by underscores, all lowercase.
+    ///
+    /// Example: `brew_coffee`
     #[default]
     Snake,
-    /// camelCase format (e.g., `brewCoffee`)
+    /// camelCase format: first word is lowercase, subsequent words are capitalized.
+    ///
+    /// Example: `brewCoffee`
     Camel,
-    /// PascalCase format (e.g., `BrewCoffee`)
+    /// PascalCase format: every word starts with an uppercase letter.
+    ///
+    /// Example: `BrewCoffee`
     Pascal,
-    /// kebab-case format (e.g., `brew-coffee`)
+    /// kebab-case format: words are separated by hyphens, all lowercase.
+    ///
+    /// Example: `brew-coffee`
     Kebab,
-    /// dot.case format (e.g., `brew.coffee`)
+    /// dot.case format: words are separated by dots, all lowercase.
+    ///
+    /// Example: `brew.coffee`
     Dot,
-    /// Title Case format (e.g., `Brew Coffee`)
+    /// Title Case format: words are separated by spaces, each word capitalized.
+    ///
+    /// Example: `Brew Coffee`
     Title,
-    /// lower case format (e.g., `brew coffee`)
+    /// lower case format: words are separated by spaces, all lowercase.
+    ///
+    /// Example: `brew coffee`
     Lower,
-    /// UPPER CASE format (e.g., `BREW COFFEE`)
+    /// UPPER CASE format: words are separated by spaces, all uppercase.
+    ///
+    /// Example: `BREW COFFEE`
     Upper,
 }
 

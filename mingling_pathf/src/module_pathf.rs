@@ -1,3 +1,9 @@
+//! A module for mapping Rust module paths to source files.
+//!
+//! This module provides functionality to analyze the module structure of a Rust crate
+//! and determine the effective module path for each source file, taking into account
+//! `pub use` re-exports that can cause modules to be hoisted to parent paths.
+
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use syn::{Item, UseTree};

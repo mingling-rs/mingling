@@ -3,6 +3,11 @@ use crate::{
     parselib::{MaskedArg, ParserStyle},
 };
 
+/// Builds a list of possible flag strings for the given argument info
+///
+/// This function generates formatted flag strings (e.g., `-h`, `--help`) from the short flag,
+/// long flag, and any aliases defined in the argument info. The long flag and alias names
+/// are converted according to the style's naming case convention before being formatted.
 #[inline(always)]
 pub fn build_possible_flags(style: &ParserStyle, arg_info: &PickerArgInfo) -> Vec<String> {
     let mut possible_flags = vec![];

@@ -722,6 +722,13 @@ impl_pick_with_route_next! { PickWithRoute9 PickWithRoute10 val_10 T1 val_1, T2 
 impl_pick_with_route_next! { PickWithRoute10 PickWithRoute11 val_11 T1 val_1, T2 val_2, T3 val_3, T4 val_4, T5 val_5, T6 val_6, T7 val_7, T8 val_8, T9 val_9, T10 val_10 }
 impl_pick_with_route_next! { PickWithRoute11 PickWithRoute12 val_12 T1 val_1, T2 val_2, T3 val_3, T4 val_4, T5 val_5, T6 val_6, T7 val_7, T8 val_8, T9 val_9, T10 val_10, T11 val_11 }
 
+/// Trait for types that can be used with `Pickable` to extract enum values from command-line arguments.
+///
+/// This trait combines `EnumTag` (for building an enum variant from a string name) and `Default`
+/// (for providing a fallback value when the flag is not present).
+///
+/// Types implementing this trait can be used with `Picker::pick`, `Picker::pick_or_route`, and
+/// the chaining `.pick()` methods to extract and parse enum values from command-line arguments.
 pub trait PickableEnum: EnumTag + Default {}
 
 impl<T> Pickable for T

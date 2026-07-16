@@ -1,3 +1,7 @@
+//! The `PackPattern` matches types defined by `pack!`, `pack_err!`, `pack_structural!`, and `pack_err_structural!` macros.
+//! It extracts the registered type name (e.g., `TypeName` from `pack!(TypeName = InnerType)`).
+//! This is used to track packed type definitions for code generation or analysis.
+
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};

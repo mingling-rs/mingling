@@ -1,3 +1,17 @@
+//! This module defines the core pattern analysis system used to parse and extract
+//! importable/referenceable items (like structs, enums, functions, etc.) from Rust source files.
+//!
+//! It provides a pluggable architecture via the `AnalyzePattern` trait, allowing different
+//! syntactic patterns to be registered and applied. Built-in patterns cover common structures
+//! such as basic structs, packs, groups, derives, chains, renderers, help, completion, and
+//! dispatch patterns (both standard and clap-based).
+//!
+//! The entry points are:
+//! - [`init()`] — creates a default `PatternAnalyzer` with all built-in patterns.
+//! - [`init_with_config()`] — creates a `PatternAnalyzer` with a given `PathfinderConfig`.
+//! - [`PatternAnalyzer::analyze_file()`] / [`PatternAnalyzer::analyze_file_items()`] — run
+//!   analysis on a single file.
+
 use std::collections::HashSet;
 use std::path::Path;
 

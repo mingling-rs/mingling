@@ -1,3 +1,9 @@
+//! Errors that can occur during the pathfinding process for Rust module resolution.
+//!
+//! This module defines all possible failure modes when traversing the module graph
+//! of a Rust project, including I/O failures, missing modules, invalid path
+//! attributes, missing entry points, and syntax parsing errors.
+
 use std::fmt;
 use std::path::PathBuf;
 

@@ -1,3 +1,8 @@
+//! The `GrouppedDerivePattern` matches structs, enums, and unions annotated with
+//! `#[derive(Groupped)]` or `#[derive(GrouppedSerialize)]` (or any combination
+//! with other derives). It also recurses into `mod` items to find nested types.
+//! This is used to track grouped items for code generation or analysis.
+
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};

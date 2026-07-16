@@ -1,3 +1,17 @@
+//! The `DispatcherClapPattern` matches structs annotated with `#[dispatcher_clap(...)]` and
+//! extracts key items for code generation or analysis:
+//! - The entry struct name (always)
+//! - The dispatcher command struct (`CMD*`, always)
+//! - The error type, if `error = ErrorType` is specified
+//! - The help internal struct, if `help = true` is specified
+//! - The `__internal_dispatcher_*` dispatch tree static, if `use_dispatch_tree` is enabled
+//!
+//! Supported forms:
+//! - `#[dispatcher_clap("greet", CMDGreet)] struct EntryGreet { ... }`
+//! - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet)] struct EntryGreet { ... }`
+//! - `#[dispatcher_clap("greet", CMDGreet, help = true)] struct EntryGreet { ... }`
+//! - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet, help = true)] struct EntryGreet { ... }`
+
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};

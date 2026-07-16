@@ -1,3 +1,6 @@
+#![allow(clippy::needless_doctest_main)]
+#![doc = include_str!("../README.md")]
+
 pub mod config;
 pub mod error;
 pub mod module_pathf;

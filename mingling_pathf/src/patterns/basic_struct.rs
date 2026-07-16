@@ -1,3 +1,7 @@
+//! The `BasicStructPattern` matches `struct` definitions in Rust source code.
+//! It identifies root-level structs and structs nested inside inline modules,
+//! returning their names and optional module path for analysis.
+
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};

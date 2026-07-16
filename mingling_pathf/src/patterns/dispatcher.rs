@@ -1,3 +1,16 @@
+//! The `DispatcherPattern` matches invocations of the `dispatcher!` macro and
+//! extracts the generated type names from its arguments. It supports:
+//! - `Entry*` — the entry type (always generated)
+//! - `CMD*` — the dispatcher struct (always generated)
+//! - `__internal_dispatcher_*` — the dispatch tree static (when `use_dispatch_tree` is `true`)
+//!
+//! Supported forms:
+//! - Explicit: `dispatcher!("greet", CMDGreet => EntryGreet)`
+//! - Implicit: `dispatcher!("greet")` — infers `CMDGreet` and `EntryGreet`
+//! - With braces: `dispatcher! { ... }`
+//!
+//! This pattern is used to track dispatcher types for code generation or analysis.
+
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};

@@ -1,3 +1,7 @@
+//! The `ChainPattern` matches functions annotated with `#[chain]` and
+//! extracts the generated internal struct name (e.g., `__internal_chain_<fn_name>`).
+//! This is used to track chained handler functions for code generation or analysis.
+
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};

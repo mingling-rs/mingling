@@ -22,15 +22,20 @@ mingling_picker = "0.3.0"
 Provides a clean chained-call API for declaring arguments to parse:
 
 ```rust
+use mingling_picker::prelude::*;
+
 let args: Vec<&str> = vec!["--name", "Bob", "--age", "24"];
-let result = args
-    .pick(&flag![name: String])
+
+let (name, age) = args
+    .pick(&arg![name: String])
     .or(|| "Alice".to_string())
-    .pick(&flag![age: i32])
+    .pick(&arg![age: i32])
     .or(|| 24)
     .post(|num| num.clamp(0, 120))
-    .parse();
-let (name, age): (String, i32) = a.unwrap();
+    .unwrap();
+
+assert_eq!(name, "Bob".to_string());
+assert_eq!(age, 24);
 ```
 
 ## Parsing Function Library
@@ -38,5 +43,5 @@ let (name, age): (String, i32) = a.unwrap();
 Provides a pure function library `parselib` for analyzing the structure of command-line arguments.
 
 ```rust
-use mingling::picker::parselib::*;
+use mingling_picker::parselib::*;
 ```

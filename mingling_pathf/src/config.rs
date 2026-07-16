@@ -1,3 +1,9 @@
+//! Configuration for the module pathfinder analysis.
+//!
+//! This module defines [`PathfinderConfig`], which controls behavior such as
+//! whether dispatch-tree related types (`__internal_dispatcher_*`) should be
+//! extracted.
+
 /// Configuration for the module pathfinder analysis.
 ///
 /// Controls behavior such as whether dispatch-tree related types

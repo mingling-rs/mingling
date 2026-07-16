@@ -25,3 +25,7 @@ pattern = "version = \"{VER}\""
 [[file]]
 file = "./mingling_picker/README.md"
 pattern = "mingling_picker = \"{VER}\""
+
+[[file]]
+file = "./mingling_picker_macros/README.md"
+pattern = "version = \"{VER}\""
