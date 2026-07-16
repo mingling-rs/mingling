@@ -1,5 +1,5 @@
-use mingling_picker::value::Flag;
-use mingling_picker::{IntoPicker, VecUntil, macros::arg};
+use mingling_picker::value::{Flag, VecUntil};
+use mingling_picker::{IntoPicker, macros::arg};
 
 #[test]
 fn test_vec_until_i16_named() {
