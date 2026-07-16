@@ -12,7 +12,18 @@ impl<'a> Pickable<'a> for String {
                 .map(|i| vec![i])
                 .unwrap_or_default()
         } else {
-            ArgMatcher::match_all(ctx.into())
+            // Check for flag-without-value before consuming ctx.
+            let args = ctx.args;
+            let positions = ArgMatcher::match_all(ctx.into());
+            if positions.len() == 1 {
+                let sep = ParserStyle::global_style().value_separator;
+                if let Some(raw) = args.get(positions[0])
+                    && !raw.contains(sep)
+                {
+                    return vec![];
+                }
+            }
+            positions
         }
     }
 
@@ -21,20 +32,13 @@ impl<'a> Pickable<'a> for String {
             0 => PickerArgResult::NotFound,
             1 => {
                 let s = raw_strs[0];
-                let style = ParserStyle::global_style();
-
                 // Inline value via style separator (e.g., --name=Alice, -Name:Alice).
-                if let Some(pos) = s.rfind(style.value_separator) {
+                let sep = ParserStyle::global_style().value_separator;
+                if let Some(pos) = s.rfind(sep) {
                     return PickerArgResult::Parsed(s[pos + 1..].to_string());
                 }
-
-                // If the single element looks like a named flag (starts with a prefix
-                // such as `--`, `-`, or `/`), it's a flag with no value → NotFound.
-                if s.starts_with(style.long_prefix) || s.starts_with(style.short_prefix) {
-                    return PickerArgResult::NotFound;
-                }
-
-                // Positional value.
+                // Positional value or single raw token — return as-is.
+                // (Named flags without a value are already filtered out by tag.)
                 PickerArgResult::Parsed(s.to_string())
             }
             _ => {
