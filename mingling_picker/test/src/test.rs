@@ -1,5 +1,7 @@
 mod arg_matcher_test;
 mod basic_test;
+mod multi_arg_test;
+mod multi_value_test;
 mod pos_matcher_test;
 mod priority_test;
 mod route_test;

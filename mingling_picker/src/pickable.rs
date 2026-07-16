@@ -3,6 +3,9 @@ use crate::{PickerArg, PickerArgAttr, PickerArgInfo, PickerArgResult, PickerArgs
 mod single_pickable;
 pub use single_pickable::*;
 
+mod multi_pickable;
+pub use multi_pickable::*;
+
 /// `Pickable` trait defines how to parse a type instance from command-line arguments.
 ///
 /// This trait is the core abstraction of the `Picker` argument parsing system, dividing the
