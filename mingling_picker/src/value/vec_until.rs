@@ -2,10 +2,10 @@ use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 
 use crate::{
+    BoundaryCheck, MultiPickableWithBoundary, Pickable, PickerArg, PickerArgAttr, PickerArgResult,
+    SinglePickable, TagPhaseContext,
     matcher_needed::Matcher,
     parselib::{MultiArgMatcher, ParserStyle},
-    BoundaryCheck, MultiPickableWithBoundary, Pickable, PickerArg, PickerArgAttr,
-    PickerArgResult, SinglePickable, TagPhaseContext,
 };
 
 /// A `Vec`-like container that stops collecting when [`BoundaryCheck`]
@@ -28,7 +28,10 @@ impl<T> VecUntil<T> {
 
 impl<T> From<Vec<T>> for VecUntil<T> {
     fn from(v: Vec<T>) -> Self {
-        VecUntil { inner: v, _marker: PhantomData }
+        VecUntil {
+            inner: v,
+            _marker: PhantomData,
+        }
     }
 }
 
@@ -51,9 +54,7 @@ impl<T> DerefMut for VecUntil<T> {
     }
 }
 
-// ============================================================
 // MultiPickableWithBoundary impl
-// ============================================================
 
 impl<T> MultiPickableWithBoundary for VecUntil<T>
 where
@@ -70,13 +71,14 @@ where
                 PickerArgResult::Unparsed => {}
             }
         }
-        PickerArgResult::Parsed(VecUntil { inner, _marker: PhantomData })
+        PickerArgResult::Parsed(VecUntil {
+            inner,
+            _marker: PhantomData,
+        })
     }
 }
 
-// ============================================================
 // Pickable impl
-// ============================================================
 
 impl<'a, T> Pickable<'a> for VecUntil<T>
 where
@@ -101,10 +103,10 @@ where
 
         let mut cut = start;
         for &idx in &positions[start..] {
-            if let Some(raw) = args.get(idx) {
-                if T::check_boundary(raw) {
-                    break;
-                }
+            if let Some(raw) = args.get(idx)
+                && T::check_boundary(raw)
+            {
+                break;
             }
             cut += 1;
         }
