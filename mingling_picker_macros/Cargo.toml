@@ -11,6 +11,9 @@ description = "Mingling's lightweight argument parser macros"
 [lib]
 proc-macro = true
 
+[features]
+mingling_support = []
+
 [dependencies]
 syn.workspace = true
 quote.workspace = true

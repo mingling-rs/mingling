@@ -17,3 +17,11 @@ pattern = "version = \"{VER}\""
 [[file]]
 file = "./docs/res/guide.txt"
 pattern = "mingling = \"{VER}\""
+
+[[file]]
+file = "./mingling_picker/README.md"
+pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./mingling_picker/README.md"
+pattern = "mingling_picker = \"{VER}\""

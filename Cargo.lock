@@ -343,12 +343,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5454cda0d57db59778608d7a47bff5b16c6705598265869fb052b657f66cf05e"
 
 [[package]]
+name = "just_fmt"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6170dccbc3ea15dfb7f2da964097f814aba1dd8f746d4ffc56f33245c38e6d96"
+
+[[package]]
 name = "just_template"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4fb99a3c1dee7299c57b26ef927f15535da0fbc93d6deb1d1114cae1337be4fb"
 dependencies = [
- "just_fmt",
+ "just_fmt 0.1.2",
  "just_template_macros",
 ]
 
@@ -407,7 +413,6 @@ dependencies = [
  "mingling_core",
  "mingling_macros",
  "mingling_picker",
- "mingling_picker_macros",
  "serde",
  "size",
  "tokio",
@@ -420,7 +425,7 @@ dependencies = [
  "chrono",
  "colored",
  "dirs",
- "just_fmt",
+ "just_fmt 0.1.2",
  "mingling",
  "serde",
  "serde_json",
@@ -432,7 +437,7 @@ name = "mingling_core"
 version = "0.3.0"
 dependencies = [
  "env_logger",
- "just_fmt",
+ "just_fmt 0.2.0",
  "just_template",
  "log",
  "mingling_pathf",
@@ -447,7 +452,7 @@ dependencies = [
 name = "mingling_macros"
 version = "0.3.0"
 dependencies = [
- "just_fmt",
+ "just_fmt 0.2.0",
  "proc-macro2",
  "quote",
  "syn",
@@ -457,7 +462,7 @@ dependencies = [
 name = "mingling_pathf"
 version = "0.3.0"
 dependencies = [
- "just_fmt",
+ "just_fmt 0.2.0",
  "proc-macro2",
  "syn",
 ]
@@ -466,7 +471,9 @@ dependencies = [
 name = "mingling_picker"
 version = "0.3.0"
 dependencies = [
+ "just_fmt 0.2.0",
  "mingling_core",
+ "mingling_picker_macros",
 ]
 
 [[package]]

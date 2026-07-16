@@ -84,3 +84,17 @@ pub struct PickerResult<Tuple> {
     pub remains_argument: Arguments,
 }
 ```
+ 
+---
+
+## 🕘 Progress
+
+- [x] In Progress
+  - [x] Added `Picker` struct and related call chain
+  - [x] Added `parselib` providing parsing logic
+  - [x] Added `Pickable` for extensibility
+  - [ ] Comprehensive testing!
+  - [ ] Improve documentation
+  - [ ] Add examples
+  - [ ] Update README
+- [ ] Complete
