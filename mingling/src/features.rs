@@ -53,6 +53,17 @@ pub const MINGLING_COMP: bool = false;
 #[cfg(feature = "comp")]
 #[allow(unused)]
 pub const MINGLING_COMP: bool = true;
+/// Whether the `core` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "core"))]
+#[allow(unused)]
+pub const MINGLING_CORE: bool = false;
+
+/// Whether the `core` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "core")]
+#[allow(unused)]
+pub const MINGLING_CORE: bool = true;
 /// Whether the `debug` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "debug"))]
@@ -108,6 +119,17 @@ pub const MINGLING_JSON_SERDE_FMT: bool = false;
 #[cfg(feature = "json_serde_fmt")]
 #[allow(unused)]
 pub const MINGLING_JSON_SERDE_FMT: bool = true;
+/// Whether the `macros` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "macros"))]
+#[allow(unused)]
+pub const MINGLING_MACROS: bool = false;
+
+/// Whether the `macros` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "macros")]
+#[allow(unused)]
+pub const MINGLING_MACROS: bool = true;
 /// Whether the `nightly` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "nightly"))]

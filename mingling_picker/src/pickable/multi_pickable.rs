@@ -1,8 +1,7 @@
 use crate::{
+    Pickable, PickerArg, PickerArgAttr, PickerArgResult, SinglePickable, TagPhaseContext,
     matcher_needed::Matcher,
     parselib::{MultiArgMatcher, ParserStyle},
-    Pickable, PickerArg, PickerArgAttr, PickerArgResult,
-    SinglePickable, TagPhaseContext,
 };
 
 /// Boundary check for multi-value positional parameters.

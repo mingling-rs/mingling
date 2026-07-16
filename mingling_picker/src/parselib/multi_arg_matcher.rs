@@ -65,9 +65,8 @@ impl Matcher for MultiArgMatcher {
         let possible_flags = build_possible_flags(style, arg_info);
         let end = seek_end_of_options(args, style);
         let sep = style.value_separator;
-        let is_flag = |raw: &str| {
-            raw.starts_with(style.long_prefix) || raw.starts_with(style.short_prefix)
-        };
+        let is_flag =
+            |raw: &str| raw.starts_with(style.long_prefix) || raw.starts_with(style.short_prefix);
         let is_our_flag = |raw: &str| {
             possible_flags
                 .iter()
@@ -118,7 +117,8 @@ impl Matcher for MultiArgMatcher {
 impl MultiArgMatcher {
     #[inline(always)]
     fn flag_match(raw: &str, flag_str: &str, case_sensitive: bool, sep: char) -> bool {
-        let eq = |r: &str, f: &str| r.len() > f.len() && r.as_bytes().get(f.len()) == Some(&(sep as u8));
+        let eq =
+            |r: &str, f: &str| r.len() > f.len() && r.as_bytes().get(f.len()) == Some(&(sep as u8));
 
         if case_sensitive {
             raw == flag_str || (raw.starts_with(flag_str) && eq(raw, flag_str))
