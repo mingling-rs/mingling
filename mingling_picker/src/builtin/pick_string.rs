@@ -1,4 +1,4 @@
-use crate::parselib::{ArgMatcher, Matcher, ParserStyle};
+use crate::parselib::{ArgMatcher, Matcher, ParserStyle, PositionalMatcher};
 use crate::pickable_needed::*;
 
 impl<'a> Pickable<'a> for String {
@@ -8,7 +8,7 @@ impl<'a> Pickable<'a> for String {
 
     fn tag(ctx: TagPhaseContext) -> Vec<usize> {
         if ctx.arg_info.positional {
-            ArgMatcher::match_one(ctx.into())
+            PositionalMatcher::match_one(ctx.into())
                 .map(|i| vec![i])
                 .unwrap_or_default()
         } else {
