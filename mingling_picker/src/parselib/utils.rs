@@ -26,6 +26,31 @@ pub fn build_possible_flags(style: &ParserStyle, arg_info: &PickerArgInfo) -> Ve
     possible_flags
 }
 
+/// Extract a single value from the raw strings tagged by [`SingleMatcher`].
+///
+/// Returns `None` if no value is available (empty slice),
+/// the inline value after the style separator if present (eq mode),
+/// or the value directly (positional or flag-following).
+///
+/// This is the standard `pick` helper for all `Single`-type
+/// [`Pickable`](crate::Pickable) implementations.
+#[must_use]
+pub fn seek_single<'a>(raw_strs: &'a [&'a str]) -> Option<&'a str> {
+    match raw_strs.len() {
+        0 => None,
+        1 => {
+            let s = raw_strs[0];
+            let sep = ParserStyle::global_style().value_separator;
+            if let Some(pos) = s.rfind(sep) {
+                Some(&s[pos + 1..])
+            } else {
+                Some(s)
+            }
+        }
+        _ => Some(raw_strs[1]),
+    }
+}
+
 /// Seeks the index of the end-of-options marker (`--`) in the argument list.
 ///
 /// This function searches for the standard end-of-options separator (`--`)
