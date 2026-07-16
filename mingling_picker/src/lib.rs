@@ -6,8 +6,8 @@ pub use picker::*;
 mod pickable;
 pub use pickable::*;
 
-mod flag;
-pub use flag::*;
+mod arg;
+pub use arg::*;
 
 mod infos;
 pub use infos::*;
