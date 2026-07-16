@@ -77,7 +77,7 @@ pub struct TagPhaseContext<'a> {
     /// to be parsed.
     pub arg_info: &'a PickerArgInfo<'a>,
 
-    /// A read-only list of all arguments in the current [`Picker`].
+    /// A read-only list of all arguments in the current [`Picker`](crate::Picker).
     pub args: &'a PickerArgs<'a>,
 
     /// Mask indicating which argument positions have already been claimed.

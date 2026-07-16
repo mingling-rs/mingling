@@ -9,7 +9,7 @@ use crate::{matcher_needed::*, parselib::seek_end_of_options};
 ///   prefix (those belong to named matchers).
 /// * After `--`: takes **everything** — the `--` marker signals that all
 ///   remaining values are positional, even if they look like flags.
-/// * Runs at the lowest priority (see [`PickerArgAttr::Positional`]).
+/// * Runs at the lowest priority (see [`PickerArgAttr::Positional`](crate::PickerArgAttr::Positional)).
 pub struct PositionalMatcher;
 
 impl PositionalMatcher {

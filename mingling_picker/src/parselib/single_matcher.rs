@@ -6,7 +6,7 @@ use crate::parselib::{ArgMatcher, Matcher, ParserStyle, PositionalMatcher};
 /// It delegates to [`PositionalMatcher`] for positional args and
 /// [`ArgMatcher`] for named args, adding a guard: if a named flag
 /// captures only itself with no inline value (eq mode), the result
-/// is cleared so that [`Pickable::pick`] receives `[]` → `NotFound`.
+/// is cleared so that [`Pickable::pick`](crate::Pickable::pick) receives `[]` → `NotFound`.
 ///
 /// This is the standard tag implementation for all `Single`-type
 /// `Pickable` implementations (e.g., `String`, `i32`, `u64`).

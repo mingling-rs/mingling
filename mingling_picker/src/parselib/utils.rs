@@ -26,7 +26,7 @@ pub fn build_possible_flags(style: &ParserStyle, arg_info: &PickerArgInfo) -> Ve
     possible_flags
 }
 
-/// Extract a single value from the raw strings tagged by [`SingleMatcher`].
+/// Extract a single value from the raw strings tagged by [`SingleMatcher`](crate::parselib::SingleMatcher).
 ///
 /// Returns `None` if no value is available (empty slice),
 /// the inline value after the style separator if present (eq mode),
