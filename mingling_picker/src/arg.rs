@@ -138,15 +138,15 @@ where
 /// Describes the attribute (behavior) of a command-line parameter.
 ///
 /// The ordering reflects parse priority (higher = parsed first):
-/// `Positional < PositionalMulti < Flag < Single < Multi`
+/// `PositionalMulti < Positional < Flag < Single < Multi`
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PickerArgAttr {
+    /// Positional argument that accepts multiple values (e.g., multiple input files).
+    PositionalMulti,
+
     /// Positional argument matched by its position (e.g., an input file).
     #[default]
     Positional,
-
-    /// Positional argument that accepts multiple values (e.g., multiple input files).
-    PositionalMulti,
 
     /// Boolean flag with no associated value (e.g., `--verbose`).
     Flag,
@@ -247,29 +247,29 @@ mod tests {
 
     #[test]
     fn test_picker_flag_attr_ordering() {
-        // Multi > Single > Flag > PositionalMulti > Positional
+        // Multi > Single > Flag > Positional > PositionalMulti
         assert!(PickerArgAttr::Multi > PickerArgAttr::Single);
         assert!(PickerArgAttr::Multi > PickerArgAttr::Flag);
-        assert!(PickerArgAttr::Multi > PickerArgAttr::PositionalMulti);
         assert!(PickerArgAttr::Multi > PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Multi > PickerArgAttr::PositionalMulti);
 
         assert!(PickerArgAttr::Single > PickerArgAttr::Flag);
-        assert!(PickerArgAttr::Single > PickerArgAttr::PositionalMulti);
         assert!(PickerArgAttr::Single > PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Single > PickerArgAttr::PositionalMulti);
 
-        assert!(PickerArgAttr::Flag > PickerArgAttr::PositionalMulti);
         assert!(PickerArgAttr::Flag > PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Flag > PickerArgAttr::PositionalMulti);
 
-        assert!(PickerArgAttr::PositionalMulti > PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Positional > PickerArgAttr::PositionalMulti);
 
         // PartialOrd
         assert!(PickerArgAttr::Multi >= PickerArgAttr::Single);
         assert!(PickerArgAttr::Single >= PickerArgAttr::Flag);
-        assert!(PickerArgAttr::Flag >= PickerArgAttr::PositionalMulti);
-        assert!(PickerArgAttr::PositionalMulti >= PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Flag >= PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Positional >= PickerArgAttr::PositionalMulti);
 
-        assert!(PickerArgAttr::Positional < PickerArgAttr::PositionalMulti);
-        assert!(PickerArgAttr::PositionalMulti < PickerArgAttr::Flag);
+        assert!(PickerArgAttr::PositionalMulti < PickerArgAttr::Positional);
+        assert!(PickerArgAttr::Positional < PickerArgAttr::Flag);
         assert!(PickerArgAttr::Flag < PickerArgAttr::Single);
         assert!(PickerArgAttr::Single < PickerArgAttr::Multi);
     }
@@ -288,8 +288,8 @@ mod tests {
         assert_eq!(
             values,
             vec![
-                PickerArgAttr::Positional,
                 PickerArgAttr::PositionalMulti,
+                PickerArgAttr::Positional,
                 PickerArgAttr::Flag,
                 PickerArgAttr::Single,
                 PickerArgAttr::Multi,
