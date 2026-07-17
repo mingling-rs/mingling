@@ -25,7 +25,7 @@ pub mod value;
 ///
 /// This module is intended to be imported with a wildcard import:
 ///
-/// ```ignore
+/// ```
 /// use mingling_picker::prelude::*;
 /// ```
 pub mod prelude {

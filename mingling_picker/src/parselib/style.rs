@@ -39,8 +39,8 @@ impl<'a> ParserStyle<'a> {
     ///
     /// # Examples
     ///
-    /// ```ignore
-    /// use mingling_picker::parselib::{ParserStyle, FlagStr, UNIX_STYLE};
+    /// ```
+    /// # use mingling_picker::parselib::{ParserStyle, FlagStr, UNIX_STYLE};
     /// let style = &UNIX_STYLE;
     ///
     /// assert_eq!(style.flag_string('v'), "-v");

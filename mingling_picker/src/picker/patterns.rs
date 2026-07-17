@@ -30,11 +30,6 @@ internal_repeat!(1..=32 => {
         ///
         /// # Example
         ///
-        /// ```ignore
-        /// let pattern = picker
-        ///     .pick(&my_arg)
-        ///     .or(|| 42);
-        /// ```
         #[allow(clippy::type_complexity)]
         pub fn or<F>(mut self, func: F) -> Self
         where
@@ -52,11 +47,6 @@ internal_repeat!(1..=32 => {
         ///
         /// # Example
         ///
-        /// ```ignore
-        /// let pattern = picker
-        ///     .pick(&my_arg)
-        ///     .or_default();
-        /// ```
         #[allow(clippy::type_complexity)]
         pub fn or_default(mut self) -> Self
         where
@@ -73,11 +63,6 @@ internal_repeat!(1..=32 => {
         ///
         /// # Example
         ///
-        /// ```ignore
-        /// let pattern = picker
-        ///     .pick(&my_arg)
-        ///     .or_route(|| Redirect::home());
-        /// ```
         pub fn or_route<F>(mut self, func: F) -> Self
         where
             F: FnMut() -> Route,
@@ -122,11 +107,6 @@ internal_repeat!(1..=32 => {
         ///
         /// # Example
         ///
-        /// ```ignore
-        /// let pattern = picker
-        ///     .pick(&my_arg)
-        ///     .post(|val| val * 2);
-        /// ```
         #[allow(clippy::type_complexity)]
         pub fn post<F>(mut self, func: F) -> Self
         where
@@ -182,10 +162,6 @@ internal_repeat!(1..32 => {
        ///
        /// # Example
        ///
-       /// ```ignore
-       /// let pattern = picker
-       ///     .pick_or(&my_arg, || 42);
-       /// ```
        #[allow(clippy::type_complexity)]
        pub fn pick_or<N, F>(self, arg: impl Into<&'a PickerArg<'a, N>>, func: F) -> PickerPattern$+<'a, (T$,+), N, Route>
        where
@@ -202,10 +178,6 @@ internal_repeat!(1..32 => {
        ///
        /// # Example
        ///
-       /// ```ignore
-       /// let pattern = picker
-       ///     .pick_or_default(&my_arg);
-       /// ```
        #[allow(clippy::type_complexity)]
        pub fn pick_or_default<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern$+<'a, (T$,+), N, Route>
        where
@@ -220,10 +192,6 @@ internal_repeat!(1..32 => {
        ///
        /// # Example
        ///
-       /// ```ignore
-       /// let pattern = picker
-       ///     .pick_or_route(&my_arg, || Redirect::home());
-       /// ```
        #[allow(clippy::type_complexity)]
        pub fn pick_or_route<N, F>(self, arg: impl Into<&'a PickerArg<'a, N>>, func: F) -> PickerPattern$+<'a, (T$,+), N, Route>
        where
