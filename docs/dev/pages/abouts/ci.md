@@ -37,11 +37,11 @@ cargo ci
 - **Test all examples**: Runs the `test-examples` tool.
 - **Verify Markdown code blocks compile**: Runs the `test-all-markdown-code` tool to check code blocks in all `*.md` files. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md) for details.
 - **Check if documentation is up to date**: Runs the following documentation refresh tools in sequence:
-  - `docs-code-box-fix`
-  - `docsify-sidebar-gen`
-  - `refresh-docs`
-  - `refresh-feature-mod`
-  - `sync-examples`
+    - `docs-code-box-fix`
+    - `docsify-sidebar-gen`
+    - `refresh-docs`
+    - `refresh-feature-mod`
+    - `sync-examples`
 - Finally, runs `cargo fmt` to unify code formatting.
 
 ### 3. File Normalization
@@ -53,11 +53,11 @@ Runs `git add --renormalize .` to ensure file attributes such as line endings co
 To ensure reproducible CI results, `ci.rs` imposes strict requirements on the workspace state:
 
 - If the current workspace is not clean and `--dirty` has not been specified, the script will prompt whether to create a temporary commit:
-  - The commit message is `[DO NOT PUSH] CI TEMP [DO NOT PUSH]`.
-  - Use `-y` to auto-confirm without interaction.
+    - The commit message is `[DO NOT PUSH] CI TEMP [DO NOT PUSH]`.
+    - Use `-y` to auto-confirm without interaction.
 - After CI finishes, the script automatically restores the workspace:
-  - First, `git reset --hard` discards all changes.
-  - If a temporary commit was created, it then runs `git reset --soft HEAD~1` and unstages everything, restoring the state to before CI started.
+    - First, `git reset --hard` discards all changes.
+    - If a temporary commit was created, it then runs `git reset --soft HEAD~1` and unstages everything, restoring the state to before CI started.
 - If `--dirty` is specified, the temporary commit and the final cleanliness check are skipped.
 
 > **Warning**: `git reset --hard` is executed at the end of CI. If you use `--dirty`, ensure you have no unsaved important changes.
@@ -69,3 +69,20 @@ To ensure reproducible CI results, `ci.rs` imposes strict requirements on the wo
 - Triggered on `push` to the `main` branch.
 - Runs `cargo ci` in parallel on `ubuntu-latest` and `windows-latest`.
 - After CI passes, the `unreleased` tag is automatically moved to the latest commit on `main`.
+
+### 4. API Documentation Deployment
+
+After all checks pass, the `Deploy-Github-Pages` job:
+
+- **Runs `deploy-api-docs`**: Executes `cargo run --manifest-path .run/Cargo.toml --bin deploy-api-docs`, which reads the `[package.metadata.docs.rs]` features from `mingling/Cargo.toml` and builds the crate's documentation via `cargo doc --no-deps`. The output is placed at `docs/api-docs/`.
+- **Deploys to GitHub Pages**: The entire repository (including the generated `docs/api-docs/`) is uploaded and published to GitHub Pages.
+
+You can view the published API documentation at:
+
+> [https://mingling-rs.github.io/mingling/docs/api-docs/mingling/](https://mingling-rs.github.io/mingling/docs/api-docs/mingling/)
+
+To generate API docs locally:
+
+```bash
+cargo run --manifest-path .run/Cargo.toml --bin deploy-api-docs
+```
