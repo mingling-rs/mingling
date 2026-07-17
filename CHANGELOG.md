@@ -161,6 +161,29 @@ None
     }
     ```
 
+7. **[`setups`]** Refactored `BasicProgramSetup`, `HelpFlagSetup`, `QuietFlagSetup`, `ConfirmFlagSetup`, `StructuralRendererSetup`, and `StructuralRendererSimpleSetup` into the `picker` subsystem under `mingling::setups::picker`. These setups now use the `arg_picker` (`picker`) chained argument parsing API internally instead of directly manipulating global arguments.
+
+    - The `BasicProgramSetup`, `HelpFlagSetup`, `QuietFlagSetup`, and `ConfirmFlagSetup` structs now use `PickerArg<Flag>` and chained `.pick()` calls to detect flags from the argument list, replacing the previous `global_argument`-based approach.
+    - The `StructuralRendererSetup` struct now uses `PickerArg<Flag>` constants (e.g., `JSON_FLAG`, `YAML_FLAG`) and chained `.pick()` calls to detect format-specifying flags, replacing the previous `global_argument` approach.
+    - The `StructuralRendererSimpleSetup` struct still uses the legacy `global_argument("--renderer", ...)` approach, preserving backward compatibility with the `--renderer <FORMAT>` syntax.
+    - New `PickerArg<Flag>` constants have been added in `mingling::setups::picker::consts`: `HELP_FLAG`, `QUIET_FLAG`, `CONFIRM_FLAG`, `JSON_FLAG`, `JSON_PRETTY_FLAG`, `YAML_FLAG`, `TOML_FLAG`, `RON_FLAG`, and `RON_PRETTY_FLAG`. The format-specific flags are feature-gated behind their respective `json_serde_fmt`, `yaml_serde_fmt`, `toml_serde_fmt`, and `ron_serde_fmt` features.
+    - The module structure is:
+        - `mingling::setups::picker` — re-exports all picker-based setup types
+        - `mingling::setups::picker::basic` — `BasicProgramSetup`, `HelpFlagSetup`, `QuietFlagSetup`, `ConfirmFlagSetup`
+        - `mingling::setups::picker::consts` — reusable `PickerArg<Flag>` constants
+        - `mingling::setups::picker::structural_renderer` — `StructuralRendererSetup`, `StructuralRendererSimpleSetup`
+    - All setup types remain available from `mingling::setups::*` as before — this is purely an internal refactoring; no public API surface changes.
+
+    The `picker` feature must be enabled for these refactored setups to be available. When the feature is disabled, the original implementations (using `global_argument`) remain in effect.
+
+8. **[`core`]** Added `get_args_mut()`, `take_args()`, and `replace_args()` methods to `Program` for more flexible argument manipulation:
+
+    - **`get_args_mut(&mut self) -> &mut [String]`** — Returns a mutable reference to the program's command-line arguments, allowing in-place modification of individual arguments.
+    - **`take_args(&mut self) -> Vec<String>`** — Takes ownership of the program's command-line arguments, replacing them with an empty `Vec`. Useful for transferring arguments to another context or processing them with ownership.
+    - **`replace_args(&mut self, args: Vec<String>) -> Vec<String>`** — Replaces the program's command-line arguments with a new set and returns the old ones. Enables swapping argument sets during program execution.
+
+    These methods complement the existing read-only `get_args(&self)` method, providing full control over argument mutation and ownership.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.
