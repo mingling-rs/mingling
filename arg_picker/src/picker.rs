@@ -73,6 +73,26 @@ pub enum PickerArgs<'a> {
     Owned(Vec<String>),
 }
 
+impl<'a> From<PickerArgs<'a>> for Vec<String> {
+    fn from(value: PickerArgs<'a>) -> Self {
+        match value {
+            PickerArgs::Slice(items) => items.iter().map(|s| s.to_string()).collect(),
+            PickerArgs::Vec(items) => items.into_iter().map(|s| s.to_string()).collect(),
+            PickerArgs::Owned(items) => items,
+        }
+    }
+}
+
+impl<'a> From<&'a PickerArgs<'a>> for Vec<&'a str> {
+    fn from(value: &'a PickerArgs<'a>) -> Self {
+        match value {
+            PickerArgs::Slice(items) => items.to_vec(),
+            PickerArgs::Vec(items) => items.clone(),
+            PickerArgs::Owned(items) => items.iter().map(|s| s.as_str()).collect(),
+        }
+    }
+}
+
 impl<'a> Default for PickerArgs<'a> {
     fn default() -> Self {
         Self::Vec(vec![])
