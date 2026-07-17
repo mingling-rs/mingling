@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use mingling_core::{ChainProcess, Groupped, ProgramCollect};
 
-use crate::{Pickable, Picker, PickerArg, PickerArgResult, PickerArgs, PickerPattern1};
+use crate::{Pickable, Picker, PickerArg, PickerArgs, PickerPattern1};
 
 /// Trait for converting Mingling entry types (types that implement `Groupped<R>` and `Into<Vec<String>>`)
 /// into [`Picker`] instances for a given route type `R`.
@@ -40,15 +40,79 @@ pub trait EntryPicker<'a, This> {
         Next: Pickable<'a> + Default + Sized,
     {
         let picker = Self::to_picker(self);
-        PickerPattern1 {
-            args: picker.args,
-            arg_1: arg.into(),
-            result_1: PickerArgResult::Unparsed,
-            default_1: None,
-            route_1: None,
-            post_1: None,
-            error_route: None,
-        }
+        Picker::build_pattern1(picker.args, arg.into(), None)
+    }
+
+    /// Starts building a picker pattern with the first argument, using a default value provider.
+    ///
+    /// This is a shorthand for calling `.pick(arg).or(func)`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Next` — The nominal type of the first argument; must implement [`Pickable`].
+    ///
+    /// # Parameters
+    ///
+    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    /// * `func` — A closure that provides a default value if the arg is not provided by the user.
+    fn pick_or<Next, F>(
+        self,
+        arg: impl Into<&'a PickerArg<'a, Next>>,
+        func: F,
+    ) -> PickerPattern1<'a, Next, ChainProcess<This>>
+    where
+        Self: Sized,
+        Next: Pickable<'a> + Default + Sized,
+        F: FnMut() -> Next + 'static,
+    {
+        self.pick(arg).or(func)
+    }
+
+    /// Starts building a picker pattern with the first argument, using a default value.
+    ///
+    /// This is a shorthand for calling `.pick(arg).or_default()`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Next` — The nominal type of the first argument; must implement [`Pickable`] and [`Default`].
+    ///
+    /// # Parameters
+    ///
+    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    fn pick_or_default<Next>(
+        self,
+        arg: impl Into<&'a PickerArg<'a, Next>>,
+    ) -> PickerPattern1<'a, Next, ChainProcess<This>>
+    where
+        Self: Sized,
+        Next: Pickable<'a> + Default + Sized,
+    {
+        self.pick(arg).or_default()
+    }
+
+    /// Starts building a picker pattern with the first argument, using a route if the arg is not provided.
+    ///
+    /// This is a shorthand for calling `.pick(arg).or_route(func)`.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `Next` — The nominal type of the first argument; must implement [`Pickable`].
+    ///
+    /// # Parameters
+    ///
+    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    /// * `func` — A closure that produces a route value if the arg is not provided by the user.
+    fn pick_or_route<Next, F>(
+        self,
+        arg: impl Into<&'a PickerArg<'a, Next>>,
+        func: F,
+    ) -> PickerPattern1<'a, Next, ChainProcess<This>>
+    where
+        Self: Sized,
+        Next: Pickable<'a> + Default + Sized,
+        F: FnMut() -> ChainProcess<This> + 'static,
+    {
+        self.pick(arg).or_route(func)
     }
 }
 

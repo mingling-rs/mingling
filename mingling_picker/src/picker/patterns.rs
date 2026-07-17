@@ -1,6 +1,6 @@
 use mingling_picker_macros::internal_repeat;
 
-use crate::{Pickable, Picker, PickerArg, PickerArgResult, PickerArgs};
+use crate::{Pickable, PickerArg, PickerArgResult, PickerArgs};
 
 internal_repeat!(1..=32 => {
     #[doc(hidden)]
@@ -175,26 +175,63 @@ internal_repeat!(1..32 => {
                 +)
            }
        }
+
+       /// Picks a new arg with a default value provider in a single call.
+       ///
+       /// This is a shorthand for calling `.pick(arg).or(func)`.
+       ///
+       /// # Example
+       ///
+       /// ```ignore
+       /// let pattern = picker
+       ///     .pick_or(&my_arg, || 42);
+       /// ```
+       #[allow(clippy::type_complexity)]
+       pub fn pick_or<N, F>(self, arg: impl Into<&'a PickerArg<'a, N>>, func: F) -> PickerPattern$+<'a, (T$,+), N, Route>
+       where
+           N: Pickable<'a>,
+           F: FnMut() -> N + 'static,
+           F: 'static,
+       {
+           self.pick(arg).or(func)
+       }
+
+       /// Picks a new arg with a default value in a single call.
+       ///
+       /// This is a shorthand for calling `.pick(arg).or_default()`.
+       ///
+       /// # Example
+       ///
+       /// ```ignore
+       /// let pattern = picker
+       ///     .pick_or_default(&my_arg);
+       /// ```
+       #[allow(clippy::type_complexity)]
+       pub fn pick_or_default<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern$+<'a, (T$,+), N, Route>
+       where
+           N: Pickable<'a> + Default,
+       {
+           self.pick(arg).or_default()
+       }
+
+       /// Picks a new arg with a route in a single call.
+       ///
+       /// This is a shorthand for calling `.pick(arg).or_route(func)`.
+       ///
+       /// # Example
+       ///
+       /// ```ignore
+       /// let pattern = picker
+       ///     .pick_or_route(&my_arg, || Redirect::home());
+       /// ```
+       #[allow(clippy::type_complexity)]
+       pub fn pick_or_route<N, F>(self, arg: impl Into<&'a PickerArg<'a, N>>, func: F) -> PickerPattern$+<'a, (T$,+), N, Route>
+       where
+           N: Pickable<'a>,
+           F: FnMut() -> Route + 'static,
+           F: 'static,
+       {
+           self.pick(arg).or_route(func)
+       }
    }
 });
-
-impl<'a, Route> Picker<'a, Route> {
-    /// Creates a `PickerPattern1` from the given arg to start a picking chain.
-    ///
-    /// This method initiates a parameter picking chain with one arg.
-    /// The result is initially `Unparsed`.
-    pub fn pick<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern1<'a, N, Route>
-    where
-        N: Pickable<'a>,
-    {
-        PickerPattern1 {
-            args: self.args,
-            error_route: None::<Route>,
-            arg_1: arg.into(),
-            result_1: PickerArgResult::Unparsed,
-            route_1: None,
-            default_1: None,
-            post_1: None,
-        }
-    }
-}

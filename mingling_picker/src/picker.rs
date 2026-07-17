@@ -254,6 +254,59 @@ impl<'a> Iterator for PickerIter<'a> {
 
 impl<'a> ExactSizeIterator for PickerIter<'a> {}
 
+impl<'a, Route> Picker<'a, Route> {
+    /// Creates a `PickerPattern1` from the given arg to start a picking chain.
+    ///
+    /// This method initiates a parameter picking chain with one arg.
+    /// The result is initially `Unparsed`.
+    pub fn pick<N>(self, arg: impl Into<&'a PickerArg<'a, N>>) -> PickerPattern1<'a, N, Route>
+    where
+        N: Pickable<'a>,
+    {
+        Self::build_pattern1(self.args, arg.into(), None::<Route>)
+    }
+
+    /// Creates a `PickerPattern1` from the given arg.
+    /// If parsing fails, attempts the fallback arg.
+    pub fn pick_or<N, F>(
+        self,
+        arg: impl Into<&'a PickerArg<'a, N>>,
+        or_arg: F,
+    ) -> PickerPattern1<'a, N, Route>
+    where
+        N: Pickable<'a>,
+        F: FnMut() -> N + 'static,
+    {
+        self.pick(arg).or(or_arg)
+    }
+
+    /// Creates a `PickerPattern1` from the given arg.
+    /// If parsing fails, uses the provided default value.
+    pub fn pick_or_default<N>(
+        self,
+        arg: impl Into<&'a PickerArg<'a, N>>,
+    ) -> PickerPattern1<'a, N, Route>
+    where
+        N: Pickable<'a> + Default,
+    {
+        self.pick(arg).or_default()
+    }
+
+    /// Creates a `PickerPattern1` from the given arg.
+    /// If parsing fails, switches to the given error route.
+    pub fn pick_or_route<N, F>(
+        self,
+        arg: impl Into<&'a PickerArg<'a, N>>,
+        error_route: F,
+    ) -> PickerPattern1<'a, N, Route>
+    where
+        N: Pickable<'a>,
+        F: FnMut() -> Route + 'static,
+    {
+        self.pick(arg).or_route(error_route)
+    }
+}
+
 /// Trait for converting types into a `Picker`
 ///
 /// Implemented for:
@@ -289,15 +342,7 @@ pub trait IntoPicker<'a> {
         Self: Sized,
         N: Pickable<'a> + Default + Sized,
     {
-        PickerPattern1 {
-            args: self.to_picker().args,
-            arg_1: arg.into(),
-            result_1: PickerArgResult::Unparsed,
-            default_1: None,
-            route_1: None,
-            post_1: None,
-            error_route: None,
-        }
+        Picker::build_pattern1(self.to_picker().args, arg.into(), None::<()>)
     }
 
     /// Converts the value into a `Picker` with a specified route type.
@@ -359,6 +404,29 @@ impl<'a> IntoPicker<'a> for Vec<String> {
         Picker {
             route_phantom: PhantomData,
             args: PickerArgs::Owned(self),
+        }
+    }
+}
+
+// Private helper: shared construction logic for `PickerPattern1`.
+// Both `Picker::pick` and `IntoPicker::pick` delegate to this.
+impl<'a, Route> Picker<'a, Route> {
+    pub(crate) fn build_pattern1<N>(
+        args: PickerArgs<'a>,
+        arg: &'a PickerArg<'a, N>,
+        error_route: Option<Route>,
+    ) -> PickerPattern1<'a, N, Route>
+    where
+        N: Pickable<'a>,
+    {
+        PickerPattern1 {
+            args,
+            error_route,
+            arg_1: arg,
+            result_1: PickerArgResult::Unparsed,
+            route_1: None,
+            default_1: None,
+            post_1: None,
         }
     }
 }
