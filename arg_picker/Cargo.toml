@@ -1,0 +1,17 @@
+[package]
+name = "arg-picker"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mingling-rs/mingling/tree/main/arg-picker"
+authors = ["Weicao-CatilGrass"]
+readme = "README.md"
+description = "A lightweight, type-safe CLI argument parser"
+
+[features]
+mingling_support = ["dep:mingling_core", "arg-picker-macros/mingling_support"]
+
+[dependencies]
+mingling_core = { workspace = true, optional = true }
+arg-picker-macros.workspace = true
+just_fmt.workspace = true

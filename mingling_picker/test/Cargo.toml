@@ -1,9 +1,0 @@
-[package]
-name = "test-mingling-picker"
-version = "0.1.0"
-edition = "2024"
-
-[workspace]
-
-[dependencies]
-mingling_picker = { path = "../" }

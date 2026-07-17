@@ -10,8 +10,8 @@ members = [
     "mingling_pathf",
 
     # Picker2
-    "mingling_picker",
-    "mingling_picker_macros",
+    "arg_picker",
+    "arg_picker_macros",
 
     # Scaffolding tool
     "mling"
@@ -36,8 +36,9 @@ exclude = [
 mingling_core = { path = "mingling_core", default-features = false }
 mingling_macros = { path = "mingling_macros", default-features = false }
 mingling_pathf = { path = "mingling_pathf", default-features = false }
-mingling_picker = { path = "mingling_picker", default-features = false }
-mingling_picker_macros = { path = "mingling_picker_macros", default-features = false }
+
+arg-picker = { path = "arg_picker", default-features = false }
+arg-picker-macros = { path = "arg_picker_macros", default-features = false }
 
 just_fmt = "0.2.0"
 just_template = "0.2.0"

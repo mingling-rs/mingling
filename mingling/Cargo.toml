@@ -50,7 +50,7 @@ dispatch_tree = ["mingling_core/dispatch_tree", "mingling_macros/dispatch_tree"]
 repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
 parser = ["dep:size"]
-picker = ["dep:mingling_picker", "mingling_picker/mingling_support"]
+picker = ["dep:arg-picker", "arg-picker/mingling_support"]
 pathf = ["mingling_core/pathf", "mingling_macros/pathf"]
 
 structural_renderer = [
@@ -90,6 +90,6 @@ extra_macros = ["mingling_macros/extra_macros"]
 [dependencies]
 mingling_core = { workspace = true, optional = true }
 mingling_macros = { workspace = true, optional = true }
-mingling_picker = { workspace = true, optional = true }
+arg-picker = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 size = { version = "0.5", optional = true }

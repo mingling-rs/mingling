@@ -86,10 +86,10 @@ pub mod parser;
 /// `Mingling` argument parser (Picker2)
 #[cfg(feature = "picker")]
 pub mod picker {
-    pub use mingling_picker::*;
+    pub use arg_picker::*;
 
     pub mod parselib {
-        pub use mingling_picker::parselib::*;
+        pub use arg_picker::parselib::*;
     }
 }
 
@@ -107,6 +107,9 @@ pub mod picker {
 #[allow(unused_imports)]
 #[cfg(feature = "macros")]
 pub mod macros {
+    /// New Parser provided by the `picker` feature
+    #[cfg(feature = "picker")]
+    pub use arg_picker::macros::*;
     /// `#[chain]` - Used to generate a struct implementing the `Chain` trait via a method
     pub use mingling_macros::chain;
     /// `#[completion(EntryType)]` - Used to generate completion entry
@@ -177,9 +180,6 @@ pub mod macros {
     /// `suggest_enum!(EnumNames)` - Used to generate enum suggestions
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest_enum;
-    /// New Parser provided by the `picker` feature
-    #[cfg(feature = "picker")]
-    pub use mingling_picker::macros::*;
 }
 
 /// derive macro `EnumTag`
@@ -286,7 +286,7 @@ pub mod prelude {
     pub use crate::parser::AsPicker;
 
     #[cfg(feature = "picker")]
-    pub use mingling_picker::prelude::*;
+    pub use arg_picker::prelude::*;
 
     /// Used to enable the `writeln!` macro for `RenderResult`
     #[cfg(feature = "core")]

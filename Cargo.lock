@@ -71,6 +71,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "arg-picker"
+version = "0.1.0"
+dependencies = [
+ "arg-picker-macros",
+ "just_fmt 0.2.0",
+ "mingling_core",
+]
+
+[[package]]
+name = "arg-picker-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -409,10 +427,10 @@ checksum = "f8ca58f447f06ed17d5fc4043ce1b10dd205e060fb3ce5b979b8ed8e59ff3f79"
 name = "mingling"
 version = "0.3.0"
 dependencies = [
+ "arg-picker",
  "mingling",
  "mingling_core",
  "mingling_macros",
- "mingling_picker",
  "serde",
  "size",
  "tokio",
@@ -464,24 +482,6 @@ version = "0.3.0"
 dependencies = [
  "just_fmt 0.2.0",
  "proc-macro2",
- "syn",
-]
-
-[[package]]
-name = "mingling_picker"
-version = "0.3.0"
-dependencies = [
- "just_fmt 0.2.0",
- "mingling_core",
- "mingling_picker_macros",
-]
-
-[[package]]
-name = "mingling_picker_macros"
-version = "0.3.0"
-dependencies = [
- "proc-macro2",
- "quote",
  "syn",
 ]
 

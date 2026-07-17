@@ -6,22 +6,22 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 
 ## 1. Project Structure 📦
 
-| Category                    | Path/Name                 | Description                                                        |
-| --------------------------- | ------------------------- | ------------------------------------------------------------------ |
-| **Entry crate**             | `mingling/`               | Project entry point                                                |
-| **Core library**            | `mingling_core/`          | Imported as an external dependency                                 |
-| **Macro library**           | `mingling_macros/`        | Imported as an external dependency                                 |
-| **Mingling Pathfinder**     | `mingling_pathf/`         | Build-time module path resolution for types                        |
-| **Mingling Picker2**        | `mingling_picker/`        | Mingling Arguments Parser                                          |
-| **Mingling Picker2 Macros** | `mingling_picker_macros/` | Mingling Arguments Parser Macros                                   |
-| **Scaffolding tool**        | `mling/`                  | Scaffolding tool `mingling-cli`                                    |
-| **Examples**                | `examples/`               | To add expected output tests, modify `examples/test-examples.toml` |
-| **Documents**               | `docs/`                   | All documents                                                      |
-| **Dev Documents**           | `docs/dev/`               | Internal documents                                                 |
-| **Resources**               | `docs/res/`               | All resources                                                      |
-| **Development tools**       | `.run/src/bin`            | Contains scripts and Rust tools                                    |
-| **CI**                      | `.run/src/bin/ci.rs`      | Can be invoked directly via `cargo ci`                             |
-| **Temporary files**         | `.temp/`                  | Ignored by `.gitignore`                                            |
+| Category                    | Path/Name            | Description                                                        |
+| --------------------------- | -------------------- | ------------------------------------------------------------------ |
+| **Entry crate**             | `mingling/`          | Project entry point                                                |
+| **Core library**            | `mingling_core/`     | Imported as an external dependency                                 |
+| **Macro library**           | `mingling_macros/`   | Imported as an external dependency                                 |
+| **Mingling Pathfinder**     | `mingling_pathf/`    | Build-time module path resolution for types                        |
+| **Mingling Picker2**        | `arg_picker/`        | Mingling Arguments Parser                                          |
+| **Mingling Picker2 Macros** | `arg_picker_macros/` | Mingling Arguments Parser Macros                                   |
+| **Scaffolding tool**        | `mling/`             | Scaffolding tool `mingling-cli`                                    |
+| **Examples**                | `examples/`          | To add expected output tests, modify `examples/test-examples.toml` |
+| **Documents**               | `docs/`              | All documents                                                      |
+| **Dev Documents**           | `docs/dev/`          | Internal documents                                                 |
+| **Resources**               | `docs/res/`          | All resources                                                      |
+| **Development tools**       | `.run/src/bin`       | Contains scripts and Rust tools                                    |
+| **CI**                      | `.run/src/bin/ci.rs` | Can be invoked directly via `cargo ci`                             |
+| **Temporary files**         | `.temp/`             | Ignored by `.gitignore`                                            |
 
 ## 2. How to Contribute
 
@@ -113,28 +113,28 @@ No strict requirements here — just modify the relevant `*.html` files. Preview
 ## 3. Submission Guide 🖊
 
 1. **Pull Request**
-   - Submit a GitHub Pull Request and @Reviewer **[Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)** for review
-   - Or send patches to **catil_grass@qq.com**
+    - Submit a GitHub Pull Request and @Reviewer **[Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)** for review
+    - Or send patches to **catil_grass@qq.com**
 
 2. **Commit Messages**
-   - Clearly and concisely describe the changes, no stringent requirements
-   - Provide more detail for complex changes, keep it brief for simple changes
-   - But: if you use [Conventional Commits](https://www.conventionalcommits.org/), it would make me even happier :)
+    - Clearly and concisely describe the changes, no stringent requirements
+    - Provide more detail for complex changes, keep it brief for simple changes
+    - But: if you use [Conventional Commits](https://www.conventionalcommits.org/), it would make me even happier :)
 
 3. **CHANGELOG**
-   - If the submission includes functional changes or fixes, **the PR must include modifications to CHANGELOG.md** to describe the changes
-   - For minor changes like typo fixes, **CHANGELOG.md modification is not required**, and we will merge faster
+    - If the submission includes functional changes or fixes, **the PR must include modifications to CHANGELOG.md** to describe the changes
+    - For minor changes like typo fixes, **CHANGELOG.md modification is not required**, and we will merge faster
 
 4. **Multi-commit PR**
 
-   - A PR can contain multiple commits
-   - However, at least one commit must modify CHANGELOG.md
+    - A PR can contain multiple commits
+    - However, at least one commit must modify CHANGELOG.md
 
 5. **Review**
-   - After submission, please notify [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass) for review — this is the most efficient way to get feedback
+    - After submission, please notify [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass) for review — this is the most efficient way to get feedback
 
 6. **Binary Resources**
-   - For binary resource files (images, etc.), please be cautious about adding them to avoid repository bloat
+    - For binary resource files (images, etc.), please be cautious about adding them to avoid repository bloat
 
 ## 4. Documentation Contribution 📕
 
