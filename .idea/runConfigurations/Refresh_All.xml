@@ -1,0 +1,27 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration
+        default="false"
+        name="Refresh All"
+        type="CompoundRunConfigurationType"
+    >
+    <toRun name="Run: Cargo Format" type="CargoCommandRunConfiguration" />
+    <toRun
+            name="Run: Fix Documents Codebox"
+            type="CargoCommandRunConfiguration"
+        />
+    <toRun
+            name="Run: Generate Docsify Sidebar"
+            type="CargoCommandRunConfiguration"
+        />
+    <toRun
+            name="Run: Sync Examples To Crates"
+            type="CargoCommandRunConfiguration"
+        />
+    <toRun
+            name="Run: Sync Examples To Helpdoc"
+            type="CargoCommandRunConfiguration"
+        />
+    <toRun name="Run: Sync Feature List" type="CargoCommandRunConfiguration" />
+    <method v="2" />
+  </configuration>
+</component>
