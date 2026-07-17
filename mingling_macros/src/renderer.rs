@@ -1,38 +1,16 @@
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{ItemFn, ReturnType, Signature, Type, TypePath, parse_macro_input};
+use syn::{ItemFn, ReturnType, Signature, TypePath, parse_macro_input};
 
 use crate::get_global_set;
 use crate::res_injection::{extract_args_info, generate_immut_resource_bindings};
 
-/// Validates that the function returns `::mingling::RenderResult`.
-fn validate_render_result_return(sig: &Signature) -> syn::Result<()> {
+/// Extracts the user's return type, returning `None` for no return type.
+fn extract_user_return_type(sig: &Signature) -> Option<proc_macro2::TokenStream> {
     match &sig.output {
-        ReturnType::Type(_, ty) => {
-            // Check if the return type is RenderResult
-            match &**ty {
-                Type::Path(type_path) => {
-                    let segments = &type_path.path.segments;
-                    let last_seg = segments.last().map(|s| s.ident.to_string());
-                    match last_seg.as_deref() {
-                        Some("RenderResult") => Ok(()),
-                        _ => Err(syn::Error::new(
-                            ty.span(),
-                            "Renderer function must return `RenderResult`",
-                        )),
-                    }
-                }
-                _ => Err(syn::Error::new(
-                    ty.span(),
-                    "Renderer function must return `RenderResult`",
-                )),
-            }
-        }
-        ReturnType::Default => Err(syn::Error::new(
-            sig.span(),
-            "Renderer function must have a return type `-> RenderResult`",
-        )),
+        ReturnType::Type(_, ty) => Some(quote! { #ty }),
+        ReturnType::Default => None,
     }
 }
 
@@ -59,10 +37,8 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
     };
 
-    // Validate that the function returns RenderResult
-    if let Err(e) = validate_render_result_return(&input_fn.sig) {
-        return e.to_compile_error().into();
-    }
+    // Determine the user's return type and whether it needs to be converted to RenderResult
+    let user_return_type = extract_user_return_type(&input_fn.sig);
 
     // Get function body statements
     let fn_body_stmts: Vec<syn::Stmt> = input_fn.block.stmts.clone();
@@ -123,10 +99,7 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // The original function preserves the user's exact signature and body.
     // Resource parameters are passed directly by the caller, NOT injected from context.
     let original_inputs = input_fn.sig.inputs.clone();
-    let original_return_type = match &input_fn.sig.output {
-        ReturnType::Type(_, ty) => quote! { #ty },
-        ReturnType::Default => unreachable!("Already validated that return type is RenderResult"),
-    };
+    let original_return_type = user_return_type.clone().unwrap_or(quote! { () });
 
     let expanded = quote! {
         #(#fn_attrs)*
@@ -140,7 +113,8 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
             type Previous = #previous_type;
 
             fn render(#prev_param: Self::Previous) -> ::mingling::RenderResult {
-                #render_fn_body
+                let __renderer_result = { #render_fn_body };
+                ::std::convert::Into::into(__renderer_result)
             }
         }
 

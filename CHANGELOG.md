@@ -116,6 +116,31 @@ None
 
     These implementations make `RenderResult` more flexible as a return type, allowing renderer functions to return simple values without manually constructing a `RenderResult` via `new()` and `write!`/`writeln!`.
 
+5. **[`macros:renderer`]** Removed the restriction that `#[renderer]` functions must return `RenderResult`. The `#[renderer]` macro now accepts any return type (including no return type), and automatically converts the return value to `RenderResult` via `Into::into`.
+
+    - Functions returning `RenderResult` work as before.
+    - Functions returning other types (e.g., `String`, `i32`, `()`) are converted via the `Into<RenderResult>` trait.
+    - Functions with no return type (`-> ()` or omitted) return `()` which is converted to an empty `RenderResult` via `From<()>`.
+
+    This makes `#[renderer]` more flexible and consistent with the ergonomic `From` implementations added in item 4 above.
+
+    ```rust
+    #[renderer]
+    fn render_greeting(prev: ResultGreeting) -> String {
+        format!("Hello, {}!", *prev)
+    }
+
+    #[renderer]
+    fn render_exit_code(prev: ResultExit) -> i32 {
+        42
+    }
+
+    #[renderer]
+    fn render_void(prev: ResultVoid) {
+        // side effects only, returns empty RenderResult
+    }
+    ```
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.
