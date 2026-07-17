@@ -29,8 +29,13 @@ pub mod value;
 /// use mingling_picker::prelude::*;
 /// ```
 pub mod prelude {
-    pub use crate::IntoPicker;
     pub use crate::macros::arg;
+
+    #[cfg(not(feature = "mingling_support"))]
+    pub use crate::IntoPicker;
+
+    #[cfg(feature = "mingling_support")]
+    pub use crate::corebind::EntryPicker;
 }
 
 /// Re-export of the `mingling_picker_macros` crate
