@@ -130,6 +130,33 @@ where
         &self.args
     }
 
+    /// Returns a mutable reference to the program's command-line arguments.
+    #[must_use]
+    pub fn get_args_mut(&mut self) -> &mut [String] {
+        &mut self.args
+    }
+
+    /// Takes ownership of the program's command-line arguments, replacing them with an empty Vec.
+    /// This is useful when you need to transfer the arguments to another context or process them
+    /// and then replace them later.
+    #[must_use]
+    pub fn take_args(&mut self) -> Vec<String> {
+        std::mem::take(&mut self.args)
+    }
+
+    /// Replaces the program's command-line arguments with a new set and returns the old ones.
+    ///
+    /// # Arguments
+    ///
+    /// * `args` - The new command-line arguments to set.
+    ///
+    /// # Returns
+    ///
+    /// The previous command-line arguments.
+    pub fn replace_args(&mut self, args: Vec<String>) -> Vec<String> {
+        std::mem::replace(&mut self.args, args)
+    }
+
     /// Get all registered dispatcher names from the program
     #[must_use]
     pub fn get_nodes(
