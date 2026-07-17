@@ -72,6 +72,42 @@ None
 
    The method is equivalent to `RenderResult::default()` but serves as a more idiomatic entry point for renderer functions.
 
+2. **[`core`]** **[`macros`]** Added `core` and `macros` features to the `mingling` crate, both enabled by default. These features allow selective exclusion of `mingling_core` and `mingling_macros` dependencies respectively.
+
+   - When `core` is **disabled** (`default-features = false, features = ["macros"]`), the `mingling` crate only re-exports proc-macros and macro-related items, without linking `mingling_core`.
+   - When `macros` is **disabled** (`default-features = false, features = ["core"]`), the `mingling` crate only provides runtime types and traits without any proc-macro re-exports.
+   - When **both are disabled** (`default-features = false`), the `mingling` crate provides a minimal re-export surface.
+
+   This enables downstream projects to fine-tune dependency weight — e.g., a library crate that only uses `mingling_macros` can disable `core` to avoid pulling in unused runtime types.
+
+3. **[`picker`]** Added the new `picker` system — a **non‑breaking companion** to the existing `parser` feature, not a replacement. The `picker` feature provides a chained argument parsing API and a parsing function library (`parselib`) for analyzing command-line argument structure. Key components:
+
+   - **Chained Argument Parser with `.pick()`** — A chained-call API for declaring and extracting arguments:
+
+     ```rust
+     use mingling_picker::prelude::*;
+
+     let args: Vec<&str> = vec!["--name", "Bob", "--age", "24"];
+
+     let (name, age) = args
+         .pick(&arg![name: String])
+         .or(|| "Alice".to_string())
+         .pick(&arg![age: i32])
+         .or(|| 24)
+         .post(|num| num.clamp(0, 120))
+         .unwrap();
+     ```
+
+   - **Pure function library `parselib`** — Provides utility functions for analyzing command-line argument structure:
+
+     ```rust
+     use mingling_picker::parselib::*;
+     ```
+
+   The `picker` system is **additive** — the old `parser` feature remains fully functional and is **not deprecated**. Users may choose either or both systems in the same project. The `picker` feature is available both as the `mingling/picker` feature (enabled by default) and as a standalone `mingling_picker` crate.
+
+   _No migration is required for existing `parser` users — the old API continues to work unchanged._
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.
