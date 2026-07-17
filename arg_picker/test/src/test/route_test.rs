@@ -1,4 +1,4 @@
-use arg_picker::{macros::arg, IntoPicker};
+use arg_picker::{IntoPicker, macros::arg};
 
 // Route mechanism — or_route
 
@@ -53,7 +53,7 @@ fn test_or_route_to_option_returns_none() {
 }
 
 #[test]
-#[should_panic(expected = "called `Option::unwrap()` on a `None` value")]
+#[should_panic(expected = "missing required argument")]
 fn test_or_route_unwrap_panics() {
     let args: Vec<&str> = vec![];
     args.with_route::<&'static str>()
