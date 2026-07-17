@@ -211,6 +211,8 @@ None
 
     All examples, docs, and test cases across the repository have been updated to use `.into()` where packed types are returned from chain functions.
 
+3. **[`core`]** **[`ExitCodeSetup`]** Updated `ExitCodeSetup` to only override the exit code when `ResExitCode` has been modified (i.e., `exit_code != 0`). Previously, it unconditionally overrode the exit code, which could interfere with exit codes set by other hooks or the program's default exit flow. The `on_finish` hook now returns `ProgramControlUnit::OverrideExitCode(...)` only when the exit code is non-zero, and `ProgramControls::Empty` otherwise. The import of `ProgramControls` has been added accordingly.
+
 ---
 
 ## Release 0.2.2 (2026-07-10)

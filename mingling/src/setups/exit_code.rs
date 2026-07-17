@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use mingling_core::{
     ProgramCollect,
-    hook::{ProgramControlUnit, ProgramHook},
+    hook::{ProgramControlUnit, ProgramControls, ProgramHook},
     setup::ProgramSetup,
     this,
 };
@@ -39,7 +39,14 @@ where
         // Insert hook to override exit code before program ends
         program.with_hook(ProgramHook::empty().on_finish(|_| {
             let this = this::<C>().res_or_default::<ResExitCode>();
-            ProgramControlUnit::OverrideExitCode(this.exit_code)
+            let ec = this.exit_code;
+
+            // Only override when ResExitCode has been modified
+            if ec != 0 {
+                ProgramControlUnit::OverrideExitCode(this.exit_code).into()
+            } else {
+                ProgramControls::Empty
+            }
         }));
     }
 }
