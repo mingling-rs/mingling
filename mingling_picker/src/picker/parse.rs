@@ -124,7 +124,7 @@ internal_repeat!(1..=32 => {
                                     } else {
                                         if error_route.is_none() {
                                             if let Some(get_route) = self.route_$ {
-                                                *error_route = Some(get_route());
+                                                *error_route = Some(get_route().into());
                                             }
                                         }
                                         other

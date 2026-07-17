@@ -10,11 +10,11 @@ internal_repeat!(1..=32 => {
         pub args: PickerArgs<'a>,
         pub error_route: Option<Route>,
         (
-            pub arg_$: &'a PickerArg<'a, T$>,
-            pub result_$: PickerArgResult<T$>,
-            pub default_$: Option<Box<dyn FnOnce() -> T$>>,
-            pub route_$: Option<Box<dyn FnOnce() -> Route>>,
-            pub post_$: Option<Box<dyn FnOnce(T$) -> T$>>,
+            pub(crate) arg_$: &'a PickerArg<'a, T$>,
+            pub(crate) result_$: PickerArgResult<T$>,
+            pub(crate) default_$: Option<Box<dyn FnOnce() -> T$>>,
+            pub(crate) route_$: Option<Box<dyn FnOnce() -> Route>>,
+            pub(crate) post_$: Option<Box<dyn FnOnce(T$) -> T$>>,
         +)
     }
 });
@@ -99,7 +99,8 @@ internal_repeat!(1..=32 => {
         /// for example when composing patterns from different contexts that use different
         /// route enums.
         #[allow(clippy::type_complexity)]
-        pub fn with_route<NewRoute>(self) -> PickerPattern$<'a, (T$,+), NewRoute> {
+        pub fn with_route<NewRoute>(self) -> PickerPattern$<'a, (T$,+), NewRoute>
+        {
             PickerPattern$ {
                 args: self.args,
                 error_route: None,

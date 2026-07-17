@@ -12,10 +12,10 @@ use crate::{Pickable, PickerArg, PickerArgResult};
 
 #[doc = include_str!("../README.md")]
 pub struct Picker<'a, Route = ()> {
-    route_phantom: PhantomData<Route>,
+    pub(crate) route_phantom: PhantomData<Route>,
 
     /// Internal arguments of Picker
-    args: PickerArgs<'a>,
+    pub(crate) args: PickerArgs<'a>,
 }
 
 impl<'a> Picker<'a> {
@@ -340,6 +340,16 @@ impl<'a> IntoPicker<'a> for Vec<&'a str> {
         Picker {
             route_phantom: PhantomData,
             args: PickerArgs::Vec(self),
+        }
+    }
+}
+
+impl<'a> IntoPicker<'a> for &'a Vec<String> {
+    fn to_picker(self) -> Picker<'a, ()> {
+        let slice: Vec<&str> = self.iter().map(|s| s.as_str()).collect();
+        Picker {
+            route_phantom: PhantomData,
+            args: PickerArgs::Vec(slice),
         }
     }
 }
