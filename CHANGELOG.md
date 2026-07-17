@@ -108,6 +108,14 @@ None
 
     _No migration is required for existing `parser` users — the old API continues to work unchanged._
 
+4. **[`core`]** Added multiple `From` implementations for `RenderResult`:
+
+    - **From `()`** — Allows constructing an empty `RenderResult` from a unit value, enabling ergonomic returns like `fn my_renderer() -> RenderResult { }` (via `}` → `}` with implicit `()` return).
+    - **From integer types** (`i32`, `i16`, `i8`, `u32`, `u16`, `u8`, `usize`) — Allows constructing a `RenderResult` with a specific exit code and empty text, enabling `fn my_renderer() -> RenderResult { 0 }` or `42.into()`.
+    - **From `String`**, **`&String`**, and **`&str`** — Allows constructing a `RenderResult` with the given text and exit code `0`, enabling `fn my_renderer() -> RenderResult { "Hello".into() }` or passing a `String` directly.
+
+    These implementations make `RenderResult` more flexible as a return type, allowing renderer functions to return simple values without manually constructing a `RenderResult` via `new()` and `write!`/`writeln!`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.

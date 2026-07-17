@@ -39,6 +39,56 @@ impl Deref for RenderResult {
     }
 }
 
+impl From<()> for RenderResult {
+    fn from(_value: ()) -> Self {
+        RenderResult::new()
+    }
+}
+
+macro_rules! impl_from_int {
+    ($($ty:ty),+ $(,)?) => {
+        $(
+            impl From<$ty> for RenderResult {
+                fn from(exit_code: $ty) -> Self {
+                    RenderResult {
+                        exit_code: exit_code as i32,
+                        ..Default::default()
+                    }
+                }
+            }
+        )+
+    };
+}
+
+impl_from_int!(i32, i16, i8, u32, u16, u8, usize);
+
+impl From<&String> for RenderResult {
+    fn from(value: &String) -> Self {
+        RenderResult {
+            render_text: value.clone(),
+            exit_code: 0,
+        }
+    }
+}
+
+impl From<String> for RenderResult {
+    fn from(value: String) -> Self {
+        RenderResult {
+            render_text: value,
+            exit_code: 0,
+        }
+    }
+}
+
+impl From<&str> for RenderResult {
+    fn from(value: &str) -> Self {
+        RenderResult {
+            render_text: value.to_string(),
+            exit_code: 0,
+        }
+    }
+}
+
 impl From<RenderResult> for String {
     fn from(result: RenderResult) -> Self {
         result.render_text
