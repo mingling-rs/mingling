@@ -1,6 +1,8 @@
 use std::path::{Path, PathBuf};
 
+use flate2::read::GzDecoder;
 use serde::Deserialize;
+use tar::Archive;
 use tools::{
     dependency_order::find_workspace_root, eprintln_cargo_style, println_cargo_style,
     run_cmd_capture_with_dir, wprintln_cargo_style,
@@ -230,20 +232,18 @@ fn main() {
         std::fs::create_dir_all(&target_dir)
             .unwrap_or_else(|e| panic!("failed to create {}: {e}", target_dir.display()));
 
-        // Extract using tar + gzip
-        let extract_cmd = format!(
-            "tar -xzf \"{}\" -C \"{}\"",
-            path.display(),
-            target_dir.display()
-        );
-        let extract_ok = std::process::Command::new("sh")
-            .arg("-c")
-            .arg(&extract_cmd)
-            .status()
-            .expect("failed to run tar");
-
-        if !extract_ok.success() {
-            eprintln_cargo_style!("Failed to extract {}", fname);
+        // Extract using flate2 + tar (cross-platform)
+        let file = match std::fs::File::open(&path) {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln_cargo_style!("Failed to open {}: {e}", path.display());
+                continue;
+            }
+        };
+        let decoder = GzDecoder::new(file);
+        let mut archive = Archive::new(decoder);
+        if let Err(e) = archive.unpack(&target_dir) {
+            eprintln_cargo_style!("Failed to extract {}: {e}", fname);
             continue;
         }
 

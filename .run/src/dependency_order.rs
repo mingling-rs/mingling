@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Parse Cargo.toml content and return dependency names that start with `prefix`.
 fn parse_mingling_deps(content: &str, prefix: &str) -> Vec<String> {
@@ -119,10 +119,23 @@ fn topological_sort(
     result
 }
 
+/// Strip the `\\?\` prefix that `std::fs::canonicalize` may add on Windows.
+fn strip_verbatim_prefix(p: &Path) -> PathBuf {
+    let s = p.to_string_lossy();
+    let s_ref: &str = &s;
+    if let Some(rest) = s_ref.strip_prefix("\\\\?\\") {
+        PathBuf::from(rest)
+    } else {
+        p.to_path_buf()
+    }
+}
+
 /// Find the workspace root by looking for a Cargo.toml with `[workspace]` members.
 /// Starts from `start` and walks up the directory tree.
 pub fn find_workspace_root(start: &std::path::Path) -> Option<PathBuf> {
-    let mut current = Some(std::fs::canonicalize(start).unwrap_or_else(|_| start.to_path_buf()));
+    let mut current = Some(strip_verbatim_prefix(
+        &std::fs::canonicalize(start).unwrap_or_else(|_| start.to_path_buf()),
+    ));
     while let Some(dir) = current {
         let members = get_workspace_members(&dir);
         if !members.is_empty() {
