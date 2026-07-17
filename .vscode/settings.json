@@ -1,11 +1,16 @@
 {
-    "rust-analyzer.check.command": "clippy",
-    "rust-analyzer.checkOnSave": true,
-    "rust-analyzer.linkedProjects": [
-        ".run/Cargo.toml",
-        "mingling_pathf/test/Cargo.toml",
-        "arg_picker/Cargo.toml",
-        "arg_picker/test/Cargo.toml"
-    ],
-    "rust-analyzer.cargo.features": ["mingling_support"]
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.checkOnSave": true,
+  "rust-analyzer.linkedProjects": [
+    ".run/Cargo.toml",
+    "mingling_pathf/test/Cargo.toml",
+    "arg_picker/Cargo.toml",
+    "arg_picker/test/Cargo.toml",
+  ],
+  "rust-analyzer.cargo.features": [
+    "mingling_support",
+    "picker",
+    "parser",
+    "comp",
+  ],
 }

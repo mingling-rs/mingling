@@ -1,19 +1,19 @@
 {
-    "lsp": {
-        "rust-analyzer": {
-            "initialization_options": {
-                "checkOnSave": true,
-                "check": { "command": "clippy" },
-                "linkedProjects": [
-                    ".run/Cargo.toml",
-                    "mingling_pathf/test/Cargo.toml",
-                    "arg_picker/Cargo.toml",
-                    "arg_picker/test/Cargo.toml"
-                ],
-                "cargo": {
-                    "features": ["mingling_support"]
-                }
-            }
-        }
-    }
+  "lsp": {
+    "rust-analyzer": {
+      "initialization_options": {
+        "checkOnSave": true,
+        "check": { "command": "clippy" },
+        "linkedProjects": [
+          ".run/Cargo.toml",
+          "mingling_pathf/test/Cargo.toml",
+          "arg_picker/Cargo.toml",
+          "arg_picker/test/Cargo.toml",
+        ],
+        "cargo": {
+          "features": ["mingling_support", "picker", "parser", "comp"],
+        },
+      },
+    },
+  },
 }
