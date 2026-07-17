@@ -146,10 +146,10 @@ pub fn display_dependency_order() -> Vec<PathBuf> {
     // Read workspace members from root Cargo.toml
     let members = get_workspace_members(&workspace_root);
 
-    // Filter to crates starting with "mingling"
+    // Filter to crates starting with "mingling" or "arg"
     let mingling_crates: HashSet<String> = members
         .into_iter()
-        .filter(|m| m.starts_with("mingling"))
+        .filter(|m| m.starts_with("mingling") || m.starts_with("arg"))
         .collect();
 
     if mingling_crates.is_empty() {
