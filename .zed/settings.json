@@ -11,7 +11,14 @@
           "arg_picker/test/Cargo.toml",
         ],
         "cargo": {
-          "features": ["mingling_support", "picker", "parser", "comp"],
+          "features": [
+            "structural_renderer",
+            "mingling_support",
+            "all_serde_fmt",
+            "picker",
+            "parser",
+            "comp",
+          ],
         },
       },
     },

@@ -8,7 +8,9 @@
     "arg_picker/test/Cargo.toml",
   ],
   "rust-analyzer.cargo.features": [
+    "structural_renderer",
     "mingling_support",
+    "all_serde_fmt",
     "picker",
     "parser",
     "comp",
