@@ -117,13 +117,32 @@ impl<'a> From<crate::TagPhaseContext<'a>> for MatcherContext<'a> {
     }
 }
 
+/// Checks whether the argument at index `idx` is already claimed (masked).
+///
+/// Returns `true` if `idx` is within the mask bounds and the mask value is non-zero,
+/// indicating the argument has been claimed by a previous matcher.
+///
+/// # Arguments
+///
+/// * `mask` - A byte slice where non-zero values indicate claimed arguments.
+/// * `idx` - The index to check in the mask.
 #[inline(always)]
-fn is_masked(mask: &[u8], idx: usize) -> bool {
+pub fn is_masked(mask: &[u8], idx: usize) -> bool {
     idx < mask.len() && mask[idx] != 0
 }
 
+/// Builds a vector of [`MaskedArg`] from the given `PickerArgs` and mask.
+///
+/// Only arguments whose mask entry is `0` (i.e., available/not yet claimed) are included.
+/// Each resulting [`MaskedArg`] retains its original raw string and its index in the full
+/// argument list for later reference.
+///
+/// # Arguments
+///
+/// * `args` - The full set of parsed arguments.
+/// * `mask` - A byte slice where `0` means available and non-zero means already claimed.
 #[inline(always)]
-fn build_masked_args<'a>(args: &'a PickerArgs, mask: &'a [u8]) -> Vec<MaskedArg<'a>> {
+pub fn build_masked_args<'a>(args: &'a PickerArgs, mask: &'a [u8]) -> Vec<MaskedArg<'a>> {
     let mut cidx = 0;
     args.iter()
         .filter_map(|r| {

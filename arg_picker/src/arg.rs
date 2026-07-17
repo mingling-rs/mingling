@@ -138,9 +138,27 @@ where
 /// Describes the attribute (behavior) of a command-line parameter.
 ///
 /// The ordering reflects parse priority (higher = parsed first):
-/// `PositionalMulti < Positional < Flag < Single < Multi`
+/// `Postprocess < Final < PositionalMulti < Positional < Flag < Single < Multi < Begin < Preprocess`
+///
+/// # Variants
+///
+/// - `Postprocess` — Reserved lowest priority, used only in special cases.
+/// - `Final` — Reserved post-processing priority, used only in special cases.
+/// - `PositionalMulti` — Positional argument that accepts multiple values (e.g., multiple input files).
+/// - `Positional` — Positional argument matched by its position (e.g., an input file).
+/// - `Flag` — Boolean flag with no associated value (e.g., `--verbose`).
+/// - `Single` — Accepts a single value (e.g., `--name Alice`).
+/// - `Multi` — Accepts multiple values (e.g., `--file a.txt --file b.txt`).
+/// - `Begin` — Reserved pre-processing priority, used only in special cases.
+/// - `Preprocess` — Reserved highest priority, used only in special cases.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum PickerArgAttr {
+    /// Reserved lowest priority, used only in special cases.
+    Postprocess,
+
+    /// Reserved post-processing priority, used only in special cases.
+    Final,
+
     /// Positional argument that accepts multiple values (e.g., multiple input files).
     PositionalMulti,
 
@@ -156,6 +174,12 @@ pub enum PickerArgAttr {
 
     /// Accepts multiple values (e.g., `--file a.txt --file b.txt`).
     Multi,
+
+    /// Reserved pre-processing priority, used only in special cases.
+    Begin,
+
+    /// Reserved highest priority, used only in special cases.
+    Preprocess,
 }
 
 impl PickerArgAttr {
