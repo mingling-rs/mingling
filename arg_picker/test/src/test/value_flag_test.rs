@@ -1,5 +1,5 @@
 use arg_picker::value::Flag;
-use arg_picker::{macros::arg, IntoPicker};
+use arg_picker::{IntoPicker, macros::arg};
 
 // Basic Flag — present / absent
 
@@ -136,10 +136,10 @@ fn test_flag_to_option() {
 #[test]
 fn test_flag_converts_to_bool() {
     let flag = Flag::Active;
-    assert!(bool::from(flag));
+    assert_eq!(bool::from(flag), true);
 
     let flag = Flag::Inactive;
-    assert!(!bool::from(flag));
+    assert_eq!(bool::from(flag), false);
 }
 
 #[test]
@@ -151,10 +151,10 @@ fn test_flag_from_bool() {
 #[test]
 fn test_flag_deref_to_bool() {
     let active = Flag::Active;
-    assert!(*active);
+    assert_eq!(*active, true);
 
     let inactive = Flag::Inactive;
-    assert!(!*inactive);
+    assert_eq!(*inactive, false);
 }
 
 // Flag never triggers route (unlike bool)
