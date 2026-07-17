@@ -41,8 +41,8 @@ fn main() {
         "cargo metadata --format-version 1 --no-deps",
         &workspace_root,
     )
-    .unwrap_or_else(|(_code, msg)| {
-        eprintln_cargo_style!("cargo metadata failed (exit {code}):\n{msg}");
+    .unwrap_or_else(|(code, _msg)| {
+        eprintln_cargo_style!(format!("cargo metadata failed (exit {code}):\n{{msg}}"));
         std::process::exit(1);
     });
 
@@ -171,7 +171,7 @@ fn main() {
         }
         Err((code, msg)) => {
             // Print output but don't fail yet
-            eprintln_cargo_style!("cargo package exited with code {code}:");
+            eprintln_cargo_style!(format!("cargo package exited with code {code}:"));
             println!("{msg}");
         }
     }
@@ -202,7 +202,7 @@ fn main() {
     for entry in std::fs::read_dir(&temp_package_dir).expect("failed to read target/package") {
         let entry = entry.expect("failed to read entry");
         let path = entry.path();
-        if path.extension().map_or(true, |e| e != "crate") {
+        if path.extension().is_none_or(|e| e != "crate") {
             continue;
         }
 
@@ -217,11 +217,7 @@ fn main() {
             .and_then(|dash| {
                 // Check if what follows looks like a semver
                 let ver_part = &fname[dash + 1..];
-                if ver_part
-                    .chars()
-                    .next()
-                    .map_or(false, |c| c.is_ascii_digit())
-                {
+                if ver_part.chars().next().is_some_and(|c| c.is_ascii_digit()) {
                     Some(&fname[..dash])
                 } else {
                     None
@@ -317,31 +313,30 @@ fn patch_workspace_deps(
             in_workspace_deps = false;
         }
 
-        if in_workspace_deps {
-            if let Some(dep_name) = trimmed.split('=').next().map(|s| s.trim()) {
-                if let Some(version) = version_map.get(dep_name) {
-                    let indent = line
-                        .chars()
-                        .take_while(|c| c.is_whitespace())
-                        .collect::<String>();
+        if in_workspace_deps
+            && let Some(dep_name) = trimmed.split('=').next().map(|s| s.trim())
+            && let Some(version) = version_map.get(dep_name)
+        {
+            let indent = line
+                .chars()
+                .take_while(|c| c.is_whitespace())
+                .collect::<String>();
 
-                    if trimmed.contains("path =") {
-                        let path_value = extract_path_value(trimmed);
-                        let patched_line: String = if let Some(pv) = path_value {
-                            trimmed.replace(
-                                &format!("path = \"{}\"", pv),
-                                &format!("path = \"{}\", version = \"{}\"", pv, version),
-                            )
-                        } else {
-                            trimmed.to_string()
-                        };
-                        result.push_str(&format!("{indent}{patched_line}\n"));
-                    } else {
-                        result.push_str(&format!("{indent}{dep_name} = \"{version}\"\n"));
-                    }
-                    continue;
-                }
+            if trimmed.contains("path =") {
+                let path_value = extract_path_value(trimmed);
+                let patched_line: String = if let Some(pv) = path_value {
+                    trimmed.replace(
+                        &format!("path = \"{}\"", pv),
+                        &format!("path = \"{}\", version = \"{}\"", pv, version),
+                    )
+                } else {
+                    trimmed.to_string()
+                };
+                result.push_str(&format!("{indent}{patched_line}\n"));
+            } else {
+                result.push_str(&format!("{indent}{dep_name} = \"{version}\"\n"));
             }
+            continue;
         }
 
         result.push_str(line);
@@ -391,25 +386,21 @@ fn patch_member_path_deps(
         if (in_deps || in_build_deps)
             && trimmed.contains("path = \"")
             && !trimmed.contains("workspace = true")
+            && let Some(dep_name) = trimmed.split('=').next().map(|s| s.trim())
+            && let Some(version) = version_map.get(dep_name.trim_end_matches(".workspace"))
+            && !trimmed.contains("version = \"")
         {
-            if let Some(dep_name) = trimmed.split('=').next().map(|s| s.trim()) {
-                let dep_name = dep_name.trim_end_matches(".workspace");
-                if let Some(version) = version_map.get(dep_name) {
-                    if !trimmed.contains("version = \"") {
-                        let indent = line
-                            .chars()
-                            .take_while(|c| c.is_whitespace())
-                            .collect::<String>();
-                        let path_val = extract_path_value(trimmed).unwrap_or_default();
-                        let patched = trimmed.replace(
-                            &format!("path = \"{path_val}\""),
-                            &format!("path = \"{path_val}\", version = \"{version}\""),
-                        );
-                        result.push_str(&format!("{indent}{patched}\n"));
-                        continue;
-                    }
-                }
-            }
+            let indent = line
+                .chars()
+                .take_while(|c| c.is_whitespace())
+                .collect::<String>();
+            let path_val = extract_path_value(trimmed).unwrap_or_default();
+            let patched = trimmed.replace(
+                &format!("path = \"{path_val}\""),
+                &format!("path = \"{path_val}\", version = \"{version}\""),
+            );
+            result.push_str(&format!("{indent}{patched}\n"));
+            continue;
         }
 
         result.push_str(line);
