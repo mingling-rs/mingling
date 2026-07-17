@@ -30,7 +30,7 @@ pub trait EntryPicker<'a, This> {
     ///
     /// # Parameters
     ///
-    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     fn pick<Next>(
         self,
         arg: impl Into<&'a PickerArg<'a, Next>>,
@@ -53,7 +53,7 @@ pub trait EntryPicker<'a, This> {
     ///
     /// # Parameters
     ///
-    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     /// * `func` — A closure that provides a default value if the arg is not provided by the user.
     fn pick_or<Next, F>(
         self,
@@ -78,7 +78,7 @@ pub trait EntryPicker<'a, This> {
     ///
     /// # Parameters
     ///
-    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     fn pick_or_default<Next>(
         self,
         arg: impl Into<&'a PickerArg<'a, Next>>,
@@ -100,7 +100,7 @@ pub trait EntryPicker<'a, This> {
     ///
     /// # Parameters
     ///
-    /// * `arg` — The argument definition, typically obtained from [`crate::arg`].
+    /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     /// * `func` — A closure that produces a route value if the arg is not provided by the user.
     fn pick_or_route<Next, F>(
         self,
