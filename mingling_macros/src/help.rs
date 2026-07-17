@@ -1,34 +1,16 @@
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{Ident, ItemFn, ReturnType, Type, TypePath, parse_macro_input};
+use syn::{Ident, ItemFn, ReturnType, Signature, TypePath, parse_macro_input};
 
 use crate::get_global_set;
 use crate::res_injection::{extract_args_info, generate_immut_resource_bindings};
 
-/// Validates that the function returns `::mingling::RenderResult`.
-fn validate_render_result_return(sig: &syn::Signature) -> syn::Result<()> {
+/// Extracts the user's return type, returning `None` for no return type.
+fn extract_user_return_type(sig: &Signature) -> Option<proc_macro2::TokenStream> {
     match &sig.output {
-        ReturnType::Type(_, ty) => match &**ty {
-            Type::Path(type_path) => {
-                let last_seg = type_path.path.segments.last().map(|s| s.ident.to_string());
-                match last_seg.as_deref() {
-                    Some("RenderResult") => Ok(()),
-                    _ => Err(syn::Error::new(
-                        ty.span(),
-                        "Help function must return `RenderResult`",
-                    )),
-                }
-            }
-            _ => Err(syn::Error::new(
-                ty.span(),
-                "Help function must return `RenderResult`",
-            )),
-        },
-        ReturnType::Default => Err(syn::Error::new(
-            sig.span(),
-            "Help function must have a return type `-> RenderResult`",
-        )),
+        ReturnType::Type(_, ty) => Some(quote! { #ty }),
+        ReturnType::Default => None,
     }
 }
 
@@ -49,10 +31,8 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
         Err(e) => return e.to_compile_error().into(),
     };
 
-    // Validate return type is RenderResult
-    if let Err(e) = validate_render_result_return(&input_fn.sig) {
-        return e.to_compile_error().into();
-    }
+    // Determine the user's return type for preserving the original function
+    let user_return_type = extract_user_return_type(&input_fn.sig);
 
     // Get the function body
     let fn_body = &input_fn.block;
@@ -69,8 +49,8 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
     let fn_name = &input_fn.sig.ident;
 
     // Get original inputs to keep the original function
-
     let original_inputs = input_fn.sig.inputs.clone();
+    let original_return_type = user_return_type.clone().unwrap_or(quote! { () });
 
     // Generate internal name using snake_case
     let internal_name = format!(
@@ -149,17 +129,18 @@ pub fn help_attr(item: TokenStream) -> TokenStream {
             type Entry = #entry_type;
 
             fn render_help(#prev_param: Self::Entry) -> ::mingling::RenderResult {
-                #help_render_body
+                let __help_result = { #help_render_body };
+                ::std::convert::Into::into(__help_result)
             }
         }
 
         ::mingling::macros::register_help!(#entry_type, #struct_name);
 
         // Keep the original function unchanged
-
+        #[allow(dead_code)]
         #(#fn_attrs)*
-        #vis fn #fn_name(#original_inputs) -> ::mingling::RenderResult {
-            #fn_body
+        #vis fn #fn_name(#original_inputs) -> #original_return_type {
+            #(#fn_body_stmts)*
         }
     };
 

@@ -1235,7 +1235,7 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 ///
 /// - The function must have exactly one parameter (the entry type to provide help for).
 /// - The parameter type must be a single-segment type path (e.g., `MyEntry`, not `other::MyEntry`).
-/// - The function must return `RenderResult`.
+/// - The function may return `RenderResult`, `()`, or any type that implements `Into<RenderResult>`.
 /// - The function cannot be async.
 ///
 /// # See also

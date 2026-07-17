@@ -141,6 +141,26 @@ None
     }
     ```
 
+6. **[`macros:help`]** Removed the restriction that `#[help]` functions must return `::mingling::RenderResult`. The `#[help]` macro now accepts any return type (including no return type), and automatically converts the return value to `RenderResult` via `Into::into`.
+
+    - Functions returning `RenderResult` work as before.
+    - Functions returning other types (e.g., `String`, `i32`, `()`) are converted via `Into<RenderResult>`.
+    - Functions with no return type (`-> ()` or omitted) return `()` which is converted to an empty `RenderResult` via `From<()>`.
+
+    This makes `#[help]` consistent with the `#[renderer]` macro's ergonomic return type handling introduced in item 5 above.
+
+    ```rust
+    #[help]
+    fn help_greeting(prev: EntryGreeting) -> String {
+        format!("Displaying help for greeting: {}", *prev)
+    }
+
+    #[help]
+    fn help_void(prev: EntryVoid) {
+        // side effects only, returns empty RenderResult
+    }
+    ```
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.
