@@ -114,7 +114,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .pick_or((), "World")
         .unpack()
         .into();
-    result
+    result.into()
 }
 
 /// Renders the greeting with the result name and repeat count.

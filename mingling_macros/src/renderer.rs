@@ -119,6 +119,7 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         // Keep the original function unchanged
+        #[allow(dead_code)]
         #(#fn_attrs)*
         #vis fn #fn_name(#original_inputs) -> #original_return_type {
             #(#fn_body_stmts)*

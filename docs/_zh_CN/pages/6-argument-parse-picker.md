@@ -32,7 +32,7 @@ features = ["parser"]
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev.pick_or((), "World").unpack();
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -47,7 +47,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
 let name = prev.pick_or((), "World").unpack();
-@@@ResultName::new(name)
+@@@ResultName::new(name).into()
 @@@}
 ```
  
@@ -82,7 +82,7 @@ let name = prev.pick_or((), "World").unpack();
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev.pick_or(["--name", "-n"], "World").unpack();
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -124,7 +124,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
         .pick::<u32>(["--id", "-I"])
         .unpack();
  
-    ResultInfo::new((name, age, id))
+    ResultInfo::new((name, age, id)).into()
 }
 ```
  
@@ -199,7 +199,7 @@ let name = match pick_result {
 
 在您使用 `pick` 提取了用户输入后，可以使用 `after` 立刻处理该参数
 
-```rust
+````rust
 // Features: ["parser"]
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 @@@pack!(ResultName = String);
@@ -217,7 +217,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
         })
         .unpack();
  
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -338,7 +338,7 @@ impl Pickable for Address {
 #[chain]
 fn handle_connect_entry(prev: EntryConnect) -> Next {
     let address: Address = prev.pick("--addr").unpack();
-    ResultConnected::new(address)
+    ResultConnected::new(address).into()
 }
  
 #[renderer]
@@ -379,7 +379,7 @@ impl PickableEnum for Fruits {}
 #[chain]
 fn handle_eat_entry(prev: EntryEat) -> Next {
     let fruit: Fruits = prev.pick("--fruit").unpack();
-    ResultFruit::new(fruit)
+    ResultFruit::new(fruit).into()
 }
  
 #[renderer]

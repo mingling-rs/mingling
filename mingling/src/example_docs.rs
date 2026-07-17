@@ -66,7 +66,7 @@
 ///         // Convert into ResultFile
 ///         .into();
 ///     // --------- IMPORTANT ---------
-///     result
+///     result.into()
 /// }
 ///
 /// pack!(ErrorNoNameProvided = ());
@@ -199,7 +199,7 @@ pub mod example_argument_parse {}
 /// //  vvvvv_ `async` keyword can be used directly here
 /// pub async fn handle_download(args: EntryDownload) -> Next {
 ///     let file_name = args.pick(()).unpack();
-///     fake_download(file_name).await
+///     fake_download(file_name).await.into()
 /// }
 ///
 /// /// Renders the downloaded file name.
@@ -292,7 +292,7 @@ pub mod example_async_support {}
 ///         .cloned()
 ///         .unwrap_or_else(|| "World".to_string())
 ///         .into();
-///     name
+///     name.into()
 /// }
 ///
 /// // Define renderer `render_name`, used to render `ResultName`
@@ -672,7 +672,7 @@ pub mod example_combine_pathf_dispatch_tree {}
 ///         .pick_or((), "World")
 ///         .unpack()
 ///         .into();
-///     result
+///     result.into()
 /// }
 ///
 /// /// Renders the greeting with the result name and repeat count.
@@ -1026,7 +1026,7 @@ pub mod example_dispatch_tree {}
 /// fn handle_language_selection(args: EntryLanguageSelection) -> Next {
 ///     // You can use Picker to directly parse ProgrammingLanguages
 ///     let lang: ProgrammingLanguages = args.pick(()).unpack();
-///     lang
+///     lang.into()
 /// }
 ///
 /// /// Renders the selected programming language with its name and description.
@@ -1428,7 +1428,7 @@ pub mod example_help {}
 ///         .cloned()
 ///         .unwrap_or_else(|| "World".to_string())
 ///         .into();
-///     name
+///     name.into()
 /// }
 ///
 /// /// Renders the greeting message with the provided name.
@@ -1967,7 +1967,7 @@ pub mod example_pack_err {}
 ///             // Panic happens here, will be caught
 ///             panic!("{}", s)
 ///         }
-///         None => NotPanic::default(),
+///         None => NotPanic::default().into(),
 ///     }
 /// }
 ///
@@ -2161,7 +2161,7 @@ pub mod example_pathfinder {}
 /// #[chain]
 /// fn parse_cd_args(prev: EntryCd) -> Next {
 ///     let join = prev.pick(()).unpack();
-///     StateChangeDirectory::new(join)
+///     StateChangeDirectory::new(join).into()
 /// }
 ///
 /// // Execute directory change
@@ -2323,7 +2323,7 @@ pub mod example_repl_basic {}
 ///     current_dir.current_dir = current_dir
 ///         .current_dir
 ///         .join(args.pick::<String>(()).unpack());
-///     EntryCurrent::default()
+///     EntryCurrent::default().into()
 /// }
 ///
 /// // Define renderer for output current path       _____________ Injected resource

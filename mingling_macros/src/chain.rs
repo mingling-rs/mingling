@@ -9,8 +9,7 @@ use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
 use syn::{Ident, ItemFn, Pat, ReturnType, Signature, Type, TypePath, parse_macro_input};
 
-/// Validates that the return type of the function is `Next`.
-/// Checks whether the return type is `()` (unit).
+/// Checks whether the return type is `()`
 fn is_unit_return_type(sig: &Signature) -> bool {
     match &sig.output {
         ReturnType::Type(_, ty) => match &**ty {
@@ -21,8 +20,9 @@ fn is_unit_return_type(sig: &Signature) -> bool {
     }
 }
 
+/// Validates that the return type is `Next`, `ChainProcess<ThisProgram>`, `()`, or omitted.
 fn validate_return_type(sig: &Signature) -> Result<(), proc_macro2::TokenStream> {
-    // If return type is `()`, it's valid (no Next required)
+    // `()` or omitted is always valid
     if is_unit_return_type(sig) {
         return Ok(());
     }
@@ -31,38 +31,36 @@ fn validate_return_type(sig: &Signature) -> Result<(), proc_macro2::TokenStream>
         ReturnType::Type(_, ty) => match &**ty {
             Type::Path(type_path) => {
                 let last_segment = type_path.path.segments.last().unwrap();
-                if last_segment.ident != "Next" {
-                    return Err(syn::Error::new(
-                        ty.span(),
-                        "Chain function must return `Next` or `()`",
-                    )
-                    .to_compile_error());
+                let ident_str = last_segment.ident.to_string();
+                if ident_str == "Next" || ident_str == "ChainProcess" {
+                    return Ok(());
                 }
-            }
-            _ => {
-                return Err(syn::Error::new(
+                Err(syn::Error::new(
                     ty.span(),
-                    "Chain function must return `Next` or `()`",
+                    "Chain function must return `Next`, `ChainProcess<ThisProgram>`, `()`, or omit the return type",
                 )
-                .to_compile_error());
+                .to_compile_error())
             }
+            _ => Err(syn::Error::new(
+                ty.span(),
+                "Chain function must return `Next`, `ChainProcess<ThisProgram>`, `()`, or omit the return type",
+            )
+            .to_compile_error()),
         },
         ReturnType::Default => {
-            return Err(syn::Error::new(
+            Err(syn::Error::new(
                 sig.span(),
-                "Chain function must specify a return type (must be `Next` or `()`)",
+                "Chain function must specify a return type (must be `Next`, `ChainProcess<ThisProgram>`, or `()`)",
             )
-            .to_compile_error());
+            .to_compile_error())
         }
     }
-    Ok(())
 }
 
-/// Builds the `proc` function implementation that serves as the actual chain
-/// entry point inside the generated `Chain` impl.
+/// Builds the `proc` function implementation inside the generated `Chain` impl.
 ///
-/// * Without resources: delegates directly to the original function.
-/// * With resources: inlines the body and prepends resource bindings.
+/// The user's function body is inlined directly, and its result is converted
+/// via `.into()` to `ChainProcess<ProgramType>`.
 #[allow(unused_variables)]
 fn generate_proc_fn(
     has_resources: bool,
@@ -70,7 +68,6 @@ fn generate_proc_fn(
     program_type: &proc_macro2::TokenStream,
     previous_type: &TypePath,
     prev_param: &Pat,
-    fn_name: &Ident,
     fn_body_stmts: &[syn::Stmt],
     is_async_fn: bool,
     is_unit_return: bool,
@@ -78,59 +75,42 @@ fn generate_proc_fn(
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), program_type);
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
 
-    let body_stmts: &[syn::Stmt] = if is_unit_return && has_resources {
-        let mut stmts = fn_body_stmts.to_vec();
-        stmts.push(syn::Stmt::Expr(
-            syn::parse_quote! {
+    let wrapped_body = if is_async_fn && !mut_resources.is_empty() {
+        wrap_body_with_mut_resources_async(fn_body_stmts, &mut_resources, program_type)
+    } else {
+        wrap_body_with_mut_resources(fn_body_stmts, &mut_resources, program_type, is_unit_return)
+    };
+
+    let proc_body = if is_unit_return {
+        let body_with_ending = if has_resources {
+            quote! {
+                #(#immut_resource_stmts)*
+                #wrapped_body;
                 <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
                 ::to_chain(crate::ResultEmpty)
-            },
-            None,
-        ));
-        // Box::leak to get a &'static [syn::Stmt]
-        Box::leak(Box::new(stmts))
+            }
+        } else {
+            quote! {
+                #wrapped_body;
+                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
+                ::to_chain(crate::ResultEmpty)
+            }
+        };
+        quote! { #body_with_ending }
     } else {
-        fn_body_stmts
-    };
-
-    let wrapped_body = if is_async_fn && !mut_resources.is_empty() {
-        wrap_body_with_mut_resources_async(body_stmts, &mut_resources, program_type)
-    } else {
-        wrap_body_with_mut_resources(body_stmts, &mut_resources, program_type)
-    };
-
-    // When the function returns `()`, wrap the result with ResultEmpty
-    let call_or_wrapped = if is_unit_return {
-        if has_resources {
+        let body = if has_resources {
             quote! {
                 #(#immut_resource_stmts)*
                 #wrapped_body
             }
         } else {
-            let call = if is_async_fn {
-                quote! { #fn_name(#prev_param).await; }
-            } else {
-                quote! { #fn_name(#prev_param); }
-            };
-            quote! {
-                #call
-                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>
-                ::to_chain(crate::ResultEmpty)
-            }
-        }
-    } else if has_resources {
-        quote! {
-            #(#immut_resource_stmts)*
-            #wrapped_body
-        }
-    } else {
-        let call = if is_async_fn {
-            quote! { #fn_name(#prev_param).await.into() }
-        } else {
-            quote! { #fn_name(#prev_param).into() }
+            quote! { #wrapped_body }
         };
+        // Use a let-binding with explicit type annotation so that the inner
+        // body's `.into()` calls resolve correctly (same as the original function).
         quote! {
-            #call
+            let __chain_result: ::mingling::ChainProcess<#program_type> = { #body };
+            __chain_result
         }
     };
 
@@ -138,7 +118,7 @@ fn generate_proc_fn(
     {
         quote! {
             async fn proc(#prev_param: #previous_type) -> ::mingling::ChainProcess<#program_type> {
-                #call_or_wrapped
+                #proc_body
             }
         }
     }
@@ -147,73 +127,14 @@ fn generate_proc_fn(
     {
         quote! {
             fn proc(#prev_param: #previous_type) -> ::mingling::ChainProcess<#program_type> {
-                #call_or_wrapped
-            }
-        }
-    }
-}
-
-/// Generates the original function signature (kept for backwards compatibility /
-/// internal use), with its return type changed to `impl Into<ChainProcess<..>>`.
-#[allow(unused_variables)]
-fn generate_original_fn(
-    fn_attrs: &[syn::Attribute],
-    vis: &syn::Visibility,
-    fn_name: &Ident,
-    inputs: &syn::punctuated::Punctuated<syn::FnArg, syn::Token![,]>,
-    fn_body: &syn::Block,
-    is_async_fn: bool,
-    program_type: &proc_macro2::TokenStream,
-    is_unit_return: bool,
-) -> proc_macro2::TokenStream {
-    // Both unit and Next return types need to produce `impl Into<ChainProcess<ProgramType>>`
-    let return_type = quote! { impl Into<::mingling::ChainProcess<#program_type>> };
-
-    let body = if is_unit_return {
-        quote! {
-            {
-                #fn_body
-                <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
-            }
-        }
-    } else {
-        quote! {
-            {
-                let _: crate::Next;
-                let _: Next;
-                #fn_body
-            }
-        }
-    };
-
-    #[cfg(feature = "async")]
-    {
-        let async_kw = if is_async_fn {
-            quote! { async }
-        } else {
-            quote! {}
-        };
-        quote! {
-            #(#fn_attrs)*
-            #vis #async_kw fn #fn_name(#inputs) -> #return_type {
-                #body
-            }
-        }
-    }
-
-    #[cfg(not(feature = "async"))]
-    {
-        quote! {
-            #(#fn_attrs)*
-            #vis fn #fn_name(#inputs) -> #return_type {
-                #body
+                #proc_body
             }
         }
     }
 }
 
 /// Assembles the final expanded output: hidden struct, `register_chain!` invocation,
-/// `Chain` impl with the `proc` method, and the original function.
+/// `Chain` impl with the `proc` method, and the preserved original function.
 fn generate_struct_and_impl(
     fn_attrs: &[syn::Attribute],
     vis: &syn::Visibility,
@@ -222,7 +143,7 @@ fn generate_struct_and_impl(
     previous_type_str: &proc_macro2::TokenStream,
     program_type: &proc_macro2::TokenStream,
     proc_fn: &proc_macro2::TokenStream,
-    origin_proc_fn: &proc_macro2::TokenStream,
+    original_fn: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     quote! {
         #(#fn_attrs)*
@@ -238,8 +159,8 @@ fn generate_struct_and_impl(
             #proc_fn
         }
 
-        // Keep the original function for internal use
-        #origin_proc_fn
+        // Keep the original function unchanged
+        #original_fn
     }
 }
 
@@ -296,8 +217,6 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     // Prepare building blocks
-    let sig = &input_fn.sig;
-    let inputs = &sig.inputs;
     let fn_body = &input_fn.block;
     let mut fn_attrs = input_fn.attrs.clone();
     fn_attrs.retain(|attr| !attr.path().is_ident("chain"));
@@ -315,14 +234,13 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Always use the default crate-defined program path
     let program_type = crate::default_program_path();
 
-    // Generate the `proc` function
+    // Generate the `proc` function for the Chain impl
     let proc_fn = generate_proc_fn(
         has_resources,
         &resources,
         &program_type,
         &previous_type,
         &prev_param,
-        fn_name,
         &fn_body.stmts,
         #[cfg(feature = "async")]
         is_async_fn,
@@ -331,20 +249,14 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         is_unit_return,
     );
 
-    // Generate the original function
-    let origin_proc_fn = generate_original_fn(
-        &fn_attrs,
-        vis,
-        fn_name,
-        inputs,
-        fn_body,
-        #[cfg(feature = "async")]
-        is_async_fn,
-        #[cfg(not(feature = "async"))]
-        false,
-        &program_type,
-        is_unit_return,
-    );
+    // Preserve the original function untouched, with dead_code allowed
+    // since it may only be called through the Chain trait dispatch.
+    // Note: do NOT add `#vis` here — `input_fn` (ItemFn) already contains its own visibility.
+    let original_fn = quote! {
+        #[allow(dead_code)]
+        #(#fn_attrs)*
+        #input_fn
+    };
 
     // Assemble the final output
     let previous_type_str = quote! { #previous_type };
@@ -356,7 +268,7 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         &previous_type_str,
         &program_type,
         &proc_fn,
-        &origin_proc_fn,
+        &original_fn,
     );
 
     expanded.into()

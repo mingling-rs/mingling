@@ -46,7 +46,7 @@ fn handle_transfer_parse(args: EntryTransfer) -> Next {
         // Convert into ResultFile
         .into();
     // --------- IMPORTANT ---------
-    result
+    result.into()
 }
 
 pack!(ErrorNoNameProvided = ());

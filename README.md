@@ -166,7 +166,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultGreeting::new(greeting)
+    ResultGreeting::new(greeting).into()
 }
 ```
 
@@ -234,7 +234,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .pick::<String>(())                   // positional: first string
         .pick_or::<u8>(["-r", "--repeat"], 1) // optional flag with default
         .unpack();
-    ResultGreeting::new(format!("{} x{}", name, count))
+    ResultGreeting::new(format!("{} x{}", name, count)).into()
 }
 ```
 
@@ -252,7 +252,7 @@ fn handle(args: EntryGreet) -> Next {
         .pick::<Option<String>>(())
         .pick_or::<u8>(["-r", "--repeat"], 1)
         .unpack();
-    ResultGreeting::new(format!("{} x{}", name.unwrap_or_default(), count))
+    ResultGreeting::new(format!("{} x{}", name.unwrap_or_default(), count)).into()
 }
 ```
 
@@ -279,7 +279,7 @@ impl PickableEnum for Language {}
 #[chain]
 fn handle(args: EntryLang) -> Next {
     let lang: Language = args.pick(()).unpack();
-    lang
+    lang.into()
 }
 ```
 
@@ -781,7 +781,7 @@ pack!(ResultDownloaded = String);
 #[chain]
 pub async fn handle_download(args: EntryDownload) -> Next {
     let file = args.pick(()).unpack();
-    download_file(file).await
+    download_file(file).await.into()
 }
 
 async fn download_file(name: String) -> ResultDownloaded {
@@ -843,7 +843,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultGreeting::new(greeting)
+    ResultGreeting::new(greeting).into()
 }
 
 #[renderer]

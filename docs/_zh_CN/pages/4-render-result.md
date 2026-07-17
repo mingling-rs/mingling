@@ -51,7 +51,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
  
 // 4. 用 Renderer 输出结果

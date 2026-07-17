@@ -163,8 +163,10 @@ fn mut_res_binding_name(var_name: &Ident) -> Ident {
     syn::Ident::new(&format!("__{}_binding", var_name), var_name.span())
 }
 
-/// Wraps the function body in nested `__modify_res_and_return_route` closures for
-/// each mutable resource parameter (sync version).
+/// Wraps the function body in mutable resource closures (sync version).
+///
+/// For unit return types: uses `modify_res` (closure returns `()`).
+/// For non-unit return types: uses `__modify_res_and_return_route` (closure returns `ChainProcess<C>`).
 ///
 /// The innermost closure gets the original body, and each mutable parameter wraps
 /// outward from last to first.
@@ -172,6 +174,7 @@ pub(crate) fn wrap_body_with_mut_resources(
     fn_body_stmts: &[syn::Stmt],
     mut_resources: &[&ResourceInjection],
     program_type: &proc_macro2::TokenStream,
+    is_unit_return: bool,
 ) -> proc_macro2::TokenStream {
     let mut wrapped = quote! {
         #(#fn_body_stmts)*
@@ -180,11 +183,19 @@ pub(crate) fn wrap_body_with_mut_resources(
     for res in mut_resources {
         let var_name = &res.var_name;
         let inner_type = &res.inner_type;
-        wrapped = quote! {
-            ::mingling::this::<#program_type>().__modify_res_and_return_route(|#var_name: &mut #inner_type| {
-                #wrapped
-            }).into()
-        };
+        if is_unit_return {
+            wrapped = quote! {
+                ::mingling::this::<#program_type>().modify_res(|#var_name: &mut #inner_type| {
+                    #wrapped
+                })
+            };
+        } else {
+            wrapped = quote! {
+                ::mingling::this::<#program_type>().__modify_res_and_return_route(|#var_name: &mut #inner_type| {
+                    #wrapped
+                })
+            };
+        }
     }
 
     wrapped

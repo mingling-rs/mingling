@@ -51,7 +51,7 @@ fn render_modify_current(args: EntryModifyCurrent, current_dir: &mut ResCurrentD
     current_dir.current_dir = current_dir
         .current_dir
         .join(args.pick::<String>(()).unpack());
-    EntryCurrent::default()
+    EntryCurrent::default().into()
 }
 
 // Define renderer for output current path       _____________ Injected resource

@@ -94,7 +94,7 @@ pack!(ResultList = Vec<String>);
 #[chain]
 fn parse_cd_args(prev: EntryCd) -> Next {
     let join = prev.pick(()).unpack();
-    StateChangeDirectory::new(join)
+    StateChangeDirectory::new(join).into()
 }
 
 // Execute directory change

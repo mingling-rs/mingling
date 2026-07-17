@@ -37,7 +37,7 @@ pack_structural!(ResultInfo = (String, i32));
 fn handle_render(args: EntryRender) -> Next {
     let name = args.inner.first().cloned().unwrap_or_default();
     let age = args.inner.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
-    ResultInfo::new((name, age))
+    ResultInfo::new((name, age)).into()
 }
  
 #[renderer]

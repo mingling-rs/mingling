@@ -47,7 +47,7 @@ fn handle_panic(prev: EntryPanic) -> Next {
             // Panic happens here, will be caught
             panic!("{}", s)
         }
-        None => NotPanic::default(),
+        None => NotPanic::default().into(),
     }
 }
 

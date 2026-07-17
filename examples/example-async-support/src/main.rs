@@ -50,7 +50,7 @@ pack!(ResultDownloaded = String);
 //  vvvvv_ `async` keyword can be used directly here
 pub async fn handle_download(args: EntryDownload) -> Next {
     let file_name = args.pick(()).unpack();
-    fake_download(file_name).await
+    fake_download(file_name).await.into()
 }
 
 /// Renders the downloaded file name.

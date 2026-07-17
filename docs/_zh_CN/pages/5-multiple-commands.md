@@ -20,13 +20,13 @@ pack!(ResultSum = i32);
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let name = args.inner.first().cloned().unwrap_or_else(|| "World".to_string());
-    ResultGreeting::new(name)
+    ResultGreeting::new(name).into()
 }
  
 #[chain]
 fn handle_add(args: EntryAdd) -> Next {
     let sum: i32 = args.inner.iter().filter_map(|s| s.parse::<i32>().ok()).sum();
-    ResultSum::new(sum)
+    ResultSum::new(sum).into()
 }
  
 #[renderer]
@@ -70,9 +70,9 @@ Sum: 6
 @@@dispatcher!("add", CMDAdd => EntryAdd);
 @@@pack!(ResultGreeting = String);
 @@@pack!(ResultSum = i32);
-@@@#[chain] fn handle_greet(_args: EntryGreet) -> Next { ResultGreeting::new("ok".into()) }
+@@@#[chain] fn handle_greet(_args: EntryGreet) -> Next { ResultGreeting::new("ok".into()).into() }
 @@@#[renderer] fn render_greet(_greeting: ResultGreeting) -> RenderResult { RenderResult::new() }
-@@@#[chain] fn handle_add(_args: EntryAdd) -> Next { ResultSum::new(0) }
+@@@#[chain] fn handle_add(_args: EntryAdd) -> Next { ResultSum::new(0).into() }
 @@@#[renderer] fn render_sum(_sum: ResultSum) -> RenderResult { RenderResult::new() }
 fn main() {
     let mut program = ThisProgram::new();

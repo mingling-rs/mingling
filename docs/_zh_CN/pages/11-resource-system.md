@@ -57,7 +57,7 @@ fn render_path(result: ResultPath) -> RenderResult {
 #[chain]
 fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
     counter.0 += 1;
-    ResultDone::default()
+    ResultDone::default().into()
 }
  
 #[renderer]

@@ -24,7 +24,7 @@ pack!(StateFoo = ());
  
 #[chain]
 async fn handle_state_foo(foo: StateFoo) -> Next {
-    StateFoo::new(())
+    StateFoo::new(()).into()
 }
 ```
  
@@ -160,7 +160,7 @@ use mingling::macros::entry;
 pack!(EntryHello = Vec<String>);
  
 fn main() {
-    let result = handle_hello(entry!("--name", "Bob")).into();
+    let result: Next = handle_hello(entry!("--name", "Bob")).into();
     // ... assertion logic here
 }
  

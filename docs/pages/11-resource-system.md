@@ -57,7 +57,7 @@ Use `&mut T` to inject a mutable resource:
 #[chain]
 fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
     counter.0 += 1;
-    ResultDone::default()
+    ResultDone::default().into()
 }
  
 #[renderer]

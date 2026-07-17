@@ -40,7 +40,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .cloned()
         .unwrap_or_else(|| "World".to_string())
         .into();
-    name
+    name.into()
 }
 
 #[renderer]

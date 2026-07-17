@@ -14,7 +14,7 @@ pub fn handle_my(args: EntryHello) -> Next {
         .cloned()
         .unwrap_or_else(|| "World".to_string())
         .into();
-    name
+    name.into()
 }
 
 #[renderer]

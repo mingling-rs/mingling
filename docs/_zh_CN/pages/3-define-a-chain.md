@@ -24,7 +24,7 @@ fn handle_greet(args: EntryGreet) -> Next {
     // args 就是用户输入经过匹配后剩下的参数
     let name = args.inner.first().cloned().unwrap_or_else(|| "World".to_string());
     // 把结果包装成 Next，告诉调度器下一步去哪
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -88,7 +88,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .cloned()
         .unwrap_or_else(|| "World".to_string());
  
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -112,7 +112,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
  
 fn main() {

@@ -45,13 +45,12 @@ where
 
     /// Internal syntax for the `&mut MyResource` syntax of #[chain], do not use directly
     #[doc(hidden)]
-    pub fn __modify_res_and_return_route<Res, Return>(
+    pub fn __modify_res_and_return_route<Res>(
         &self,
-        f: impl FnOnce(&mut Res) -> Return,
-    ) -> impl Into<ChainProcess<C>>
+        f: impl FnOnce(&mut Res) -> ChainProcess<C>,
+    ) -> ChainProcess<C>
     where
         Res: 'static + Default + ResourceMarker + Send + Sync,
-        Return: Into<ChainProcess<C>>,
     {
         let Ok(mut guard) = self.resources.lock() else {
             let mut default_res = Res::res_default();

@@ -24,7 +24,7 @@ fn handle_greet(args: EntryGreet) -> Next {
     // args contains the remaining params after matching user input
     let name = args.inner.first().cloned().unwrap_or_else(|| "World".to_string());
     // Wrap the result into Next, telling the dispatcher where to go next
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -88,7 +88,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .cloned()
         .unwrap_or_else(|| "World".to_string());
  
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -112,7 +112,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
  
 fn main() {

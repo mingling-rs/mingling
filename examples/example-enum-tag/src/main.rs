@@ -79,7 +79,7 @@ dispatcher!("lang-select", CMDLanguageSelection => EntryLanguageSelection);
 fn handle_language_selection(args: EntryLanguageSelection) -> Next {
     // You can use Picker to directly parse ProgrammingLanguages
     let lang: ProgrammingLanguages = args.pick(()).unpack();
-    lang
+    lang.into()
 }
 
 /// Renders the selected programming language with its name and description.

@@ -32,7 +32,7 @@ Now let's look at `Picker` in action:
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev.pick_or((), "World").unpack();
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -47,7 +47,7 @@ Breaking down the example above:
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
 let name = prev.pick_or((), "World").unpack();
-@@@ResultName::new(name)
+@@@ResultName::new(name).into()
 @@@}
 ```
  
@@ -82,7 +82,7 @@ If your program needs to parse flag args (e.g., `greet --name Alice`), do this:
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev.pick_or(["--name", "-n"], "World").unpack();
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -124,7 +124,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
         .pick::<u32>(["--id", "-I"])
         .unpack();
  
-    ResultInfo::new((name, age, id))
+    ResultInfo::new((name, age, id)).into()
 }
 ```
  
@@ -224,7 +224,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
         })
         .unpack();
  
-    ResultName::new(name)
+    ResultName::new(name).into()
 }
 ```
  
@@ -345,7 +345,7 @@ impl Pickable for Address {
 #[chain]
 fn handle_connect_entry(prev: EntryConnect) -> Next {
     let address: Address = prev.pick("--addr").unpack();
-    ResultConnected::new(address)
+    ResultConnected::new(address).into()
 }
  
 #[renderer]
@@ -387,7 +387,7 @@ impl PickableEnum for Fruits {}
 #[chain]
 fn handle_eat_entry(prev: EntryEat) -> Next {
     let fruit: Fruits = prev.pick("--fruit").unpack();
-    ResultFruit::new(fruit)
+    ResultFruit::new(fruit).into()
 }
  
 #[renderer]

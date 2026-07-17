@@ -55,7 +55,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .cloned()
         .unwrap_or_else(|| "World".to_string())
         .into();
-    name
+    name.into()
 }
 
 // Define renderer `render_name`, used to render `ResultName`

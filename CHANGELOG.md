@@ -160,6 +160,37 @@ None
 
     All examples, docs, and test cases across the repository have been updated to use the new pattern: creating a `RenderResult` with `RenderResult::new()` or `RenderResult::default()`, writing with `write!`/`writeln!` from `std::io::Write`, and returning the result.
 
+2. **[`macros:chain`]** The `#[chain]` macro's return type requirement has been relaxed. Previously, chain functions were required to return `Next` or `()` (with `()` auto-converting to `ResultEmpty`). Now, chain functions can also return `ChainProcess<ThisProgram>` directly, or omit the return type entirely (which defaults to `()` → `ResultEmpty`).
+
+    The return value of chain functions is now wrapped in an explicit `.into()` call inside the generated `proc` function, ensuring consistent conversion to `ChainProcess<ProgramType>`. As a result, **all downstream code that previously relied on implicit conversion from packed types to `Next`/`ChainProcess` must now call `.into()` explicitly**.
+
+    ```rust
+    // Before — implicit conversion worked because the generated proc
+    // function was `fn proc(...) -> impl Into<ChainProcess<...>>`
+    #[chain]
+    fn handle_greet(args: EntryGreet) -> Next {
+        let name = /* ... */;
+        ResultGreeting::new(name) // implicitly converted
+    }
+
+    // After — the generated proc function is `fn proc(...) -> ChainProcess<...>`,
+    // so the body must produce ChainProcess explicitly
+    #[chain]
+    fn handle_greet(args: EntryGreet) -> Next {
+        let name = /* ... */;
+        ResultGreeting::new(name).into() // explicit conversion required
+    }
+    ```
+
+    The key advantage of this design is that **the original function body and the expanded `proc` function body are now identical** — the macro only adjusts the function signature and inserts an outermost `.into()` wrapper, without rewriting the internal return expressions. This means the semantics of the original code are perfectly preserved: there is no invisible type coercion happening mid-body, and the behavior you write in the source is exactly what executes at runtime. If a bug arises, the expanded code mirrors the source almost one-to-one, making debugging straightforward.
+
+    This change also applies to:
+    - Chain functions returning `()` (unit), where the body's final expression with `.into()` is replaced by an explicit `ResultEmpty::to_chain()` call.
+    - Chain functions using `&mut` resource injection with non-unit returns: the inner closure now calls `__modify_res_and_return_route` (which returns `ChainProcess<C>` directly) instead of relying on `.into()` conversion.
+    - The `__modify_res_and_return_route` method signature changed from accepting `impl Into<ChainProcess<C>>` to returning `ChainProcess<C>` directly.
+
+    All examples, docs, and test cases across the repository have been updated to use `.into()` where packed types are returned from chain functions.
+
 ---
 
 ## Release 0.2.2 (2026-07-10)
