@@ -7,6 +7,9 @@ pub use dirs::*;
 mod exit_code;
 pub use exit_code::*;
 
+#[cfg(feature = "picker")]
+pub mod picker;
+
 #[cfg(feature = "structural_renderer")]
 mod structural_renderer;
 
