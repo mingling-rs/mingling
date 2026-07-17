@@ -1,8 +1,3 @@
-<p align="center">
-    <a href="https://github.com/mingling-rs/mingling">
-        <img alt="Mingling" src="https://github.com/mingling-rs/mingling/raw/main/docs/res/icon2.png" width="50%">
-    </a>
-</p>
 <h1 align="center">Mìng Lìng - 命令</h1>
 
 <p align="center">
