@@ -3,6 +3,22 @@ use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
 use crate::setups::picker::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG};
 
+/// Helper: picks a boolean flag from the program arguments, calls `f` with the
+/// flag value, then replaces the program arguments with the remaining args.
+fn pick_flag<'a, C>(
+    program: &mut Program<C>,
+    flag: &PickerArg<'a, Flag>,
+    f: impl FnOnce(bool, &mut Program<C>),
+) where
+    C: ProgramCollect<Enum = C>,
+{
+    let args = program.take_args();
+    let remains_arg = PickerArg::<PickerArgs<'a>>::new(&[], None, true);
+    let (active, remains) = args.pick(flag).pick(&remains_arg).unwrap();
+    f(*active, program);
+    program.replace_args(remains.into());
+}
+
 /// Performs basic program initialization:
 ///
 /// - Collects `--quiet` flag to control message rendering
@@ -40,11 +56,9 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let args = program.take_args();
-        let remains_arg = PickerArg::<PickerArgs<'a>>::new(&[], None, true);
-        let (active, remains) = args.pick(self.flag).pick(&remains_arg).unwrap();
-        program.user_context.help = *active;
-        program.replace_args(remains.into());
+        pick_flag(program, self.flag, |active, ctx| {
+            ctx.user_context.help = active;
+        });
     }
 }
 
@@ -73,14 +87,12 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let args = program.take_args();
-        let remains_arg = PickerArg::<PickerArgs<'a>>::new(&[], None, true);
-        let (active, remains) = args.pick(self.flag).pick(&remains_arg).unwrap();
-        if *active {
-            program.stdout_setting.render_output = false;
-            program.stdout_setting.error_output = false;
-        }
-        program.replace_args(remains.into());
+        pick_flag(program, self.flag, |active, ctx| {
+            if active {
+                ctx.stdout_setting.render_output = false;
+                ctx.stdout_setting.error_output = false;
+            }
+        });
     }
 }
 
@@ -109,13 +121,11 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let args = program.take_args();
-        let remains_arg = PickerArg::<PickerArgs<'a>>::new(&[], None, true);
-        let (active, remains) = args.pick(self.flag).pick(&remains_arg).unwrap();
-        if *active {
-            program.user_context.confirm = true;
-        }
-        program.replace_args(remains.into());
+        pick_flag(program, self.flag, |active, ctx| {
+            if active {
+                ctx.user_context.confirm = true;
+            }
+        });
     }
 }
 

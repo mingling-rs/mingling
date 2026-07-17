@@ -21,14 +21,16 @@ internal_repeat!(1..=32 => {
 internal_repeat!(1..=32 => {
     impl<'a, (T$,+), Route> PickerPattern$<'a, (T$,+), Route>
     where (T$: Pickable<'a>,+) {
-        /// Unwraps the result, panicking if a route was selected.
+        /// Unwraps the result, panicking if a route was selected or a required
+        /// value is missing.
         ///
         /// # Panics
         ///
-        /// Panics if a route was selected.
+        /// Panics if a route was selected, or if a required argument was not
+        /// provided by the user.
         pub fn unwrap(self) -> ((T$,+)) {
             let p = self.parse();
-            ((p.v$.unwrap(),+))
+            ((p.v$.expect(concat!("missing required argument at position ", $)),+))
         }
 
         /// Returns the individual option values without checking the route.
