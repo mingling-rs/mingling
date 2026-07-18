@@ -5,6 +5,3 @@ pub use basic::*;
 mod structural_renderer;
 #[cfg(feature = "structural_renderer")]
 pub use structural_renderer::*;
-
-mod consts;
-pub use consts::*;

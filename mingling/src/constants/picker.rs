@@ -45,6 +45,17 @@ pub const CONFIRM_FLAG: PickerArg<Flag> = PickerArg::<Flag> {
     internal_type: PhantomData,
 };
 
+/// Renderer flag: explicitly specify the Structural Renderer argument.
+/// - `full`: `["renderer"]`
+/// - `short`: (none)
+#[cfg(feature = "structural_renderer")]
+pub const RENDERER_ARG: PickerArg<String> = PickerArg::<String> {
+    full: &["renderer"],
+    short: None,
+    positional: false,
+    internal_type: PhantomData,
+};
+
 /// JSON flag: enable JSON output format.
 /// - `full`: `["json"]`
 /// - `short`: (none)

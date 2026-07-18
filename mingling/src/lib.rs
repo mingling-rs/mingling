@@ -16,12 +16,13 @@ pub mod parser;
 
 /// `Mingling` argument parser (Picker2)
 #[cfg(feature = "picker")]
-pub mod picker {
-    pub use arg_picker::*;
+pub mod picker;
 
-    pub mod parselib {
-        pub use arg_picker::parselib::*;
-    }
+mod constants;
+
+/// Constants used throughout the Mingling framework.
+pub mod consts {
+    pub use crate::constants::*;
 }
 
 /// Re-export of all macros from `mingling_macros`.

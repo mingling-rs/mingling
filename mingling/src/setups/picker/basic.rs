@@ -1,26 +1,10 @@
-use arg_picker::{IntoPicker, PickerArg, value::Flag};
+use arg_picker::{PickerArg, value::Flag};
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
 use crate::{
-    setup::picker::REMAINS,
-    setups::picker::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG},
+    consts::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG},
+    picker::pick_global_flag,
 };
-
-/// Helper: picks a boolean flag from the program arguments, calls `f` with the
-/// flag value, then replaces the program arguments with the remaining args.
-fn pick_flag<'a, C>(
-    program: &mut Program<C>,
-    flag: &PickerArg<'a, Flag>,
-    f: impl FnOnce(bool, &mut Program<C>),
-) where
-    C: ProgramCollect<Enum = C>,
-{
-    let args = program.take_args();
-    let remains_arg = PickerArg::<PickerArgs<'a>>::new(&[], None, true);
-    let (active, remains) = args.pick(flag).pick(&remains_arg).unwrap();
-    f(*active, program);
-    program.replace_args(remains.into());
-}
 
 /// Performs basic program initialization:
 ///
@@ -59,9 +43,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        pick_flag(program, self.flag, |active, ctx| {
-            ctx.user_context.help = active;
-        });
+        pick_global_flag(program, self.flag);
     }
 }
 
@@ -90,12 +72,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        pick_flag(program, self.flag, |active, ctx| {
-            if active {
-                ctx.stdout_setting.render_output = false;
-                ctx.stdout_setting.error_output = false;
-            }
-        });
+        pick_global_flag(program, self.flag);
     }
 }
 
@@ -124,11 +101,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        pick_flag(program, self.flag, |active, ctx| {
-            if active {
-                ctx.user_context.confirm = true;
-            }
-        });
+        pick_global_flag(program, self.flag);
     }
 }
 

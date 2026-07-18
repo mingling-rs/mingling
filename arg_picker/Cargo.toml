@@ -8,10 +8,6 @@ authors = ["Weicao-CatilGrass"]
 readme = "README.md"
 description = "A lightweight, type-safe CLI argument parser"
 
-[features]
-mingling_support = ["dep:mingling_core", "arg-picker-macros/mingling_support"]
-
 [dependencies]
-mingling_core = { workspace = true, optional = true }
 arg-picker-macros.workspace = true
 just_fmt.workspace = true

@@ -158,6 +158,15 @@ impl<'a> IntoIterator for &'a PickerArgs<'a> {
     }
 }
 
+impl<'a, Route> From<PickerArgs<'a>> for Picker<'a, Route> {
+    fn from(args: PickerArgs<'a>) -> Self {
+        Picker {
+            route_phantom: PhantomData,
+            args,
+        }
+    }
+}
+
 impl<'a, Route> From<&'a [&'a str]> for Picker<'a, Route> {
     fn from(value: &'a [&'a str]) -> Self {
         Picker {
@@ -428,10 +437,9 @@ impl<'a> IntoPicker<'a> for Vec<String> {
     }
 }
 
-// Private helper: shared construction logic for `PickerPattern1`.
-// Both `Picker::pick` and `IntoPicker::pick` delegate to this.
 impl<'a, Route> Picker<'a, Route> {
-    pub(crate) fn build_pattern1<N>(
+    /// Build the PickerPattern via Arguments
+    pub fn build_pattern1<N>(
         args: PickerArgs<'a>,
         arg: &'a PickerArg<'a, N>,
         error_route: Option<Route>,

@@ -1,8 +1,6 @@
-use std::marker::PhantomData;
-
 use mingling_core::{ChainProcess, Groupped, ProgramCollect};
 
-use crate::{Pickable, Picker, PickerArg, PickerArgs, PickerPattern1};
+use crate::{picker::Pickable, picker::Picker, picker::PickerArg, picker::PickerPattern1};
 
 /// Trait for converting Mingling entry types (types that implement `Groupped<R>` and `Into<Vec<String>>`)
 /// into [`Picker`] instances for a given route type `R`.
@@ -40,7 +38,7 @@ pub trait EntryPicker<'a, This> {
         Next: Pickable<'a> + Default + Sized,
     {
         let picker = Self::to_picker(self);
-        Picker::build_pattern1(picker.args, arg.into(), None)
+        Picker::build_pattern1(picker.into_args(), arg.into(), None)
     }
 
     /// Starts building a picker pattern with the first argument, using a default value provider.
@@ -123,9 +121,6 @@ where
 {
     fn to_picker(self) -> Picker<'a, ChainProcess<This>> {
         let args = self.into();
-        Picker {
-            route_phantom: PhantomData,
-            args: PickerArgs::Owned(args),
-        }
+        Picker::from(args)
     }
 }

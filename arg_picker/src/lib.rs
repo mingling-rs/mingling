@@ -29,13 +29,8 @@ pub mod value;
 /// use arg_picker::prelude::*;
 /// ```
 pub mod prelude {
-    pub use crate::macros::arg;
-
-    #[cfg(not(feature = "mingling_support"))]
     pub use crate::IntoPicker;
-
-    #[cfg(feature = "mingling_support")]
-    pub use crate::corebind::EntryPicker;
+    pub use crate::macros::arg;
 }
 
 /// Re-export of the `arg_picker_macros` crate
@@ -53,10 +48,3 @@ pub mod matcher_needed {
     pub use crate::PickerArgInfo;
     pub use crate::parselib::{MaskedArg, Matcher, ParserStyle};
 }
-
-#[cfg(feature = "mingling_support")]
-mod corebind;
-
-#[allow(unused_imports)]
-#[cfg(feature = "mingling_support")]
-pub use corebind::*;

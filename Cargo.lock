@@ -76,7 +76,6 @@ version = "0.1.0"
 dependencies = [
  "arg-picker-macros",
  "just_fmt 0.2.0",
- "mingling_core",
 ]
 
 [[package]]
