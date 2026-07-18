@@ -43,7 +43,10 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        pick_global_flag(program, self.flag);
+        let help = pick_global_flag(program, self.flag);
+        if help {
+            program.user_context.help = true;
+        }
     }
 }
 
@@ -72,7 +75,10 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        pick_global_flag(program, self.flag);
+        let help = pick_global_flag(program, self.flag);
+        if help {
+            program.stdout_setting.quiet = true;
+        }
     }
 }
 
@@ -101,7 +107,10 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        pick_global_flag(program, self.flag);
+        let help = pick_global_flag(program, self.flag);
+        if help {
+            program.user_context.confirm = true;
+        }
     }
 }
 
