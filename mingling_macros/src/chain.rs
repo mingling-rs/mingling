@@ -20,41 +20,16 @@ fn is_unit_return_type(sig: &Signature) -> bool {
     }
 }
 
-/// Validates that the return type is `Next`, `ChainProcess<ThisProgram>`, `()`, or omitted.
+/// Validates that the return type is acceptable.
+/// Accepts `()`, `Next`, `ChainProcess<...>`, or any type that can
+/// be converted to `ChainProcess` via `.into()` (i.e. any pack type).
 fn validate_return_type(sig: &Signature) -> Result<(), proc_macro2::TokenStream> {
     // `()` or omitted is always valid
     if is_unit_return_type(sig) {
         return Ok(());
     }
 
-    match &sig.output {
-        ReturnType::Type(_, ty) => match &**ty {
-            Type::Path(type_path) => {
-                let last_segment = type_path.path.segments.last().unwrap();
-                let ident_str = last_segment.ident.to_string();
-                if ident_str == "Next" || ident_str == "ChainProcess" {
-                    return Ok(());
-                }
-                Err(syn::Error::new(
-                    ty.span(),
-                    "Chain function must return `Next`, `ChainProcess<ThisProgram>`, `()`, or omit the return type",
-                )
-                .to_compile_error())
-            }
-            _ => Err(syn::Error::new(
-                ty.span(),
-                "Chain function must return `Next`, `ChainProcess<ThisProgram>`, `()`, or omit the return type",
-            )
-            .to_compile_error()),
-        },
-        ReturnType::Default => {
-            Err(syn::Error::new(
-                sig.span(),
-                "Chain function must specify a return type (must be `Next`, `ChainProcess<ThisProgram>`, or `()`)",
-            )
-            .to_compile_error())
-        }
-    }
+    Ok(())
 }
 
 /// Builds the `proc` function implementation inside the generated `Chain` impl.
@@ -71,6 +46,7 @@ fn generate_proc_fn(
     fn_body_stmts: &[syn::Stmt],
     is_async_fn: bool,
     is_unit_return: bool,
+    origin_return_type: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), program_type);
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
@@ -106,11 +82,16 @@ fn generate_proc_fn(
         } else {
             quote! { #wrapped_body }
         };
-        // Use a let-binding with explicit type annotation so that the inner
-        // body's `.into()` calls resolve correctly (same as the original function).
+        // Convert the body result to `ChainProcess` using the user-declared
+        // return type as the source type for a fully-qualified `Into` call.
+        // This works for both:
+        // - `-> Next` / `-> ChainProcess`: identity `From<T> for T`
+        // - `-> PackType`: `Into<ChainProcess>` from pack!/derive
         quote! {
-            let __chain_result: ::mingling::ChainProcess<#program_type> = { #body };
-            __chain_result
+            let __chain_result = { #body };
+            <#origin_return_type as ::std::convert::Into<
+                ::mingling::ChainProcess<#program_type>
+            >>::into(__chain_result)
         }
     };
 
@@ -234,6 +215,12 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Always use the default crate-defined program path
     let program_type = crate::default_program_path();
 
+    // Extract the user's return type for the explicit Into turbofish
+    let origin_return_type = match &input_fn.sig.output {
+        ReturnType::Type(_, ty) => quote! { #ty },
+        ReturnType::Default => quote! { () },
+    };
+
     // Generate the `proc` function for the Chain impl
     let proc_fn = generate_proc_fn(
         has_resources,
@@ -247,6 +234,7 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         #[cfg(not(feature = "async"))]
         false,
         is_unit_return,
+        &origin_return_type,
     );
 
     // Preserve the original function untouched, with dead_code allowed
