@@ -218,7 +218,10 @@ pub mod prelude {
     pub use crate::parser::AsPicker;
 
     #[cfg(feature = "picker")]
-    pub use arg_picker::prelude::*;
+    pub use arg_picker::prelude::arg;
+
+    #[cfg(feature = "picker")]
+    pub use crate::picker::EntryPicker;
 
     /// Used to enable the `writeln!` macro for `RenderResult`
     #[cfg(feature = "core")]
