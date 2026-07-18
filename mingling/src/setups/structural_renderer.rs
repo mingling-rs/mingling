@@ -1,8 +1,16 @@
+#![allow(deprecated)]
+
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
 /// Sets up the structural renderer for the program:
 ///
 /// - Adds a `--renderer` global argument to specify the renderer type
+#[cfg_attr(
+    feature = "picker",
+    deprecated(
+        note = "When the `picker` feature is enabled, you can use `mingling::setup::picker::StructuralRendererSimpleSetup` instead"
+    )
+)]
 pub struct StructuralRendererSimpleSetup;
 
 impl<C> ProgramSetup<C> for StructuralRendererSimpleSetup
@@ -25,6 +33,12 @@ where
 ///   * `--toml` for TOML output
 ///   * `--ron` for RON output
 ///   * `--ron-pretty` for pretty-printed RON output
+#[cfg_attr(
+    feature = "picker",
+    deprecated(
+        note = "When the `picker` feature is enabled, you can use `mingling::setup::picker::StructuralRendererSetup` instead"
+    )
+)]
 pub struct StructuralRendererSetup;
 
 impl<C> ProgramSetup<C> for StructuralRendererSetup

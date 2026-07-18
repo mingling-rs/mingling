@@ -1,3 +1,6 @@
+// `mling` has not been replaced from `parser` to `picker` yet
+#![allow(deprecated)]
+
 use crate::{
     CMDCompletion, ErrorDispatcherNotFound, Next, ThisProgram,
     display::markdown,
