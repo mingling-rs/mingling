@@ -38,8 +38,8 @@ Additionally, the project is currently developed by me alone ([Weicao-CatilGrass
 Mingling abstracts the behavior of a program's lifecycle into three phases: **Dispatch**, **Execution**, and **Rendering**. Each phase is connected by types — the output of the current phase becomes the input of the next phase. For example:
 
 ```rust
-dispatcher!("current", CMDCurrent => EntryGreet);
-pack!(StateNext => ());
+dispatcher!("current", CMDCurrent => EntryCurrent);
+pack!(StateNext = ());
 
 #[chain]
 fn handle_current(_: EntryCurrent) -> StateNext {
@@ -128,15 +128,15 @@ features = []
   - [x] [[0.1.9](https://docs.rs/mingling/0.1.9/mingling/)] [`core`] [`repl`] Provides REPL capability (`program.exec_repl();`)
   - [x] [[0.2.0](https://docs.rs/mingling/0.2.0/mingling/)] Complete documentation, tests, and examples
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
-  - [ ] [`mling` / `mingling-cli`]
-    - [ ] **Mingling** Linter
-    - [ ] **Mingling** Project Generator
-    - [ ] **Mingling** Program Installer & Manager (For development)
-    - [ ] Helpdoc Editor
-  - [ ] [`picker`] A more efficient and intelligent argument parser
-  - [x] [`macros`] Remove `r_print!` / `r_println!` macros
+    - [ ] [`mling` / `mingling-cli`]
+        - [ ] **Mingling** Linter
+        - [ ] **Mingling** Project Generator
+        - [ ] **Mingling** Program Installer & Manager (For development)
+        - [ ] Helpdoc Editor
+    - [ ] [`picker`] A more efficient and intelligent argument parser
+    - [x] [`macros`] Remove `r_print!` / `r_println!` macros
 - [ ] Milestone.3 "Unplanned"
-  - [ ] ...
+    - [ ] ...
 
 ## Unplanned Features
 
