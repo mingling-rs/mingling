@@ -743,6 +743,10 @@ where
     }
 }
 
+/// Trait for types that can be converted into a `Picker` to extract values from command-line arguments.
+///
+/// This trait provides a convenient way to convert a value (such as `Vec<String>`, `&[String]`, etc.)
+/// into a `Picker` and immediately start extracting values associated with specific flags.
 pub trait AsPicker
 where
     Self: Into<Vec<String>>,

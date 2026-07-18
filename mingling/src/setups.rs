@@ -7,6 +7,10 @@ pub use dirs::*;
 mod exit_code;
 pub use exit_code::*;
 
+/// Picker's `ProgramSetup` variant.
+///
+/// Internally does not use its own argument parsing,
+/// but relies on `arg_picker`'s argument parsing capability.
 #[cfg(feature = "picker")]
 pub mod picker;
 

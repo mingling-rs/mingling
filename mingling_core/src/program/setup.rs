@@ -1,9 +1,26 @@
 use crate::{ProgramCollect, program::Program};
 
+/// Trait for defining initialization/setup logic for a `Program`.
+///
+/// Implementors can define custom setup behavior that will be executed
+/// when the program is initialized via [`Program::with_setup`].
+///
+/// # Type Parameters
+///
+/// * `C` - The program collect type, which must implement [`ProgramCollect`]
+///   and have `Enum = C` (i.e., it collects itself).
 pub trait ProgramSetup<C>
 where
     C: ProgramCollect<Enum = C>,
 {
+    /// Perform setup on the given program.
+    ///
+    /// This method consumes the setup instance (`self`) and is called once
+    /// during program initialization.
+    ///
+    /// # Arguments
+    ///
+    /// * `program` - A mutable reference to the [`Program`] being set up.
     fn setup(self, program: &mut Program<C>);
 }
 
