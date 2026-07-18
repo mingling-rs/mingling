@@ -1,7 +1,10 @@
-use arg_picker::{IntoPicker, PickerArg, PickerArgs, value::Flag};
+use arg_picker::{IntoPicker, PickerArg, value::Flag};
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
-use crate::setups::picker::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG};
+use crate::{
+    setup::picker::REMAINS,
+    setups::picker::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG},
+};
 
 /// Helper: picks a boolean flag from the program arguments, calls `f` with the
 /// flag value, then replaces the program arguments with the remaining args.

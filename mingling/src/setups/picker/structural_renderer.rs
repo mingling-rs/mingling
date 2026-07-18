@@ -1,8 +1,11 @@
-use arg_picker::{IntoPicker, PickerArg, PickerArgs};
+use arg_picker::IntoPicker;
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
-use crate::setups::picker::{
-    JSON_FLAG, JSON_PRETTY_FLAG, RON_FLAG, RON_PRETTY_FLAG, TOML_FLAG, YAML_FLAG,
+use crate::{
+    setup::picker::REMAINS,
+    setups::picker::{
+        JSON_FLAG, JSON_PRETTY_FLAG, RON_FLAG, RON_PRETTY_FLAG, TOML_FLAG, YAML_FLAG,
+    },
 };
 
 /// Sets up the structural renderer for the program:
@@ -47,7 +50,6 @@ fn process_renderer_flags<C>(args: Vec<String>, program: &mut Program<C>) -> Vec
 where
     C: ProgramCollect<Enum = C>,
 {
-    let remains_arg = PickerArg::<PickerArgs>::new(&[], None, true);
     let (json, json_pretty, yaml, toml, ron, ron_pretty, remains) = args
         .pick(&JSON_FLAG)
         .pick(&JSON_PRETTY_FLAG)
@@ -55,7 +57,7 @@ where
         .pick(&TOML_FLAG)
         .pick(&RON_FLAG)
         .pick(&RON_PRETTY_FLAG)
-        .pick(&remains_arg)
+        .pick(&REMAINS)
         .unwrap();
 
     #[cfg(feature = "json_serde_fmt")]
