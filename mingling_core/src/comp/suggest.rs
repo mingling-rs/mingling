@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use std::collections::BTreeSet;
 
 use crate::ShellContext;
@@ -30,6 +32,12 @@ impl Suggest {
 
     /// Filters out already typed flag arguments from suggestion results.
     #[must_use]
+    #[cfg_attr(
+        feature = "picker",
+        deprecated(
+            note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
+        )
+    )]
     pub fn strip_typed_argument(self, ctx: &ShellContext) -> Self {
         ctx.strip_typed_argument(self)
     }

@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use std::collections::HashSet;
 
 use crate::{Flag, ShellFlag, Suggest};
@@ -115,6 +117,13 @@ impl ShellContext {
     ///     // }
     /// }
     /// ```
+    #[must_use]
+    #[cfg_attr(
+        feature = "picker",
+        deprecated(
+            note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
+        )
+    )]
     pub fn filling_argument_first(&self, flag: impl Into<Flag>) -> bool {
         let flag = flag.into();
         if self.filling_argument(&flag) {
@@ -153,6 +162,13 @@ impl ShellContext {
     ///     // }
     /// }
     /// ```
+    #[must_use]
+    #[cfg_attr(
+        feature = "picker",
+        deprecated(
+            note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
+        )
+    )]
     pub fn filling_argument(&self, flag: impl Into<Flag>) -> bool {
         for f in flag.into().iter() {
             if self.previous_word == **f {
@@ -190,6 +206,12 @@ impl ShellContext {
     /// }
     /// ```
     #[must_use]
+    #[cfg_attr(
+        feature = "picker",
+        deprecated(
+            note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
+        )
+    )]
     pub fn typing_argument(&self) -> bool {
         #[cfg(target_os = "windows")]
         {
@@ -208,6 +230,12 @@ impl ShellContext {
     /// when the user has already typed certain flags. The method processes both
     /// regular suggestion sets and file completion suggestions differently.
     #[must_use]
+    #[cfg_attr(
+        feature = "picker",
+        deprecated(
+            note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
+        )
+    )]
     pub fn strip_typed_argument(&self, suggest: Suggest) -> Suggest {
         let typed = Self::get_typed_arguments(self);
         match suggest {
@@ -225,6 +253,12 @@ impl ShellContext {
     /// which typically represent command-line flags or options. It returns a vector
     /// containing these flag strings, converted to owned `String` values.
     #[must_use]
+    #[cfg_attr(
+        feature = "picker",
+        deprecated(
+            note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
+        )
+    )]
     pub fn get_typed_arguments(&self) -> HashSet<String> {
         self.all_words
             .iter()

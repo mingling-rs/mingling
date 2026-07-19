@@ -50,7 +50,7 @@ dispatch_tree = ["mingling_core/dispatch_tree", "mingling_macros/dispatch_tree"]
 repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
 parser = ["dep:size"]
-picker = ["dep:arg-picker", "arg-picker/mingling_support"]
+picker = ["mingling_core/picker", "dep:arg-picker", "arg-picker/mingling_support"]
 pathf = ["mingling_core/pathf", "mingling_macros/pathf"]
 
 structural_renderer = [

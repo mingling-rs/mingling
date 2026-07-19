@@ -15,6 +15,7 @@ nightly = []
 default = []
 async = []
 builds = []
+picker = []
 
 dispatch_tree = []
 structural_renderer = ["dep:serde"]
