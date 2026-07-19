@@ -21,3 +21,6 @@ pub mod node;
 
 #[doc(hidden)]
 pub mod renderer;
+
+#[doc(hidden)]
+pub mod routable;

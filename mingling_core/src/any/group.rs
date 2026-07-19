@@ -1,4 +1,4 @@
-use crate::{AnyOutput, ChainProcess};
+use crate::{AnyOutput, ChainProcess, ProgramCollect, Routable};
 
 /// Used to mark a type with a unique enum ID, assisting dynamic dispatch
 ///
@@ -30,5 +30,19 @@ where
         Self: Send,
     {
         AnyOutput::new(self).route_renderer()
+    }
+}
+
+impl<T, C> Routable<C> for T
+where
+    C: ProgramCollect<Enum = C>,
+    T: Grouped<C> + Send,
+{
+    fn to_chain(self) -> ChainProcess<C> {
+        T::to_chain(self)
+    }
+
+    fn to_render(self) -> ChainProcess<C> {
+        T::to_render(self)
     }
 }

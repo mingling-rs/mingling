@@ -521,20 +521,25 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
     pack_err::pack_err_structural(input)
 }
 
-/// Early-returns an error from a `Result`, converting the `Ok` branch to a
-/// `ChainProcess`.
+/// Early-returns the error from a `Result`, converting the `Ok` branch to the
+/// next chain process value.
 ///
 /// This macro is equivalent to:
 /// ```rust,ignore
 /// match expr {
 ///     Ok(r) => r,
-///     Err(e) => return ::mingling::Grouped::to_chain(e),
+///     Err(e) => return ::mingling::Routable::to_chain(e),
 /// }
 /// ```
 ///
-/// It is useful inside chain functions where you have a `Result<SomeType, SomeType>`
-/// where both types implement `Grouped` and want to propagate the error case
-/// as an early return via `Grouped::to_chain()`.
+/// It is useful inside chain functions where you have a `Result<SuccessType, ErrorType>`
+/// where both types implement `Routable` and you want to propagate the error case
+/// as an early return via `Routable::to_chain()`.
+///
+/// The key difference from a simple `?` operator is that `route!` converts **both**
+/// the success and error types into the chain process — the `Ok` value is unwrapped
+/// directly, while the `Err` value is converted via `Routable::to_chain()` and
+/// returned early.
 ///
 /// # Example
 ///
@@ -542,7 +547,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
 /// use mingling::macros::{chain, route};
 ///
 /// #[chain]
-/// fn process(prev: SomeEntry) -> ChainProcess<ThisProgram> {
+/// fn process(prev: SomeEntry) -> Next {
 ///     let value = route!(current_dir().map_err(|e| ErrorEntry::new(e.to_string_lossy().to_string())));
 ///     // value is the PathBuf from current_dir()
 ///     value.to_chain()
@@ -555,7 +560,7 @@ pub fn route(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         match #expr {
             Ok(r) => r,
-            Err(e) => return ::mingling::Grouped::to_chain(e),
+            Err(e) => return ::mingling::Routable::to_chain(e),
         }
     };
     TokenStream::from(expanded)
@@ -1446,7 +1451,29 @@ pub fn gen_program(_input: TokenStream) -> TokenStream {
     let comp_gen = quote! {};
 
     TokenStream::from(quote! {
+        /// Alias for the current program type `crate::ThisProgram`
         pub type Next = ::mingling::ChainProcess<crate::ThisProgram>;
+
+        impl ::mingling::Routable<crate::ThisProgram> for ::mingling::ChainProcess<crate::ThisProgram>
+        {
+            fn to_chain(self) -> ::mingling::ChainProcess<crate::ThisProgram> {
+                match self {
+                    ::mingling::ChainProcess::Ok((any, _)) => {
+                        ::mingling::ChainProcess::Ok((any, mingling::NextProcess::Chain))
+                    }
+                    other => other,
+                }
+            }
+
+            fn to_render(self) -> ::mingling::ChainProcess<crate::ThisProgram> {
+                match self {
+                    ::mingling::ChainProcess::Ok((any, _)) => {
+                        ::mingling::ChainProcess::Ok((any, mingling::NextProcess::Renderer))
+                    }
+                    other => other,
+                }
+            }
+        }
 
         #comp_gen
         ::mingling::macros::program_fallback_gen!();

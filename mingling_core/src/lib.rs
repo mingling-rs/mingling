@@ -36,6 +36,7 @@ pub use crate::asset::help::*;
 pub use crate::asset::lazy_resource::*;
 pub use crate::asset::node::*;
 pub use crate::asset::renderer::*;
+pub use crate::asset::routable::*;
 
 /// All error types of `Mingling`
 pub mod error {
