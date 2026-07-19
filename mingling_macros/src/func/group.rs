@@ -91,7 +91,7 @@ fn gen_type_use(type_path: &TypePath) -> proc_macro2::TokenStream {
     }
 }
 
-pub fn group_macro(input: TokenStream) -> TokenStream {
+pub(crate) fn group_macro(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as GroupInput);
 
     let is_aliased = matches!(input, GroupInput::Aliased { .. });

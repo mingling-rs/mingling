@@ -66,6 +66,19 @@ None
 
     The `Routable` trait is defined in `mingling_core::asset::routable` and provides unified routing capabilities (`to_chain` / `to_render`) for any type that can be dispatched into the program's pipeline. A blanket implementation is provided for all `T: Grouped<C> + Send`, ensuring backward compatibility — existing types that implement `Grouped` automatically implement `Routable`.
 
+2. **[`macros`]** Restructured the `mingling_macros` crate's internal module hierarchy. The previously flat module structure has been reorganized into a logical directory-based layout:
+
+    - **`attr/`** — Attribute macro implementations (e.g., `#[chain]`, `#[renderer]`, `#[help]`, `#[completion]`, `#[dispatcher_clap]`, `#[program_setup]`)
+    - **`derive/`** — Derive macro implementations (e.g., `#[derive(Grouped)]`, `#[derive(EnumTag)]`)
+    - **`func/`** — Function-like macro implementations (e.g., `pack!`, `group!`, `dispatcher!`, `suggest!`, `entry!`, `node!`, `gen_program!` and its sub-macros)
+    - **`systems/`** — Cross-cutting systems (e.g., resource injection, dispatch tree generation, structural data derive support)
+    - **`extensions/`** — Extension point mechanism for attribute macros (unchanged)
+    - **`utils.rs`** — Shared utility module for future common helpers
+
+    All public API items (`#[proc_macro]`, `#[proc_macro_derive]`, `#[proc_macro_attribute]`) remain at the crate root (`lib.rs`) with identical signatures. Internal function visibility has been tightened from `pub fn` to `pub(crate) fn` for all module-internal functions that were previously publicly accessible only within the crate.
+
+    _No migration is required for downstream code — all macros are re-exported with the same names and signatures as before._
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

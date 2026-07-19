@@ -25,7 +25,7 @@ impl Parse for PackInput {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn pack(input: TokenStream) -> TokenStream {
+pub(crate) fn pack(input: TokenStream) -> TokenStream {
     let pack_input = syn::parse_macro_input!(input as PackInput);
 
     let group_name = crate::default_program_path();

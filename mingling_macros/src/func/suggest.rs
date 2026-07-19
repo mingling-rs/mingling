@@ -35,7 +35,7 @@ impl Parse for SuggestItem {
 }
 
 #[cfg(feature = "comp")]
-pub fn suggest(input: TokenStream) -> TokenStream {
+pub(crate) fn suggest(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as SuggestInput);
 
     let mut items = Vec::new();
@@ -71,7 +71,7 @@ pub fn suggest(input: TokenStream) -> TokenStream {
     expanded.into()
 }
 
-pub fn suggest_enum(input: TokenStream) -> TokenStream {
+pub(crate) fn suggest_enum(input: TokenStream) -> TokenStream {
     let enum_type = parse_macro_input!(input as syn::Type);
 
     let expanded = quote! {{

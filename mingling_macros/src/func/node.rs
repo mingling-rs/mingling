@@ -18,7 +18,7 @@ impl Parse for NodeInput {
     }
 }
 
-pub fn node(input: TokenStream) -> TokenStream {
+pub(crate) fn node(input: TokenStream) -> TokenStream {
     // Parse the input as a string literal
     let input_parsed = syn::parse_macro_input!(input as NodeInput);
     let path_str = input_parsed.path.value();

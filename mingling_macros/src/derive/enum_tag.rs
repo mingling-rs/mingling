@@ -4,7 +4,7 @@ use syn::{
     Attribute, Data, DeriveInput, Error, Fields, Ident, LitStr, Result, Variant, parse_macro_input,
 };
 
-pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
+pub(crate) fn derive_enum_tag(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
 
     match derive_enum_tag_impl(input) {

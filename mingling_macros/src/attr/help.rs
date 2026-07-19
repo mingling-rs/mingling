@@ -14,7 +14,7 @@ fn extract_user_return_type(sig: &Signature) -> Option<proc_macro2::TokenStream>
     }
 }
 
-pub fn help_attr(item: TokenStream) -> TokenStream {
+pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
     // Parse the function item
     let input_fn = parse_macro_input!(item as ItemFn);
 
@@ -160,7 +160,7 @@ fn build_help_entry(struct_name: &Ident, entry_type: &TypePath) -> proc_macro2::
     }
 }
 
-pub fn register_help(input: TokenStream) -> TokenStream {
+pub(crate) fn register_help(input: TokenStream) -> TokenStream {
     // Parse the input as a comma-separated list of arguments
     let input_parsed = syn::parse_macro_input!(input with syn::punctuated::Punctuated<syn::Expr, syn::Token![,]>::parse_terminated);
 

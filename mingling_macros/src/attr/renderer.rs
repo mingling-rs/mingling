@@ -15,7 +15,7 @@ fn extract_user_return_type(sig: &Signature) -> Option<proc_macro2::TokenStream>
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub(crate) fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // #[renderer] takes no arguments; always use the default program path
     let _ = attr;
     let program_path = crate::default_program_path();
@@ -130,7 +130,7 @@ pub fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// Builds the renderer entry for the global renderers list
-pub fn build_renderer_entry(
+pub(crate) fn build_renderer_entry(
     struct_name: &syn::Ident,
     previous_type: &TypePath,
 ) -> proc_macro2::TokenStream {
@@ -141,7 +141,7 @@ pub fn build_renderer_entry(
 }
 
 /// Builds the renderer existence check entry
-pub fn build_renderer_exist_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
+pub(crate) fn build_renderer_exist_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
     let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
         Self::#enum_variant => true,
@@ -150,7 +150,9 @@ pub fn build_renderer_exist_entry(previous_type: &TypePath) -> proc_macro2::Toke
 
 /// Builds the structural renderer entry
 #[cfg(feature = "structural_renderer")]
-pub fn build_structural_renderer_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
+pub(crate) fn build_structural_renderer_entry(
+    previous_type: &TypePath,
+) -> proc_macro2::TokenStream {
     let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
         Self::#enum_variant => {
@@ -164,7 +166,7 @@ pub fn build_structural_renderer_entry(previous_type: &TypePath) -> proc_macro2:
     }
 }
 
-pub fn register_renderer(input: TokenStream) -> TokenStream {
+pub(crate) fn register_renderer(input: TokenStream) -> TokenStream {
     // Parse the input as a comma-separated list of arguments
     let input_parsed = syn::parse_macro_input!(input with syn::punctuated::Punctuated<syn::Expr, syn::Token![,]>::parse_terminated);
 

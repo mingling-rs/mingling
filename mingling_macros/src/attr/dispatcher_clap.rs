@@ -93,7 +93,7 @@ impl Parse for DispatcherClapInput {
 }
 
 #[cfg(feature = "clap")]
-pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr_input = parse_macro_input!(attr as DispatcherClapInput);
     let input_struct = parse_macro_input!(item as ItemStruct);
     let struct_name = &input_struct.ident;
@@ -144,7 +144,7 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         Some(quote! {
             #[allow(non_snake_case)]
             #[::mingling::macros::help]
-            pub fn #help_fn_name(_prev: #struct_name) -> ::mingling::RenderResult {
+            pub(crate) fn #help_fn_name(_prev: #struct_name) -> ::mingling::RenderResult {
                 use std::io::Write;
                 use clap::ColorChoice;
 
@@ -189,7 +189,7 @@ pub fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         // Generate the dispatcher struct
         #[doc(hidden)]
         #[derive(Default)]
-        pub struct #dispatcher_struct;
+        pub(crate) struct #dispatcher_struct;
 
         impl ::mingling::Dispatcher<#program_path> for #dispatcher_struct {
             fn node(&self) -> ::mingling::Node {

@@ -75,7 +75,7 @@ impl Parse for DispatcherChainInput {
 // are nearly identical and could benefit from refactoring into common helper functions.
 
 #[allow(clippy::too_many_lines)]
-pub fn dispatcher(input: TokenStream) -> TokenStream {
+pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
     // Parse the input
     let dispatcher_input = syn::parse_macro_input!(input as DispatcherChainInput);
 
@@ -209,7 +209,7 @@ impl Parse for RegisterDispatcherInput {
 }
 
 #[cfg(feature = "dispatch_tree")]
-pub fn register_dispatcher(input: TokenStream) -> TokenStream {
+pub(crate) fn register_dispatcher(input: TokenStream) -> TokenStream {
     let RegisterDispatcherInput {
         node_name,
         dispatcher_type,
@@ -243,7 +243,7 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(not(feature = "dispatch_tree"))]
-pub fn register_dispatcher(_input: TokenStream) -> TokenStream {
+pub(crate) fn register_dispatcher(_input: TokenStream) -> TokenStream {
     quote! {}.into()
 }
 

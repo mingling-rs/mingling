@@ -39,7 +39,7 @@ fn parse_strings(input: &syn::parse::ParseBuffer) -> syn::Result<Vec<String>> {
     Ok(strings)
 }
 
-pub fn entry(input: TokenStream) -> TokenStream {
+pub(crate) fn entry(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as EntryInput);
 
     let strings = match &parsed {

@@ -31,7 +31,7 @@ impl syn::parse::Parse for PackErrInput {
 }
 
 #[allow(clippy::too_many_lines)]
-pub fn pack_err(input: TokenStream) -> TokenStream {
+pub(crate) fn pack_err(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as PackErrInput);
 
     match parsed {
@@ -123,7 +123,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
 /// impl ::mingling::__private::StructuralData for ErrorNotFound {}
 /// ```
 #[cfg(feature = "structural_renderer")]
-pub fn pack_err_structural(input: TokenStream) -> TokenStream {
+pub(crate) fn pack_err_structural(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as PackErrInput);
 
     let type_name = match &parsed {

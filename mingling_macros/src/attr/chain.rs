@@ -158,7 +158,7 @@ fn reject_async(sig: &Signature) -> Result<(), proc_macro2::TokenStream> {
     Ok(())
 }
 
-pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Reject non-empty attribute arguments; #[chain] must be bare
     if !attr.is_empty() {
         return syn::Error::new(
@@ -263,7 +263,10 @@ pub fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 /// Builds a match arm for chain mapping
-pub fn build_chain_arm(struct_name: &Ident, previous_type: &TypePath) -> proc_macro2::TokenStream {
+pub(crate) fn build_chain_arm(
+    struct_name: &Ident,
+    previous_type: &TypePath,
+) -> proc_macro2::TokenStream {
     let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
         #struct_name => #enum_variant,
@@ -271,14 +274,14 @@ pub fn build_chain_arm(struct_name: &Ident, previous_type: &TypePath) -> proc_ma
 }
 
 /// Builds a match arm for chain existence check
-pub fn build_chain_exist_arm(previous_type: &TypePath) -> proc_macro2::TokenStream {
+pub(crate) fn build_chain_exist_arm(previous_type: &TypePath) -> proc_macro2::TokenStream {
     let enum_variant = &previous_type.path.segments.last().unwrap().ident;
     quote! {
         Self::#enum_variant => true,
     }
 }
 
-pub fn register_chain(input: TokenStream) -> TokenStream {
+pub(crate) fn register_chain(input: TokenStream) -> TokenStream {
     // Parse the input as a comma-separated list of arguments
     let input_parsed = syn::parse_macro_input!(input with syn::punctuated::Punctuated<syn::Expr, syn::Token![,]>::parse_terminated);
 

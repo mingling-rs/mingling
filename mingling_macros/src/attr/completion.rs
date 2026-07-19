@@ -5,7 +5,7 @@ use syn::spanned::Spanned;
 use syn::{FnArg, Ident, ItemFn, Pat, PatType, Type, TypePath, parse_macro_input};
 
 #[cfg(feature = "comp")]
-pub fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse the attribute arguments such as HelloEntry or crate::EntryFine from #[completion(crate::EntryFine)]
     use crate::get_global_set;
     let previous_type_path: TypePath = if attr.is_empty() {

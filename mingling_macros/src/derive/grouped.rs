@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Ident, parse_macro_input};
 
-pub fn derive_grouped(input: TokenStream) -> TokenStream {
+pub(crate) fn derive_grouped(input: TokenStream) -> TokenStream {
     // Parse the input struct/enum
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;

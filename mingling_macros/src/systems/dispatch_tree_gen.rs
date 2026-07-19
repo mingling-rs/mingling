@@ -4,11 +4,11 @@ use just_fmt::snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::resolve_type;
+use crate::func::gen_program::resolve_type;
 
 /// Generate the `get_nodes()` function body for a ProgramCollect impl.
 /// If `pathf_map` is non-empty, resolves internal dispatcher statics using full paths.
-pub fn gen_get_nodes(
+pub(crate) fn gen_get_nodes(
     entries: &[(String, String, String)],
     pathf_map: &HashMap<String, String>,
 ) -> TokenStream {
@@ -40,7 +40,7 @@ pub fn gen_get_nodes(
 /// Single-node groups use `starts_with`; multi-node groups recurse with `nth()` match.
 ///
 /// If `pathf_map` is non-empty, resolves dispatcher types using full paths.
-pub fn gen_dispatch_args_trie(
+pub(crate) fn gen_dispatch_args_trie(
     entries: &[(String, String, String)],
     pathf_map: &HashMap<String, String>,
 ) -> TokenStream {

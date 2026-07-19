@@ -47,7 +47,7 @@ fn extract_return_type(sig: &Signature) -> syn::Result<()> {
     }
 }
 
-pub fn setup_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub(crate) fn setup_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // #[program_setup] takes no arguments; always use the default program path
     let _ = attr;
     let program_path = crate::default_program_path();
