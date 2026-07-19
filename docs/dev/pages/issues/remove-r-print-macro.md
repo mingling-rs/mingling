@@ -89,9 +89,9 @@ As for rendering in logic functions like `#[chain]`, that should be handled by a
 ## 🕘 Progress
 
 - [x] In Progress
-  - [x] Remove `r_println!` and `r_print!` macros
-  - [x] Modify `#[renderer]` and `#[help]` macros, remove implicit injection
-  - [x] Provide **no-return-value mode** and **RenderResult return value mode** for `#[renderer]` and `#[help]` macros
-  - [ ] Add new simplified syntax
-  - [x] Update documentation and test cases, ensure **all pass**
-- [ ] Complete
+    - [x] Remove `r_println!` and `r_print!` macros
+    - [x] Modify `#[renderer]` and `#[help]` macros, remove implicit injection
+    - [x] Provide **no-return-value mode** and **RenderResult return value mode** for `#[renderer]` and `#[help]` macros
+    - [x] Add new simplified syntax
+    - [x] Update documentation and test cases, ensure **all pass**
+- [x] Complete
