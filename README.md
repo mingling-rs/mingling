@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://github.com/mingling-rs/mingling">
-        <img alt="Mingling" src="https://github.com/mingling-rs/mingling/raw/main/docs/res/icon2.png" width="30%">
+        <img alt="Mingling" src="https://github.com/mingling-rs/mingling/raw/main/docs/res/icon3.png" width="30%">
     </a>
 </p>
 <h1 align="center">Mìng Lìng - 命令</h1>
