@@ -576,7 +576,8 @@ With the `structural_renderer` feature, users can add `--json` or `--yaml` flags
 // Dependencies:
 // serde = "1"
 
-use mingling::{prelude::*, setup::StructuralRendererSetup};
+use mingling::prelude::*;
+use mingling::setup::picker::StructuralRendererSetup;
 use mingling::Grouped;
 use mingling::StructuralData;
 use serde::Serialize;
