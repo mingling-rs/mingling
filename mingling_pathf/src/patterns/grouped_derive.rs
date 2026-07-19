@@ -1,5 +1,5 @@
-//! The `GrouppedDerivePattern` matches structs, enums, and unions annotated with
-//! `#[derive(Groupped)]` or `#[derive(GrouppedSerialize)]` (or any combination
+//! The `GroupedDerivePattern` matches structs, enums, and unions annotated with
+//! `#[derive(Grouped)]` or `#[derive(GroupedSerialize)]` (or any combination
 //! with other derives). It also recurses into `mod` items to find nested types.
 //! This is used to track grouped items for code generation or analysis.
 
@@ -7,17 +7,17 @@ use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Matches `#[derive(Groupped)]` and `#[derive(GrouppedSerialize)]`.
+/// Matches `#[derive(Grouped)]` and `#[derive(GroupedSerialize)]`.
 ///
 /// Covers the forms:
-/// - `#[derive(Groupped)] struct T { ... }`
-/// - `#[derive(Groupped, Serialize, ...)] struct T { ... }`
-/// - `#[derive(GrouppedSerialize)] struct T { ... }`
-pub struct GrouppedDerivePattern;
+/// - `#[derive(Grouped)] struct T { ... }`
+/// - `#[derive(Grouped, Serialize, ...)] struct T { ... }`
+/// - `#[derive(GroupedSerialize)] struct T { ... }`
+pub struct GroupedDerivePattern;
 
-impl AnalyzePattern for GrouppedDerivePattern {
+impl AnalyzePattern for GroupedDerivePattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("Groupped")
+        content.contains("Grouped")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {
@@ -29,19 +29,19 @@ impl AnalyzePattern for GrouppedDerivePattern {
 
         for item in &syntax.items {
             match item {
-                Item::Struct(s) if has_groupped_derive(&s.attrs) => {
+                Item::Struct(s) if has_grouped_derive(&s.attrs) => {
                     items.push(AnalyzeItem {
                         module: String::new(),
                         item_name: s.ident.to_string(),
                     });
                 }
-                Item::Enum(e) if has_groupped_derive(&e.attrs) => {
+                Item::Enum(e) if has_grouped_derive(&e.attrs) => {
                     items.push(AnalyzeItem {
                         module: String::new(),
                         item_name: e.ident.to_string(),
                     });
                 }
-                Item::Union(u) if has_groupped_derive(&u.attrs) => {
+                Item::Union(u) if has_grouped_derive(&u.attrs) => {
                     items.push(AnalyzeItem {
                         module: String::new(),
                         item_name: u.ident.to_string(),
@@ -51,13 +51,13 @@ impl AnalyzePattern for GrouppedDerivePattern {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
                             match n {
-                                Item::Struct(s) if has_groupped_derive(&s.attrs) => {
+                                Item::Struct(s) if has_grouped_derive(&s.attrs) => {
                                     items.push(AnalyzeItem {
                                         module: item_mod.ident.to_string(),
                                         item_name: s.ident.to_string(),
                                     });
                                 }
-                                Item::Enum(e) if has_groupped_derive(&e.attrs) => {
+                                Item::Enum(e) if has_grouped_derive(&e.attrs) => {
                                     items.push(AnalyzeItem {
                                         module: item_mod.ident.to_string(),
                                         item_name: e.ident.to_string(),
@@ -76,10 +76,10 @@ impl AnalyzePattern for GrouppedDerivePattern {
     }
 }
 
-fn has_groupped_derive(attrs: &[syn::Attribute]) -> bool {
+fn has_grouped_derive(attrs: &[syn::Attribute]) -> bool {
     attrs.iter().any(|attr| {
         if attr.path().is_ident("derive") {
-            // Correctly parse comma-separated paths in #[derive(Groupped, Debug, ...)]
+            // Correctly parse comma-separated paths in #[derive(Grouped, Debug, ...)]
             attr.parse_args_with(|input: syn::parse::ParseStream| {
                 let paths =
                     syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated(
@@ -87,7 +87,7 @@ fn has_groupped_derive(attrs: &[syn::Attribute]) -> bool {
                     )?;
                 Ok(paths.iter().any(|p| {
                     let name = p.segments.last().unwrap().ident.to_string();
-                    name == "Groupped" || name == "GrouppedSerialize"
+                    name == "Grouped" || name == "GroupedSerialize"
                 }))
             })
             .unwrap_or(false)

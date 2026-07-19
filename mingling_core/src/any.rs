@@ -1,12 +1,12 @@
 use crate::error::ChainProcessError;
-use crate::{Groupped, ProgramCollect};
+use crate::{Grouped, ProgramCollect};
 
 #[doc(hidden)]
 pub mod group;
 
 /// Any type output
 ///
-/// Accepts any type that implements `Send + Groupped<G>`
+/// Accepts any type that implements `Send + Grouped<G>`
 /// After being passed into `AnyOutput`, it will be converted to `Box<dyn Any + Send + 'static>`
 ///
 /// Note:
@@ -22,10 +22,10 @@ pub struct AnyOutput<G> {
 }
 
 impl<G> AnyOutput<G> {
-    /// Create an `AnyOutput` from a `Send + Groupped<G>` type
+    /// Create an `AnyOutput` from a `Send + Grouped<G>` type
     pub fn new<T>(value: T) -> Self
     where
-        T: Send + Groupped<G> + 'static,
+        T: Send + Grouped<G> + 'static,
     {
         Self {
             inner: Box::new(value),
@@ -148,7 +148,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Groupped;
+    use crate::Grouped;
 
     /// Mock enum for testing AnyOutput
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -175,7 +175,7 @@ mod tests {
         value: i32,
     }
 
-    impl Groupped<MockGroup> for AlphaData {
+    impl Grouped<MockGroup> for AlphaData {
         fn member_id() -> MockGroup {
             MockGroup::Alpha
         }
@@ -187,7 +187,7 @@ mod tests {
         name: String,
     }
 
-    impl Groupped<MockGroup> for BetaData {
+    impl Grouped<MockGroup> for BetaData {
         fn member_id() -> MockGroup {
             MockGroup::Beta
         }
@@ -198,7 +198,7 @@ mod tests {
     #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
     struct GammaData;
 
-    impl Groupped<MockGroup> for GammaData {
+    impl Grouped<MockGroup> for GammaData {
         fn member_id() -> MockGroup {
             MockGroup::Gamma
         }
@@ -354,7 +354,7 @@ mod tests {
             x: i32,
         }
 
-        impl Groupped<MockGroup> for SerData {
+        impl Grouped<MockGroup> for SerData {
             fn member_id() -> MockGroup {
                 MockGroup::Gamma
             }
@@ -381,13 +381,13 @@ mod tests {
             b: String,
         }
 
-        impl Groupped<MockGroup> for SerA {
+        impl Grouped<MockGroup> for SerA {
             fn member_id() -> MockGroup {
                 MockGroup::Alpha
             }
         }
 
-        impl Groupped<MockGroup> for SerB {
+        impl Grouped<MockGroup> for SerB {
             fn member_id() -> MockGroup {
                 MockGroup::Beta
             }

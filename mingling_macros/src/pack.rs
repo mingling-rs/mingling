@@ -138,7 +138,7 @@ pub fn pack(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl ::mingling::Groupped<#group_name> for #type_name {
+        impl ::mingling::Grouped<#group_name> for #type_name {
             fn member_id() -> #group_name {
                 #group_name::#type_name
             }

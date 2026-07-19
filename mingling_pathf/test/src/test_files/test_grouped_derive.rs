@@ -1,42 +1,42 @@
-#[derive(Groupped)]
+#[derive(Grouped)]
 struct Derived1 {
     value: String,
 }
 
-#[derive(Groupped, Debug, Clone)]
+#[derive(Grouped, Debug, Clone)]
 struct Derived2 {
     value: i32,
 }
 
-#[derive(GrouppedSerialize)]
+#[derive(GroupedSerialize)]
 struct Derived3 {
     value: bool,
 }
 
-#[derive(Groupped)]
+#[derive(Grouped)]
 enum EnumDerived1 {
     A,
     B,
 }
 
-#[derive(GrouppedSerialize)]
+#[derive(GroupedSerialize)]
 enum EnumDerived2 {
     X(String),
     Y(i32),
 }
 
 pub mod sub {
-    #[derive(Groupped)]
+    #[derive(Grouped)]
     struct Derived1 {
         value: String,
     }
 
-    #[derive(GrouppedSerialize)]
+    #[derive(GroupedSerialize)]
     struct Derived3 {
         value: bool,
     }
 
-    #[derive(Groupped)]
+    #[derive(Grouped)]
     enum EnumDerived1 {
         A,
     }

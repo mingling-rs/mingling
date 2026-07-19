@@ -171,12 +171,12 @@ For enums, derive `EnumTag` and implement `PickableEnum` to parse enum variants 
 ```rust
 // Features: ["parser", "extra_macros"]
 
-use mingling::{EnumTag, Groupped};
+use mingling::{EnumTag, Grouped};
 use mingling::parser::PickableEnum;
 
 dispatcher!("lang.select", CMDLang => EntryLang);
 
-#[derive(Debug, Default, EnumTag, Groupped)]
+#[derive(Debug, Default, EnumTag, Grouped)]
 pub enum Language {
     #[default]
     Rust,
@@ -473,7 +473,7 @@ use mingling::macros::dispatcher_clap;
 use mingling::prelude::*;
 use std::io::Write;
 
-#[derive(Default, clap::Parser, Groupped)]
+#[derive(Default, clap::Parser, Grouped)]
 #[dispatcher_clap(
     "greet", CMDGreet,
     help = true,              // auto-generate #[help] from clap
@@ -623,14 +623,14 @@ With the `structural_renderer` feature, users can add `--json` or `--yaml` flags
 // serde = "1"
 
 use mingling::{prelude::*, setup::StructuralRendererSetup};
-use mingling::Groupped;
+use mingling::Grouped;
 use mingling::StructuralData;
 use serde::Serialize;
 use std::io::Write;
 
 dispatcher!("render", CMDRender => EntryRender);
 
-#[derive(Default, StructuralData, Serialize, Groupped)]
+#[derive(Default, StructuralData, Serialize, Grouped)]
 struct ResultInfo {
     name: String,
     age: i32,

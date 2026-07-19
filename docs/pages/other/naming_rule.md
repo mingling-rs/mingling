@@ -96,7 +96,7 @@ Result + Content
 | `ResultGreetSomeone` | Greeting result   |
 | `ResultFruitList`    | Fruit list result |
 
-Result structs are expected to be consumed by the Renderer, and their internal structure should be designed for rendering aesthetics. Generally use `#[derive(Groupped)]` instead of `pack!()` wrapping for more flexible field control.
+Result structs are expected to be consumed by the Renderer, and their internal structure should be designed for rendering aesthetics. Generally use `#[derive(Grouped)]` instead of `pack!()` wrapping for more flexible field control.
 
 ### Error
 

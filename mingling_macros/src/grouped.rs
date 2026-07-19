@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Ident, parse_macro_input};
 
-pub fn derive_groupped(input: TokenStream) -> TokenStream {
+pub fn derive_grouped(input: TokenStream) -> TokenStream {
     // Parse the input struct/enum
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = input.ident;
@@ -12,11 +12,11 @@ pub fn derive_groupped(input: TokenStream) -> TokenStream {
     let any_output_convert_impls =
         proc_macro2::TokenStream::from(build_any_output_convert_impls(&struct_name, &group_ident));
 
-    // Generate the Groupped trait implementation
+    // Generate the Grouped trait implementation
     let expanded = quote! {
         ::mingling::macros::register_type!(#struct_name);
 
-        impl ::mingling::Groupped<#group_ident> for #struct_name {
+        impl ::mingling::Grouped<#group_ident> for #struct_name {
             fn member_id() -> #group_ident {
                 #group_ident::#struct_name
             }
@@ -29,7 +29,7 @@ pub fn derive_groupped(input: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "structural_renderer")]
-pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
+pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
     // Parse the input struct/enum
     let input_parsed = parse_macro_input!(input as DeriveInput);
     let struct_name = input_parsed.ident.clone();
@@ -39,14 +39,14 @@ pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
     let any_output_convert_impls =
         proc_macro2::TokenStream::from(build_any_output_convert_impls(&struct_name, &group_ident));
 
-    // Generate both Serialize and Groupped implementations
+    // Generate both Serialize and Grouped implementations
     let expanded = quote! {
         #[derive(serde::Serialize)]
         #input_parsed
 
         ::mingling::macros::register_type!(#struct_name);
 
-        impl ::mingling::Groupped<#group_ident> for #struct_name {
+        impl ::mingling::Grouped<#group_ident> for #struct_name {
             fn member_id() -> #group_ident {
                 #group_ident::#struct_name
             }

@@ -20,7 +20,7 @@ AnyOutput<G>
  
 这里的 `G` 就是 `gen_program!()` 生成的程序枚举（也就是你熟知的 `ThisProgram`）。
 
-每个被 `pack!` 或 `#[derive(Groupped)]` 标记的类型都被分配到这个枚举的一个变体。
+每个被 `pack!` 或 `#[derive(Grouped)]` 标记的类型都被分配到这个枚举的一个变体。
 
 ## ChainProcess：数据 + 路由
 
@@ -38,17 +38,17 @@ ChainProcess<G>
 
 调度器根据 `NextProcess` 决定是继续循环还是退出渲染。
 
-## Groupped：谁是谁
+## Grouped：谁是谁
 
-调度器如何知道 `AnyOutput` 里装的是 `ResultName` 还是 `ErrorUserBlocked`？答案是 `Groupped` trait：
+调度器如何知道 `AnyOutput` 里装的是 `ResultName` 还是 `ErrorUserBlocked`？答案是 `Grouped` trait：
 
 ```
-trait Groupped<G> {
+trait Grouped<G> {
     fn member_id() -> G;
 }
 ```
  
-当你用 `pack!(ResultName = String)` 时，宏自动为 `ResultName` 实现 `Groupped`，`member_id()` 返回枚举中对应的变体。调度器一看 `member_id`，就去找对应的 Chain 或 Renderer。
+当你用 `pack!(ResultName = String)` 时，宏自动为 `ResultName` 实现 `Grouped`，`member_id()` 返回枚举中对应的变体。调度器一看 `member_id`，就去找对应的 Chain 或 Renderer。
 
 `to_chain()` 和 `to_render()` 本质上是 `AnyOutput` 的快捷方法，分别构造 `ChainProcess::Ok(any, Chain)` 和 `ChainProcess::Ok(any, Renderer)`。
 

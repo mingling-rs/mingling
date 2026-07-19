@@ -13,7 +13,7 @@
 //! ┌──────────────────────────────────────────────────────────────────┐
 //! │  Phase 1: Declaration                                            │
 //! │                                                                  │
-//! │  dispatcher!  pack!     node!       #[derive(Groupped)]          │
+//! │  dispatcher!  pack!     node!       #[derive(Grouped)]           │
 //! │  │            │         │           │                            │
 //! │  V            V         V           V                            │
 //! │  Declares     Wraps a   Builds      Makes a type                 │
@@ -55,7 +55,7 @@
 //! | `pack_err!` | Creates an error struct with automatic `name` field |
 //! | `pack_err_structural!` | Like `pack_err!` but also derives `StructuralData` for structured output |
 //! | `entry!` | Creates a packed entry from string literals |
-//! | [`#[derive(Groupped)]`](derive@Groupped) | Makes a type recognizable by the framework's type registry |
+//! | [`#[derive(Grouped)]`](derive@Grouped) | Makes a type recognizable by the framework's type registry |
 //! | `#[derive(StructuralData)]` | Marks a type as eligible for structured output (JSON/YAML/etc.) |
 //! | [`#[derive(EnumTag)]`](derive@EnumTag) | Adds enum variant metadata (name, description) |
 //!
@@ -161,7 +161,7 @@ mod entry;
 mod enum_tag;
 #[cfg(feature = "extra_macros")]
 mod group_impl;
-mod groupped;
+mod grouped;
 mod help;
 mod node;
 mod pack;
@@ -265,7 +265,7 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
 /// Registers an outside-type as a member of a program group without modifying its definition.
 ///
 /// This macro allows you to use outside-types from external crates (like `std::io::Error`)
-/// within the Mingling framework by generating a `Groupped` implementation and registering
+/// within the Mingling framework by generating a `Grouped` implementation and registering
 /// the type's simple name as an enum variant.
 ///
 /// # Syntax
@@ -281,11 +281,11 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
 ///
 /// The macro generates a module containing:
 /// - A `use` import for the program path and the outside-type
-/// - An `impl Groupped<Program>` for the outside-type
+/// - An `impl Grouped<Program>` for the outside-type
 /// - A `register_type!` call with the type's simple name
 ///
 /// The type's simple name (e.g. `Error`) is used as the enum variant in the generated
-/// program enum, just like `#[derive(Groupped)]` or `pack!`.
+/// program enum, just like `#[derive(Grouped)]` or `pack!`.
 ///
 /// # Example
 ///
@@ -297,7 +297,7 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
 /// ```
 ///
 /// After expansion, the type can be used in chains and renderers like any
-/// `#[derive(Groupped)]` type.
+/// `#[derive(Grouped)]` type.
 ///
 /// This macro is only available with the `extra_macros` feature.
 #[cfg(feature = "extra_macros")]
@@ -402,7 +402,7 @@ pub fn node(input: TokenStream) -> TokenStream {
 /// - `AsRef<String>`, `AsMut<String>`
 /// - `Default` if `String: Default`
 /// - `Into<AnyOutput<ThisProgram>>`, `Into<ChainProcess<ThisProgram>>`
-/// - Implements `Groupped<ThisProgram>` with `member_id()` returning the enum variant
+/// - Implements `Grouped<ThisProgram>` with `member_id()` returning the enum variant
 ///
 /// The struct is also registered via `register_type!` so that `gen_program!`
 /// can include it in the program enum.
@@ -438,7 +438,7 @@ pub fn pack_structural(input: TokenStream) -> TokenStream {
 
 /// Creates an error struct with a `name: String` field and optional `info: Type` field.
 ///
-/// This macro provides a concise way to define error types that implement `Groupped`
+/// This macro provides a concise way to define error types that implement `Grouped`
 /// and are registered for inclusion in the program enum.
 ///
 /// The `name` field is automatically set to the snake_case version of the struct name
@@ -461,7 +461,7 @@ pub fn pack_structural(input: TokenStream) -> TokenStream {
 /// For `pack_err!(ErrorNotFound)`:
 ///
 /// ```rust,ignore
-/// #[derive(::mingling::Groupped)]
+/// #[derive(::mingling::Grouped)]
 /// pub struct ErrorNotFound {
 ///     name: String,
 /// }
@@ -478,7 +478,7 @@ pub fn pack_structural(input: TokenStream) -> TokenStream {
 /// For `pack_err!(ErrorNotDir = PathBuf)`:
 ///
 /// ```rust,ignore
-/// #[derive(::mingling::Groupped)]
+/// #[derive(::mingling::Grouped)]
 /// pub struct ErrorNotDir {
 ///     name: String,
 ///     info: PathBuf,
@@ -528,13 +528,13 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// match expr {
 ///     Ok(r) => r,
-///     Err(e) => return ::mingling::Groupped::to_chain(e),
+///     Err(e) => return ::mingling::Grouped::to_chain(e),
 /// }
 /// ```
 ///
 /// It is useful inside chain functions where you have a `Result<SomeType, SomeType>`
-/// where both types implement `Groupped` and want to propagate the error case
-/// as an early return via `Groupped::to_chain()`.
+/// where both types implement `Grouped` and want to propagate the error case
+/// as an early return via `Grouped::to_chain()`.
 ///
 /// # Example
 ///
@@ -555,7 +555,7 @@ pub fn route(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         match #expr {
             Ok(r) => r,
-            Err(e) => return ::mingling::Groupped::to_chain(e),
+            Err(e) => return ::mingling::Grouped::to_chain(e),
         }
     };
     TokenStream::from(expanded)
@@ -613,7 +613,7 @@ pub fn route(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn empty_result(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
-        <crate::ResultEmpty as ::mingling::Groupped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
+        <crate::ResultEmpty as ::mingling::Grouped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
     };
     TokenStream::from(expanded)
 }
@@ -1250,10 +1250,10 @@ pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
     help::help_attr(item)
 }
 
-/// Derive macro for automatically implementing the `Groupped` trait on a struct.
+/// Derive macro for automatically implementing the `Grouped` trait on a struct.
 ///
-/// The `#[derive(Groupped)]` macro:
-/// 1. Implements `Groupped<crate::ThisProgram>`.
+/// The `#[derive(Grouped)]` macro:
+/// 1. Implements `Grouped<crate::ThisProgram>`.
 /// 2. Registers the type via `register_type!` so it's included in the program enum.
 /// 3. Generates `Into<AnyOutput<Group>>` and `Into<ChainProcess<Group>>` conversions.
 /// 4. Adds `to_chain()` and `to_render()` methods to the struct.
@@ -1261,7 +1261,7 @@ pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// #[derive(Groupped)]
+/// #[derive(Grouped)]
 /// struct MyStruct {
 ///     // ...
 /// }
@@ -1270,9 +1270,9 @@ pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::Groupped;
+/// use mingling::macros::Grouped;
 ///
-/// #[derive(Groupped)]
+/// #[derive(Grouped)]
 /// struct Greeting {
 ///     name: String,
 /// }
@@ -1280,9 +1280,9 @@ pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// This is equivalent to using `pack!` but works with custom structs that
 /// have named fields. For simple wrappers, prefer `pack!`.
-#[proc_macro_derive(Groupped, attributes(group))]
-pub fn derive_groupped(input: TokenStream) -> TokenStream {
-    groupped::derive_groupped(input)
+#[proc_macro_derive(Grouped, attributes(group))]
+pub fn derive_grouped(input: TokenStream) -> TokenStream {
+    grouped::derive_grouped(input)
 }
 
 /// Derive macro for automatically implementing the `EnumTag` trait on an enum
@@ -1351,18 +1351,18 @@ pub fn derive_structural_data(input: TokenStream) -> TokenStream {
     structural_data::derive_structural_data(input)
 }
 
-/// Derive macro for implementing both `Groupped` and `serde::Serialize` on a struct.
+/// Derive macro for implementing both `Grouped` and `serde::Serialize` on a struct.
 ///
 /// **This macro is only available with the `structural_renderer` feature.**
 ///
-/// This is identical to `#[derive(Groupped)]` but also adds `#[derive(serde::Serialize)]`
+/// This is identical to `#[derive(Grouped)]` but also adds `#[derive(serde::Serialize)]`
 /// to the struct, which is required for the structural renderer to serialize output
 /// to formats like JSON, YAML, TOML, or RON.
 ///
 /// # Syntax
 ///
 /// ```rust,ignore
-/// #[derive(GrouppedSerialize)]
+/// #[derive(GroupedSerialize)]
 /// struct Info {
 ///     name: String,
 ///     age: i32,
@@ -1372,19 +1372,19 @@ pub fn derive_structural_data(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::GrouppedSerialize;
+/// use mingling::GroupedSerialize;
 /// use serde::Serialize;
 ///
-/// #[derive(GrouppedSerialize)]
+/// #[derive(GroupedSerialize)]
 /// struct Info {
 ///     name: String,
 ///     age: i32,
 /// }
 /// ```
 #[cfg(feature = "structural_renderer")]
-#[proc_macro_derive(GrouppedSerialize, attributes(group))]
-pub fn derive_groupped_serialize(input: TokenStream) -> TokenStream {
-    groupped::derive_groupped_serialize(input)
+#[proc_macro_derive(GroupedSerialize, attributes(group))]
+pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
+    grouped::derive_grouped_serialize(input)
 }
 
 /// Generates the program enum and all collected types, chains, and renderers.
@@ -1474,7 +1474,7 @@ pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
         #[doc(hidden)]
         #[::mingling::macros::chain]
         pub async fn __exec_completion(prev: CompletionContext) -> Next {
-            use ::mingling::Groupped;
+            use ::mingling::Grouped;
 
             let read_ctx = ::mingling::ShellContext::try_from(prev.inner);
             match read_ctx {
@@ -1492,7 +1492,7 @@ pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
         #[doc(hidden)]
         #[::mingling::macros::chain]
         pub fn __exec_completion(prev: CompletionContext) -> Next {
-            use ::mingling::Groupped;
+            use ::mingling::Grouped;
 
             let read_ctx = ::mingling::ShellContext::try_from(prev.inner);
             match read_ctx {
@@ -1516,7 +1516,7 @@ pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
     let comp_dispatcher = quote! {
         #[doc(hidden)]
         mod __internal_completion_mod {
-            use ::mingling::Groupped;
+            use ::mingling::Grouped;
             ::mingling::macros::dispatcher!("__comp", CMDCompletion => CompletionContext);
             ::mingling::macros::pack!(
                 CompletionSuggest = (::mingling::ShellContext, ::mingling::Suggest)
@@ -1548,7 +1548,7 @@ pub fn program_comp_gen(_input: TokenStream) -> TokenStream {
 /// Registers a type into the global packed types registry for inclusion in
 /// the program enum generated by `gen_program!`.
 ///
-/// This macro is called internally by `pack!` and `#[derive(Groupped)]`(`macro.derive_groupped.html`)
+/// This macro is called internally by `pack!` and `#[derive(Grouped)]`(`macro.derive_grouped.html`)
 /// and is generally not needed in user code. However, it can be used for manual
 /// registration if you are implementing custom type registration outside of
 /// the standard macros.
@@ -1653,13 +1653,13 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
 pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
     #[cfg(feature = "structural_renderer")]
     let pack_empty = quote! {
-        #[derive(::serde::Serialize, ::mingling::StructuralData, ::mingling::Groupped, Default)]
+        #[derive(::serde::Serialize, ::mingling::StructuralData, ::mingling::Grouped, Default)]
         pub struct ResultEmpty;
     };
 
     #[cfg(not(feature = "structural_renderer"))]
     let pack_empty = quote! {
-        #[derive(::mingling::Groupped, Default)]
+        #[derive(::mingling::Grouped, Default)]
         pub struct ResultEmpty;
     };
 
@@ -1675,7 +1675,7 @@ pub fn program_fallback_gen(_input: TokenStream) -> TokenStream {
 /// and its `ProgramCollect` implementation.
 ///
 /// This is the core code generation macro that:
-/// 1. Collects all registered types (from `pack!`, `#[derive(Groupped)]`, etc.) and
+/// 1. Collects all registered types (from `pack!`, `#[derive(Grouped)]`, etc.) and
 ///    creates an enum with each type as a variant.
 /// 2. Generates the `Display` implementation for the enum.
 /// 3. Generates the `ProgramCollect` implementation that dispatches to all

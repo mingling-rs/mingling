@@ -678,7 +678,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Groupped;
+    use crate::Grouped;
     use std::sync::atomic::{AtomicBool, Ordering};
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -694,7 +694,7 @@ mod tests {
         }
     }
 
-    impl Groupped<MockHookEnum> for MockHookEnum {
+    impl Grouped<MockHookEnum> for MockHookEnum {
         fn member_id() -> MockHookEnum {
             MockHookEnum::A
         }

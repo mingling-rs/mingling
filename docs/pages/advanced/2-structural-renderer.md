@@ -62,7 +62,7 @@ When the user passes `--json`, the framework automatically serializes the render
 
 ## Customizing Output Structure
 
-The default output from `pack_structural!` includes an `inner` field. For full control over the output structure, define the type manually with `#[derive(StructuralData, Serialize, Groupped)]`:
+The default output from `pack_structural!` includes an `inner` field. For full control over the output structure, define the type manually with `#[derive(StructuralData, Serialize, Grouped)]`:
 
 ```rust
 // Features: ["structural_renderer"]
@@ -74,7 +74,7 @@ The default output from `pack_structural!` includes an `inner` field. For full c
 @@@use serde::Serialize;
 @@@dispatcher!("render", CMDRender => EntryRender);
  
-#[derive(Serialize, StructuralData, Groupped)]
+#[derive(Serialize, StructuralData, Grouped)]
 struct Info {
     name: String,
     age: i32,

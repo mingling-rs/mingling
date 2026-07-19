@@ -1,8 +1,8 @@
-use mingling_core::{ChainProcess, Groupped, ProgramCollect};
+use mingling_core::{ChainProcess, Grouped, ProgramCollect};
 
 use crate::{picker::Pickable, picker::Picker, picker::PickerArg, picker::PickerPattern1};
 
-/// Trait for converting Mingling entry types (types that implement `Groupped<R>` and `Into<Vec<String>>`)
+/// Trait for converting Mingling entry types (types that implement `Grouped<R>` and `Into<Vec<String>>`)
 /// into [`Picker`] instances for a given route type `R`.
 ///
 /// This trait provides a bridge between entry definitions created with the `mingling` framework
@@ -12,7 +12,7 @@ use crate::{picker::Pickable, picker::Picker, picker::PickerArg, picker::PickerP
 ///
 /// * `'a` — The lifetime of the picker and its references to argument definitions.
 /// * `This` — The program type used for dispatching runtime routes; must implement [`ProgramCollect`].
-/// * `Route` — The route type used for dispatching; must implement [`Groupped<This>`].
+/// * `Route` — The route type used for dispatching; must implement [`Grouped<This>`].
 pub trait EntryPicker<'a, This> {
     /// Converts `self` into a [`Picker`] for the given route type `Route`.
     fn to_picker(self) -> Picker<'a, ChainProcess<This>>;
@@ -117,7 +117,7 @@ pub trait EntryPicker<'a, This> {
 impl<'a, This, Bind> EntryPicker<'a, This> for Bind
 where
     This: ProgramCollect<Enum = This>,
-    Bind: Groupped<This> + Into<Vec<String>>,
+    Bind: Grouped<This> + Into<Vec<String>>,
 {
     fn to_picker(self) -> Picker<'a, ChainProcess<This>> {
         let args = self.into();

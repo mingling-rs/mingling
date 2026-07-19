@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 use mingling::{
-    Groupped, RenderResult,
+    Grouped, RenderResult,
     macros::{chain, pack, renderer},
 };
 use serde::Serialize;
@@ -17,7 +17,7 @@ use crate::{
     res::ResManifestPath,
 };
 
-#[derive(Serialize, Groupped)]
+#[derive(Serialize, Grouped)]
 pub struct ResultBinaries {
     pub binaries: Vec<DataBinary>,
 }

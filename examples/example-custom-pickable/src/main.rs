@@ -14,15 +14,15 @@
 //! Failed to parse address
 //! ```
 
-use mingling::{macros::route, parser::Pickable, prelude::*, Groupped};
+use mingling::{macros::route, parser::Pickable, prelude::*, Grouped};
 use std::io::Write;
 
 // Define types that can be recognized by Mingling
 //               ________________________ `Pickable` trait needs to implement Default
-//              /                ________ The Groupped derive macro registers an ID for this type
+//              /                ________ The Grouped derive macro registers an ID for this type
 //              |               /           Mingling uses this ID to identify the type
-//              vvvvvvv         vvvvvvvv
-#[derive(Debug, Default, Clone, Groupped)]
+//              vvvvvvv         vvvvvvv
+#[derive(Debug, Default, Clone, Grouped)]
 pub struct Address {
     pub ip: [u8; 4],
     pub port: u16,

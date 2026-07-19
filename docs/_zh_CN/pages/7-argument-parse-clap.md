@@ -25,7 +25,7 @@ features = ["derive", "color"]
 // Dependencies:
 // clap = "4"
 @@@ use mingling::macros::dispatcher_clap;
-#[derive(Default, clap::Parser, Groupped)]
+#[derive(Default, clap::Parser, Grouped)]
 #[dispatcher_clap("greet", CMDGreet, help = true, error = ErrorGreetParsed)]
 pub struct EntryGreet {
     #[clap(default_value = "World")]
@@ -64,7 +64,7 @@ fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
 // clap = "4"
 @@@use mingling::setup::BasicProgramSetup;
 @@@use mingling::macros::dispatcher_clap;
-@@@#[derive(Default, clap::Parser, Groupped)]
+@@@#[derive(Default, clap::Parser, Grouped)]
 @@@#[dispatcher_clap("greet", CMDGreet)]
 @@@pub struct EntryGreet {
 @@@    name: String,

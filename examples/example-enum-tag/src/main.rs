@@ -16,7 +16,7 @@
 //! ```
 
 use mingling::{
-    macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Groupped, ShellContext,
+    macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Grouped, ShellContext,
     Suggest,
 };
 use std::io::Write;
@@ -25,7 +25,7 @@ use std::io::Write;
 //                        ________ adds metadata to the enum, enabling it to:
 //                       /         1. Be used by the `suggest_enum!(Enum)` macro under the `comp` feature for autocompletion
 //                       vvvvvvv   2. Implement the `PickableEnum` trait
-#[derive(Debug, Default, EnumTag, Groupped)]
+#[derive(Debug, Default, EnumTag, Grouped)]
 pub enum ProgrammingLanguages {
     #[enum_desc("An efficient and flexible compiled language widely used for system programming")]
     C,

@@ -48,7 +48,7 @@ You've probably guessed it — `pack!(ResultName = String)` defines a type that 
 ```rust
 // pack!(ResultName = String) generates code roughly like this
  
-#[derive(Groupped)]
+#[derive(Grouped)]
 pub struct ResultName {
     pub inner: String,
 }

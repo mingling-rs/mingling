@@ -171,7 +171,7 @@ fn handle_hello(args: EntryHello) {}
 ### `group!`
 
 Registers an external type as a member of the program group without modifying its definition.
-The type's simple name is used as the enum variant, just like `pack!` or `#[derive(Groupped)]`.
+The type's simple name is used as the enum variant, just like `pack!` or `#[derive(Grouped)]`.
 
 ```rust
 // Features: ["extra_macros"]

@@ -378,7 +378,7 @@ pub mod example_basic {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::{Groupped, macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup};
+/// use mingling::{Grouped, macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup};
 /// use std::io::Write;
 ///
 /// fn main() {
@@ -407,10 +407,10 @@ pub mod example_basic {}
 /// // Implement Clap Parser, and bind to Dispatcher
 /// //        _______________________________ Default trait, provides fallback on parse failure
 /// //       /         ______________________ clap::Parser, parsing logic implemented by Clap
-/// //       |        /              ________ Implement mingling::Groupped
+/// //       |        /              ________ Implement mingling::Grouped
 /// //       |        |             /           to ensure Mingling can recognize the type
-/// //       vvvvvvv  vvvvvvvvvvvv  vvvvvvvv
-/// #[derive(Default, clap::Parser, Groupped)]
+/// //       vvvvvvv  vvvvvvvvvvvv  vvvvvvv
+/// #[derive(Default, clap::Parser, Grouped)]
 /// #[dispatcher_clap(
 ///     "greet", CMDGreet,        // Bind EntryGreet to "greet" command
 ///     help = true,              // Generate clap help for EntryGreet
@@ -724,15 +724,15 @@ pub mod example_completion {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::{macros::route, parser::Pickable, prelude::*, Groupped};
+/// use mingling::{macros::route, parser::Pickable, prelude::*, Grouped};
 /// use std::io::Write;
 ///
 /// // Define types that can be recognized by Mingling
 /// //               ________________________ `Pickable` trait needs to implement Default
-/// //              /                ________ The Groupped derive macro registers an ID for this type
+/// //              /                ________ The Grouped derive macro registers an ID for this type
 /// //              |               /           Mingling uses this ID to identify the type
-/// //              vvvvvvv         vvvvvvvv
-/// #[derive(Debug, Default, Clone, Groupped)]
+/// //              vvvvvvv         vvvvvvv
+/// #[derive(Debug, Default, Clone, Grouped)]
 /// pub struct Address {
 ///     pub ip: [u8; 4],
 ///     pub port: u16,
@@ -963,7 +963,7 @@ pub mod example_dispatch_tree {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{
-///     macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Groupped, ShellContext,
+///     macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Grouped, ShellContext,
 ///     Suggest,
 /// };
 /// use std::io::Write;
@@ -972,7 +972,7 @@ pub mod example_dispatch_tree {}
 /// //                        ________ adds metadata to the enum, enabling it to:
 /// //                       /         1. Be used by the `suggest_enum!(Enum)` macro under the `comp` feature for autocompletion
 /// //                       vvvvvvv   2. Implement the `PickableEnum` trait
-/// #[derive(Debug, Default, EnumTag, Groupped)]
+/// #[derive(Debug, Default, EnumTag, Grouped)]
 /// pub enum ProgrammingLanguages {
 ///     #[enum_desc("An efficient and flexible compiled language widely used for system programming")]
 ///     C,
@@ -1691,7 +1691,7 @@ pub mod example_lazy_resources {}
 /// /// Renderer for parse errors — using the outside `ParseIntError` type.
 /// ///
 /// /// The `ParseIntError` type is registered via `group!` above, so it implements
-/// /// `Groupped<ThisProgram>` and can be used directly in a `#[renderer]` function.
+/// /// `Grouped<ThisProgram>` and can be used directly in a `#[renderer]` function.
 /// #[renderer]
 /// fn render_parse_error(err: ParseIntError) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
@@ -2436,7 +2436,7 @@ pub mod example_setup {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::prelude::*;
-/// use mingling::{Groupped, StructuralData, parser::Picker, setup::StructuralRendererSetup};
+/// use mingling::{parser::Picker, setup::StructuralRendererSetup, Grouped, StructuralData};
 /// use serde::Serialize;
 /// use std::io::Write;
 ///
@@ -2453,12 +2453,12 @@ pub mod example_setup {}
 /// // --------- IMPORTANT ---------
 /// // For beautiful output structure, do not use `pack!` to wrap the types that need to be output.
 /// // Instead, manually implement
-/// //        __________________________________ Mark as structured data so it can be rendered
-/// //       /              ____________________ Implement serde::Serialize
-/// //       |             /           _________ Implement mingling::Groupped
-/// //       |             |          /            to ensure Mingling can recognize the type
-/// //       vvvvvvvvvvvv  vvvvvvvvv  vvvvvvvv
-/// #[derive(StructuralData, Serialize, Groupped)]
+/// //        ____________________________________ Mark as structured data so it can be rendered
+/// //       /                ____________________ Implement serde::Serialize
+/// //       |               /           _________ Implement mingling::Grouped
+/// //       |               |          /            to ensure Mingling can recognize the type
+/// //       vvvvvvvvvvvv    vvvvvvvvv  vvvvvvv
+/// #[derive(StructuralData, Serialize, Grouped)]
 /// struct Info {
 ///     #[serde(rename = "member_name")]
 ///     name: String,

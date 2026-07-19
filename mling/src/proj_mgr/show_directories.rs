@@ -1,6 +1,6 @@
 use colored::Colorize;
 use mingling::{
-    Groupped, RenderResult,
+    Grouped, RenderResult,
     macros::{chain, pack, renderer},
 };
 use serde::Serialize;
@@ -12,12 +12,12 @@ use crate::{
     res::ResManifestPath,
 };
 
-#[derive(Serialize, Groupped)]
+#[derive(Serialize, Grouped)]
 pub struct ResultWorkspaceDirectory {
     pub path: String,
 }
 
-#[derive(Serialize, Groupped)]
+#[derive(Serialize, Grouped)]
 pub struct ResultTargetDirectory {
     pub path: String,
 }

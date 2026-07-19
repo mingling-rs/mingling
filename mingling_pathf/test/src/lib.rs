@@ -222,11 +222,11 @@ fn test_group_analyze() {
 }
 
 #[test]
-fn test_groupped_derive_analyze() {
+fn test_grouped_derive_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
     let file = current_dir()
         .unwrap()
-        .join("src/test_files/test_groupped_derive.rs");
+        .join("src/test_files/test_grouped_derive.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![

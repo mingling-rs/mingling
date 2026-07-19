@@ -18,7 +18,7 @@
 //! ```
 
 use mingling::prelude::*;
-use mingling::{Groupped, StructuralData, parser::Picker, setup::StructuralRendererSetup};
+use mingling::{parser::Picker, setup::StructuralRendererSetup, Grouped, StructuralData};
 use serde::Serialize;
 use std::io::Write;
 
@@ -35,12 +35,12 @@ fn main() {
 // --------- IMPORTANT ---------
 // For beautiful output structure, do not use `pack!` to wrap the types that need to be output.
 // Instead, manually implement
-//        __________________________________ Mark as structured data so it can be rendered
-//       /              ____________________ Implement serde::Serialize
-//       |             /           _________ Implement mingling::Groupped
-//       |             |          /            to ensure Mingling can recognize the type
-//       vvvvvvvvvvvv  vvvvvvvvv  vvvvvvvv
-#[derive(StructuralData, Serialize, Groupped)]
+//        ____________________________________ Mark as structured data so it can be rendered
+//       /                ____________________ Implement serde::Serialize
+//       |               /           _________ Implement mingling::Grouped
+//       |               |          /            to ensure Mingling can recognize the type
+//       vvvvvvvvvvvv    vvvvvvvvv  vvvvvvv
+#[derive(StructuralData, Serialize, Grouped)]
 struct Info {
     #[serde(rename = "member_name")]
     name: String,

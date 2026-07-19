@@ -134,7 +134,7 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
                 ::mingling::macros::node!(#command_name_str)
             }
             fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
-                use ::mingling::Groupped;
+                use ::mingling::Grouped;
                 #pack::new(args).to_chain()
             }
             fn clone_dispatcher(&self) -> Box<dyn ::mingling::Dispatcher<#program_type>> {

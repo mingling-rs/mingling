@@ -4,7 +4,7 @@ use std::pin::Pin;
 #[cfg(feature = "dispatch_tree")]
 use crate::Dispatcher;
 
-use crate::{AnyOutput, ChainProcess, Groupped, ProgramCollect, RenderResult};
+use crate::{AnyOutput, ChainProcess, Grouped, ProgramCollect, RenderResult};
 
 #[cfg(feature = "structural_renderer")]
 use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
@@ -23,7 +23,7 @@ pub enum MockProgramCollect {
     Bar,
 }
 
-impl Groupped<MockProgramCollect> for MockProgramCollect {
+impl Grouped<MockProgramCollect> for MockProgramCollect {
     fn member_id() -> MockProgramCollect {
         MockProgramCollect::Foo
     }

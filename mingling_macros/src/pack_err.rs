@@ -42,7 +42,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
             // Note: No longer derives Serialize under structural_renderer.
             // Use pack_err_structural for structured output support.
             let derive = quote! {
-                #[derive(::mingling::Groupped)]
+                #[derive(::mingling::Grouped)]
             };
 
             let expanded = quote! {
@@ -75,7 +75,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
             // Note: No longer derives Serialize under structural_renderer.
             // Use pack_err_structural for structured output support.
             let derive = quote! {
-                #[derive(::mingling::Groupped)]
+                #[derive(::mingling::Grouped)]
             };
 
             let expanded = quote! {
@@ -150,7 +150,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
             let snake_name = snake_case!(&name_str);
 
             let expanded = quote! {
-                #[derive(::mingling::Groupped, ::serde::Serialize)]
+                #[derive(::mingling::Grouped, ::serde::Serialize)]
                 pub struct #type_name {
                     /// The snake_case name of this error, automatically set at compile time.
                     pub name: String,
@@ -179,7 +179,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
             let snake_name = snake_case!(&name_str);
 
             let expanded = quote! {
-                #[derive(::mingling::Groupped, ::serde::Serialize)]
+                #[derive(::mingling::Grouped, ::serde::Serialize)]
                 pub struct #type_name {
                     /// The snake_case name of this error, automatically set at compile time.
                     pub name: String,

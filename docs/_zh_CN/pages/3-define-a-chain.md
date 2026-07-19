@@ -48,7 +48,7 @@ Chain 函数签名里写着它需要什么——`args: EntryGreet`
 ```rust
 // pack!(ResultName = String) 大概生成了这样的代码
  
-#[derive(Groupped)]
+#[derive(Grouped)]
 pub struct ResultName {
     pub inner: String,
 }

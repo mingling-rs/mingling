@@ -96,7 +96,7 @@ Result + 内容
 | `ResultGreetSomeone` | 问候结果     |
 | `ResultFruitList`    | 水果列表结果 |
 
-结果结构体期望被 Renderer 消费，内部结构应该为了渲染美观而设计。一般用 `#[derive(Groupped)]` 代替 `pack!()` 包装，以获得更灵活的字段控制。
+结果结构体期望被 Renderer 消费，内部结构应该为了渲染美观而设计。一般用 `#[derive(Grouped)]` 代替 `pack!()` 包装，以获得更灵活的字段控制。
 
 ### 错误
 

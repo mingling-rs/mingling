@@ -176,7 +176,7 @@ pub(crate) fn pack_structural(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl ::mingling::Groupped<#program_path> for #type_name {
+        impl ::mingling::Grouped<#program_path> for #type_name {
             fn member_id() -> #program_path {
                 #program_path::#type_name
             }
@@ -297,7 +297,7 @@ pub(crate) fn group_structural(input: TokenStream) -> TokenStream {
             #type_use
             #alias_use
 
-            impl ::mingling::Groupped<__MinglingProgram> for #type_name {
+            impl ::mingling::Grouped<__MinglingProgram> for #type_name {
                 fn member_id() -> __MinglingProgram {
                     __MinglingProgram::#type_name
                 }

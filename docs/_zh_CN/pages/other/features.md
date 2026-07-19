@@ -171,7 +171,7 @@ fn handle_hello(args: EntryHello) {}
 ### `group!`
 
 将外部类型注册为程序组成员，无需修改原始类型的定义。
-类型名会直接作为枚举变体，与 `pack!` 或 `#[derive(Groupped)]` 一致。
+类型名会直接作为枚举变体，与 `pack!` 或 `#[derive(Grouped)]` 一致。
 
 ```rust
 // Features: ["extra_macros"]

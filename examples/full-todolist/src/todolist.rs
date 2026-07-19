@@ -1,13 +1,13 @@
 //! Data structures, read and write logic for the todo list
 
-use mingling::{Groupped, RenderResult, macros::renderer};
+use mingling::{Grouped, RenderResult, macros::renderer};
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::{env::current_dir, path::PathBuf};
 
 use crate::ResProgramFlags;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, Groupped)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, Grouped)]
 pub struct ResTodoList {
     pub items: Vec<Todo>,
 }

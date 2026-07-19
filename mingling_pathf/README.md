@@ -7,7 +7,7 @@
 
 ## Overview
 
-`mingling_pathf` provides the `pathf` feature for Mingling. It automatically analyzes the full module paths of all Mingling types in a crate at build-time (types defined via `pack!`, `#[derive(Groupped)]`, `#[chain]`, `#[renderer]`, etc.), and generates a mapping from type names to module paths for consumption by `gen_program!()` at compile-time.
+`mingling_pathf` provides the `pathf` feature for Mingling. It automatically analyzes the full module paths of all Mingling types in a crate at build-time (types defined via `pack!`, `#[derive(Grouped)]`, `#[chain]`, `#[renderer]`, etc.), and generates a mapping from type names to module paths for consumption by `gen_program!()` at compile-time.
 
 When enabled, `gen_program!()` uses full module paths for type references in the generated dispatch code (e.g., `downcast::<myapp::sub::ResultMyName>()`), eliminating the need to `use` all types in the module where `gen_program!()` is called. This allows for a more flexible module organization without the constraint of centralized `use` statements.
 

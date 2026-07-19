@@ -71,7 +71,7 @@ fn render_number(num: ParsedNumber) -> RenderResult {
 /// Renderer for parse errors — using the outside `ParseIntError` type.
 ///
 /// The `ParseIntError` type is registered via `group!` above, so it implements
-/// `Groupped<ThisProgram>` and can be used directly in a `#[renderer]` function.
+/// `Grouped<ThisProgram>` and can be used directly in a `#[renderer]` function.
 #[renderer]
 fn render_parse_error(err: ParseIntError) -> RenderResult {
     let mut render_result = RenderResult::new();

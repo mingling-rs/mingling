@@ -38,7 +38,7 @@
 //! For more information, try '--help'.
 //! ```
 
-use mingling::{Groupped, macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup};
+use mingling::{Grouped, macros::dispatcher_clap, prelude::*, setup::BasicProgramSetup};
 use std::io::Write;
 
 fn main() {
@@ -67,10 +67,10 @@ fn main() {
 // Implement Clap Parser, and bind to Dispatcher
 //        _______________________________ Default trait, provides fallback on parse failure
 //       /         ______________________ clap::Parser, parsing logic implemented by Clap
-//       |        /              ________ Implement mingling::Groupped
+//       |        /              ________ Implement mingling::Grouped
 //       |        |             /           to ensure Mingling can recognize the type
-//       vvvvvvv  vvvvvvvvvvvv  vvvvvvvv
-#[derive(Default, clap::Parser, Groupped)]
+//       vvvvvvv  vvvvvvvvvvvv  vvvvvvv
+#[derive(Default, clap::Parser, Grouped)]
 #[dispatcher_clap(
     "greet", CMDGreet,        // Bind EntryGreet to "greet" command
     help = true,              // Generate clap help for EntryGreet

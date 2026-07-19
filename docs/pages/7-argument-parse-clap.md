@@ -25,7 +25,7 @@ Add `#[dispatcher_clap]` on a `clap::Parser` struct to auto-generate a Dispatche
 // Dependencies:
 // clap = "4"
 @@@ use mingling::macros::dispatcher_clap;
-#[derive(Default, clap::Parser, Groupped)]
+#[derive(Default, clap::Parser, Grouped)]
 #[dispatcher_clap("greet", CMDGreet, help = true, error = ErrorGreetParsed)]
 pub struct EntryGreet {
     #[clap(default_value = "World")]
@@ -64,7 +64,7 @@ If you need `--help` support, register `BasicProgramSetup` in main and set the c
 // clap = "4"
 @@@use mingling::setup::BasicProgramSetup;
 @@@use mingling::macros::dispatcher_clap;
-@@@#[derive(Default, clap::Parser, Groupped)]
+@@@#[derive(Default, clap::Parser, Grouped)]
 @@@#[dispatcher_clap("greet", CMDGreet)]
 @@@pub struct EntryGreet {
 @@@    name: String,

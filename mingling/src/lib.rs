@@ -118,9 +118,9 @@ pub mod macros {
 #[cfg(feature = "macros")]
 pub use mingling_macros::EnumTag;
 
-/// derive macro Groupped
+/// derive macro Grouped
 #[cfg(feature = "macros")]
-pub use mingling_macros::Groupped;
+pub use mingling_macros::Grouped;
 
 /// derive macro `StructuralData` — marks a type as supporting structured output
 #[cfg(feature = "structural_renderer")]
@@ -171,9 +171,9 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
-    /// Re-export of the `Groupped` derive macro for grouping types.
+    /// Re-export of the `Grouped` derive macro for grouping types.
     #[cfg(feature = "core")]
-    pub use crate::Groupped;
+    pub use crate::Grouped;
     /// Re-export of the `RenderResult` struct for outputting rendering result
     #[cfg(feature = "core")]
     pub use crate::RenderResult;

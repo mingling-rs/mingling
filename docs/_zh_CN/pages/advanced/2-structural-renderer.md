@@ -62,7 +62,7 @@ fn render_info(r: ResultInfo) -> RenderResult {
 
 ## 自定义输出结构
 
-`pack_structural!` 的默认输出包含 `inner` 字段。要完全控制输出结构，可以用 `#[derive(StructuralData, Serialize, Groupped)]` 手动定义类型：
+`pack_structural!` 的默认输出包含 `inner` 字段。要完全控制输出结构，可以用 `#[derive(StructuralData, Serialize, Grouped)]` 手动定义类型：
 
 ```rust
 // Features: ["structural_renderer"]
@@ -74,7 +74,7 @@ fn render_info(r: ResultInfo) -> RenderResult {
 @@@use serde::Serialize;
 @@@dispatcher!("render", CMDRender => EntryRender);
  
-#[derive(Serialize, StructuralData, Groupped)]
+#[derive(Serialize, StructuralData, Grouped)]
 struct Info {
     name: String,
     age: i32,

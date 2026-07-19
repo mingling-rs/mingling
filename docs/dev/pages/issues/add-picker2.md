@@ -40,7 +40,7 @@ fn handle_hello(args: EntryHello) {
 ```rust
 #[chain]
 fn handle_hello(args: EntryHello) -> Next {
-    //                                         requires impl Groupped<_>
+    //                                         requires impl Grouped<_>
     //                                         |
     let parsed = args //                       vvvvvvvvvvvvvvvvvvv
         .pick_route::<String, _>(positional!(), ErrorNoNameProvided)

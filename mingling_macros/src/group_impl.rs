@@ -124,7 +124,7 @@ pub fn group_macro(input: TokenStream) -> TokenStream {
         quote! {}
     };
 
-    // Generate the module with the Groupped implementation
+    // Generate the module with the Grouped implementation
     let expanded = quote! {
         #alias_stmt
         #[allow(non_camel_case_types)]
@@ -133,7 +133,7 @@ pub fn group_macro(input: TokenStream) -> TokenStream {
             #type_use
             #alias_use
 
-            impl ::mingling::Groupped<__MinglingProgram> for #type_name {
+            impl ::mingling::Grouped<__MinglingProgram> for #type_name {
                 fn member_id() -> __MinglingProgram {
                     __MinglingProgram::#type_name
                 }

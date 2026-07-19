@@ -4,7 +4,7 @@ use std::pin::Pin;
 #[cfg(feature = "dispatch_tree")]
 use crate::Dispatcher;
 
-use crate::{AnyOutput, ChainProcess, Groupped, RenderResult};
+use crate::{AnyOutput, ChainProcess, Grouped, RenderResult};
 
 #[cfg(feature = "structural_renderer")]
 use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
@@ -21,9 +21,9 @@ pub use mock::*;
 pub trait ProgramCollect {
     /// Enum type representing internal IDs for the program
     type Enum;
-    type ErrorDispatcherNotFound: Groupped<Self::Enum>;
-    type ErrorRendererNotFound: Groupped<Self::Enum>;
-    type ResultEmpty: Groupped<Self::Enum>;
+    type ErrorDispatcherNotFound: Grouped<Self::Enum>;
+    type ErrorRendererNotFound: Grouped<Self::Enum>;
+    type ResultEmpty: Grouped<Self::Enum>;
 
     /// Use a prefix tree to quickly match arguments and dispatch to an Entry
     #[cfg(feature = "dispatch_tree")]
