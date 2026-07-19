@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use colored::Colorize;
 use indicatif::ProgressBar;
 use tools::verify::{
-    build_block, compute_block_hash, generate_cargo_toml, generate_main_rs, generate_build_rs,
+    build_block, compute_block_hash, generate_build_rs, generate_cargo_toml, generate_main_rs,
     is_block_testable, parse_code_blocks, write_summary_report,
 };
 use tools::{eprintln_cargo_style, println_cargo_style};
@@ -13,16 +13,7 @@ use tools::{eprintln_cargo_style, println_cargo_style};
 /// Config from verified-docs.toml
 #[derive(serde::Deserialize)]
 struct Config {
-    verified: VerifiedPaths,
-}
-
-#[derive(serde::Deserialize)]
-struct VerifiedPaths {
-    readme: String,
-    #[serde(default)]
-    documents_en_us: Option<String>,
-    #[serde(default)]
-    documents_zh_cn: Option<String>,
+    verified: HashMap<String, String>,
 }
 
 #[tokio::main]
@@ -64,31 +55,28 @@ async fn main() {
     };
 
     // Collect all markdown files from config
+    // Keys are used as labels; values are either single file paths or directory globs
     let mut files: Vec<(String, PathBuf)> = Vec::new();
 
-    // README
-    let readme_path = PathBuf::from(&config.verified.readme);
-    if readme_path.exists() {
-        files.push(("README".to_string(), readme_path));
-    }
-
-    // English docs
-    if let Some(pattern) = &config.verified.documents_en_us {
-        let base = pattern.trim_end_matches("/**").trim_end_matches('*');
-        let dir = PathBuf::from(base);
-        if dir.exists() && dir.is_dir() {
-            collect_md_files(&dir, &mut files, "en");
+    for (key, value) in &config.verified {
+        let candidate = PathBuf::from(value);
+        if candidate.is_dir() {
+            // Directory — walk it for all .md files, using the key as label
+            collect_md_files(&candidate, &mut files, key);
+        } else if candidate.exists() && candidate.is_file() {
+            // Single file
+            files.push((key.to_string(), candidate));
+        } else if candidate.extension().is_none() {
+            // No extension — treat as a glob like "docs/pages/**", walk the base dir instead
+            let base = PathBuf::from(value.trim_end_matches("/**").trim_end_matches('*'));
+            if base.is_dir() {
+                collect_md_files(&base, &mut files, key);
+            }
         }
     }
 
-    // Chinese docs
-    if let Some(pattern) = &config.verified.documents_zh_cn {
-        let base = pattern.trim_end_matches("/**").trim_end_matches('*');
-        let dir = PathBuf::from(base);
-        if dir.exists() && dir.is_dir() {
-            collect_md_files(&dir, &mut files, "zh_CN");
-        }
-    }
+    // Sort for deterministic ordering
+    files.sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)));
 
     // If a single file was specified, filter the list to only that file
     if let Some(ref target) = single_file {
@@ -201,10 +189,7 @@ async fn main() {
                     bar.inc(1);
                 } else {
                     bar.inc(1);
-                    bar.println(format!(
-                        "  {} {block_label}",
-                        "failed".bold().bright_red()
-                    ));
+                    bar.println(format!("  {} {block_label}", "failed".bold().bright_red()));
                     bar.println(format!("  {block_label} FAILED:\n{err}"));
                 }
                 group_results.push((block.source_file.clone(), block.line, ok, err));
