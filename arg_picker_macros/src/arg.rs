@@ -119,6 +119,7 @@ pub(crate) fn arg(input: TokenStream) -> TokenStream {
 fn split_at_commas(tokens: &[TokenTree]) -> Vec<Vec<TokenTree>> {
     let mut result = vec![Vec::new()];
     let mut depth = 0u32;
+    let mut angle_depth = 0u32;
     for t in tokens {
         match t {
             TokenTree::Group(_g) => {
@@ -126,7 +127,15 @@ fn split_at_commas(tokens: &[TokenTree]) -> Vec<Vec<TokenTree>> {
                 result.last_mut().unwrap().push(t.clone());
                 depth -= 1;
             }
-            TokenTree::Punct(p) if p.as_char() == ',' && depth == 0 => {
+            TokenTree::Punct(p) if p.as_char() == '<' => {
+                angle_depth += 1;
+                result.last_mut().unwrap().push(t.clone());
+            }
+            TokenTree::Punct(p) if p.as_char() == '>' && angle_depth > 0 => {
+                angle_depth -= 1;
+                result.last_mut().unwrap().push(t.clone());
+            }
+            TokenTree::Punct(p) if p.as_char() == ',' && depth == 0 && angle_depth == 0 => {
                 result.push(Vec::new());
             }
             _ => result.last_mut().unwrap().push(t.clone()),

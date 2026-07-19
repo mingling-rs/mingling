@@ -35,7 +35,7 @@ pub trait EntryPicker<'a, This> {
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
-        Next: Pickable<'a> + Default + Sized,
+        Next: Pickable<'a> + Sized,
     {
         let picker = Self::to_picker(self);
         Picker::build_pattern1(picker.into_args(), arg.into(), None)
@@ -60,7 +60,7 @@ pub trait EntryPicker<'a, This> {
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
-        Next: Pickable<'a> + Default + Sized,
+        Next: Pickable<'a> + Sized,
         F: FnMut() -> Next + 'static,
     {
         self.pick(arg).or(func)
@@ -107,7 +107,7 @@ pub trait EntryPicker<'a, This> {
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
-        Next: Pickable<'a> + Default + Sized,
+        Next: Pickable<'a> + Sized,
         F: FnMut() -> ChainProcess<This> + 'static,
     {
         self.pick(arg).or_route(func)
