@@ -126,72 +126,26 @@ fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
 
 ---
 
-## 4. Parsing Arguments — The Picker
+## 4. Argument Parsing — Picker
 
-Mingling provides a **Picker** for zero-cost argument extraction. You use `pick()` or `pick_or()` on an entry to extract typed values, then `unpack()` to get the final tuple.
+Mingling provides a **Picker** for argument extraction. You can use `pick()` or `pick_or()` on an entry to tag typed values, then parse them into a tuple type all at once.
 
 ```rust
-// Features: ["parser"]
-
-use mingling::parser::Picker;
-
+// Features: ["picker"]
 dispatcher!("greet", CMDGreet => EntryGreet);
 pack!(ResultGreeting = String);
 
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let (name, count) = Picker::new(args.inner)
-        .pick::<String>(())                   // positional: first string
-        .pick_or::<u8>(["-r", "--repeat"], 1) // optional flag with default
-        .unpack();
+    let (name, count) = args
+        .pick(&arg![String])                   // positional argument: first string
+        .pick_or(&arg![repeat: u8, 'r'], || 1) // optional flag with default value
+        .unwrap();
     ResultGreeting::new(format!("{} x{}", name, count)).into()
 }
 ```
 
-With the `parser` feature, the `AsPicker` trait provides a shorthand directly on entries:
-
-```rust
-// Features: ["parser"]
-
-dispatcher!("greet", CMDGreet => EntryGreet);
-pack!(ResultGreeting = String);
-
-#[chain]
-fn handle(args: EntryGreet) -> Next {
-    let (name, count) = args
-        .pick::<Option<String>>(())
-        .pick_or::<u8>(["-r", "--repeat"], 1)
-        .unpack();
-    ResultGreeting::new(format!("{} x{}", name.unwrap_or_default(), count)).into()
-}
-```
-
-For enums, derive `EnumTag` and implement `PickableEnum` to parse enum variants from strings:
-
-```rust
-// Features: ["parser", "extra_macros"]
-
-use mingling::{EnumTag, Grouped};
-use mingling::parser::PickableEnum;
-
-dispatcher!("lang.select", CMDLang => EntryLang);
-
-#[derive(Debug, Default, EnumTag, Grouped)]
-pub enum Language {
-    #[default]
-    Rust,
-    #[enum_rename("C++")]
-    CPlusPlus,
-}
-
-impl PickableEnum for Language {}
-
-#[chain]
-fn handle(args: EntryLang) -> Next {
-    let lang: Language = args.pick(()).unpack();
-    lang.into()
-}
-```
+For more details on the Picker, see [arg-picker](https://github.com/mingling-rs/mingling/tree/main/arg_picker)
 
 ---
 
