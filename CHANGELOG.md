@@ -217,6 +217,12 @@ None
 
     The return type validation has been removed entirely — any valid Rust return type is accepted. If the type does not implement `Into<ChainProcess<ThisProgram>>`, a standard Rust compilation error will be produced at the call site.
 
+10. **[`macros`]** **[`extensions`]** Added the `extensions` module to `mingling_macros`, providing an extension point mechanism for attribute macros (`#[chain]`, `#[renderer]`, `#[help]`, `#[completion]`). The extension system allows identifiers in the attribute argument to be extracted and processed before the main macro logic runs.
+
+    Each attribute macro now attempts to redispatch through `extensions::try_redispatch_simple()` (or `try_redispatch_completion` for `#[completion]`) before executing its standard logic. If extension identifiers are detected, the call is re-routed so that extensions are applied via additional `#[...]` attributes stacked on top of the inner core attribute. New extensions can be added without modifying the attribute macros themselves — only the `extensions` module needs to be updated to register new identifiers.
+
+    This system is designed for future extensibility: as new cross-cutting concerns (e.g., logging, metrics, validation) are identified, they can be added as simple extension identifiers without touching the core macro logic.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.

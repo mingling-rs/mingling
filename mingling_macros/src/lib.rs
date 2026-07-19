@@ -159,6 +159,10 @@ mod dispatcher_clap;
 #[cfg(feature = "extra_macros")]
 mod entry;
 mod enum_tag;
+
+/// Extension point mechanism for attribute macros
+/// (`#[chain(routeify, ...)]`, `#[renderer(routeify, ...)]`, etc.)
+mod extensions;
 #[cfg(feature = "extra_macros")]
 mod group_impl;
 mod grouped;
@@ -877,6 +881,11 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
 /// - With the `async` feature, async functions are supported; without it, async functions are rejected.
 #[proc_macro_attribute]
 pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
+    // Extension point: if attr contains extension identifiers like `routeify`,
+    // re-dispatch as #[ext1] #[ext2] #[chain] fn ...
+    if let Some(redispatch) = extensions::try_redispatch_simple(attr.clone(), &item, "chain") {
+        return redispatch;
+    }
     chain::chain_attr(attr, item)
 }
 
@@ -944,6 +953,9 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
+    if let Some(redispatch) = extensions::try_redispatch_simple(attr.clone(), &item, "renderer") {
+        return redispatch;
+    }
     renderer::renderer_attr(attr, item)
 }
 
@@ -998,6 +1010,9 @@ pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[cfg(feature = "comp")]
 #[proc_macro_attribute]
 pub fn completion(attr: TokenStream, item: TokenStream) -> TokenStream {
+    if let Some(redispatch) = extensions::try_redispatch_completion(attr.clone(), &item) {
+        return redispatch;
+    }
     completion::completion_attr(attr, item)
 }
 
@@ -1251,7 +1266,10 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 ///
 /// [`BasicProgramSetup`]: https://docs.rs/mingling/latest/mingling/setup/struct.BasicProgramSetup.html
 #[proc_macro_attribute]
-pub fn help(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
+    if let Some(redispatch) = extensions::try_redispatch_simple(attr.clone(), &item, "help") {
+        return redispatch;
+    }
     help::help_attr(item)
 }
 
