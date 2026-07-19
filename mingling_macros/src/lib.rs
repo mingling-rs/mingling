@@ -1239,6 +1239,27 @@ pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
     help::help_attr(item)
 }
 
+/// Extension attribute macro that transforms `expr?` into `route!(expr)`.
+///
+/// Designed for use with `#[chain(routeify, ...)]` to enable concise error
+/// routing in chain functions using the `?` operator syntax.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[chain(routeify)]
+/// fn handle_calc(args: EntryCalculate) -> Next {
+///     let a = args.pick(&arg![f32]).to_result()?;
+///     let op = args.pick(&arg![Operator]).to_result()?;
+///     StateCalculate { number_a: a, operator: op, ... }.to_chain()
+/// }
+/// ```
+#[cfg(feature = "extra_macros")]
+#[proc_macro_attribute]
+pub fn routeify(attr: TokenStream, item: TokenStream) -> TokenStream {
+    extensions::routeify::routeify_impl(attr, item)
+}
+
 /// Derive macro for automatically implementing the `Grouped` trait on a struct.
 ///
 /// The `#[derive(Grouped)]` macro:

@@ -236,6 +236,32 @@ None
 
     This system is designed for future extensibility: as new cross-cutting concerns (e.g., logging, metrics, validation) are identified, they can be added as simple extension identifiers without touching the core macro logic.
 
+11. **[`extensions`]** **[`macros`]** Added the `#[routeify]` extension attribute macro that transforms `expr?` into `route!(expr)`, enabling concise error routing in chain functions using the `?` operator syntax.
+
+    The `#[routeify]` macro can be used:
+    - **Standalone** — as a direct attribute: `#[routeify] fn handle(...) { ... }`
+    - **As an extension** — via the extension point system: `#[chain(routeify)] fn handle(...) { ... }`
+
+    When used as a `#[chain]` extension, the `routeify` identifier is detected by the extension point mechanism, stripped from the `#[chain]` attribute arguments, and `#[routeify]` is applied as an outer attribute on top of `#[chain]`. The re-dispatch token stream now correctly generates `#[#exts]*` (i.e., `#[routeify] #[chain]`) instead of the previous bare `#exts` — fixing a bug where extension identifiers were emitted without the `#[...]` attribute delimiter, producing invalid token streams.
+
+    ```rust
+    use mingling::macros::routeify;
+
+    #[chain(routeify)]
+    fn handle_calc(args: EntryCalculate) -> Next {
+        let a = args.pick(&arg![f32]).to_result()?;
+        let op = args.pick(&arg![Operator]).to_result()?;
+        StateCalculate { number_a: a, operator: op, ... }.to_chain()
+    }
+    ```
+
+    The `#[routeify]` macro is feature-gated behind `extra_macros` and re-exported as `mingling::macros::routeify`.
+
+    Internal changes:
+    - Added `mingling_macros/src/extensions/routeify.rs` with `routeify_impl` implementation.
+    - Updated `try_redispatch_simple` and `try_redispatch_completion` to emit `#[#exts]` instead of bare `#exts`, ensuring proper attribute syntax in the re-dispatched token stream.
+    - Registered `#[proc_macro_attribute] pub fn routeify` in `mingling_macros/src/lib.rs`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.

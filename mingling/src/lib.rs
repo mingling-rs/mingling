@@ -106,6 +106,10 @@ pub mod macros {
     /// `route! { /* ... */ }` - Used to generate a route that either returns a successful result or early returns an error.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::route;
+    /// `#[routeify]` - An extension attribute macro that transforms `expr?` into `route!(expr)`.
+    /// Can be used standalone or as a chain/renderer extension: `#[chain(routeify, ...)]`.
+    #[cfg(feature = "extra_macros")]
+    pub use mingling_macros::routeify;
     /// `suggest! { "hello", "bye" }` - Used to generate suggestions
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest;
