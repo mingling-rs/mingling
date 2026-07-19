@@ -123,14 +123,26 @@ fn ci(test_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
     }
 
     if run_all || test_docs {
-        println_cargo_style!("Phase: Test all examples");
-        test_examples()?;
+        let mut exit_code = 0;
 
         println_cargo_style!("Phase: Verify all *.md document code blocks are compilable");
-        test_docs_code_blocks()?;
+        if let Err(code) = test_docs_code_blocks() {
+            exit_code = exit_code.max(code);
+        }
+
+        println_cargo_style!("Phase: Test all examples");
+        if let Err(code) = test_examples() {
+            exit_code = exit_code.max(code);
+        }
 
         println_cargo_style!("Phase: Check all documentation is up to date");
-        docs_refresh()?;
+        if let Err(code) = docs_refresh() {
+            exit_code = exit_code.max(code);
+        }
+
+        if exit_code != 0 {
+            return Err(exit_code);
+        }
     }
 
     run_cmd!("git add --renormalize .")?;
