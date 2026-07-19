@@ -90,11 +90,11 @@ pub struct PickerResult<Tuple> {
 ## 🕘 Progress
 
 - [x] In Progress
-  - [x] Added `Picker` struct and related call chain
-  - [x] Added `parselib` providing parsing logic
-  - [x] Added `Pickable` for extensibility
-  - [ ] Comprehensive testing!
-  - [ ] Improve documentation
-  - [ ] Add examples
-  - [ ] Update README
+    - [x] Added `Picker` struct and related call chain
+    - [x] Added `parselib` providing parsing logic
+    - [x] Added `Pickable` for extensibility
+    - [x] Comprehensive testing!
+    - [ ] Improve documentation
+    - [x] Add examples
+    - [ ] Update README
 - [ ] Complete
