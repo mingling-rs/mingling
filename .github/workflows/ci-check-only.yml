@@ -45,3 +45,10 @@ jobs:
             ${{ runner.os }}-mingling-temp-
 
       - run: cargo ci --test-docs
+
+      - name: Upload docs test result on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-test-result-${{ matrix.os }}.md
+          path: .temp/DOCS-TEST-RESULT.md
