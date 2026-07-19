@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use colored::Colorize;
 use mingling::{
-    Grouped, RenderResult,
+    Grouped, RenderResult, Routable,
     macros::{chain, pack, renderer},
 };
 use serde::Serialize;

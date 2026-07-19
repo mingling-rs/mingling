@@ -11,7 +11,7 @@ use crate::{
 };
 use colored::Colorize;
 use mingling::{
-    Grouped, Program, RenderResult,
+    Grouped, Program, RenderResult, Routable,
     hook::ProgramHook,
     macros::{chain, help, pack, program_setup, renderer},
     res::ResExitCode,

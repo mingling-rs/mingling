@@ -62,13 +62,13 @@ fn generate_proc_fn(
             quote! {
                 #(#immut_resource_stmts)*
                 #wrapped_body;
-                <crate::ResultEmpty as ::mingling::Grouped::<crate::ThisProgram>>
+                <crate::ResultEmpty as ::mingling::Routable::<crate::ThisProgram>>
                 ::to_chain(crate::ResultEmpty)
             }
         } else {
             quote! {
                 #wrapped_body;
-                <crate::ResultEmpty as ::mingling::Grouped::<crate::ThisProgram>>
+                <crate::ResultEmpty as ::mingling::Routable::<crate::ThisProgram>>
                 ::to_chain(crate::ResultEmpty)
             }
         };

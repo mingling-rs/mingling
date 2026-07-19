@@ -325,6 +325,25 @@ None
 
     This is a pure rename — no behavioral changes. All functionality remains identical. Downstream code using the old `Groupped` name must migrate to `Grouped`.
 
+5. **[`core`]** **[`macros`]** Removed `to_chain()` and `to_render()` default methods from the `Grouped` trait. These methods are now exclusively provided by the `Routable` trait. All code that previously called `to_chain()` or `to_render()` via `Grouped` must now call them via `Routable`:
+
+    ```rust
+    // Before (via Grouped — removed)
+    use mingling::Grouped;
+    my_value.to_chain();
+
+    // After (via Routable)
+    use mingling::Routable;
+    my_value.to_chain();
+    ```
+
+    - The `Routable` trait is re-exported in `mingling::prelude` alongside `Grouped`.
+    - The blanket implementation `impl<T: Grouped<C> + Send> Routable<C> for T` remains, so all types that implement `Grouped` still have `to_chain()` and `to_render()` — they just need to import `Routable` instead of relying on `Grouped` for those methods.
+    - Internal macro-generated code (in `#[chain]`, `#[renderer]`, `#[dispatcher_clap]`, `gen_program!`, `empty_result!`, etc.) has been updated to reference `::mingling::Routable::<C>::to_chain(...)` / `::mingling::Routable::<C>::to_render(...)` instead of `::mingling::Grouped::<C>::to_chain(...)` / `::mingling::Grouped::<C>::to_render(...)`.
+    - Downstream crates using `mingling` macros are automatically migrated — the macro output now references `Routable`. Only manual `.to_chain()` / `.to_render()` calls in user code need updating (add `use mingling::Routable;`).
+
+    _No behavioral changes — this is a pure API migration from `Grouped` to `Routable` for routing methods._
+
 ---
 
 ## Release 0.2.2 (2026-07-10)

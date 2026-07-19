@@ -1,7 +1,7 @@
 use std::path::{self, PathBuf};
 
 use mingling::{
-    Grouped, RenderResult,
+    RenderResult, Routable,
     macros::{chain, pack, renderer, route},
 };
 use std::io::Write as _;

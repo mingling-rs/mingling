@@ -175,12 +175,15 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
-    /// Re-export of the `Grouped` derive macro for grouping types.
+    /// Re-export of the `Grouped` trait
     #[cfg(feature = "core")]
     pub use crate::Grouped;
     /// Re-export of the `RenderResult` struct for outputting rendering result
     #[cfg(feature = "core")]
     pub use crate::RenderResult;
+    /// Re-export of the `Routable` trait
+    #[cfg(feature = "core")]
+    pub use crate::Routable;
     /// Re-export of the `chain` macro for defining a chain of commands.
     #[cfg(feature = "macros")]
     pub use crate::macros::chain;

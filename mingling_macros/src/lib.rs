@@ -610,7 +610,7 @@ pub fn route(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn empty_result(_input: TokenStream) -> TokenStream {
     let expanded = quote! {
-        <crate::ResultEmpty as ::mingling::Grouped::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
+        <crate::ResultEmpty as ::mingling::Routable::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
     };
     TokenStream::from(expanded)
 }

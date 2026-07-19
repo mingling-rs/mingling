@@ -108,23 +108,23 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     let begin_body = if let Some(ref error_struct) = options.error_struct {
         quote! {
             if ::mingling::this::<#program_path>().user_context.help {
-                return #struct_name::default().to_chain();
+                return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
             }
             match <#struct_name as ::clap::Parser>::try_parse_from(clap_args) {
-                Ok(parsed) => parsed.to_chain(),
+                Ok(parsed) => ::mingling::Routable::<#program_path>::to_chain(parsed),
                 Err(e) => {
-                    return #error_struct::new(format!("{}", e.render().ansi())).to_render()
+                    return ::mingling::Routable::<#program_path>::to_render(#error_struct::new(format!("{}", e.render().ansi())))
                 },
             }
         }
     } else {
         quote! {
             if ::mingling::this::<#program_path>().user_context.help {
-                return #struct_name::default().to_chain();
+                return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
             }
             let parsed = <#struct_name as ::clap::Parser>::try_parse_from(clap_args)
                 .unwrap_or_else(|e| e.exit());
-            parsed.to_chain()
+            ::mingling::Routable::<#program_path>::to_chain(parsed)
         }
     };
 
