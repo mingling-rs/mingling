@@ -12,7 +12,7 @@ use proc_macro::TokenStream;
 use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::visit_mut::VisitMut;
-use syn::{parse_macro_input, Expr, ItemFn};
+use syn::{Expr, ItemFn, parse_macro_input};
 
 struct RouteifyTransform;
 
