@@ -10,8 +10,9 @@
 
 use proc_macro::TokenStream;
 use quote::ToTokens;
+use syn::spanned::Spanned;
 use syn::visit_mut::VisitMut;
-use syn::{Expr, ItemFn, parse_macro_input};
+use syn::{parse_macro_input, Expr, ItemFn};
 
 struct RouteifyTransform;
 
@@ -23,8 +24,14 @@ impl VisitMut for RouteifyTransform {
             let inner = &*try_expr.expr;
             let inner_tokens = inner.to_token_stream();
 
+            // Set the span of the generated `route` ident to the `?` token's span,
+            // so that rust-analyzer resolves the `?` position to the `route!` macro
+            // instead of the standard Try trait, showing the route macro's docs on hover.
+            let q_span = try_expr.question_token.span();
+            let route_ident = proc_macro2::Ident::new("route", q_span);
+
             if let Ok(macro_expr) = syn::parse2::<Expr>(quote::quote! {
-                ::mingling::macros::route!(#inner_tokens)
+                ::mingling::macros::#route_ident!(#inner_tokens)
             }) {
                 *expr = macro_expr;
             }

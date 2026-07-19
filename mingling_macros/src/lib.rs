@@ -511,6 +511,28 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
 /// directly, while the `Err` value is converted via `Routable::to_chain()` and
 /// returned early.
 ///
+/// ## Interaction with `#[routeify]`
+///
+/// The [`#[routeify]`](attr.routeify.html) attribute macro automatically replaces
+/// every `expr?` inside a function with `route!(expr)`. This means you can use the
+/// familiar `?` syntax in chain functions instead of writing `route!(...)`
+/// explicitly:
+///
+/// ```rust,ignore
+/// use mingling::macros::chain;
+///
+/// #[chain(routeify)]
+/// fn process(prev: SomeEntry) -> Next {
+///     // `?` here expands to `route!(...)` → this macro → the match block
+///     let value = some_fallible_call()?;
+///     value.to_chain()
+/// }
+/// ```
+///
+/// Because `#[routeify]` maps the span of `?` to this macro, hovering over `?` in
+/// a `#[routeify]` function will display this documentation — explaining what
+/// the `?` actually expands to.
+///
 /// # Example
 ///
 /// ```rust,ignore
