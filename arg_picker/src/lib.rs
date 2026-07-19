@@ -48,3 +48,13 @@ pub mod matcher_needed {
     pub use crate::PickerArgInfo;
     pub use crate::parselib::{MaskedArg, Matcher, ParserStyle};
 }
+
+mod constants;
+
+/// Re-export of constants used by `arg-picker`.
+///
+/// This module provides access to various constants defined internally, such as
+/// default values, configuration limits, and other static parameters.
+pub mod consts {
+    pub use crate::constants::*;
+}
