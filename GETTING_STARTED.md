@@ -323,7 +323,7 @@ Two built-in fallback types are always available:
 Chain and renderer functions can accept **additional parameters** for the program's global state. Resources are singleton values registered with `program.with_resource(...)`.
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["picker", "extra_macros"]
 
 use std::path::PathBuf;
 
@@ -355,7 +355,7 @@ fn show_current(_prev: EntryCurrent, current_dir: &ResCurrentDir) -> Next {
 // Mutable access:
 #[chain]
 fn change_dir(prev: EntryCd, current_dir: &mut ResCurrentDir) -> Next {
-    let path: String = prev.pick(()).unpack();
+    let path = prev.pick_or_default(&arg![String]).unwrap();
     current_dir.current_dir = current_dir.current_dir.join(path);
     empty_result!()
 }
@@ -572,7 +572,7 @@ fn main() {
 With the `structural_renderer` feature, users can add `--json` or `--yaml` flags to get structured output instead of human-readable text.
 
 ```rust
-// Features: ["structural_renderer", "parser"]
+// Features: ["structural_renderer", "picker"]
 // Dependencies:
 // serde = "1"
 
@@ -592,7 +592,10 @@ struct ResultInfo {
 
 #[chain]
 fn render_info(args: EntryRender) -> Next {
-    let (name, age) = args.pick::<String>(()).pick::<i32>(()).unpack();
+    let (name, age) = args
+        .pick_or_default(&arg![String])
+        .pick_or_default(&arg![i32])
+        .unwrap();
     ResultInfo { name, age }.to_chain()
 }
 
@@ -632,7 +635,7 @@ age: 22
 Enable the `async` feature to use `async fn` inside `#[chain]`:
 
 ```rust
-// Features: ["async", "parser"]
+// Features: ["async", "picker"]
 // Dependencies:
 // tokio = { version = "1", features = ["full"] }
 
@@ -644,7 +647,7 @@ pack!(ResultDownloaded = String);
 
 #[chain]
 pub async fn handle_download(args: EntryDownload) -> Next {
-    let file = args.pick(()).unpack();
+    let file = args.pick_or_default(&arg![String]).unwrap();
     download_file(file).await.into()
 }
 
