@@ -31,6 +31,21 @@
     ]
   },
   {
+    "id": "example-argument-picker",
+    "name": "Argument Picker",
+    "icon": "📋",
+    "category": "parsing",
+    "desc": "Demonstrates how to use Mingling's `picker` feature and `Picker` to extract typed arguments from the command line.\n",
+    "tags": [
+      "arg-picker",
+      "SinglePickable"
+    ],
+    "files": [
+      "src/main.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
     "id": "example-async-support",
     "name": "Async Support",
     "icon": "⚡",

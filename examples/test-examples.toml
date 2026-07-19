@@ -277,3 +277,38 @@ expect.result = "Hello, Alice!"
 command = "hello"
 expect.exit-code = 0
 expect.result = "Hello, World!"
+
+[[test.example-argument-picker]]
+command = "calc 1 + 1"
+expect.exit-code = 0
+expect.result = "Result: 2"
+
+[[test.example-argument-picker]]
+command = "calc 7 * 7"
+expect.exit-code = 0
+expect.result = "Result: 49"
+
+[[test.example-argument-picker]]
+command = "calc"
+expect.exit-code = 0
+expect.result = "Error: First number (number_a) was not provided."
+
+[[test.example-argument-picker]]
+command = "calc 1"
+expect.exit-code = 0
+expect.result = "Error: Operator was not provided."
+
+[[test.example-argument-picker]]
+command = "calc 1 +"
+expect.exit-code = 0
+expect.result = "Error: Second number (number_b) was not provided."
+
+[[test.example-argument-picker]]
+command = "calc 4 / 3"
+expect.exit-code = 0
+expect.result = "Result: 1.3333334"
+
+[[test.example-argument-picker]]
+command = "calc 4 / 3 --round"
+expect.exit-code = 0
+expect.result = "Result: 1"
