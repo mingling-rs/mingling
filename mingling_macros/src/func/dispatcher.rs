@@ -135,7 +135,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
             }
             fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
                 use ::mingling::Grouped;
-                #pack::new(args).to_chain()
+                ::mingling::Routable::to_chain(#pack::new(args))
             }
             fn clone_dispatcher(&self) -> Box<dyn ::mingling::Dispatcher<#program_type>> {
                 Box::new(#command_struct)
