@@ -58,7 +58,13 @@ None
 
 #### Optimizations:
 
-None
+1. **[`macros`]** Updated `route!` macro to use `Routable` trait instead of `Grouped` trait for error conversion, making the semantics clearer. The `route!` macro now calls `::mingling::Routable::to_chain(e)` on the error branch instead of `::mingling::Grouped::to_chain(e)`.
+
+    Additionally, `ChainProcess<ThisProgram>` now implements `Routable<ThisProgram>`, allowing `route!` to work with `Result<Ok, ChainProcess<ThisProgram>>` patterns — where the error side is already a `ChainProcess` value that should be routed directly:
+
+    When `ChainProcess` implements `Routable`, `to_chain()` re-routes the inner `AnyOutput` to the chain pipeline (preserving the existing `NextProcess::Chain`/`Renderer` flag), while `to_render()` re-routes it to the render pipeline. This enables seamless propagation of already-routed chain process values through the `route!` macro without double-wrapping.
+
+    The `Routable` trait is defined in `mingling_core::asset::routable` and provides unified routing capabilities (`to_chain` / `to_render`) for any type that can be dispatched into the program's pipeline. A blanket implementation is provided for all `T: Grouped<C> + Send`, ensuring backward compatibility — existing types that implement `Grouped` automatically implement `Routable`.
 
 #### Features:
 
