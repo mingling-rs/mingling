@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::parse_macro_input;
@@ -38,35 +40,33 @@ fn parse_entry_pair(entry: &proc_macro2::TokenStream) -> (proc_macro2::Ident, pr
 }
 
 /// Loads the pathf type mapping from `$OUT_DIR/{crate}/type_using.rs`.
-/// Always compiled; returns empty map when pathf feature is not enabled.
-fn load_pathf_map() -> std::collections::HashMap<String, String> {
+/// Always compiled; returns None when pathf feature is not enabled,
+/// or when the file does not exist / fails to load.
+fn load_pathf_map() -> Option<std::collections::HashMap<String, String>> {
     if !cfg!(feature = "pathf") {
-        return std::collections::HashMap::new();
+        return None;
     }
-    let out_dir = std::env::var("OUT_DIR").ok();
-    let crate_name = std::env::var("CARGO_PKG_NAME").ok();
-    match (out_dir, crate_name) {
-        (Some(dir), Some(name)) => {
-            let path = std::path::Path::new(&dir).join(&name).join("type_using.rs");
-            match std::fs::read_to_string(&path) {
-                Ok(content) => content
-                    .lines()
-                    .filter_map(|line| {
-                        let line = line.trim();
-                        if let Some(rest) = line.strip_prefix("use ") {
-                            let path = rest.strip_suffix(';').unwrap_or(rest);
-                            if let Some((_mod, type_name)) = path.rsplit_once("::") {
-                                return Some((type_name.to_string(), path.to_string()));
-                            }
-                        }
-                        None
-                    })
-                    .collect(),
-                Err(_) => std::collections::HashMap::new(),
-            }
-        }
-        _ => std::collections::HashMap::new(),
-    }
+    let out_dir = std::env::var("OUT_DIR").ok()?;
+    let crate_name = std::env::var("CARGO_PKG_NAME").ok()?;
+    let path = std::path::Path::new(&out_dir)
+        .join(&crate_name)
+        .join("type_using.rs");
+    let content = std::fs::read_to_string(&path).ok()?;
+    Some(
+        content
+            .lines()
+            .filter_map(|line| {
+                let line = line.trim();
+                if let Some(rest) = line.strip_prefix("use ") {
+                    let path = rest.strip_suffix(';').unwrap_or(rest);
+                    if let Some((_mod, type_name)) = path.rsplit_once("::") {
+                        return Some((type_name.to_string(), path.to_string()));
+                    }
+                }
+                None
+            })
+            .collect(),
+    )
 }
 
 /// Resolves a type name to its full path token stream using the pathf mapping.
@@ -289,10 +289,30 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
         .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
         .collect();
 
-    let pathf_map: std::collections::HashMap<String, String> = if cfg!(feature = "pathf") {
-        load_pathf_map()
+    let pathf_map: Option<HashMap<String, String>> = load_pathf_map();
+
+    let pathf_hint: proc_macro2::TokenStream = if pathf_map.is_none() {
+        quote! {
+            compile_error!(
+"Cannot load type mapping computed by `pathf`.
+If not yet configured, execute `mingling::build::analyze_and_build_type_mapping()` in your `build.rs`.
+
+fn main() {
+    // Require features: [\"builds\", \"pathf\"]
+    mingling::build::analyze_and_build_type_mapping().unwrap();
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\\__ Write to `build.rs`
+
+}
+            ");
+        }
     } else {
-        std::collections::HashMap::new()
+        quote! {}
+    };
+
+    let pathf_map: HashMap<String, String> = if cfg!(feature = "pathf") {
+        pathf_map.unwrap_or_default()
+    } else {
+        HashMap::new()
     };
 
     let pathf_uses: Vec<proc_macro2::TokenStream> = if cfg!(feature = "pathf") {
@@ -509,6 +529,8 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
+        #pathf_hint
+
         #[derive(Debug, PartialEq, Eq, Clone)]
         #[repr(#repr_type)]
         #[allow(nonstandard_style)]
