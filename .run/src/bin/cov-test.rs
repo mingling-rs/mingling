@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::PathBuf;
 use tools::{println_cargo_style, run_cmd};
 
 const OUTPUT_DIR: &str = "docs/cov-test";

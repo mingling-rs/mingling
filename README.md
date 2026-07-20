@@ -165,4 +165,5 @@ See [LICENSE-MIT](LICENSE-MIT) or [LICENSE-APACHE](LICENSE-APACHE) file for deta
 - 💡 Examples - [Github](https://mingling-rs.github.io/mingling/docs/examples.html)
 - 📖 Help Doc - [EN](https://mingling-rs.github.io/mingling/docs/doc.html#/) | [中文](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
 - 📖 API Doc - [docs.rs](https://docs.rs/mingling/latest/mingling/) | [latest](https://mingling-rs.github.io/mingling/docs/api-docs/mingling/)
+- 📖 Coverage Test - [LLVM Coverage](https://mingling-rs.github.io/mingling/docs/cov-test/)
 - 📖 Dev Doc - [Github](https://mingling-rs.github.io/mingling/docs/dev/)

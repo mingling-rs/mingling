@@ -85,6 +85,12 @@ jobs:
       - name: Build API docs
         run: cargo run --manifest-path .run/Cargo.toml --bin deploy-api-docs
 
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: Run cov-test
+        run: cargo run --manifest-path .run/Cargo.toml --bin cov-test
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
