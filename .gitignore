@@ -6,6 +6,9 @@
 # Temp file for .run/src/bin/deploy-api-docs.rs
 docs/api-docs/
 
+# Temp file for .run/src/bin/cov-test.rs
+docs/cov-test/
+
 # Drafts
 __*.md
 __*/
