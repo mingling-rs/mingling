@@ -366,6 +366,44 @@ None
 
     Under the hood, `r_append!` (when used in implicit buffer mode inside a `#[buffer]` function) calls `append_other` on the current render buffer. The `From<F>` implementation allows the buffer function's return value (a `RenderResult`) to be seamlessly converted into the parent's buffer via `append_other`. This enables clean separation of render logic into reusable buffer functions that can be composed together.
 
+14. **[`core`]** **[`macros`]** Added the `render_route!` macro and `#[renderify]` extension attribute macro, providing error routing to the rendering pipeline (as opposed to `route!`/`#[routeify]` which route to the chain pipeline).
+
+    The `render_route!` macro is conceptually similar to `route!`, but instead of routing errors through `Routable::to_chain()` (returning `ChainProcess`), it routes them directly to the renderer via `crate::ThisProgram::render(AnyOutput::new(e))` (returning `RenderResult`). This makes it suitable for use in `#[renderer]` and `#[help]` functions where the return type is `RenderResult`.
+
+    ```rust,ignore
+    use mingling::macros::{renderer, render_route};
+
+    #[renderer]
+    fn render_something(prev: SomeType) -> RenderResult {
+        let data = render_route!(fetch_data().map_err(|e| ErrorEntry::new(e.to_string())))?;
+        // ... render data
+        Ok(RenderResult::new())
+    }
+    ```
+
+    The `#[renderify]` extension attribute is the rendering-pipeline counterpart to `#[routeify]`. It transforms `expr?` into `render_route!(expr)` (instead of `route!(expr)`), enabling concise error routing in renderer and help functions using the `?` operator syntax.
+
+    ```rust,ignore
+    #[renderer(renderify)]
+    fn render_greeting(prev: Greeting) -> RenderResult {
+        let data = load_data()?;  // expands to render_route!(load_data())
+        r_println!("{data}");
+        Ok(RenderResult::new())
+    }
+    ```
+
+    The `#[renderify]` macro can be used:
+    - **Standalone** — as a direct attribute: `#[renderify] fn render(...) { ... }`
+    - **As an extension** — via the extension point system: `#[renderer(renderify)] fn render(...) { ... }` or `#[help(renderify)] fn help(...) { ... }`
+
+    When used as a renderer/help extension, the `renderify` identifier is detected by the extension point mechanism, stripped from the attribute arguments, and `#[renderify]` is applied as an outer attribute on top of `#[renderer]`/`#[help]` — just like `routeify` works with `#[chain]`.
+
+    Both `render_route!` and `#[renderify]` are feature-gated behind `extra_macros` and re-exported as `mingling::macros::render_route` and `mingling::macros::renderify` respectively.
+
+    Internal changes:
+    - Added `mingling_macros/src/extensions/renderify.rs` with `renderify_impl` implementation.
+    - Registered `#[proc_macro] pub fn render_route` and `#[proc_macro_attribute] pub fn renderify` in `mingling_macros/src/lib.rs`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros from being implicitly injected by `#[renderer]` and `#[help]` macros. These macros still exist, but must now be used **explicitly** — either with an explicit buffer argument, or via the `#[buffer]` extension attribute that re-enables implicit buffer injection.

@@ -123,8 +123,17 @@ pub mod macros {
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]
     pub use mingling_macros::register_type;
+    /// `render_route! { /* ... */ }` - Routes errors to the rendering pipeline.
+    /// Similar to `route!`, but used in `#[renderer]` and `#[help]` functions
+    /// where the return type is `RenderResult` instead of `ChainProcess`.
+    #[cfg(feature = "extra_macros")]
+    pub use mingling_macros::render_route;
     /// `#[renderer]` - Used to generate a struct implementing the `Renderer` trait via a method
     pub use mingling_macros::renderer;
+    /// `#[renderify]` - An extension attribute macro that transforms `expr?` into `render_route!(expr)`.
+    /// Can be used standalone or as a renderer/help extension: `#[renderer(renderify, ...)]`, `#[help(renderify, ...)]`.
+    #[cfg(feature = "extra_macros")]
+    pub use mingling_macros::renderify;
     /// `route! { /* ... */ }` - Used to generate a route that either returns a successful result or early returns an error.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::route;

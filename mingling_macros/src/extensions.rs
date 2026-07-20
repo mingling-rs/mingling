@@ -13,6 +13,10 @@ use syn::{Ident, Token};
 #[cfg(feature = "extra_macros")]
 pub(crate) mod routeify;
 
+/// Extension: `#[renderify]` — transforms `expr?` into `render_route!(expr)`.
+#[cfg(feature = "extra_macros")]
+pub(crate) mod renderify;
+
 /// Extension: `#[buffer]` — wraps a unit-returning function to return `RenderResult`.
 pub(crate) mod buffer;
 

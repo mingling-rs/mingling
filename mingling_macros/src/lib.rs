@@ -590,6 +590,56 @@ pub fn route(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Routes errors to the rendering pipeline instead of the chain pipeline.
+///
+/// This macro is similar to [`route!`] but instead of routing errors through
+/// `Routable::to_chain()` (which returns `ChainProcess`), it routes them
+/// directly to the renderer via `crate::ThisProgram::render(AnyOutput::new(e))`
+/// (which returns `RenderResult`).
+///
+/// This is useful in `#[renderer]` and `#[help]` functions where the return
+/// type is `RenderResult` rather than `ChainProcess`.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// render_route!(expr)
+/// ```
+///
+/// Where `expr` is an expression of type `Result<T, E>`.
+///
+/// # Interaction with `#[routeify]`
+///
+/// When `#[routeify]` is used on a `#[renderer]` or `#[help]` function (e.g.
+/// `#[renderer(routeify)]` or `#[help(routeify)]`), every `expr?` is automatically
+/// replaced with `render_route!(expr)` instead of `route!(expr)`.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::macros::{renderer, render_route};
+/// use std::io::Write;
+///
+/// #[renderer]
+/// fn render_something(prev: SomeType) -> RenderResult {
+///     let data = render_route!(fetch_data().map_err(|e| ErrorEntry::new(e.to_string())))?;
+///     // ... render data
+///     Ok(RenderResult::new())
+/// }
+/// ```
+#[cfg(feature = "extra_macros")]
+#[proc_macro]
+pub fn render_route(input: TokenStream) -> TokenStream {
+    let expr = parse_macro_input!(input as syn::Expr);
+    let expanded = quote! {
+        match #expr {
+            Ok(r) => r,
+            Err(e) => return crate::ThisProgram::render(::mingling::AnyOutput::new(e)),
+        }
+    };
+    TokenStream::from(expanded)
+}
+
 /// Creates an empty result value wrapped in `ChainProcess` for early return
 /// from a chain function.
 ///
@@ -1312,6 +1362,32 @@ pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn routeify(attr: TokenStream, item: TokenStream) -> TokenStream {
     extensions::routeify::routeify_impl(attr, item)
+}
+
+/// Extension attribute macro that transforms `expr?` into `render_route!(expr)`.
+///
+/// Designed for use with `#[renderer(renderify, ...)]` or `#[help(renderify, ...)]`
+/// to enable concise error routing in renderer and help functions using the `?`
+/// operator syntax.
+///
+/// Unlike `#[routeify]` which routes errors to the chain pipeline via `route!`,
+/// `#[renderify]` routes errors to the rendering pipeline via `render_route!`,
+/// which matches the `RenderResult` return type of renderer and help functions.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[renderer(renderify)]
+/// fn render_greeting(prev: Greeting) -> RenderResult {
+///     let data = load_data()?;  // expands to render_route!(load_data())
+///     r_println!("{data}");
+///     Ok(RenderResult::new())
+/// }
+/// ```
+#[cfg(feature = "extra_macros")]
+#[proc_macro_attribute]
+pub fn renderify(attr: TokenStream, item: TokenStream) -> TokenStream {
+    extensions::renderify::renderify_impl(attr, item)
 }
 
 /// Wraps a unit-returning function to produce a `RenderResult`.
