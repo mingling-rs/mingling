@@ -126,6 +126,26 @@ None
 
     _No behavioral changes — all existing functionality is preserved. Downstream code that ignores the return value continues to work without modification._
 
+6. **[`core`]** **`StructuralData` trait now takes a generic parameter `C`.** The `StructuralData` trait and its sealed supertrait `StructuralDataSealed` (both under `::mingling::__private`) have been made generic over a program collector type `C: ProgramCollect<Enum = C>`. This change is necessary for `group_structural!` to bypass the orphan rule — by tying `StructuralData<C>` to `crate::ThisProgram` (which is defined in the user's crate), external types can implement `StructuralData<crate::ThisProgram>` without violating coherence.
+
+    **Migration guide (only relevant for manual `StructuralData` implementations):**
+
+    - All `impl StructuralData for MyType` must be updated to `impl StructuralData<crate::ThisProgram> for MyType`.
+    - All `impl StructuralDataSealed for MyType` must be updated to `impl StructuralDataSealed<crate::ThisProgram> for MyType`.
+    - All trait bounds `T: StructuralData` must be updated to `T: StructuralData<C>` with an additional `C: ProgramCollect<Enum = C>` bound.
+    - The `StructuralRenderer::render` method signature has changed from `render<T: StructuralData + Send>(...)` to `render<T, C>(...) where T: StructuralData<C> + Send, C: ProgramCollect<Enum = C>`.
+
+    **Internal changes:**
+
+    - `StructuralDataSealed` in `mingling_core::__private` now takes a `C` type parameter with `C: ProgramCollect<Enum = C>`.
+    - `StructuralData` in `mingling_core::renderer::structural::structural_data` now takes a `C` type parameter with `C: ProgramCollect<Enum = C>`.
+    - Both traits remain under `::mingling::__private`, so this change does **not** affect the public API surface.
+    - `StructuralRenderer::render` now takes an additional generic parameter `C: ProgramCollect<Enum = C>`.
+    - All derive macro and `pack_structural!` / `pack_err_structural!` / `group_structural!` implementations have been updated to emit `impl StructuralDataSealed<crate::ThisProgram>` and `impl StructuralData<crate::ThisProgram>` instead of the non-generic form.
+    - Test code has been updated to use `MockProgramCollect` where appropriate, and integration tests now use `crate::ThisProgram` and call `gen_program!()`.
+
+    _No behavioral changes — this is purely a type-system refactoring to enable `group_structural!` to work with external types. Since both traits are defined in `::mingling::__private`, this change has **no impact on the public API** — end users interact with `StructuralData` only through auto-generated derive macros and `pack_structural!`/`group_structural!` macros, which are automatically updated. Only users with manual `impl StructuralData` blocks (an advanced/rare case) need to update their code.
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

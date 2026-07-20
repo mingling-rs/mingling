@@ -1,5 +1,4 @@
 use mingling::Flag;
-use mingling::MockProgramCollect;
 use mingling::NextProcess;
 use mingling::Node;
 use mingling::Program;
@@ -125,13 +124,13 @@ fn test_structural_renderer_json() {
 
 #[test]
 fn test_is_completing() {
-    let program: Program<MockProgramCollect> = Program::new_with_args(["app", "__comp"]);
+    let program: Program<crate::ThisProgram> = Program::new_with_args(["app", "__comp"]);
     assert!(program.is_completing());
 }
 
 #[test]
 fn test_is_not_completing() {
-    let program: Program<MockProgramCollect> = Program::new_with_args(["app", "greet"]);
+    let program: Program<crate::ThisProgram> = Program::new_with_args(["app", "greet"]);
     assert!(!program.is_completing());
 }
 
@@ -141,7 +140,7 @@ fn test_is_not_completing() {
 fn test_hook_setup() {
     static CALLED: AtomicBool = AtomicBool::new(false);
 
-    let hook = ProgramHook::<MockProgramCollect>::empty().on_begin::<_, ()>(|_| {
+    let hook = ProgramHook::<crate::ThisProgram>::empty().on_begin::<_, ()>(|_| {
         CALLED.store(true, Ordering::SeqCst);
     });
 
@@ -166,3 +165,5 @@ fn test_string_vec_from_array() {
     let v: Vec<String> = sv.into();
     assert_eq!(v, vec!["a", "b", "c"]);
 }
+
+mingling::macros::gen_program!();

@@ -90,8 +90,14 @@ pub mod setup {
 /// Private API — not intended for direct use.
 #[doc(hidden)]
 pub mod __private {
+    use crate::ProgramCollect;
+
     /// Sealed trait for `StructuralData` — only implementable via derive macro.
-    pub trait StructuralDataSealed {}
+    pub trait StructuralDataSealed<C>
+    where
+        C: ProgramCollect<Enum = C>,
+    {
+    }
 
     /// Re-export so the derive macro can reference the trait without
     /// conflicting with the derive macro name at `::mingling::StructuralData`.

@@ -139,8 +139,8 @@ pub(crate) fn pack_err_structural(input: TokenStream) -> TokenStream {
         .insert(type_name_str);
 
     let structural_data = quote! {
-        impl ::mingling::__private::StructuralDataSealed for #type_name {}
-        impl ::mingling::__private::StructuralData for #type_name {}
+        impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
+        impl ::mingling::__private::StructuralData<crate::ThisProgram> for #type_name {}
     };
 
     // Generate the struct + impls (same as pack_err! but with Serialize derive + sealed)

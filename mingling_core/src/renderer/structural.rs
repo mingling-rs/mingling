@@ -1,5 +1,5 @@
 use crate::{
-    RenderResult, StructuralRendererSetting,
+    ProgramCollect, RenderResult, StructuralRendererSetting,
     renderer::structural::error::StructuralRendererSerializeError,
 };
 use serde::Serialize;
@@ -24,11 +24,15 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[allow(unused_variables)]
-    pub fn render<T: StructuralData + Send>(
+    pub fn render<T, C>(
         data: &T,
         setting: &StructuralRendererSetting,
         r: &mut RenderResult,
-    ) -> Result<(), StructuralRendererSerializeError> {
+    ) -> Result<(), StructuralRendererSerializeError>
+    where
+        T: StructuralData<C> + Send,
+        C: ProgramCollect<Enum = C>,
+    {
         match setting {
             StructuralRendererSetting::Disable => Ok(()),
             #[cfg(feature = "json_serde_fmt")]
@@ -148,7 +152,7 @@ impl StructuralRenderer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::RenderResult;
+    use crate::{MockProgramCollect, RenderResult};
     use serde::Serialize;
 
     #[derive(Debug, Clone, PartialEq, Serialize)]
@@ -157,8 +161,8 @@ mod tests {
         value: i32,
     }
 
-    impl crate::__private::StructuralDataSealed for TestData {}
-    impl StructuralData for TestData {}
+    impl crate::__private::StructuralDataSealed<MockProgramCollect> for TestData {}
+    impl StructuralData<MockProgramCollect> for TestData {}
 
     fn test_data() -> TestData {
         TestData {

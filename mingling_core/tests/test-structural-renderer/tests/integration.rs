@@ -74,3 +74,6 @@ fn test_render_ron() {
     assert!(output.contains("value:"));
     assert!(output.contains("42"));
 }
+
+mingling::macros::gen_program!();
+

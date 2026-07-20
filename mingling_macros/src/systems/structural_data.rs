@@ -29,8 +29,8 @@ pub(crate) fn derive_structural_data(input: TokenStream) -> TokenStream {
     // Users cannot implement StructuralDataSealed manually (it's #[doc(hidden)]),
     // so the only way to get StructuralData is through this derive macro.
     let expanded = quote! {
-        impl ::mingling::__private::StructuralDataSealed for #type_name {}
-        impl ::mingling::__private::StructuralData for #type_name {}
+        impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
+        impl ::mingling::__private::StructuralData<crate::ThisProgram> for #type_name {}
     };
 
     expanded.into()
@@ -149,8 +149,8 @@ pub(crate) fn pack_structural(input: TokenStream) -> TokenStream {
 
     // StructuralData impl + sealed + registration
     let structural_impl = quote! {
-        impl ::mingling::__private::StructuralDataSealed for #type_name {}
-        impl ::mingling::__private::StructuralData for #type_name {}
+        impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
+        impl ::mingling::__private::StructuralData<crate::ThisProgram> for #type_name {}
     };
 
     let expanded = quote! {
@@ -303,8 +303,8 @@ pub(crate) fn group_structural(input: TokenStream) -> TokenStream {
                 }
             }
 
-            impl ::mingling::__private::StructuralDataSealed for #type_name {}
-            impl ::mingling::__private::StructuralData for #type_name {}
+            impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
+            impl ::mingling::__private::StructuralData<crate::ThisProgram> for #type_name {}
 
             ::mingling::macros::register_type!(#type_name);
         }
