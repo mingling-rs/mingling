@@ -47,11 +47,8 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
 
     // Extract the first param pattern and type for the ctx parameter
     let first_arg = &inputs[0];
-    let (ctx_pat, _ctx_type) = match first_arg {
-        FnArg::Typed(PatType { pat, ty, .. }) => {
-            let param_pat = (**pat).clone();
-            (param_pat, (**ty).clone())
-        }
+    let _ctx_type = match first_arg {
+        FnArg::Typed(PatType { ty, .. }) => (**ty).clone(),
         FnArg::Receiver(_) => {
             return syn::Error::new(
                 first_arg.span(),
@@ -61,6 +58,7 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
             .into();
         }
     };
+    let fixed_ctx: Pat = syn::parse_quote!(ctx);
 
     // Extract resources from params 2 through N, skipping ctx
     let resources = match extract_resources_from_args(sig, 1) {
@@ -70,7 +68,6 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
 
     // Get the function body
     let fn_body = &input_fn.block;
-    let fn_body_stmts = &fn_body.stmts;
 
     // Get function attributes excluding the completion attribute
     let mut fn_attrs = input_fn.attrs.clone();
@@ -96,12 +93,26 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     // Generate immutable resource bindings
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), &program_type);
 
-    // Build the comp method body with resource injection
-    // Use modify_res for mutable resources same pattern as renderer.rs
-    let wrapped_body = if mut_resources.is_empty() {
-        quote! { #(#fn_body_stmts)* }
+    // Build the call to the original function with resource arguments injected
+    let resource_args: Vec<_> = resources
+        .iter()
+        .map(|res| {
+            let var_name = &res.var_name;
+            quote! { #var_name }
+        })
+        .collect();
+
+    let fn_call = if has_resources {
+        quote! { #fn_name(#fixed_ctx, #(#resource_args),*) }
     } else {
-        let mut wrapped = quote! { #(#fn_body_stmts)* };
+        quote! { #fn_name(#fixed_ctx) }
+    };
+
+    // Wrap the function call with modify_res for mutable resources
+    let inner_call = if mut_resources.is_empty() {
+        fn_call
+    } else {
+        let mut wrapped = fn_call;
         for res in mut_resources.iter().rev() {
             let var_name = &res.var_name;
             let inner_type = &res.inner_type;
@@ -117,10 +128,10 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     let comp_body = if has_resources {
         quote! {
             #(#immut_resource_stmts)*
-            #wrapped_body
+            #inner_call
         }
     } else {
-        quote! { #(#fn_body_stmts)* }
+        quote! { #inner_call }
     };
 
     // Generate the struct and implementation
@@ -135,7 +146,7 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         impl ::mingling::Completion for #struct_name {
             type Previous = #previous_type_path;
 
-            fn comp(#ctx_pat: &::mingling::ShellContext) #output {
+            fn comp(#fixed_ctx: &::mingling::ShellContext) #output {
                 #comp_body
             }
         }

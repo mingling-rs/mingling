@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{Ident, ItemFn, ReturnType, Signature, TypePath, parse_macro_input};
+use syn::{Ident, ItemFn, Pat, ReturnType, Signature, TypePath, parse_macro_input};
 
 use crate::get_global_set;
 use crate::res_injection::{extract_args_info, generate_immut_resource_bindings};
@@ -25,8 +25,8 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
             .into();
     }
 
-    // Extract the entry type, parameter name, and resource injection params
-    let (prev_param, entry_type, resources) = match extract_args_info(&input_fn.sig) {
+    // Extract the entry type and resource injection params
+    let (_, entry_type, resources) = match extract_args_info(&input_fn.sig) {
         Ok(info) => info,
         Err(e) => return e.to_compile_error().into(),
     };
@@ -66,13 +66,31 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
     // Generate immutable resource bindings
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), &program_type);
 
-    // Build the render_help body with resource injection
-    // Use modify_res for mutable resources same pattern as renderer.rs
+    // Build the call to the original function with resource arguments injected
+    let resource_args: Vec<_> = resources
+        .iter()
+        .map(|res| {
+            let var_name = &res.var_name;
+            quote! { #var_name }
+        })
+        .collect();
 
-    let wrapped_body = if mut_resources.is_empty() {
-        quote! { #(#fn_body_stmts)* }
+    // Use a fixed parameter name `prev` for the trait method, regardless of
+    // the user's original parameter name (which may be `_` and cannot be
+    // referenced in expression position).
+    let fixed_prev: Pat = syn::parse_quote!(prev);
+
+    let fn_call = if has_resources {
+        quote! { #fn_name(#fixed_prev, #(#resource_args),*) }
     } else {
-        let mut wrapped = quote! { #(#fn_body_stmts)* };
+        quote! { #fn_name(#fixed_prev) }
+    };
+
+    // Wrap the function call with modify_res for mutable resources
+    let inner_call = if mut_resources.is_empty() {
+        fn_call
+    } else {
+        let mut wrapped = fn_call;
         for res in mut_resources.iter().rev() {
             let var_name = &res.var_name;
             let inner_type = &res.inner_type;
@@ -88,10 +106,10 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
     let help_render_body = if has_resources {
         quote! {
             #(#immut_resource_stmts)*
-            #wrapped_body
+            #inner_call
         }
     } else {
-        quote! { #(#fn_body_stmts)* }
+        quote! { #inner_call }
     };
 
     // Register the help request mapping
@@ -128,7 +146,7 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
         impl ::mingling::HelpRequest for #struct_name {
             type Entry = #entry_type;
 
-            fn render_help(#prev_param: Self::Entry) -> ::mingling::RenderResult {
+            fn render_help(#fixed_prev: Self::Entry) -> ::mingling::RenderResult {
                 let __help_result = { #help_render_body };
                 ::std::convert::Into::into(__help_result)
             }
@@ -137,7 +155,6 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
         ::mingling::macros::register_help!(#entry_type, #struct_name);
 
         // Keep the original function unchanged
-        #[allow(dead_code)]
         #(#fn_attrs)*
         #vis fn #fn_name(#original_inputs) -> #original_return_type {
             #(#fn_body_stmts)*

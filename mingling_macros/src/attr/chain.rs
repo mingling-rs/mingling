@@ -34,16 +34,14 @@ fn validate_return_type(sig: &Signature) -> Result<(), proc_macro2::TokenStream>
 
 /// Builds the `proc` function implementation inside the generated `Chain` impl.
 ///
-/// The user's function body is inlined directly, and its result is converted
-/// via `.into()` to `ChainProcess<ProgramType>`.
-#[allow(unused_variables)]
+/// Instead of inlining the user's body, the trait method calls the original
+/// function by name, with resources injected from the application context.
 fn generate_proc_fn(
+    fn_name: &Ident,
     has_resources: bool,
     resources: &[ResourceInjection],
     program_type: &proc_macro2::TokenStream,
     previous_type: &TypePath,
-    prev_param: &Pat,
-    fn_body_stmts: &[syn::Stmt],
     is_async_fn: bool,
     is_unit_return: bool,
     origin_return_type: &proc_macro2::TokenStream,
@@ -51,10 +49,52 @@ fn generate_proc_fn(
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), program_type);
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
 
-    let wrapped_body = if is_async_fn && !mut_resources.is_empty() {
-        wrap_body_with_mut_resources_async(fn_body_stmts, &mut_resources, program_type)
+    // Use a fixed parameter name `prev` for the trait method, regardless of
+    // the user's original parameter name (which may be `_` and cannot be
+    // referenced in expression position).
+    let fixed_prev: Pat = syn::parse_quote!(prev);
+
+    // Build the call to the original function with resource arguments injected.
+    // The variable names come from the resource injection bindings
+    // (immut bindings are `let #name = …`, mut closures receive `|#name: &mut T|`),
+    // which match the original function's parameter names.
+    let resource_args: Vec<_> = resources
+        .iter()
+        .map(|res| {
+            let var_name = &res.var_name;
+            quote! { #var_name }
+        })
+        .collect();
+
+    let fn_call = if has_resources {
+        let call = quote! { #fn_name(#fixed_prev, #(#resource_args),*) };
+        if is_async_fn {
+            quote! { #call.await }
+        } else {
+            call
+        }
     } else {
-        wrap_body_with_mut_resources(fn_body_stmts, &mut_resources, program_type, is_unit_return)
+        let call = quote! { #fn_name(#fixed_prev) };
+        if is_async_fn {
+            quote! { #call.await }
+        } else {
+            call
+        }
+    };
+
+    // Convert the function call to a syn::Stmt so existing wrapping functions can use it
+    let fn_call_expr: syn::Expr = syn::parse_quote! { #fn_call };
+    let fn_call_stmt = syn::Stmt::Expr(fn_call_expr, None);
+
+    let wrapped_body = if is_async_fn && !mut_resources.is_empty() {
+        wrap_body_with_mut_resources_async(&[fn_call_stmt], &mut_resources, program_type)
+    } else {
+        wrap_body_with_mut_resources(
+            &[fn_call_stmt],
+            &mut_resources,
+            program_type,
+            is_unit_return,
+        )
     };
 
     let proc_body = if is_unit_return {
@@ -82,11 +122,6 @@ fn generate_proc_fn(
         } else {
             quote! { #wrapped_body }
         };
-        // Convert the body result to `ChainProcess` using the user-declared
-        // return type as the source type for a fully-qualified `Into` call.
-        // This works for both:
-        // - `-> Next` / `-> ChainProcess`: identity `From<T> for T`
-        // - `-> PackType`: `Into<ChainProcess>` from pack!/derive
         quote! {
             let __chain_result = { #body };
             <#origin_return_type as ::std::convert::Into<
@@ -98,7 +133,7 @@ fn generate_proc_fn(
     #[cfg(feature = "async")]
     {
         quote! {
-            async fn proc(#prev_param: #previous_type) -> ::mingling::ChainProcess<#program_type> {
+            async fn proc(#fixed_prev: #previous_type) -> ::mingling::ChainProcess<#program_type> {
                 #proc_body
             }
         }
@@ -107,7 +142,7 @@ fn generate_proc_fn(
     #[cfg(not(feature = "async"))]
     {
         quote! {
-            fn proc(#prev_param: #previous_type) -> ::mingling::ChainProcess<#program_type> {
+            fn proc(#fixed_prev: #previous_type) -> ::mingling::ChainProcess<#program_type> {
                 #proc_body
             }
         }
@@ -192,13 +227,12 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     // Extract the previous type, parameter name, and resource injection params
-    let (prev_param, previous_type, resources) = match extract_args_info(&input_fn.sig) {
+    let (_, previous_type, resources) = match extract_args_info(&input_fn.sig) {
         Ok(info) => info,
         Err(e) => return e.to_compile_error().into(),
     };
 
     // Prepare building blocks
-    let fn_body = &input_fn.block;
     let mut fn_attrs = input_fn.attrs.clone();
     fn_attrs.retain(|attr| !attr.path().is_ident("chain"));
     let vis = &input_fn.vis;
@@ -223,12 +257,11 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // Generate the `proc` function for the Chain impl
     let proc_fn = generate_proc_fn(
+        fn_name,
         has_resources,
         &resources,
         &program_type,
         &previous_type,
-        &prev_param,
-        &fn_body.stmts,
         #[cfg(feature = "async")]
         is_async_fn,
         #[cfg(not(feature = "async"))]
@@ -237,11 +270,9 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         &origin_return_type,
     );
 
-    // Preserve the original function untouched, with dead_code allowed
-    // since it may only be called through the Chain trait dispatch.
+    // Preserve the original function untouched
     // Note: do NOT add `#vis` here — `input_fn` (ItemFn) already contains its own visibility.
     let original_fn = quote! {
-        #[allow(dead_code)]
         #(#fn_attrs)*
         #input_fn
     };

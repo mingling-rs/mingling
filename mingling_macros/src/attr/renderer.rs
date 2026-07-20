@@ -1,7 +1,7 @@
 use proc_macro::TokenStream;
 use quote::{ToTokens, quote};
 use syn::spanned::Spanned;
-use syn::{ItemFn, ReturnType, Signature, TypePath, parse_macro_input};
+use syn::{ItemFn, Pat, ReturnType, Signature, TypePath, parse_macro_input};
 
 use crate::get_global_set;
 use crate::res_injection::{extract_args_info, generate_immut_resource_bindings};
@@ -31,8 +31,8 @@ pub(crate) fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream
             .into();
     }
 
-    // Extract the previous type, parameter name, and resource injection params
-    let (prev_param, previous_type, resources) = match extract_args_info(&input_fn.sig) {
+    // Extract the previous type and resource injection params
+    let (_, previous_type, resources) = match extract_args_info(&input_fn.sig) {
         Ok(info) => info,
         Err(e) => return e.to_compile_error().into(),
     };
@@ -69,31 +69,53 @@ pub(crate) fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), program_type);
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
 
-    let inner_body_with_resources = if has_mut_resources {
-        let mut wrapped = quote! { #(#fn_body_stmts)* };
+    // Build the call to the original function with resource arguments injected
+    let resource_args: Vec<_> = resources
+        .iter()
+        .map(|res| {
+            let var_name = &res.var_name;
+            quote! { #var_name }
+        })
+        .collect();
+
+    // Use a fixed parameter name `prev` for the trait method, regardless of
+    // the user's original parameter name (which may be `_` and cannot be
+    // referenced in expression position).
+    let fixed_prev: Pat = syn::parse_quote!(prev);
+
+    let fn_call = if has_resources {
+        quote! { #fn_name(#fixed_prev, #(#resource_args),*) }
+    } else {
+        quote! { #fn_name(#fixed_prev) }
+    };
+
+    // Wrap the function call with modify_res for mutable resources
+    let inner_call = if has_mut_resources {
+        let mut wrapped = fn_call;
         for res in mut_resources.iter().rev() {
             let var_name = &res.var_name;
             let inner_type = &res.inner_type;
             wrapped = quote! {
-                ::mingling::this::<#program_type>().modify_res(|#var_name: &mut #inner_type| {
+                ::mingling::this::<#program_type>()
+                    .modify_res(|#var_name: &mut #inner_type| {
                     #wrapped
                 })
             };
         }
         wrapped
     } else {
-        quote! { #(#fn_body_stmts)* }
+        fn_call
     };
 
-    // Build the Renderer::render body with resource injection
-    // The user's body now directly creates and returns a RenderResult.
+    // Build the Renderer::render body with resource injection.
+    // The trait method injects resources and calls the original function.
     let render_fn_body = if has_resources {
         quote! {
             #(#immut_resource_stmts)*
-            #inner_body_with_resources
+            #inner_call
         }
     } else {
-        quote! { #inner_body_with_resources }
+        quote! { #inner_call }
     };
 
     // The original function preserves the user's exact signature and body.
@@ -112,14 +134,13 @@ pub(crate) fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream
         impl ::mingling::Renderer for #struct_name {
             type Previous = #previous_type;
 
-            fn render(#prev_param: Self::Previous) -> ::mingling::RenderResult {
+            fn render(#fixed_prev: Self::Previous) -> ::mingling::RenderResult {
                 let __renderer_result = { #render_fn_body };
                 ::std::convert::Into::into(__renderer_result)
             }
         }
 
         // Keep the original function unchanged
-        #[allow(dead_code)]
         #(#fn_attrs)*
         #vis fn #fn_name(#original_inputs) -> #original_return_type {
             #(#fn_body_stmts)*

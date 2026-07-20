@@ -79,6 +79,16 @@ None
 
     _No migration is required for downstream code — all macros are re-exported with the same names and signatures as before._
 
+3. **[`macros`]** Refactored the code generation strategy for `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` attribute macros. Instead of inlining the user's function body directly into the generated trait implementation, these macros now **preserve the original user function as a standalone item** and generate trait method implementations that **call the original function by name**, injecting resources from the application context.
+
+    This approach provides several benefits:
+
+    - **Better debugging and error messages** — The user's function exists as a named, callable item. Stack traces, profiler output, and error messages reference the user's function name (e.g., `handle_greet`) rather than an anonymous closure or inlined block, making debugging more intuitive.
+
+    - **Clearer macro expansion** — The generated code maintains a clear separation between the original user function and the trait glue code, reducing the cognitive load when inspecting macro-expanded output.
+
+    _No migration is required for downstream code — the behavior of all four macros is unchanged. This is purely an internal code generation refactoring._
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.
