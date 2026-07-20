@@ -135,7 +135,8 @@ features = []
         - [ ] **Mingling** Program Installer & Manager (For development)
         - [ ] Helpdoc Editor
     - [ ] [`picker`] A more efficient and intelligent argument parser
-    - [x] [`macros`] Remove `r_print!` / `r_println!` macros
+    - [x] [`macros`] ~~Remove r_print! / r_println! macros~~ (see below)
+    - [x] [`macros`] Make implicit modifications to functions explicit
 - [ ] Milestone.3 "Unplanned"
     - [ ] ...
 
