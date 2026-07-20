@@ -1478,6 +1478,36 @@ pub fn r_eprint(input: TokenStream) -> TokenStream {
     func::r_print::r_eprint(input)
 }
 
+/// Appends the contents of one `RenderResult` to another.
+///
+/// # Implicit buffer (inside `#[buffer]` functions)
+///
+/// ```rust,ignore
+/// use mingling::macros::{buffer, r_append};
+///
+/// #[buffer]
+/// fn render() {
+///     let other = make_other_result();
+///     r_append!(other);
+/// }
+/// ```
+///
+/// # Explicit buffer
+///
+/// ```rust,ignore
+/// use mingling::macros::r_append;
+/// use mingling::RenderResult;
+///
+/// let mut dst = RenderResult::new();
+/// let src = RenderResult::from("hello");
+/// r_append!(dst, src);
+/// assert!(!dst.is_empty());
+/// ```
+#[proc_macro]
+pub fn r_append(input: TokenStream) -> TokenStream {
+    func::r_print::r_append(input)
+}
+
 /// Derive macro for automatically implementing the `Grouped` trait on a struct.
 ///
 /// The `#[derive(Grouped)]` macro:

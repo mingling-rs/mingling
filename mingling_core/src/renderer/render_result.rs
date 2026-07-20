@@ -209,6 +209,50 @@ impl RenderResult {
         self.append_to_buffer("\n", mode);
     }
 
+    /// Appends the contents of another `RenderResult` to this one.
+    ///
+    /// If this `RenderResult` has `immediate_output` enabled but the other does not,
+    /// the other's content will be immediately flushed to the appropriate output stream
+    /// (stdout/stderr) while also being appended to the render buffer.
+    ///
+    /// The `exit_code` of the other result is **not** transferred — only the buffered
+    /// content and the `immediate_output` flag of the other result are merged.
+    ///
+    /// # Arguments
+    ///
+    /// * `other` - The `RenderResult` whose contents should be appended.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut dest = RenderResult::default();
+    /// let mut src = RenderResult::default();
+    ///
+    /// src.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// src.append_to_buffer(" Error", RenderResultMode::Stderr);
+    ///
+    /// dest.append_otehr(src);
+    /// assert_eq!(dest.to_string(), "Hello Error");
+    /// ```
+    pub fn append_other(&mut self, other: impl Into<RenderResult>) {
+        let other = other.into();
+
+        // If self has immediate output enabled, but the input does not, the input needs immediate output.
+        let immediate_output = !other.immediate_output && self.immediate_output;
+
+        for i in other.render_buffer {
+            if immediate_output {
+                match &i.1 {
+                    Stdout => print!("{}", i.0),
+                    Stderr => eprint!("{}", i.0),
+                }
+            }
+            self.render_buffer.push(i);
+        }
+    }
+
     /// Appends the given text to the rendered content.
     ///
     /// # Examples

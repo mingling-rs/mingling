@@ -302,6 +302,14 @@ None
     - Updated `try_redispatch_simple` and `try_redispatch_completion` to emit `#[#exts]` instead of bare `#exts`, ensuring proper attribute syntax in the re-dispatched token stream.
     - Registered `#[proc_macro_attribute] pub fn routeify` in `mingling_macros/src/lib.rs`.
 
+12. **[`core`]** **[`macros`]** Added the `r_append!` macro and `RenderResult::append_other()` method for appending the contents of one `RenderResult` to another. The `append_other()` method on `RenderResult` merges the buffered content (text and output modes) from another `RenderResult` into the current one. If the destination result has `immediate_output` enabled but the source does not, the source's content will be immediately flushed to the appropriate output stream (stdout/stderr) while also being appended to the render buffer. The `exit_code` of the source result is **not** transferred — only the buffered content and the `immediate_output` flag are merged.
+
+    The `r_append!` macro supports two usage forms:
+    - **Explicit buffer** — `r_append!(dst, src)` appends the contents of `src` into the `dst` `RenderResult`.
+    - **Implicit buffer** — `r_append!(src)` appends the contents of `src` into the implicit `__render_result_buffer` (available inside `#[buffer]` functions).
+
+    The macro is re-exported as `mingling::macros::r_append` and included in `mingling::prelude::*`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros from being implicitly injected by `#[renderer]` and `#[help]` macros. These macros still exist, but must now be used **explicitly** — either with an explicit buffer argument, or via the `#[buffer]` extension attribute that re-enables implicit buffer injection.
