@@ -8,5 +8,6 @@ pub(crate) mod node;
 pub(crate) mod pack;
 #[cfg(feature = "extra_macros")]
 pub(crate) mod pack_err;
+pub(crate) mod r_print;
 #[cfg(feature = "comp")]
 pub(crate) mod suggest;

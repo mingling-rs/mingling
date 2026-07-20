@@ -42,6 +42,8 @@ pub mod macros {
     /// New Parser provided by the `picker` feature
     #[cfg(feature = "picker")]
     pub use arg_picker::macros::*;
+    /// `#[buffer]` - Wraps a unit-returning function to produce a `RenderResult`.
+    pub use mingling_macros::buffer;
     /// `#[chain]` - Used to generate a struct implementing the `Chain` trait via a method
     pub use mingling_macros::chain;
     /// `#[completion(EntryType)]` - Used to generate completion entry
@@ -91,6 +93,12 @@ pub mod macros {
     /// `#[program_setup]` - Used to generate program setup
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::program_setup;
+    /// `r_print!` - Prints text to a `RenderResult` buffer (without newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_print;
+    /// `r_println!` - Prints text to a `RenderResult` buffer (with newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_println;
     #[doc(hidden)]
     pub use mingling_macros::register_chain;
     #[doc(hidden)]

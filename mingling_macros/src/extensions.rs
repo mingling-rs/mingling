@@ -13,6 +13,9 @@ use syn::{Ident, Token};
 #[cfg(feature = "extra_macros")]
 pub(crate) mod routeify;
 
+/// Extension: `#[buffer]` — wraps a unit-returning function to return `RenderResult`.
+pub(crate) mod buffer;
+
 /// Parsed extensions from an attribute macro like `#[chain(routeify, other_ext)]`.
 pub(crate) struct Extensions {
     pub(crate) exts: Vec<Ident>,

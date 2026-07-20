@@ -1282,6 +1282,104 @@ pub fn routeify(attr: TokenStream, item: TokenStream) -> TokenStream {
     extensions::routeify::routeify_impl(attr, item)
 }
 
+/// Wraps a unit-returning function to produce a `RenderResult`.
+///
+/// The `#[buffer]` attribute macro injects a local `__render_result_buffer`
+/// variable of type `::mingling::RenderResult` and changes the function's
+/// return type to `::mingling::RenderResult`. Inside the body, use the
+/// `r_print!` and `r_println!` macros to write into the buffer.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::macros::{buffer, r_println};
+///
+/// #[buffer]
+/// fn render_my_type(prev: MyType) {
+///     r_println!("Value: {:?}", *prev);
+/// }
+/// ```
+///
+/// This expands to:
+///
+/// ```rust,ignore
+/// fn render_my_type(prev: MyType) -> mingling::RenderResult {
+///     let mut __render_result_buffer = mingling::RenderResult::new();
+///     {
+///         r_println!("Value: {:?}", *prev);
+///     }
+///     __render_result_buffer
+/// }
+/// ```
+///
+/// # Requirements
+///
+/// - The function must return `()` (unit).
+/// - The function cannot be async.
+#[proc_macro_attribute]
+pub fn buffer(attr: TokenStream, item: TokenStream) -> TokenStream {
+    extensions::buffer::buffer_impl(attr, item)
+}
+
+/// Prints text to a `RenderResult` buffer, with a trailing newline.
+///
+/// # Implicit buffer (inside `#[buffer]` functions)
+///
+/// ```rust,ignore
+/// use mingling::macros::{buffer, r_println};
+///
+/// #[buffer]
+/// fn render() {
+///     r_println!("Hello, {}!", name);
+/// }
+/// ```
+///
+/// # Explicit buffer
+///
+/// Pass a `RenderResult` variable as the first argument:
+///
+/// ```rust,ignore
+/// use mingling::macros::r_println;
+/// use mingling::RenderResult;
+///
+/// let mut r = RenderResult::new();
+/// r_println!(r, "value: {}", 42);
+/// assert_eq!(&*r, "value: 42\n");
+/// ```
+#[proc_macro]
+pub fn r_println(input: TokenStream) -> TokenStream {
+    func::r_print::r_println(input)
+}
+
+/// Prints text to a `RenderResult` buffer, without a trailing newline.
+///
+/// # Implicit buffer (inside `#[buffer]` functions)
+///
+/// ```rust,ignore
+/// use mingling::macros::{buffer, r_print};
+///
+/// #[buffer]
+/// fn render() {
+///     r_print!("Hello, ");
+///     r_println!("world!");
+/// }
+/// ```
+///
+/// # Explicit buffer
+///
+/// ```rust,ignore
+/// use mingling::macros::r_print;
+/// use mingling::RenderResult;
+///
+/// let mut r = RenderResult::new();
+/// r_print!(r, "value: {}", 42);
+/// assert_eq!(&*r, "value: 42");
+/// ```
+#[proc_macro]
+pub fn r_print(input: TokenStream) -> TokenStream {
+    func::r_print::r_print(input)
+}
+
 /// Derive macro for automatically implementing the `Grouped` trait on a struct.
 ///
 /// The `#[derive(Grouped)]` macro:

@@ -274,22 +274,35 @@ None
 
 #### **BREAKING CHANGES** (API CHANGES):
 
-1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros. The `#[renderer]` and `#[help]` macros no longer implicitly inject an internal `RenderResult` variable or provide `r_println!` / `r_print!` macros.
+1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros from being implicitly injected by `#[renderer]` and `#[help]` macros. These macros still exist, but must now be used **explicitly** — either with an explicit buffer argument, or via the `#[buffer]` extension attribute that re-enables implicit buffer injection.
 
-    Renderers and help functions must now explicitly create and return a `RenderResult`:
+    **Option A — Explicit buffer:** Pass a `RenderResult` variable as the first argument:
 
     ```rust
+    use mingling::macros::r_println;
     use mingling::prelude::*;
 
     #[renderer]
     fn render_greeting(greeting: ResultGreeting) -> RenderResult {
         let mut result = RenderResult::new();
-        writeln!(result, "Hello, {}!", *greeting).ok();
+        r_println!(result, "Hello, {}!", *greeting);
         result
     }
     ```
 
-    All examples, docs, and test cases across the repository have been updated to use the new pattern: creating a `RenderResult` with `RenderResult::new()` or `RenderResult::default()`, writing with `write!`/`writeln!` from `std::io::Write`, and returning the result.
+    **Option B — Implicit buffer via `#[buffer]` extension:** Use `#[renderer(buffer)]` to re-enable the old implicit injection behavior, where a `RenderResult` buffer is automatically created and `r_println!`/`r_print!` write to it without an explicit argument. This requires the function to return `()` (unit); the expanded function will return `RenderResult`:
+
+    ```rust
+    use mingling::macros::r_println;
+
+    #[renderer(buffer)]
+    fn render_greeting(greeting: ResultGreeting) {
+        r_println!("Hello, {}!", *greeting);
+        // Returns RenderResult implicitly
+    }
+    ```
+
+    The `#[buffer]` extension is also available standalone as `#[buffer]` for use outside of `#[renderer]`/`#[help]` functions.
 
 2. **[`macros:chain`]** The `#[chain]` macro's return type requirement has been relaxed. Previously, chain functions were required to return `Next` or `()` (with `()` auto-converting to `ResultEmpty`). Now, chain functions can also return `ChainProcess<ThisProgram>` directly, or omit the return type entirely (which defaults to `()` → `ResultEmpty`).
 

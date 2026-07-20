@@ -132,8 +132,8 @@ impl RenderResult {
     /// result.print(", world!");
     /// assert_eq!(result.deref(), "Hello, world!");
     /// ```
-    pub fn print(&mut self, text: &str) {
-        self.render_text.push_str(text);
+    pub fn print(&mut self, text: impl AsRef<str>) {
+        self.render_text.push_str(text.as_ref());
     }
 
     /// Appends the given text followed by a newline to the rendered content.
@@ -149,8 +149,8 @@ impl RenderResult {
     /// result.println("Second line");
     /// assert_eq!(result.deref(), "First line\nSecond line\n");
     /// ```
-    pub fn println(&mut self, text: &str) {
-        self.render_text.push_str(text);
+    pub fn println(&mut self, text: impl AsRef<str>) {
+        self.render_text.push_str(text.as_ref());
         self.render_text.push('\n');
     }
 
