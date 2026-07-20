@@ -2,43 +2,16 @@ use std::path::Path;
 
 use tools::{println_cargo_style, run_cmd};
 
-const DOCS_RS_MANIFEST: &str = "mingling/Cargo.toml";
 const OUTPUT_DIR: &str = "docs/api-docs";
 
 fn main() {
     let repo_root = find_git_repo().expect("Failed to find git repository root");
 
-    let manifest_path = repo_root.join(DOCS_RS_MANIFEST);
-    if !manifest_path.exists() {
-        eprintln!("Error: Manifest not found at {}", manifest_path.display());
+    // Read features from [package.metadata.docs.rs]
+    let features = tools::read_features().unwrap_or_else(|e| {
+        eprintln!("Error: {}", e);
         std::process::exit(1);
-    }
-
-    // Read and parse [package.metadata.docs.rs]
-    let manifest_content =
-        std::fs::read_to_string(&manifest_path).expect("Failed to read Cargo.toml");
-    let cargo_toml: toml::Value = manifest_content
-        .parse()
-        .expect("Failed to parse Cargo.toml");
-
-    let doc_features = cargo_toml
-        .get("package")
-        .and_then(|p| p.get("metadata"))
-        .and_then(|m| m.get("docs"))
-        .and_then(|d| d.get("rs"))
-        .and_then(|rs| rs.get("features"))
-        .and_then(|f| f.as_array())
-        .unwrap_or_else(|| {
-            eprintln!("Error: [package.metadata.docs.rs] or its 'features' key not found in mingling/Cargo.toml");
-            std::process::exit(1);
-        });
-
-    let features: Vec<&str> = doc_features.iter().filter_map(|v| v.as_str()).collect();
-
-    if features.is_empty() {
-        eprintln!("Error: No features defined in [package.metadata.docs.rs]");
-        std::process::exit(1);
-    }
+    });
 
     let features_arg = features.join(",");
 

@@ -334,6 +334,82 @@ pub fn run_cmd_with_progress(phase: &str, label: &str, cmd: String) -> Result<()
     }
 }
 
+/// Read `[package.metadata.docs.rs].features` from `mingling/Cargo.toml`.
+///
+/// Finds the git repository root, reads `mingling/Cargo.toml`, parses it as TOML,
+/// and extracts the feature list under `[package.metadata.docs.rs].features`.
+///
+/// # Errors
+///
+/// Returns `std::io::Error` if:
+/// - The git repository root cannot be found.
+/// - The manifest file cannot be read.
+/// - The TOML cannot be parsed.
+/// - The `[package.metadata.docs.rs].features` key is missing or empty.
+pub fn read_features() -> Result<Vec<String>, std::io::Error> {
+    // Find git repo root
+    let mut current_dir = std::env::current_dir()?;
+    let repo_root = loop {
+        let git_dir = current_dir.join(".git");
+        if git_dir.exists() && git_dir.is_dir() {
+            break Some(current_dir);
+        }
+        if !current_dir.pop() {
+            break None;
+        }
+    };
+    let repo_root = repo_root.ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "Failed to find git repository root",
+        )
+    })?;
+
+    let manifest_path = repo_root.join("mingling/Cargo.toml");
+    if !manifest_path.exists() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Manifest not found at {}", manifest_path.display()),
+        ));
+    }
+
+    let manifest_content = std::fs::read_to_string(&manifest_path)?;
+    let cargo_toml: toml::Value = manifest_content.parse().map_err(|e| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Failed to parse Cargo.toml: {}", e),
+        )
+    })?;
+
+    let doc_features = cargo_toml
+        .get("package")
+        .and_then(|p| p.get("metadata"))
+        .and_then(|m| m.get("docs"))
+        .and_then(|d| d.get("rs"))
+        .and_then(|rs| rs.get("features"))
+        .and_then(|f| f.as_array())
+        .ok_or_else(|| {
+            std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "[package.metadata.docs.rs] or its 'features' key not found in mingling/Cargo.toml",
+            )
+        })?;
+
+    let features: Vec<String> = doc_features
+        .iter()
+        .filter_map(|v| v.as_str().map(String::from))
+        .collect();
+
+    if features.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "No features defined in [package.metadata.docs.rs]",
+        ));
+    }
+
+    Ok(features)
+}
+
 #[must_use]
 pub fn cargo_tomls() -> Vec<std::path::PathBuf> {
     let mut cargo_tomls = Vec::new();
