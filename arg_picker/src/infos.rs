@@ -1,4 +1,4 @@
-use crate::{Pickable, PickerArg};
+use crate::{Pickable, PickerArg, parselib::ParserStyle};
 
 /// Represents the result of parsing or looking up a value.
 ///
@@ -288,28 +288,7 @@ where
     T: Pickable<'a>,
 {
     fn from(value: PickerArg<'a, T>) -> Self {
-        let (long, alias) = match value.full.len() {
-            0 => (None, None),
-            _ => {
-                let long = Some(value.full[0]);
-                let alias = if value.full.len() > 1 {
-                    Some(value.full[1..].to_vec())
-                } else {
-                    None
-                };
-                (long, alias)
-            }
-        };
-
-        Self {
-            short: value.short,
-            long,
-            alias,
-            positional: value.positional,
-            optional: false,
-            multi: false,
-            is_flag: false,
-        }
+        value.into_info()
     }
 }
 
@@ -436,6 +415,56 @@ impl<'a> PickerArgInfo<'a> {
     pub fn set_is_flag(&mut self, is_flag: bool) -> &mut Self {
         self.is_flag = is_flag;
         self
+    }
+
+    /// Returns the short flag string, e.g. `-n` for short `n`.
+    ///
+    /// Uses [`ParserStyle::global_style()`] to format the flag.
+    ///
+    /// # Returns
+    ///
+    /// - `Some(String)` if `self.short` is set.
+    /// - `None` if `self.short` is `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use arg_picker::PickerArgInfo;
+    ///
+    /// let info = PickerArgInfo::new().with_short('n');
+    /// assert_eq!(info.short_flag(), Some("-n".to_string()));
+    ///
+    /// let info = PickerArgInfo::new();
+    /// assert_eq!(info.short_flag(), None);
+    /// ```
+    pub fn short_flag(&self) -> Option<String> {
+        let short = self.short?;
+        Some(ParserStyle::global_style().flag_string(short))
+    }
+
+    /// Returns the long flag string, e.g. `--name` for long `"name"`.
+    ///
+    /// Uses [`ParserStyle::global_style()`] to format the flag.
+    ///
+    /// # Returns
+    ///
+    /// - `Some(String)` if `self.long` is set.
+    /// - `None` if `self.long` is `None`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use arg_picker::PickerArgInfo;
+    ///
+    /// let info = PickerArgInfo::new().with_long("name");
+    /// assert_eq!(info.long_flag(), Some("--name".to_string()));
+    ///
+    /// let info = PickerArgInfo::new();
+    /// assert_eq!(info.long_flag(), None);
+    /// ```
+    pub fn long_flag(&self) -> Option<String> {
+        let long = self.long?;
+        Some(ParserStyle::global_style().flag_string(long))
     }
 }
 

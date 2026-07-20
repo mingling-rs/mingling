@@ -1,4 +1,4 @@
-use crate::Pickable;
+use crate::{Pickable, PickerArgInfo};
 use std::marker::PhantomData;
 
 /// Represents a constraint definition for a parameter selection.
@@ -132,6 +132,35 @@ where
     pub fn with_positional(mut self, positional: bool) -> Self {
         self.positional = positional;
         self
+    }
+
+    /// Converts this `PickerArg` into a `PickerArgInfo` value.
+    ///
+    /// This is a convenience method equivalent to calling `PickerArgInfo::from(self)`.
+    pub fn into_info(self) -> PickerArgInfo<'a> {
+        let value = self;
+        let (long, alias) = match value.full.len() {
+            0 => (None, None),
+            _ => {
+                let long = Some(value.full[0]);
+                let alias = if value.full.len() > 1 {
+                    Some(value.full[1..].to_vec())
+                } else {
+                    None
+                };
+                (long, alias)
+            }
+        };
+
+        PickerArgInfo {
+            short: value.short,
+            long,
+            alias,
+            positional: value.positional,
+            optional: false,
+            multi: false,
+            is_flag: false,
+        }
     }
 }
 
