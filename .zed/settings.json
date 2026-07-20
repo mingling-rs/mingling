@@ -4,23 +4,24 @@
             "initialization_options": {
                 "checkOnSave": true,
                 "check": { "command": "clippy" },
+                "files": {
+                    "exclude": ["**/target/**", "**/.temp/**"]
+                },
                 "linkedProjects": [
                     ".run/Cargo.toml",
                     "mingling_pathf/test/Cargo.toml",
-                    "mingling_cli/Cargo.toml",
                     "arg_picker/Cargo.toml",
-                    "arg_picker/test/Cargo.toml"
+                    "arg_picker/test/Cargo.toml",
+                    "mingling_cli/Cargo.toml"
                 ],
                 "cargo": {
-                    "features": [
-                        "structural_renderer",
-                        "mingling_support",
-                        "all_serde_fmt",
-                        "docs_rs",
-                        "picker",
-                        "parser",
-                        "comp"
-                    ]
+                    "features": []
+                },
+                "procMacro": {
+                    "enable": true,
+                    "attributes": {
+                        "enable": true
+                    }
                 }
             }
         }

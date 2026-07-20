@@ -11,15 +11,29 @@ description = "Mingling's scaffolding tool for generating, analyzing, and modify
 keywords = ["cli", "cli-framework", "command-line", "tools"]
 categories = ["command-line-interface"]
 
+[[bin]]
+name = "mling"
+path = "src/main.rs"
+
 [dependencies.mingling]
 path = "../mingling"
 features = [
     "picker",
     "pathf",
-    "dispatch_tree",
-    "extra_macros"
+    "extra_macros",
+    "structural_renderer"
+]
+
+[build-dependencies.mingling]
+path = "../mingling"
+features = [
+    "builds",
+    "pathf",
 ]
 
 [dependencies]
+cargo_metadata = "0.23.1"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 
 [workspace]
