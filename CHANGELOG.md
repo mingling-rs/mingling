@@ -310,6 +310,27 @@ None
 
     The macro is re-exported as `mingling::macros::r_append` and included in `mingling::prelude::*`.
 
+13. **[`core`]** **[`macros`]** Added `From<F>` implementation for `RenderResult` where `F: FnOnce() -> RenderResult`. This enables `RenderResult` to be constructed from a closure or function pointer that returns a `RenderResult`, enabling ergonomic composition of render buffers.
+
+    This is particularly useful with the `#[buffer]` extension attribute, which creates a separate buffer function that can be called from within a `#[renderer(buffer)]` function using `r_append!`:
+
+    ```rust
+    use mingling::macros::{buffer, r_append, r_println};
+
+    // A standalone buffer function
+    #[buffer]
+    fn print_sth() {
+        r_println!("ok");
+    }
+
+    #[renderer(buffer)]
+    fn render_greet(_: ResultGreet) {
+        r_append!(print_sth);  // appends `a`'s RenderResult content into `p`'s buffer
+    }
+    ```
+
+    Under the hood, `r_append!` (when used in implicit buffer mode inside a `#[buffer]` function) calls `append_other` on the current render buffer. The `From<F>` implementation allows the buffer function's return value (a `RenderResult`) to be seamlessly converted into the parent's buffer via `append_other`. This enables clean separation of render logic into reusable buffer functions that can be composed together.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros from being implicitly injected by `#[renderer]` and `#[help]` macros. These macros still exist, but must now be used **explicitly** — either with an explicit buffer argument, or via the `#[buffer]` extension attribute that re-enables implicit buffer injection.

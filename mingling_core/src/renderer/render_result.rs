@@ -47,6 +47,15 @@ pub enum RenderResultMode {
     Stderr = 1,
 }
 
+impl<F> From<F> for RenderResult
+where
+    F: FnOnce() -> RenderResult,
+{
+    fn from(value: F) -> Self {
+        value()
+    }
+}
+
 impl Write for RenderResult {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let s = std::str::from_utf8(buf).map_err(|_| {
@@ -233,7 +242,7 @@ impl RenderResult {
     /// src.append_to_buffer("Hello", RenderResultMode::Stdout);
     /// src.append_to_buffer(" Error", RenderResultMode::Stderr);
     ///
-    /// dest.append_otehr(src);
+    /// dest.append_other(src);
     /// assert_eq!(dest.to_string(), "Hello Error");
     /// ```
     pub fn append_other(&mut self, other: impl Into<RenderResult>) {
