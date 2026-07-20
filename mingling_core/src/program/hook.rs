@@ -144,8 +144,9 @@ where
 {
     /// Adds a typed hook to the program. The hook will be called at the appropriate
     /// lifecycle events.
-    pub fn with_hook(&mut self, hook: ProgramHook<C>) {
+    pub fn with_hook(&mut self, hook: ProgramHook<C>) -> &mut Self {
         self.hooks.push(hook);
+        self
     }
 
     pub(crate) fn run_hook_on_begin(&self, info: HookBeginInfo) {

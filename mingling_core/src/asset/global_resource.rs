@@ -13,10 +13,14 @@ where
     C: ProgramCollect<Enum = C>,
 {
     /// Insert a resource of the given type, cloning the provided value into the store
-    pub fn with_resource<Res: 'static + Send + Sync + ResourceMarker>(&mut self, res: Res) {
+    pub fn with_resource<Res: 'static + Send + Sync + ResourceMarker>(
+        &mut self,
+        res: Res,
+    ) -> &mut Self {
         if let Ok(mut guard) = self.resources.lock() {
             guard.insert(TypeId::of::<Res>(), Box::new(Arc::new(res)));
         }
+        self
     }
 
     /// Modify a resource by type, applying a closure to the resource if present

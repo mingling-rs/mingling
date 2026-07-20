@@ -38,7 +38,7 @@ where
             note = "When the `dispatch_tree` feature is enabled, the `dispatcher` field no longer exists inside Program. All types are collected at compile time by the `gen_program!()` macro, so the `with_dispatcher` function is no longer needed"
         )
     )]
-    pub fn with_dispatcher<Disp>(&mut self, dispatcher: Disp)
+    pub fn with_dispatcher<Disp>(&mut self, dispatcher: Disp) -> &mut Self
     where
         Disp: Dispatcher<C> + Send + Sync + 'static,
     {
@@ -50,6 +50,7 @@ where
         {
             let _ = dispatcher;
         }
+        self
     }
 
     /// Add some dispatchers to the program.
@@ -59,7 +60,7 @@ where
             note = "When the `dispatch_tree` feature is enabled, the `dispatcher` field no longer exists inside Program. All types are collected at compile time by the `gen_program!()` macro, so the `with_dispatcher` function is no longer needed"
         )
     )]
-    pub fn with_dispatchers<D>(&mut self, dispatchers: D)
+    pub fn with_dispatchers<D>(&mut self, dispatchers: D) -> &mut Self
     where
         D: Into<Dispatchers<C>>,
     {
@@ -72,6 +73,7 @@ where
         {
             let _ = dispatchers;
         }
+        self
     }
 }
 

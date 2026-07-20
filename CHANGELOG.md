@@ -93,6 +93,32 @@ None
 
     Previously, when `render_output` was true but `result.is_empty()` was also true, the old code would skip printing entirely and return the exit code from the result. Now, `std_print()` is called unconditionally when `render_output` is true, and the exit code is read from the result regardless of whether any output was printed. This ensures that programs which set a non-zero exit code without producing renderable output (e.g., via `ExitCodeSetup` or `ProgramControlUnit::OverrideExitCode`) will exit with the correct code.
 
+5. **[`core`]** Made `with_resource`, `with_dispatcher`, `with_dispatchers`, `with_hook`, and `with_setup` methods return `&mut Self` instead of `()`. These methods now return a mutable reference to the program instance, enabling ergonomic chaining:
+
+    ```rust
+    // Before — required separate statements
+    program.with_resource(ResConfig::new());
+    program.with_resource(ResDatabase::new());
+    program.with_setup(BasicProgramSetup);
+    program.with_hook(logging_hook);
+
+    // After — supports method chaining
+    program
+        .with_resource(ResConfig::new())
+        .with_resource(ResDatabase::new())
+        .with_setup(BasicProgramSetup)
+        .with_hook(logging_hook);
+    ```
+
+    Affected methods:
+    - `Program::with_resource(&mut self, res: Res) -> &mut Self` — Insert a resource into the program's global resource store.
+    - `Program::with_dispatcher(&mut self, dispatcher: Disp) -> &mut Self` — Add a single dispatcher to the program.
+    - `Program::with_dispatchers(&mut self, dispatchers: D) -> &mut Self` — Add multiple dispatchers to the program.
+    - `Program::with_hook(&mut self, hook: ProgramHook<C>) -> &mut Self` — Add a lifecycle hook to the program.
+    - `Program::with_setup(&mut self, setup: S) -> &mut Self` — Load and execute a program setup.
+
+    _No behavioral changes — all existing functionality is preserved. Downstream code that ignores the return value continues to work without modification._
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

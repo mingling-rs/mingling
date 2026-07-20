@@ -29,8 +29,9 @@ where
     C: ProgramCollect<Enum = C>,
 {
     /// Load and execute init logic
-    pub fn with_setup<S: ProgramSetup<C> + 'static>(&mut self, setup: S) {
+    pub fn with_setup<S: ProgramSetup<C> + 'static>(&mut self, setup: S) -> &mut Self {
         S::setup(setup, self);
+        self
     }
 }
 
