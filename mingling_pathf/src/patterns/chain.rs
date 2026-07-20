@@ -18,7 +18,7 @@ pub struct ChainPattern;
 
 impl AnalyzePattern for ChainPattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("chain]")
+        content.contains("[chain") || content.contains("chain]")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {

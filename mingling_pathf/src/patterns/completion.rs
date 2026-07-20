@@ -13,7 +13,7 @@ pub struct CompletionPattern;
 
 impl AnalyzePattern for CompletionPattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("completion(")
+        content.contains("completion(") || content.contains("[completion")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {

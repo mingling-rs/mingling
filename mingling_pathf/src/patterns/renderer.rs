@@ -13,7 +13,7 @@ pub struct RendererPattern;
 
 impl AnalyzePattern for RendererPattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("renderer]")
+        content.contains("[renderer") || content.contains("renderer]")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {

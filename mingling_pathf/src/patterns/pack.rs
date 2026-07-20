@@ -18,7 +18,10 @@ pub struct PackPattern;
 
 impl AnalyzePattern for PackPattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("pack!") || content.contains("pack_err!")
+        content.contains("pack!")
+            || content.contains("pack_err!")
+            || content.contains("pack_structural!")
+            || content.contains("pack_err_structural!")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {

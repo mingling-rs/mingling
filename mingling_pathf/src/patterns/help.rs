@@ -13,7 +13,7 @@ pub struct HelpPattern;
 
 impl AnalyzePattern for HelpPattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("help]")
+        content.contains("[help") || content.contains("help]")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {
