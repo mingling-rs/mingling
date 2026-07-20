@@ -1,0 +1,25 @@
+[package]
+name = "mingling-cli"
+version = "0.3.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/mingling-rs/mingling/tree/main/mingling_cli"
+authors = ["Weicao-CatilGrass"]
+readme = "README.md"
+
+description = "Mingling's scaffolding tool for generating, analyzing, and modifying Mingling projects"
+keywords = ["cli", "cli-framework", "command-line", "tools"]
+categories = ["command-line-interface"]
+
+[dependencies.mingling]
+path = "../mingling"
+features = [
+    "picker",
+    "pathf",
+    "dispatch_tree",
+    "extra_macros"
+]
+
+[dependencies]
+
+[workspace]
