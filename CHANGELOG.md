@@ -89,6 +89,10 @@ None
 
     _No migration is required for downstream code — the behavior of all four macros is unchanged. This is purely an internal code generation refactoring._
 
+4. **[`core`]** Changed the `exec_without_render` and `exec` methods' behavior: the `print!`-based output with manual stdout flushing has been replaced by a call to `result.std_print()`, which handles buffered output internally via the new `RenderResult` buffer system (introduced in **BREAKING CHANGE #6**). The `render_output` gating still applies — when `stdout_setting.render_output` is `false`, nothing is printed — but the `!result.is_empty()` guard has been removed: `std_print()` now handles empty results appropriately.
+
+    Previously, when `render_output` was true but `result.is_empty()` was also true, the old code would skip printing entirely and return the exit code from the result. Now, `std_print()` is called unconditionally when `render_output` is true, and the exit code is read from the result regardless of whether any output was printed. This ensures that programs which set a non-zero exit code without producing renderable output (e.g., via `ExitCodeSetup` or `ProgramControlUnit::OverrideExitCode`) will exit with the correct code.
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

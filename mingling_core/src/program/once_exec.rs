@@ -79,23 +79,12 @@ where
         };
 
         // Read exit code
-        let exit_code = result.exit_code;
-
         // Render result
-        if stdout_setting.render_output && !result.is_empty() {
-            print!("{result}");
-
-            if let Err(e) = std::io::Write::flush(&mut std::io::stdout())
-                && stdout_setting.error_output
-            {
-                eprintln!("{e}");
-                1
-            } else {
-                exit_code
-            }
-        } else {
-            exit_code
+        if stdout_setting.render_output {
+            result.std_print();
         }
+
+        result.exit_code
     }
 
     /// Run the command line program, then exit
@@ -217,23 +206,12 @@ where
         };
 
         // Read exit code
-        let exit_code = result.exit_code;
-
         // Render result
-        if stdout_setting.render_output && !result.is_empty() {
-            print!("{result}");
-
-            if let Err(e) = std::io::Write::flush(&mut std::io::stdout())
-                && stdout_setting.error_output
-            {
-                eprintln!("{e}");
-                1
-            } else {
-                exit_code
-            }
-        } else {
-            exit_code
+        if stdout_setting.render_output {
+            result.std_print();
         }
+
+        result.exit_code
     }
 
     /// Run the command line program, then exit
