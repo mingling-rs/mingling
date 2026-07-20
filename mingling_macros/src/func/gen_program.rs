@@ -291,6 +291,7 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
 
     let pathf_map: Option<HashMap<String, String>> = load_pathf_map();
 
+    #[cfg(feature = "pathf")]
     let pathf_hint: proc_macro2::TokenStream = if pathf_map.is_none() {
         quote! {
             compile_error!(
@@ -308,6 +309,9 @@ fn main() {
     } else {
         quote! {}
     };
+
+    #[cfg(not(feature = "pathf"))]
+    let pathf_hint: proc_macro2::TokenStream = quote! {};
 
     let pathf_map: HashMap<String, String> = if cfg!(feature = "pathf") {
         pathf_map.unwrap_or_default()
