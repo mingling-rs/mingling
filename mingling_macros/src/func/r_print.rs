@@ -60,3 +60,11 @@ pub(crate) fn r_println(input: TokenStream) -> TokenStream {
 pub(crate) fn r_print(input: TokenStream) -> TokenStream {
     expand_print(input, "print")
 }
+
+pub(crate) fn r_eprintln(input: TokenStream) -> TokenStream {
+    expand_print(input, "eprintln")
+}
+
+pub(crate) fn r_eprint(input: TokenStream) -> TokenStream {
+    expand_print(input, "eprint")
+}

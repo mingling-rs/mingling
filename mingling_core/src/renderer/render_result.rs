@@ -1,13 +1,24 @@
 use std::{
     fmt::{Display, Formatter},
     io::Write,
-    ops::Deref,
 };
+
+use crate::RenderResultMode::{Stderr, Stdout};
 
 /// Render result, containing the rendered text content.
 #[derive(Default, Debug, PartialEq)]
 pub struct RenderResult {
-    render_text: String,
+    /// Whether the output should be written immediately.
+    ///
+    /// When set to `true`, rendered content will be flushed to stdout/stderr
+    /// in real time while also being collected in the render buffer.
+    immediate_output: bool,
+
+    /// The buffered render output, stored as a list of (text, mode) pairs.
+    ///
+    /// Each entry contains a rendered string together with a `RenderResultMode`
+    /// indicating whether it should be output to stdout or stderr.
+    render_buffer: Vec<(String, RenderResultMode)>,
 
     /// The exit code to return from the rendering process.
     ///
@@ -16,12 +27,32 @@ pub struct RenderResult {
     pub exit_code: i32,
 }
 
+/// Enum representing the output mode for render results.
+///
+/// This determines whether the rendered content should be directed to standard
+/// output or standard error.
+///
+/// # Variants
+///
+/// * `Stdout` - Output will be written to standard output (stdout).
+/// * `Stderr` - Output will be written to standard error (stderr).
+#[repr(u8)]
+#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+pub enum RenderResultMode {
+    /// Standard output (stdout).
+    #[default]
+    Stdout = 0,
+
+    /// Standard error (stderr).
+    Stderr = 1,
+}
+
 impl Write for RenderResult {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
         let s = std::str::from_utf8(buf).map_err(|_| {
             std::io::Error::new(std::io::ErrorKind::InvalidInput, "not valid UTF-8")
         })?;
-        self.render_text.push_str(s);
+        self.append_to_buffer(s, Stdout);
         Ok(buf.len())
     }
 
@@ -32,15 +63,7 @@ impl Write for RenderResult {
 
 impl Display for RenderResult {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}", self.render_text.trim())
-    }
-}
-
-impl Deref for RenderResult {
-    type Target = str;
-
-    fn deref(&self) -> &Self::Target {
-        &self.render_text
+        write!(f, "{}", render_result_to_string(self).trim())
     }
 }
 
@@ -69,40 +92,31 @@ impl_from_int!(i32, i16, i8, u32, u16, u8, usize);
 
 impl From<&String> for RenderResult {
     fn from(value: &String) -> Self {
-        RenderResult {
-            render_text: value.clone(),
-            exit_code: 0,
-        }
+        string_to_render_result(value, Stdout)
     }
 }
 
 impl From<String> for RenderResult {
     fn from(value: String) -> Self {
-        RenderResult {
-            render_text: value,
-            exit_code: 0,
-        }
+        string_to_render_result(value, Stdout)
     }
 }
 
 impl From<&str> for RenderResult {
     fn from(value: &str) -> Self {
-        RenderResult {
-            render_text: value.to_string(),
-            exit_code: 0,
-        }
+        string_to_render_result(value, Stdout)
     }
 }
 
 impl From<RenderResult> for String {
     fn from(result: RenderResult) -> Self {
-        result.render_text
+        render_result_to_string(&result)
     }
 }
 
 impl From<&RenderResult> for String {
     fn from(result: &RenderResult) -> Self {
-        result.render_text.clone()
+        render_result_to_string(result)
     }
 }
 
@@ -124,21 +138,95 @@ impl RenderResult {
         Self::default()
     }
 
+    /// Marks the render result for immediate output, bypassing any buffering or
+    /// deferred rendering.
+    ///
+    /// When set, the rendered content will be both collected in the result and
+    /// immediately flushed to stdout/stderr in real time, rather than being
+    /// deferred for later display.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.immediate_output();
+    /// ```
+    pub fn immediate_output(&mut self) -> &mut Self {
+        self.immediate_output = true;
+        self
+    }
+
+    /// Appends the given text and mode to the render buffer.
+    ///
+    /// Unlike `print` and `println` which only store plain text in a single string,
+    /// this method stores the text along with a `RenderResultMode` that indicates
+    /// whether the output should be directed to stdout or stderr. This allows for
+    /// more fine-grained control over output routing when the buffer is later flushed.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The text content to append to the buffer.
+    /// * `mode` - The output mode (`Stdout` or `Stderr`) indicating where the text
+    ///   should be directed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_to_buffer("Error message", RenderResultMode::Stderr);
+    /// ```
+    pub fn append_to_buffer(&mut self, text: impl Into<String>, mode: RenderResultMode) {
+        self.render_buffer.push((text.into(), mode));
+    }
+
+    /// Appends the given text followed by a newline, along with the mode, to the render buffer.
+    ///
+    /// This is a convenience method that calls `append_to_buffer` for the text and then
+    /// appends a newline with the same mode.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - The text content to append to the buffer.
+    /// * `mode` - The output mode (`Stdout` or `Stderr`) indicating where the text
+    ///   should be directed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_line_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_line_to_buffer("Warning", RenderResultMode::Stderr);
+    /// ```
+    pub fn append_line_to_buffer(&mut self, text: impl Into<String>, mode: RenderResultMode) {
+        self.append_to_buffer(text, mode);
+        self.append_to_buffer("\n", mode);
+    }
+
     /// Appends the given text to the rendered content.
     ///
     /// # Examples
     ///
     /// ```
     /// use mingling_core::RenderResult;
-    /// use std::ops::Deref;
     ///
     /// let mut result = RenderResult::default();
     /// result.print("Hello");
     /// result.print(", world!");
-    /// assert_eq!(result.deref(), "Hello, world!");
+    /// assert_eq!(result.to_string(), "Hello, world!");
     /// ```
-    pub fn print(&mut self, text: impl AsRef<str>) {
-        self.render_text.push_str(text.as_ref());
+    pub fn print(&mut self, text: impl Into<String>) {
+        let text = text.into();
+        if self.immediate_output {
+            print!("{}", text)
+        }
+        self.append_to_buffer(text, Stdout);
     }
 
     /// Appends the given text followed by a newline to the rendered content.
@@ -147,16 +235,58 @@ impl RenderResult {
     ///
     /// ```
     /// use mingling_core::RenderResult;
-    /// use std::ops::Deref;
     ///
     /// let mut result = RenderResult::default();
     /// result.println("First line");
     /// result.println("Second line");
-    /// assert_eq!(result.deref(), "First line\nSecond line\n");
+    /// assert_eq!(result.to_string(), "First line\nSecond line");
     /// ```
-    pub fn println(&mut self, text: impl AsRef<str>) {
-        self.render_text.push_str(text.as_ref());
-        self.render_text.push('\n');
+    pub fn println(&mut self, text: impl Into<String>) {
+        let text = text.into();
+        if self.immediate_output {
+            println!("{}", text)
+        }
+        self.append_line_to_buffer(text, Stdout);
+    }
+
+    /// Appends the given text to the rendered content, marking it for stderr output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.eprint("Hello");
+    /// result.eprint(", world!");
+    /// assert_eq!(result.to_string(), "Hello, world!");
+    /// ```
+    pub fn eprint(&mut self, text: impl Into<String>) {
+        let text = text.into();
+        if self.immediate_output {
+            eprint!("{}", text)
+        }
+        self.append_to_buffer(text, Stderr);
+    }
+
+    /// Appends the given text followed by a newline to the rendered content, marking it for stderr output.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.eprintln("First line");
+    /// result.eprintln("Second line");
+    /// assert_eq!(result.to_string(), "First line\nSecond line");
+    /// ```
+    pub fn eprintln(&mut self, text: impl Into<String>) {
+        let text = text.into();
+        if self.immediate_output {
+            println!("{}", text)
+        }
+        self.append_line_to_buffer(text, Stderr);
     }
 
     /// Clears all rendered content.
@@ -174,7 +304,148 @@ impl RenderResult {
     /// assert!(result.is_empty());
     /// ```
     pub fn clear(&mut self) {
-        self.render_text.clear();
+        self.render_buffer.clear();
+    }
+
+    /// Outputs all buffered content to stdout and stderr according to their respective modes.
+    ///
+    /// Iterates through the render buffer and prints each buffered string to the appropriate
+    /// output stream — stdout for `Stdout` entries and stderr for `Stderr` entries.
+    ///
+    /// This method is typically used to flush the buffered output at the end of rendering,
+    /// ensuring that all output is displayed in the correct order and to the correct stream.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_to_buffer("Error", RenderResultMode::Stderr);
+    /// result.std_print(); // prints "Hello" to stdout and "Error" to stderr
+    /// ```
+    pub fn std_print(&self) {
+        for (content, mode) in self.render_buffer.iter() {
+            match mode {
+                Stdout => print!("{}", content),
+                Stderr => eprint!("{}", content),
+            }
+        }
+    }
+
+    /// Returns the total number of characters (in terms of `char` count) in the buffered render output.
+    ///
+    /// This counts the length across all buffered entries, regardless of whether they are
+    /// destined for stdout or stderr.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.print("Hello");
+    /// result.print(", 世界");
+    /// assert_eq!(result.len(), 9); // "Hello, 世界" has 9 chars
+    /// ```
+    pub fn len(&self) -> usize {
+        self.render_buffer
+            .iter()
+            .map(|(s, _)| s.chars().count())
+            .sum()
+    }
+
+    /// Returns `true` if the buffered render output contains no characters.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::default();
+    /// assert!(result.is_empty());
+    /// result.print("Hello");
+    /// assert!(!result.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    /// Trims leading and trailing whitespace from the buffered render output.
+    ///
+    /// This method processes the render buffer as follows:
+    /// - If the buffer is empty, it returns `self` unchanged.
+    /// - If there is only one entry, whitespace is trimmed from both the start and end of that
+    ///   single entry.
+    /// - If there are multiple entries, whitespace is trimmed from the start of the first entry
+    ///   and the end of the last entry.
+    ///
+    /// Whitespace in the middle entries is preserved. This is useful for cleaning up output
+    /// without removing intentional spacing between separately buffered segments.
+    ///
+    /// # Returns
+    ///
+    /// A new `RenderResult` with the same `immediate_output` flag and `exit_code`, but with
+    /// trimmed text content.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.print("  Hello, world!  ");
+    /// let trimmed = result.trim_buffer();
+    /// assert_eq!(trimmed.to_string().trim(), "Hello, world!");
+    /// ```
+    pub fn trim_buffer(self) -> RenderResult {
+        if self.render_buffer.is_empty() {
+            return self;
+        }
+
+        let mut buffer = self.render_buffer;
+        if buffer.len() == 1 {
+            // Only one entry: trim both start and end of this single entry
+            let (text, mode) = buffer.remove(0);
+            buffer.push((text.trim().to_string(), mode));
+        } else {
+            // Multiple entries: trim start of first, trim end of last
+            let first_len = buffer.len();
+
+            // Trim start of first entry
+            let (first_text, first_mode) = buffer.remove(0);
+            let trimmed_first = first_text.trim_start().to_string();
+            buffer.insert(0, (trimmed_first, first_mode));
+
+            // Trim end of last entry
+            let (last_text, last_mode) = buffer.remove(first_len - 1);
+            let trimmed_last = last_text.trim_end().to_string();
+            buffer.push((trimmed_last, last_mode));
+        }
+
+        RenderResult {
+            render_buffer: buffer,
+            immediate_output: self.immediate_output,
+            exit_code: self.exit_code,
+        }
+    }
+}
+
+#[inline(always)]
+fn render_result_to_string(result: &RenderResult) -> String {
+    let mut buffer = String::new();
+    for item in result.render_buffer.iter() {
+        buffer += &item.0;
+    }
+    buffer
+}
+
+#[inline(always)]
+fn string_to_render_result(string: impl Into<String>, mode: RenderResultMode) -> RenderResult {
+    RenderResult {
+        render_buffer: vec![(string.into(), mode)],
+        ..Default::default()
     }
 }
 
@@ -188,20 +459,6 @@ mod tests {
         let result = RenderResult::default();
         assert!(result.is_empty());
         assert_eq!(result.exit_code, 0);
-    }
-
-    #[test]
-    fn print_appends_text() {
-        let mut result = RenderResult::default();
-        result.print("Hello");
-        assert_eq!(result.deref(), "Hello");
-    }
-
-    #[test]
-    fn println_appends_text_with_newline() {
-        let mut result = RenderResult::default();
-        result.println("Hello");
-        assert_eq!(result.deref(), "Hello\n");
     }
 
     #[test]
@@ -222,14 +479,6 @@ mod tests {
     }
 
     #[test]
-    fn write_appends_utf8_bytes() {
-        let mut result = RenderResult::default();
-        let n = IoWrite::write(&mut result, b"hello").unwrap();
-        assert_eq!(n, 5);
-        assert_eq!(result.deref(), "hello");
-    }
-
-    #[test]
     fn write_with_invalid_utf8_returns_error() {
         let mut result = RenderResult::default();
         let err = IoWrite::write(&mut result, &[0xff, 0xfe]).unwrap_err();
@@ -241,16 +490,7 @@ mod tests {
         let mut result = RenderResult::default();
         result.print("  hello world  \n");
         let formatted = format!("{}", result);
-        assert_eq!(formatted, "hello world\n");
-    }
-
-    #[test]
-    fn deref_exposes_inner_text_as_str() {
-        let mut result = RenderResult::default();
-        result.print("test");
-
-        let s: &str = &result;
-        assert_eq!(s, "test");
+        assert_eq!(formatted, "hello world");
     }
 
     #[test]
@@ -269,5 +509,73 @@ mod tests {
         assert_eq!(s, "content");
         // original is still usable
         assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn trim_empty_buffer_returns_self() {
+        let result = RenderResult::default();
+        let trimmed = result.trim_buffer();
+        assert!(trimmed.is_empty());
+        assert_eq!(trimmed.exit_code, 0);
+    }
+
+    #[test]
+    fn trim_single_entry_trims_both_ends() {
+        let mut result = RenderResult::default();
+        result.print("  Hello, world!  ");
+        let trimmed = result.trim_buffer();
+        assert_eq!(trimmed.to_string(), "Hello, world!");
+    }
+
+    #[test]
+    fn trim_single_entry_nothing_to_trim() {
+        let mut result = RenderResult::default();
+        result.print("Hello");
+        let trimmed = result.trim_buffer();
+        assert_eq!(trimmed.to_string(), "Hello");
+    }
+
+    #[test]
+    fn trim_multiple_entries_trims_first_start_and_last_end() {
+        let mut result = RenderResult::default();
+        result.print("  Hello");
+        result.print(" World ");
+        result.print("!  ");
+        let trimmed = result.trim_buffer();
+        // first entry trim_start: "Hello"
+        // middle entry unchanged: " World "
+        // last entry trim_end: "!"
+        assert_eq!(trimmed.to_string(), "Hello World !");
+    }
+
+    #[test]
+    fn trim_multiple_entries_only_whitespace_first_entry() {
+        let mut result = RenderResult::default();
+        result.print("   ");
+        result.print("Hello");
+        result.print("   ");
+        let trimmed = result.trim_buffer();
+        // first entry trim_start: ""
+        // middle entry unchanged: "Hello"
+        // last entry trim_end: ""
+        assert_eq!(trimmed.to_string(), "Hello");
+    }
+
+    #[test]
+    fn trim_preserves_exit_code() {
+        let mut result = RenderResult::new();
+        result.exit_code = 42;
+        result.print("  test  ");
+        let trimmed = result.trim_buffer();
+        assert_eq!(trimmed.exit_code, 42);
+    }
+
+    #[test]
+    fn trim_preserves_stderr_mode() {
+        let mut result = RenderResult::default();
+        result.eprint("  error  ");
+        let trimmed = result.trim_buffer();
+        assert_eq!(trimmed.render_buffer[0].1, RenderResultMode::Stderr);
+        assert_eq!(trimmed.to_string(), "error");
     }
 }

@@ -1,4 +1,4 @@
-use mingling::{StructuralRenderer, StructuralRendererSetting, RenderResult, StructuralData};
+use mingling::{RenderResult, StructuralData, StructuralRenderer, StructuralRendererSetting};
 use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq, Serialize, StructuralData)]
@@ -17,7 +17,8 @@ fn test_data() -> TestData {
 #[test]
 fn test_render_disable() {
     let mut r = RenderResult::default();
-    let result = StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Disable, &mut r);
+    let result =
+        StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Disable, &mut r);
     assert!(result.is_ok());
     assert!(r.is_empty());
 }

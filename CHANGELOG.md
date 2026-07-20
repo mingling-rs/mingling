@@ -367,6 +367,50 @@ None
 
     _No behavioral changes — this is a pure API migration from `Grouped` to `Routable` for routing methods._
 
+6. **[`core`]** **[BREAKING]** Removed the `Deref<Target = str>` implementation from `RenderResult`. Previously, `RenderResult` implemented `Deref<Target = str>`, delegating to the internal `render_text: String` field. This implementation has been removed as part of the internal refactoring of `RenderResult` from a single `String` field to a `Vec<(String, RenderResultMode)>` buffer.
+
+    The `RenderResult` struct has been restructured internally:
+
+    - **Removed:** `render_text: String` — replaced by a buffered storage format
+    - **Added:** `render_buffer: Vec<(String, RenderResultMode)>` — a list of (text, output-mode) pairs
+    - **Added:** `immediate_output: bool` — flag for real-time flushing
+
+    **New `RenderResultMode` enum** (`Stdout` / `Stderr`) has been added to distinguish output streams at the buffer level. Both variants are re-exported as `mingling::RenderResultMode`.
+
+    **New methods added to `RenderResult`:**
+
+    - `append_to_buffer(text, mode)` / `append_line_to_buffer(text, mode)` — Append text with an explicit output mode (`Stdout` or `Stderr`)
+    - `eprint(text)` / `eprintln(text)` — Append text marked for stderr output
+    - `immediate_output()` — Enable real-time output flushing
+    - `std_print()` — Flush all buffered content to stdout/stderr
+    - `len()` / `is_empty()` — Character count and emptiness check (based on the buffer)
+    - `trim_buffer(self) -> RenderResult` — Trim whitespace from the buffer ends, returning a new `RenderResult`
+
+    **`r_eprint!` and `r_eprintln!` macros** have been added to `mingling_macros` and re-exported via `mingling::macros::r_eprint` / `mingling::macros::r_eprintln` and `mingling::prelude::*`. These work analogously to `r_print!` / `r_println!` but target stderr output (calling `RenderResult::eprint` / `RenderResult::eprintln` under the hood). Both support implicit buffer mode (inside `#[buffer]` functions) and explicit buffer mode (passing a `RenderResult` as the first argument).
+
+        The `Display` implementation for `RenderResult` is now: `write!(f, "{}", render_result_to_string(self).trim())` — this trims leading and trailing whitespace from the rendered output, making formatting more predictable and avoiding stray newlines or spaces in display contexts.
+
+    **Migration guide:**
+
+    Code that relied on `Deref<Target = str>` (e.g., `&*result`, `result.as_ref()`, or passing `&RenderResult` where `&str` was expected) must be updated to use one of the following:
+
+    ```rust
+    // Before — relied on Deref
+    fn takes_str(s: &str) { /* ... */ }
+    takes_str(&result);
+
+    // After — convert explicitly
+    let result_string: String = result.to_string();
+    takes_str(&result_string);
+
+    // Or use the Display impl directly
+    println!("{}", result);
+    ```
+
+    The `is_empty()` method now checks the buffer length (in characters) rather than checking `render_text.is_empty()`. The `Display` implementation no longer adds a trailing newline (previously `writeln!` was used; now `write!` is used) — existing code that relied on the trailing newline in `Display` may need adjustment. Additionally, the `to_string()` call on `RenderResult` now trims leading and trailing whitespace from the rendered text via the `Display` implementation, whereas previously the raw content was preserved without trimming.
+
+    All examples and internal usages have been updated across the codebase to reflect these changes (e.g., `repl_basic_setup` now calls `println!("{}", r.result)` instead of `println!("{}", r.result.trim())`, since `Display` no longer adds a trailing newline).
+
 ---
 
 ## Release 0.2.2 (2026-07-10)

@@ -1412,6 +1412,72 @@ pub fn r_print(input: TokenStream) -> TokenStream {
     func::r_print::r_print(input)
 }
 
+/// Prints text to a `RenderResult` buffer (standard error style), with a trailing newline.
+///
+/// This macro works identically to `r_println!` but conceptually targets
+/// "error output" — it writes into a `RenderResult` buffer with a trailing newline.
+///
+/// # Implicit buffer (inside `#[buffer]` functions)
+///
+/// ```rust,ignore
+/// use mingling::macros::{buffer, r_eprintln};
+///
+/// #[buffer]
+/// fn render() {
+///     r_eprintln!("Error: {}", err_msg);
+/// }
+/// ```
+///
+/// # Explicit buffer
+///
+/// Pass a `RenderResult` variable as the first argument:
+///
+/// ```rust,ignore
+/// use mingling::macros::r_eprintln;
+/// use mingling::RenderResult;
+///
+/// let mut r = RenderResult::new();
+/// r_eprintln!(r, "error: {}", 42);
+/// assert_eq!(&*r, "error: 42\n");
+/// ```
+#[proc_macro]
+pub fn r_eprintln(input: TokenStream) -> TokenStream {
+    func::r_print::r_eprintln(input)
+}
+
+/// Prints text to a `RenderResult` buffer (standard error style), without a trailing newline.
+///
+/// This macro works identically to `r_print!` but conceptually targets
+/// "error output" — it writes into a `RenderResult` buffer without a trailing newline.
+///
+/// # Implicit buffer (inside `#[buffer]` functions)
+///
+/// ```rust,ignore
+/// use mingling::macros::{buffer, r_eprint};
+///
+/// #[buffer]
+/// fn render() {
+///     r_eprint!("Error: ");
+///     r_eprintln!("something went wrong");
+/// }
+/// ```
+///
+/// # Explicit buffer
+///
+/// ```rust,ignore
+/// use mingling::macros::r_eprint;
+/// use mingling::RenderResult;
+///
+/// let mut r = RenderResult::new();
+/// r_eprint!(r, "error: ");
+/// r_eprintln!(r, "42");
+/// assert_eq!(&*r, "error: 42\n");
+/// ```
+#[proc_macro]
+pub fn r_eprint(input: TokenStream) -> TokenStream {
+    func::r_print::r_eprint(input)
+}
+
 /// Derive macro for automatically implementing the `Grouped` trait on a struct.
 ///
 /// The `#[derive(Grouped)]` macro:

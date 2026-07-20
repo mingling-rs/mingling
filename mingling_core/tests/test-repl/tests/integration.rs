@@ -59,5 +59,5 @@ fn test_render_result_default() {
 fn test_render_result_print() {
     let mut r = RenderResult::default();
     r.print("hello");
-    assert_eq!(&*r, "hello");
+    assert_eq!(r.to_string().as_str(), "hello");
 }

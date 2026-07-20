@@ -98,6 +98,12 @@ pub mod macros {
     /// `#[program_setup]` - Used to generate program setup
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::program_setup;
+    /// `r_eprint!` - Prints text to a `RenderResult` error buffer (without newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_eprint;
+    /// `r_eprintln!` - Prints text to a `RenderResult` error buffer (with newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_eprintln;
     /// `r_print!` - Prints text to a `RenderResult` buffer (without newline).
     /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_print;
@@ -229,6 +235,12 @@ pub mod prelude {
     /// Like `pack!` but also marks the type for structured output
     #[cfg(all(feature = "macros", feature = "structural_renderer"))]
     pub use mingling_macros::pack_structural;
+    /// `r_eprint!` - Prints text to a `RenderResult` error buffer (without newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_eprint;
+    /// `r_eprintln!` - Prints text to a `RenderResult` error buffer (with newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_eprintln;
     /// `r_print!` - Prints text to a `RenderResult` buffer (without newline).
     /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_print;

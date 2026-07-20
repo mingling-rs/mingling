@@ -75,7 +75,7 @@ where
     fn setup(self, program: &mut Program<C>) {
         program.with_hook(ProgramHook::empty().on_repl_receive_result(|r| {
             if !r.result.is_empty() {
-                println!("{}", r.result.trim())
+                println!("{}", r.result)
             }
         }));
     }

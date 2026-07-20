@@ -1,13 +1,13 @@
 use mingling::Flag;
-use mingling::StructuralRenderer;
-use mingling::StructuralRendererSetting;
 use mingling::MockProgramCollect;
 use mingling::NextProcess;
-use mingling::StructuralData;
 use mingling::Node;
 use mingling::Program;
 use mingling::RenderResult;
 use mingling::StringVec;
+use mingling::StructuralData;
+use mingling::StructuralRenderer;
+use mingling::StructuralRendererSetting;
 use mingling::comp::{ShellContext, ShellFlag, Suggest};
 use mingling::core_res::ResREPL;
 use mingling::hook::ProgramHook;
@@ -86,7 +86,7 @@ fn test_render_result_default() {
 fn test_render_result_print() {
     let mut r = RenderResult::default();
     r.print("hello");
-    assert_eq!(&*r, "hello");
+    assert_eq!(r.to_string().as_str(), "hello");
 }
 
 // StructuralRenderer

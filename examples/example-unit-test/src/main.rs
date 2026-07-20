@@ -42,25 +42,25 @@ mod tests {
     #[test]
     fn test_render_result_name() {
         let r = render_result_name(ResultName::new("Peter".into()));
-        assert_eq!(r.to_string().as_str(), "Hello, Peter!\n")
+        assert_eq!(r.to_string().as_str(), "Hello, Peter!")
     }
 
     #[test]
     fn test_render_error_no_name_provided() {
         let r = render_error_no_name_provided(ErrorNoNameProvided::default());
-        assert_eq!(r.to_string().as_str(), "No name provided\n")
+        assert_eq!(r.to_string().as_str(), "No name provided")
     }
 
     #[test]
     fn test_render_error_name_not_available() {
         let r = render_error_name_not_available(ErrorNameNotAvailable::default());
-        assert_eq!(r.to_string().as_str(), "Name not available\n")
+        assert_eq!(r.to_string().as_str(), "Name not available")
     }
 
     #[test]
     fn test_render_error_name_too_long() {
         let r = render_error_name_too_long(ErrorNameTooLong::new(17));
-        assert_eq!(r.to_string().as_str(), "Name too long: 17 > 10\n")
+        assert_eq!(r.to_string().as_str(), "Name too long: 17 > 10")
     }
     // --------- IMPORTANT ---------
 }
