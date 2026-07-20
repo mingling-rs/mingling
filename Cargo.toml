@@ -14,7 +14,7 @@ members = [
     "arg_picker_macros",
 
     # Scaffolding tool
-    "mling"
+    # "mling" (deprecated)
 ]
 
 exclude = [
