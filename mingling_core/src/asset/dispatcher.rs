@@ -32,22 +32,46 @@ where
     C: ProgramCollect<Enum = C>,
 {
     /// Adds a dispatcher to the program.
-    #[cfg(not(feature = "dispatch_tree"))]
+    #[cfg_attr(
+        feature = "dispatch_tree",
+        deprecated(
+            note = "When the `dispatch_tree` feature is enabled, the `dispatcher` field no longer exists inside Program. All types are collected at compile time by the `gen_program!()` macro, so the `with_dispatcher` function is no longer needed"
+        )
+    )]
     pub fn with_dispatcher<Disp>(&mut self, dispatcher: Disp)
     where
         Disp: Dispatcher<C> + Send + Sync + 'static,
     {
-        self.dispatcher.push(Box::new(dispatcher));
+        #[cfg(not(feature = "dispatch_tree"))]
+        {
+            self.dispatcher.push(Box::new(dispatcher));
+        }
+        #[cfg(feature = "dispatch_tree")]
+        {
+            let _ = dispatcher;
+        }
     }
 
     /// Add some dispatchers to the program.
-    #[cfg(not(feature = "dispatch_tree"))]
+    #[cfg_attr(
+        feature = "dispatch_tree",
+        deprecated(
+            note = "When the `dispatch_tree` feature is enabled, the `dispatcher` field no longer exists inside Program. All types are collected at compile time by the `gen_program!()` macro, so the `with_dispatcher` function is no longer needed"
+        )
+    )]
     pub fn with_dispatchers<D>(&mut self, dispatchers: D)
     where
         D: Into<Dispatchers<C>>,
     {
-        let dispatchers = dispatchers.into();
-        self.dispatcher.extend(dispatchers.dispatcher);
+        #[cfg(not(feature = "dispatch_tree"))]
+        {
+            let dispatchers = dispatchers.into();
+            self.dispatcher.extend(dispatchers.dispatcher);
+        }
+        #[cfg(feature = "dispatch_tree")]
+        {
+            let _ = dispatchers;
+        }
     }
 }
 
