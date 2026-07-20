@@ -44,7 +44,6 @@ fn generate_proc_fn(
     previous_type: &TypePath,
     is_async_fn: bool,
     is_unit_return: bool,
-    origin_return_type: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), program_type);
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
@@ -82,8 +81,14 @@ fn generate_proc_fn(
         }
     };
 
-    // Convert the function call to a syn::Stmt so existing wrapping functions can use it
-    let fn_call_expr: syn::Expr = syn::parse_quote! { #fn_call };
+    // Convert the function call to a syn::Stmt so existing wrapping functions can use it.
+    // For non-unit returns, wrap in `to_chain()` so mutable-resource closures
+    // return `ChainProcess<C>` (as required by `__modify_res_and_return_route`).
+    let fn_call_expr: syn::Expr = if is_unit_return {
+        syn::parse_quote! { #fn_call }
+    } else {
+        syn::parse_quote! { ::mingling::Routable::<#program_type>::to_chain(#fn_call) }
+    };
     let fn_call_stmt = syn::Stmt::Expr(fn_call_expr, None);
 
     let wrapped_body = if is_async_fn && !mut_resources.is_empty() {
@@ -124,9 +129,7 @@ fn generate_proc_fn(
         };
         quote! {
             let __chain_result = { #body };
-            <#origin_return_type as ::std::convert::Into<
-                ::mingling::ChainProcess<#program_type>
-            >>::into(__chain_result)
+            ::mingling::Routable::<#program_type>::to_chain(__chain_result)
         }
     };
 
@@ -249,12 +252,6 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     // Always use the default crate-defined program path
     let program_type = crate::default_program_path();
 
-    // Extract the user's return type for the explicit Into turbofish
-    let origin_return_type = match &input_fn.sig.output {
-        ReturnType::Type(_, ty) => quote! { #ty },
-        ReturnType::Default => quote! { () },
-    };
-
     // Generate the `proc` function for the Chain impl
     let proc_fn = generate_proc_fn(
         fn_name,
@@ -267,7 +264,6 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         #[cfg(not(feature = "async"))]
         false,
         is_unit_return,
-        &origin_return_type,
     );
 
     // Preserve the original function untouched
