@@ -63,6 +63,14 @@ None
 
 2. **[`pathf:patterns`]** Updated `PackPattern` detection to recognize `pack_structural!` and `pack_err_structural!` macros, which were previously missed by the pattern matcher. The `contains` method now checks for these additional macro names alongside the existing `pack!` and `pack_err!` checks.
 
+3. **[`pathf:patterns`]** Added `is_foreign` field to `AnalyzeItem` struct in `mingling_pathf`, along with constructor helpers `AnalyzeItem::local()` and `AnalyzeItem::foreign()`. The `foreign()` constructor marks items resolved via `use` imports, so their `module` path is used as-is (rather than being prefixed with the file's module path) in `type_mapping_builder.rs`.
+
+    - **`GroupPattern`** updated to collect `use` imports at the file and inline-module level via `collect_use_imports()` and `collect_from_use_tree()`, and to resolve `group!(TypeName)` invocations against those imports: if a name matches an imported type, it is emitted as `AnalyzeItem::foreign()` with the full import path; if the `Alias = path::Type` form is used, it is emitted as `AnalyzeItem::local()` (the alias lives in-crate); otherwise it is `local()`.
+
+    - All other patterns (`BasicStructPattern`, `ChainPattern`, `CompletionPattern`, `DispatcherPattern`, `DispatcherClapPattern`, `GroupedDerivePattern`, `HelpPattern`, `PackPattern`, `RendererPattern`) updated to use `AnalyzeItem::local()` constructors, preserving existing behavior (all items are treated as local/in-crate).
+
+    - **`type_mapping_builder.rs`** updated to check `ai.is_foreign`: when true, the full path is built as `{module}::{item_name}` (no prefix from the file's own module path); when false, the existing logic applies (`{file_module_path}::{module}::{item_name}` or `{file_module_path}::{item_name}`).
+
 #### Optimizations:
 
 1. **[`macros`]** Updated `route!` macro to use `Routable` trait instead of `Grouped` trait for error conversion, making the semantics clearer. The `route!` macro now calls `::mingling::Routable::to_chain(e)` on the error branch instead of `::mingling::Grouped::to_chain(e)`.

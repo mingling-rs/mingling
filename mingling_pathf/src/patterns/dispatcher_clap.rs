@@ -61,10 +61,7 @@ impl AnalyzePattern for DispatcherClapPattern {
                 Item::Struct(s) if has_attr(&s.attrs, "dispatcher_clap") => {
                     // Entry type (struct name) — always
                     let entry_name = s.ident.to_string();
-                    items.push(AnalyzeItem {
-                        module: String::new(),
-                        item_name: entry_name.clone(),
-                    });
+                    items.push(AnalyzeItem::local(String::new(), entry_name.clone()));
 
                     // Parse the attribute to extract CMD, error, and help info
                     if let Some(attr) = s.attrs.iter().find(|a| {
@@ -79,18 +76,12 @@ impl AnalyzePattern for DispatcherClapPattern {
 
                         // CMD type — always
                         if let Some(ref cmd) = parsed.cmd_type {
-                            items.push(AnalyzeItem {
-                                module: String::new(),
-                                item_name: cmd.clone(),
-                            });
+                            items.push(AnalyzeItem::local(String::new(), cmd.clone()));
                         }
 
                         // Error type — if error = TypeName
                         if let Some(ref err) = parsed.error_type {
-                            items.push(AnalyzeItem {
-                                module: String::new(),
-                                item_name: err.clone(),
-                            });
+                            items.push(AnalyzeItem::local(String::new(), err.clone()));
                         }
 
                         // Help internal struct — if help = true
@@ -100,10 +91,7 @@ impl AnalyzePattern for DispatcherClapPattern {
                             let help_fn = format!("__{}_help", just_fmt::snake_case!(cmd));
                             let help_struct =
                                 format!("__internal_help_{}", just_fmt::snake_case!(&help_fn));
-                            items.push(AnalyzeItem {
-                                module: String::new(),
-                                item_name: help_struct,
-                            });
+                            items.push(AnalyzeItem::local(String::new(), help_struct));
                         }
 
                         // __internal_dispatcher_* — when configured
@@ -114,10 +102,7 @@ impl AnalyzePattern for DispatcherClapPattern {
                                 "__internal_dispatcher_{}",
                                 just_fmt::snake_case!(cmd_name)
                             );
-                            items.push(AnalyzeItem {
-                                module: String::new(),
-                                item_name: internal_name,
-                            });
+                            items.push(AnalyzeItem::local(String::new(), internal_name));
                         }
                     }
                 }
@@ -128,10 +113,10 @@ impl AnalyzePattern for DispatcherClapPattern {
                                 && has_attr(&s.attrs, "dispatcher_clap")
                             {
                                 let entry_name = s.ident.to_string();
-                                items.push(AnalyzeItem {
-                                    module: item_mod.ident.to_string(),
-                                    item_name: entry_name.clone(),
-                                });
+                                items.push(AnalyzeItem::local(
+                                    item_mod.ident.to_string(),
+                                    entry_name.clone(),
+                                ));
 
                                 if let Some(attr) = s.attrs.iter().find(|a| {
                                     a.path()
@@ -145,17 +130,17 @@ impl AnalyzePattern for DispatcherClapPattern {
                                     let parsed = parse_dispatcher_clap_args(&args_str);
 
                                     if let Some(ref cmd) = parsed.cmd_type {
-                                        items.push(AnalyzeItem {
-                                            module: item_mod.ident.to_string(),
-                                            item_name: cmd.clone(),
-                                        });
+                                        items.push(AnalyzeItem::local(
+                                            item_mod.ident.to_string(),
+                                            cmd.clone(),
+                                        ));
                                     }
 
                                     if let Some(ref err) = parsed.error_type {
-                                        items.push(AnalyzeItem {
-                                            module: item_mod.ident.to_string(),
-                                            item_name: err.clone(),
-                                        });
+                                        items.push(AnalyzeItem::local(
+                                            item_mod.ident.to_string(),
+                                            err.clone(),
+                                        ));
                                     }
 
                                     // Help internal struct — same naming rule as root level
@@ -168,10 +153,10 @@ impl AnalyzePattern for DispatcherClapPattern {
                                             "__internal_help_{}",
                                             just_fmt::snake_case!(&help_fn)
                                         );
-                                        items.push(AnalyzeItem {
-                                            module: item_mod.ident.to_string(),
-                                            item_name: help_struct,
-                                        });
+                                        items.push(AnalyzeItem::local(
+                                            item_mod.ident.to_string(),
+                                            help_struct,
+                                        ));
                                     }
 
                                     // __internal_dispatcher_* — when configured
@@ -182,10 +167,10 @@ impl AnalyzePattern for DispatcherClapPattern {
                                             "__internal_dispatcher_{}",
                                             just_fmt::snake_case!(cmd_name)
                                         );
-                                        items.push(AnalyzeItem {
-                                            module: item_mod.ident.to_string(),
-                                            item_name: internal_name,
-                                        });
+                                        items.push(AnalyzeItem::local(
+                                            item_mod.ident.to_string(),
+                                            internal_name,
+                                        ));
                                     }
                                 }
                             }

@@ -28,20 +28,17 @@ impl AnalyzePattern for BasicStructPattern {
             match item {
                 // Root-level struct
                 Item::Struct(s) => {
-                    items.push(AnalyzeItem {
-                        module: String::new(),
-                        item_name: s.ident.to_string(),
-                    });
+                    items.push(AnalyzeItem::local(String::new(), s.ident.to_string()));
                 }
                 // Struct within inline modules
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
                             if let syn::Item::Struct(s) = n {
-                                items.push(AnalyzeItem {
-                                    module: item_mod.ident.to_string(),
-                                    item_name: s.ident.to_string(),
-                                });
+                                items.push(AnalyzeItem::local(
+                                    item_mod.ident.to_string(),
+                                    s.ident.to_string(),
+                                ));
                             }
                         }
                     }

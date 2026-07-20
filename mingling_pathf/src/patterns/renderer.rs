@@ -37,10 +37,10 @@ fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem
     match item {
         Item::Fn(f) if has_attr(&f.attrs, "renderer") => {
             let fn_name = f.sig.ident.to_string();
-            items.push(AnalyzeItem {
-                module: current_mod.to_string(),
-                item_name: internal_name(&fn_name),
-            });
+            items.push(AnalyzeItem::local(
+                current_mod.to_string(),
+                internal_name(&fn_name),
+            ));
         }
         Item::Mod(item_mod) => {
             if let Some((_, nested)) = &item_mod.content {

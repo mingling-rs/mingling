@@ -111,27 +111,18 @@ fn extract_all_types(
 
     // Entry type — always
     if let Some(ref entry) = entry_struct {
-        items.push(AnalyzeItem {
-            module: module.to_string(),
-            item_name: entry.clone(),
-        });
+        items.push(AnalyzeItem::local(module.to_string(), entry.clone()));
     }
 
     // CMD type — always
     if let Some(ref cmd) = cmd_struct {
-        items.push(AnalyzeItem {
-            module: module.to_string(),
-            item_name: cmd.clone(),
-        });
+        items.push(AnalyzeItem::local(module.to_string(), cmd.clone()));
     }
 
     // __internal_dispatcher_* — when configured
     if use_dispatch_tree {
         let internal_name = format!("__internal_dispatcher_{}", snake_case(&cmd_name));
-        items.push(AnalyzeItem {
-            module: module.to_string(),
-            item_name: internal_name,
-        });
+        items.push(AnalyzeItem::local(module.to_string(), internal_name));
     }
 
     items

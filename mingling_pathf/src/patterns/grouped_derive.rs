@@ -30,38 +30,29 @@ impl AnalyzePattern for GroupedDerivePattern {
         for item in &syntax.items {
             match item {
                 Item::Struct(s) if has_grouped_derive(&s.attrs) => {
-                    items.push(AnalyzeItem {
-                        module: String::new(),
-                        item_name: s.ident.to_string(),
-                    });
+                    items.push(AnalyzeItem::local(String::new(), s.ident.to_string()));
                 }
                 Item::Enum(e) if has_grouped_derive(&e.attrs) => {
-                    items.push(AnalyzeItem {
-                        module: String::new(),
-                        item_name: e.ident.to_string(),
-                    });
+                    items.push(AnalyzeItem::local(String::new(), e.ident.to_string()));
                 }
                 Item::Union(u) if has_grouped_derive(&u.attrs) => {
-                    items.push(AnalyzeItem {
-                        module: String::new(),
-                        item_name: u.ident.to_string(),
-                    });
+                    items.push(AnalyzeItem::local(String::new(), u.ident.to_string()));
                 }
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
                             match n {
                                 Item::Struct(s) if has_grouped_derive(&s.attrs) => {
-                                    items.push(AnalyzeItem {
-                                        module: item_mod.ident.to_string(),
-                                        item_name: s.ident.to_string(),
-                                    });
+                                    items.push(AnalyzeItem::local(
+                                        item_mod.ident.to_string(),
+                                        s.ident.to_string(),
+                                    ));
                                 }
                                 Item::Enum(e) if has_grouped_derive(&e.attrs) => {
-                                    items.push(AnalyzeItem {
-                                        module: item_mod.ident.to_string(),
-                                        item_name: e.ident.to_string(),
-                                    });
+                                    items.push(AnalyzeItem::local(
+                                        item_mod.ident.to_string(),
+                                        e.ident.to_string(),
+                                    ));
                                 }
                                 _ => {}
                             }

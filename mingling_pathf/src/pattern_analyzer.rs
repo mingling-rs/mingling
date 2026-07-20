@@ -48,6 +48,28 @@ pub struct AnalyzeItem {
     pub module: String,
     /// The name of the item itself, e.g. `"HashMap"`, `"AnalyzeResult"`, etc.
     pub item_name: String,
+    /// Whether the item is from an external crate (resolved via `use`), bypassing the file's own module path.
+    pub is_foreign: bool,
+}
+
+impl AnalyzeItem {
+    /// Creates a local `AnalyzeItem` (not foreign, will be prefixed with the file's module path).
+    pub fn local(module: String, item_name: String) -> Self {
+        Self {
+            module,
+            item_name,
+            is_foreign: false,
+        }
+    }
+
+    /// Creates a foreign `AnalyzeItem` (resolved via `use`, the `module` field is the full import path).
+    pub fn foreign(module: String, item_name: String) -> Self {
+        Self {
+            module,
+            item_name,
+            is_foreign: true,
+        }
+    }
 }
 
 /// Collection of analysis results

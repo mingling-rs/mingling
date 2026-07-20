@@ -39,7 +39,10 @@ pub fn analyze_and_build_type_mapping_for(
         };
 
         for ai in analyze_items {
-            let full_path = if ai.module.is_empty() {
+            let full_path = if ai.is_foreign {
+                // Foreign item — use its own module path as-is
+                format!("{}::{}", ai.module, ai.item_name)
+            } else if ai.module.is_empty() {
                 format!("{}::{}", module_path, ai.item_name)
             } else {
                 format!("{}::{}::{}", module_path, ai.module, ai.item_name)

@@ -36,10 +36,7 @@ impl AnalyzePattern for PackPattern {
                 // Top-level macro calls
                 Item::Macro(m) => {
                     if let Some(name) = try_extract_pack_name(m) {
-                        items.push(AnalyzeItem {
-                            module: String::new(),
-                            item_name: name,
-                        });
+                        items.push(AnalyzeItem::local(String::new(), name));
                     }
                 }
                 // Macro calls inside inline modules
@@ -49,10 +46,7 @@ impl AnalyzePattern for PackPattern {
                             if let Item::Macro(m) = n
                                 && let Some(name) = try_extract_pack_name(m)
                             {
-                                items.push(AnalyzeItem {
-                                    module: item_mod.ident.to_string(),
-                                    item_name: name,
-                                });
+                                items.push(AnalyzeItem::local(item_mod.ident.to_string(), name));
                             }
                         }
                     }
