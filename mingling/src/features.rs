@@ -97,6 +97,17 @@ pub const MINGLING_DISPATCH_TREE: bool = false;
 #[cfg(feature = "dispatch_tree")]
 #[allow(unused)]
 pub const MINGLING_DISPATCH_TREE: bool = true;
+/// Whether the `docs_rs` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "docs_rs"))]
+#[allow(unused)]
+pub const MINGLING_DOCS_RS: bool = false;
+
+/// Whether the `docs_rs` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "docs_rs")]
+#[allow(unused)]
+pub const MINGLING_DOCS_RS: bool = true;
 /// Whether the `extra_macros` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "extra_macros"))]

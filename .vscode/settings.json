@@ -11,6 +11,7 @@
     "structural_renderer",
     "mingling_support",
     "all_serde_fmt",
+    "docs_rs",
     "picker",
     "parser",
     "comp",

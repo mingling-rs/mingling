@@ -21,7 +21,9 @@ mingling = { path = ".", features = [
 ] }
 
 [package.metadata.docs.rs]
+rustdoc-args = ["--generate-link-to-definition"]
 features = [
+    "docs_rs",
     "core",
     "macros",
     "builds",
@@ -86,6 +88,9 @@ toml_serde_fmt = ["mingling_core/toml_serde_fmt"]
 ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 
 extra_macros = ["mingling_macros/extra_macros"]
+
+# Section only shown in docs.rs
+docs_rs = []
 
 [dependencies]
 mingling_core = { workspace = true, optional = true }

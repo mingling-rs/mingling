@@ -1,3 +1,4 @@
+#![doc(html_logo_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/icon3.png")]
 #![doc = include_str!("lib.md")]
 
 #[cfg(feature = "core")]
@@ -139,8 +140,9 @@ pub use mingling_macros::Grouped;
 pub use mingling_macros::StructuralData;
 
 /// Example projects for `Mingling`, for learning how to use `Mingling`
-#[cfg(feature = "core")]
-pub mod _mingling_examples {
+#[cfg(all(feature = "core", feature = "docs_rs"))]
+#[allow(nonstandard_style)]
+pub mod EXAMPLES {
     pub use crate::example_docs::*;
 }
 

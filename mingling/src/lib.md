@@ -76,7 +76,7 @@ Command not found: [great]
 ## Examples
 
 `Mingling` provides detailed usage examples for your reference.
-See [Examples](_mingling_examples/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/examples.html)
+See [Examples](EXAMPLES/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/examples.html)
 
 ## About Features
 
