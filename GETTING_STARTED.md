@@ -577,6 +577,7 @@ With the `structural_renderer` feature, users can add `--json` or `--yaml` flags
 // serde = "1"
 
 use mingling::prelude::*;
+use mingling::macros::buffer;
 use mingling::setup::picker::StructuralRendererSetup;
 use mingling::Grouped;
 use mingling::StructuralData;
@@ -600,11 +601,9 @@ fn render_info(args: EntryRender) -> Next {
     ResultInfo { name, age }.to_chain()
 }
 
-#[renderer]
-fn render_info_result(info: ResultInfo) -> RenderResult {
-    let mut result = RenderResult::new();
-    writeln!(result, "{} is {} years old", info.name, info.age).ok();
-    result
+#[renderer(buffer)]
+fn render_info_result(info: ResultInfo) {
+    r_println!("{} is {} years old", info.name, info.age);
 }
 
 fn main() {

@@ -7,21 +7,34 @@ Now we've created a Dispatcher and a Chain, and produced a Result type via `pack
 
 ## The `#[renderer]` Macro
 
-Similar to `#[chain]`, `#[renderer]` marks an output function:
+Similar to `#[chain]`, `#[renderer]` marks a function that produces output:
 
 ```rust
-use std::io::Write;
- 
-pack!(ResultName = String);
-#[renderer]
-fn render_name(name: ResultName) -> RenderResult {
-    let mut result = RenderResult::new();
-    writeln!(result, "Hello, {}!", *name).ok();
-    result
+@@@use mingling::macros::buffer;
+@@@pack!(ResultName = String);
+#[renderer(buffer)]
+fn render_name(name: ResultName) {
+    r_println!("Hello, {}!", *name);
 }
 ```
  
-A Renderer takes the result produced by a Chain and returns a `RenderResult`. Inside the function, create a `RenderResult`, write content using `write!` / `writeln!` (from [`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html)), and return it.
+A Renderer receives the result produced by a Chain and returns a `RenderResult`. Inside the function, you create a `RenderResult`, write content with `r_print!` / `r_println!`, and finally return it.
+
+## The `buffer` Extension
+
+If you find explicitly creating and returning a `RenderResult` too verbose, you can use `#[renderer(buffer)]` to inject a buffer directly into your function.
+
+```rust
+use mingling::macros::buffer;
+ 
+@@@pack!(ResultName = String);
+#[renderer(buffer)]
+fn render_name(name: ResultName) {
+    r_println!("Hello, {}!", *name);
+}
+```
+ 
+This gives your renderer function a more concise syntax, but also introduces an implicit mechanism: it injects a mutable `RenderResult` variable named `__render_result_buffer` into the function. When the `r_print!` macro is used without an explicit `RenderResult`, it will append output to that buffer by convention.
 
 ## The `RenderResult` Type
 
@@ -36,7 +49,7 @@ A Renderer takes the result produced by a Chain and returns a `RenderResult`. In
 Putting all three tutorials together, here's your first complete Mingling program:
 
 ```rust
-use std::io::Write;
+use mingling::macros::buffer;
  
 // 1. Declare commands with a Dispatcher
 dispatcher!("greet", CMDGreet => EntryGreet);
@@ -55,11 +68,9 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
  
 // 4. Output results with a Renderer
-#[renderer]
-fn render_name(name: ResultName) -> RenderResult {
-    let mut result = RenderResult::new();
-    writeln!(result, "Hello, {}!", *name).ok();
-    result
+#[renderer(buffer)]
+fn render_name(name: ResultName) {
+    r_println!("Hello, {}!", *name);
 }
  
 // 5. Assemble and run the program in main
@@ -108,17 +119,15 @@ cargo run -- great
 `gen_program!()` auto-generates an `ErrorDispatcherNotFound` type wrapping `Vec<String>`—it holds the user input that didn't match any command. You just need to write a Renderer for it:
 
 ```rust
-use std::io::Write;
+use mingling::macros::buffer;
  
-#[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
-    let mut result = RenderResult::new();
+#[renderer(buffer)]
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
     if err.inner.is_empty() {
-        writeln!(result, "Unknown command").ok();
+        r_println!("Unknown command");
     } else {
-        writeln!(result, "Command not found: \"{}\"", err.inner.join(" ")).ok();
+        r_println!("Command not found: \"{}\"", err.inner.join(" "));
     }
-    result
 }
 ```
  

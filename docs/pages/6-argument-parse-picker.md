@@ -3,7 +3,7 @@
     Use Picker to perform basic argument parsing
 </p>
 
-In previous tutorials, we extracted args manually from `EntryGreet.inner` (`Vec<String>`).
+In previous tutorials, we manually extracted parameters from `EntryGreet.inner` (`Vec<String>`).
 
 ```rust
 @@@ fn main() {
@@ -12,7 +12,7 @@ let name = args.first().cloned().unwrap_or_else(|| "World".to_string());
 @@@ }
 ```
  
-But this approach doesn't scale well for many params. Mingling provides `Picker` — a chaining API to extract and convert args.
+But this approach doesn't scale well when there are many params. Mingling provides `Picker` — a chained API for extracting and transforming params.
 
 To enable `Picker`, update your `Cargo.toml`:
 
@@ -22,7 +22,7 @@ To enable `Picker`, update your `Cargo.toml`:
 features = ["parser"]
 ```
  
-Now let's look at `Picker` in action:
+Now let's see how `Picker` is written:
 
 ```rust
 // Features: ["parser"]
@@ -36,9 +36,9 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 }
 ```
  
-`AsPicker` implements `pick`, `pick_or`, and `pick_or_route` for any type that can convert to `Vec<String>`: they semantically **pick** args from a string list and convert them to structured data.
+`AsPicker` implements `pick`, `pick_or`, and `pick_or_route` for all types convertible to `Vec<String>`. These functions semantically **pick** params from the string list and convert them into structured data.
 
-Breaking down the example above:
+For the code above:
 
 ```rust
 // Features: ["parser"]
@@ -62,17 +62,17 @@ Its semantics are:
 @@@let name: String =
    prev.pick_or((), "World").unpack();
 // ~~~~ ~~~~~~~ ~~  ~~~~~~~  ~~~~~~~~
-// |    |       |   |        |_ unpack to String
+// |    |       |   |        |_ unpack as String
 // |    |       |   |__________ default value "World"
 // |    |       |______________ pick the first positional arg (no flag)
 // |    |______________________ pick or use default
-// |___________________________ from previous input
+// |___________________________ from the previous input
 @@@}
 ```
  
-## Parsing Flag Args
+## Parsing Flag Arguments
 
-If your program needs to parse flag args (e.g., `greet --name Alice`), do this:
+If your program needs to parse flag arguments (e.g. `greet --name Alice`), do this:
 
 ```rust
 // Features: ["parser"]
@@ -97,19 +97,19 @@ Its semantics:
 @@@let name: String =
    prev.pick_or(["--name", "-n"], "World").unpack();
 // ~~~~ ~~~~~~~ ~~~~~~~~~~~~~~~~  ~~~~~~~  ~~~~~~~~
-// |    |       |                 |        |_ unpack to String
+// |    |       |                 |        |_ unpack as String
 // |    |       |                 |__________ default value "World"
-// |    |       |____________________________ pick arg after "--name" or "-n"
+// |    |       |____________________________ pick the value after "--name" or "-n"
 // |    |____________________________________ pick or use default
-// |_________________________________________ from previous input
+// |_________________________________________ from the previous input
 @@@}
 ```
  
 ## About `.unpack()`
 
-You may have noticed that `Picker` calls `.unpack()` at the end of parsing. It converts the accumulated parse results into structured info.
+You may have noticed that `Picker` calls `.unpack()` at the end of parsing. It converts the collected results into structured info.
 
-For a single pick, `.unpack()` returns a single value; for multiple picks, it returns a tuple:
+For a single pick, `.unpack()` returns the value directly; for multiple picks, it returns a tuple:
 
 ```rust
 // Features: ["parser"]
@@ -129,16 +129,17 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 ```
  
 > [!IMPORTANT]
-> `Picker` is very sensitive to parse order, esp. for positional args (they're parsed sequentially). If you need to parse positional args, make sure all **flag args** have been picked and consumed first.
+> `Picker` is sensitive to parse order, especially for positional args — it parses sequentially. If you need to parse positional args, make sure all **flag arguments** are picked and consumed first.
 
 ## Handling Edge Cases with `pick_or_route`
 
-As the old saying goes: "Never trust your users." To handle missing required args, type mismatches, etc., `pick_or_route` routes the execution chain to a dedicated error-handling type.
+As the saying goes: "never trust your users." To handle missing required params, type mismatches, etc., `pick_or_route` routes the chain to a dedicated error handler.
 
-A simple example:
+Here's a simple example:
 
 ```rust
 // Features: ["parser", "extra_macros"]
+@@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 @@@pack!(ResultName = String);
@@ -150,29 +151,20 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
         .pick_or_route(["--name", "-n"], ErrorNoName::default())
         .unpack();
  
-    // Use route! macro to unpack pick_result
+    // Use route! macro to expand pick_result
     let name = route!(pick_result);
     ResultName::new(name).into()
 }
  
-#[renderer]
-fn render_no_name(_prev: ErrorNoName) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Error: No name provided.").ok();
-    r
-}
- 
-#[renderer]
-fn render_name(prev: ResultName) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *prev).ok();
-    r
+#[renderer(buffer)]
+fn render_greet(result: ResultName) {
+    r_println!("Hello, {}!", *result);
 }
 ```
  
-With `pick_or_route`, the code gets a bit more complex: `.unpack()` no longer returns the value directly, but `Result<Value, Route>`.
+With `pick_or_route`, the code becomes more involved: `.unpack()` no longer returns the value directly, but `Result<Value, Route>`.
 
-However, Mingling's `extra_macros` feature provides the `route!` macro to simplify unwrapping — it just omits some boilerplate:
+However, **Mingling**'s `extra_macros` feature provides the `route!` macro for simplified expansion. It's not complex — it just reduces boilerplate:
 
 ```rust
 // Features: ["parser", "extra_macros"]
@@ -204,7 +196,7 @@ let name = match pick_result {
  
 ## Post-processing Extracted Values
 
-After picking user input, you can use `after` to process the value immediately:
+After picking user input with `pick`, you can use `after` to process it immediately:
 
 ```rust
 // Features: ["parser"]
@@ -215,7 +207,7 @@ After picking user input, you can use `after` to process the value immediately:
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
         .pick_or(["--name", "-n"], "World")
-        // Format immediately after extracting --name
+        // Format immediately after picking --name
         .after(|name: String| {
             name.replace(['-', '_', '.'], " ")
                 .to_lowercase()
@@ -228,10 +220,11 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 }
 ```
  
-Similarly, use `after_or_route` to handle format errors in input args:
+Similarly, you can use `after_or_route` to handle input format errors:
 
 ```rust
 // Features: ["parser", "extra_macros"]
+@@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 @@@pack!(ResultName = String);
@@ -254,35 +247,31 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
     ResultName::new(name).into()
 }
  
-#[renderer]
-fn render_name_too_long(prev: ErrorNameTooLong) -> RenderResult {
-    let mut r = RenderResult::new();
+#[renderer(buffer)]
+fn render_name_too_long(prev: ErrorNameTooLong) {
     let len = *prev;
-    writeln!(r, "Error: name too long (length: {} > 32)", len).ok();
-    r
+    r_println!("Error: name too long (length: {} > 32)", len);
 }
  
-#[renderer]
-fn render_name(prev: ResultName) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *prev).ok();
-    r
+#[renderer(buffer)]
+fn render_name(prev: ResultName) {
+    r_println!("Hello, {}!", *prev);
 }
 ```
  
 ## Boolean Parsing
 
-`Picker` can parse bools too, with two modes: implicit and explicit.
+`Picker` can also parse booleans, in two modes:
 
 | Mode     | Format                              |
 | -------- | ----------------------------------- |
 | Implicit | `--confirmed`                       |
 | Explicit | `--confirm true` or `--confirm yes` |
 
-- Using `.pick::<bool>(flag)` → implicit: flag present means `true`
-- Using `.pick::<Yes>(flag)` or `.pick::<True>(flag)` → explicit
+- `.pick::<bool>(flag)` uses implicit mode: the flag being present means `true`
+- `.pick::<Yes>(flag)` or `.pick::<True>(flag)` uses explicit mode
 
-Implicit is fine for most cases, but for important confirmations, explicit logic is more semantic.
+Implicit mode is generally sufficient, but for important confirmations, explicit logic is more idiomatic.
 
 ```rust
 // Features: ["parser"]
@@ -302,7 +291,7 @@ fn handle_entry(prev: EntryTest) -> Next {
  
 ## Special Usage: `usize` Parsing
 
-Mingling provides a special `usize` feature: parsing strings like `25G`, `32mib`, etc.
+**Mingling** provides a special `usize` feature: parsing strings like `25G`, `32mib`, etc.
 
 ```rust
 // Features: ["parser"]
@@ -315,12 +304,13 @@ fn parse_size() {
 }
 ```
  
-## Custom Parseable Types
+## Custom Pickable Types
 
-Implement the `Pickable` trait to make your type parseable by `Picker` — this is where Picker's extensibility comes from.
+You can make your types pickable by `Picker` using the `Pickable` trait — this is where `Picker`'s extensibility comes from.
 
 ```rust
 // Features: ["parser"]
+@@@use mingling::macros::buffer;
 @@@use mingling::parser::{Pickable, Argument};
 @@@use mingling::Flag;
 #[derive(Default, Clone)]
@@ -348,12 +338,9 @@ fn handle_connect_entry(prev: EntryConnect) -> Next {
     ResultConnected::new(address).into()
 }
  
-#[renderer]
-fn render_connected(prev: ResultConnected) -> RenderResult {
-    let mut r = RenderResult::new();
-    let addr = prev.inner;
-    writeln!(r, "Connected: IP: {} PORT: {}", addr.ip, addr.port).ok();
-    r
+#[renderer(buffer)]
+fn render_connected(addr: ResultConnected) {
+    r_println!("Connected: IP: {} PORT: {}", addr.ip, addr.port);
 }
 ```
  
@@ -366,10 +353,11 @@ Connected: IP: 127.0.0.1 PORT: 8080
  
 ## Auto-implementing Pickable for Enums
 
-To implement `Pickable` for an enum, just make it implement `EnumTag`, then implement `PickableEnum`:
+To make an enum `Pickable`, just implement `EnumTag` on it, then implement `PickableEnum`:
 
 ```rust
 // Features: ["parser"]
+@@@use mingling::macros::buffer;
 @@@use mingling::parser::PickableEnum;
 @@@use mingling::EnumTag;
 #[derive(Debug, Default, EnumTag)]
@@ -390,15 +378,13 @@ fn handle_eat_entry(prev: EntryEat) -> Next {
     ResultFruit::new(fruit).into()
 }
  
-#[renderer]
-fn render_fruit(prev: ResultFruit) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Picked fruit: {:?}", *prev).ok();
-    r
+#[renderer(buffer)]
+fn render_fruit(prev: ResultFruit) {
+    r_println!("Picked fruit: {:?}", *prev);
 }
 ```
  
-That covers all the features of `Picker`.
+That covers all the usages of `Picker`.
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass

@@ -25,6 +25,7 @@ features = ["derive", "color"]
 // Dependencies:
 // clap = "4"
 @@@ use mingling::macros::dispatcher_clap;
+@@@ use mingling::macros::buffer;
 #[derive(Default, clap::Parser, Grouped)]
 #[dispatcher_clap("greet", CMDGreet, help = true, error = ErrorGreetParsed)]
 pub struct EntryGreet {
@@ -34,23 +35,19 @@ pub struct EntryGreet {
     repeat: i32,
 }
  
-#[renderer]
-fn render_greet(greet: EntryGreet) -> RenderResult {
-    let mut r = RenderResult::new();
+#[renderer(buffer)]
+fn render_greet(greet: EntryGreet) {
     let count = greet.repeat.max(0) as usize;
-    write!(r, "Hello, ").ok();
+    r_print!("Hello, ");
     for _ in 0..count {
-        write!(r, "{} ", greet.name).ok();
+        r_print!("{} ", greet.name);
     }
-    writeln!(r, "!").ok();
-    r
+    r_println!("!");
 }
  
-#[renderer]
-fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "{}", *err).ok();
-    r
+#[renderer(buffer)]
+fn render_greet_parse_failed(err: ErrorGreetParsed) {
+    r_println!("{}", *err);
 }
 ```
  
@@ -62,6 +59,7 @@ fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
 // Features: ["clap"]
 // Dependencies:
 // clap = "4"
+@@@use mingling::macros::buffer;
 @@@use mingling::setup::BasicProgramSetup;
 @@@use mingling::macros::dispatcher_clap;
 @@@#[derive(Default, clap::Parser, Grouped)]
@@ -69,11 +67,9 @@ fn render_greet_parse_failed(err: ErrorGreetParsed) -> RenderResult {
 @@@pub struct EntryGreet {
 @@@    name: String,
 @@@}
-@@@#[renderer]
-@@@fn render_greet(greet: EntryGreet) -> RenderResult {
-@@@    let mut r = RenderResult::new();
-@@@    write!(r, "Hello, {}!", greet.name).ok();
-@@@    r
+@@@#[renderer(buffer)]
+@@@fn render_greet(greet: EntryGreet) {
+@@@    r_println!("Hello, {}!", greet.name);
 @@@}
 fn main() {
     let mut program = ThisProgram::new();

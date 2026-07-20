@@ -27,6 +27,7 @@ Since `ResCurrentDir` implements both `Default` and `Clone`, the framework autom
 In a Chain or Renderer, simply declare the resource in the parameter list:
 
 ```rust
+@@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResCurrentDir(String);
 @@@dispatcher!("pwd", CMDPrintWorkingDir => EntryPrintWorkingDir);
@@ -37,11 +38,9 @@ fn handle_pwd(_args: EntryPrintWorkingDir, cwd: &ResCurrentDir) -> Next {
     ResultPath::new(cwd.0.clone()).to_render()
 }
  
-#[renderer]
-fn render_path(result: ResultPath) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "{}", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_path(result: ResultPath) {
+    r_println!("{}", *result);
 }
 ```
  
@@ -50,6 +49,7 @@ fn render_path(result: ResultPath) -> RenderResult {
 Use `&mut T` to inject a mutable resource:
 
 ```rust
+@@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResVisitCount(u32);
 @@@dispatcher!("visit", CMDVisit => EntryVisit);
@@ -60,11 +60,9 @@ fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
     ResultDone::default().into()
 }
  
-#[renderer]
-fn render_done(_done: ResultDone, counter: &ResVisitCount) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "visit count is : {}", counter.0).ok();
-    r
+#[renderer(buffer)]
+fn render_done(_done: ResultDone, counter: &ResVisitCount) {
+    r_println!("visit count is : {}", counter.0);
 }
 ```
  

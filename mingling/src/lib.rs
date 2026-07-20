@@ -223,6 +223,12 @@ pub mod prelude {
     /// Like `pack!` but also marks the type for structured output
     #[cfg(all(feature = "macros", feature = "structural_renderer"))]
     pub use mingling_macros::pack_structural;
+    /// `r_print!` - Prints text to a `RenderResult` buffer (without newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_print;
+    /// `r_println!` - Prints text to a `RenderResult` buffer (with newline).
+    /// See the macro documentation for implicit vs. explicit buffer usage.
+    pub use mingling_macros::r_println;
 
     /// Re-export of the `completion` macro for generating completion entries.
     #[cfg(all(feature = "macros", feature = "comp"))]
@@ -237,8 +243,4 @@ pub mod prelude {
 
     #[cfg(feature = "picker")]
     pub use crate::picker::EntryPicker;
-
-    /// Used to enable the `writeln!` macro for `RenderResult`
-    #[cfg(feature = "core")]
-    pub use std::io::Write;
 }

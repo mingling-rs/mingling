@@ -166,6 +166,7 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 ## 完整示例
 
 ```rust
+@@@use mingling::macros::buffer;
 @@@ #[derive(Default, Clone)]
 @@@ struct ResDatabase {  }
 @@@ impl ResDatabase { fn has_remote(&self, remote: &String) -> bool { true } }
@@ -192,19 +193,15 @@ fn handle_state_operation_remotes(state: StateOperationRemotes, db: &ResDatabase
 }
  
 // 结果渲染
-#[renderer]
-fn render_remote_added(result: ResultRemoteAdded) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Remote added: {}", result.inner).ok();
-    r
+#[renderer(buffer)]
+fn render_remote_added(result: ResultRemoteAdded) {
+    r_println!("Remote added: {}", result.inner);
 }
  
 // 错误渲染
-#[renderer]
-fn render_error_repository_not_found(err: ErrorRepositoryNotFound) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Error: remote '{}' not found", err.inner).ok();
-    r
+#[renderer(buffer)]
+fn render_error_repository_not_found(err: ErrorRepositoryNotFound) {
+    r_println!("Error: remote '{}' not found", err.inner);
 }
 ```
  

@@ -16,7 +16,7 @@ Renderer 是最容易测试的——调用函数，断言返回结果：
 #[renderer]
 fn render_greet(result: ResultName) -> RenderResult {
     let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
+    r_println!(r, "Hello, {}!", *result);
     r
 }
  

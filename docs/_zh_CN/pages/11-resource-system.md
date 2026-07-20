@@ -27,6 +27,7 @@ fn main() {
 在 Chain 或 Renderer 中，只需在参数列表里声明你要的资源：
 
 ```rust
+@@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResCurrentDir(String);
 @@@dispatcher!("pwd", CMDPrintWorkingDir => EntryPrintWorkingDir);
@@ -37,11 +38,9 @@ fn handle_pwd(_args: EntryPrintWorkingDir, cwd: &ResCurrentDir) -> Next {
     ResultPath::new(cwd.0.clone()).to_render()
 }
  
-#[renderer]
-fn render_path(result: ResultPath) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "{}", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_path(result: ResultPath) {
+    r_println!("{}", *result);
 }
 ```
  
@@ -50,6 +49,7 @@ fn render_path(result: ResultPath) -> RenderResult {
 用 `&mut T` 注入可修改资源：
 
 ```rust
+@@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResVisitCount(u32);
 @@@dispatcher!("visit", CMDVisit => EntryVisit);
@@ -60,11 +60,9 @@ fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
     ResultDone::default().into()
 }
  
-#[renderer]
-fn render_done(_done: ResultDone, counter: &ResVisitCount) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "visit count is : {}", counter.0).ok();
-    r
+#[renderer(buffer)]
+fn render_done(_done: ResultDone, counter: &ResVisitCount) {
+    r_println!("visit count is : {}", counter.0);
 }
 ```
  

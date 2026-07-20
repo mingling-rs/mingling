@@ -10,6 +10,7 @@
 继续在同一个项目里操作：
 
 ```rust
+@@@use mingling::macros::buffer;
 // 声明两个命令
 dispatcher!("greet", CMDGreet => EntryGreet);
 dispatcher!("add",   CMDAdd   => EntryAdd);
@@ -29,18 +30,14 @@ fn handle_add(args: EntryAdd) -> Next {
     ResultSum::new(sum).into()
 }
  
-#[renderer]
-fn render_greet(result: ResultGreeting) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_greet(result: ResultGreeting) {
+    r_println!("Hello, {}!", *result);
 }
  
-#[renderer]
-fn render_sum(result: ResultSum) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Sum: {}", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_sum(result: ResultSum) {
+    r_println!("Sum: {}", *result);
 }
  
 fn main() {

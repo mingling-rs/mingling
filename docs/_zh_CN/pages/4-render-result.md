@@ -10,18 +10,31 @@
 跟 `#[chain]` 类似，`#[renderer]` 用于标记一个输出函数：
 
 ```rust
-use std::io::Write;
- 
+@@@use mingling::macros::buffer;
 @@@pack!(ResultName = String);
-#[renderer]
-fn render_name(name: ResultName) -> RenderResult {
-    let mut result = RenderResult::new();
-    writeln!(result, "Hello, {}!", *name).ok();
-    result
+#[renderer(buffer)]
+fn render_name(name: ResultName) {
+    r_println!("Hello, {}!", *name);
 }
 ```
  
-Renderer 接收 Chain 产出的结果，然后返回一个 `RenderResult`。在函数内部，创建 `RenderResult`，用 `write!` / `writeln!`（来自 [`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html)）写入内容，最后返回它。
+Renderer 接收 Chain 产出的结果，然后返回一个 `RenderResult`。在函数内部，创建 `RenderResult`，用 `r_print!` / `r_println!` 写入内容，最后返回它。
+
+## `buffer` 拓展
+
+若您觉得显式创建并返回 `RenderResult` 过于繁琐，可以使用 `#[renderer(buffer)]` 在原始函数内植入一个缓冲区。
+
+```rust
+use mingling::macros::buffer;
+ 
+@@@pack!(ResultName = String);
+#[renderer(buffer)]
+fn render_name(name: ResultName) {
+    r_println!("Hello, {}!", *name);
+}
+```
+ 
+这样，你的 renderer 函数就获得了更简洁的语法，但也引入了一个隐含机制：它会向函数内注入一个名为 `__render_result_buffer` 的可变 `RenderResult`。当 `r_print!` 宏没有显式指定 `RenderResult` 时，它便会按照约定向该缓冲区追加输出。
 
 ## `RenderResult` 类型
 
@@ -36,7 +49,7 @@ Renderer 接收 Chain 产出的结果，然后返回一个 `RenderResult`。在�
 把三篇教程的内容合在一起，你的第一个 Mingling 程序就完整了：
 
 ```rust
-use std::io::Write;
+use mingling::macros::buffer;
  
 // 1. 用 Dispatcher 声明命令
 dispatcher!("greet", CMDGreet => EntryGreet);
@@ -55,11 +68,9 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
  
 // 4. 用 Renderer 输出结果
-#[renderer]
-fn render_name(name: ResultName) -> RenderResult {
-    let mut result = RenderResult::new();
-    writeln!(result, "Hello, {}!", *name).ok();
-    result
+#[renderer(buffer)]
+fn render_name(name: ResultName) {
+    r_println!("Hello, {}!", *name);
 }
  
 // 5. 在 main 函数内装配程序并运行
@@ -108,17 +119,15 @@ cargo run -- great
 `gen_program!()` 自动生成了一个 `ErrorDispatcherNotFound` 类型，包裹 `Vec<String>`——它存的是用户输入的那些没匹配到的命令。你只需要给它写一个 Renderer：
 
 ```rust
-use std::io::Write;
+use mingling::macros::buffer;
  
-#[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
-    let mut result = RenderResult::new();
+#[renderer(buffer)]
+fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
     if err.inner.is_empty() {
-        writeln!(result, "Unknown command").ok();
+        r_println!("Unknown command");
     } else {
-        writeln!(result, "Command not found: \"{}\"", err.inner.join(" ")).ok();
+        r_println!("Command not found: \"{}\"", err.inner.join(" "));
     }
-    result
 }
 ```
  

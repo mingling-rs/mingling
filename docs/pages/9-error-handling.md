@@ -38,23 +38,20 @@ fn handle_greet(args: EntryGreet) -> Next {
 Then write separate Renderers:
 
 ```rust
+@@@use mingling::macros::buffer;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 @@@pack!(ResultGreeting = String);
 @@@pack!(ErrorNameEmpty = String);
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting::new(args.inner.first().cloned().unwrap_or_default()).to_render() }
  
-#[renderer]
-fn render_greeting(result: ResultGreeting) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_greet(result: ResultGreeting) {
+    r_println!("Hello, {}!", *result);
 }
  
-#[renderer]
-fn render_error_name_empty(err: ErrorNameEmpty) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Error: {}", *err).ok();
-    r
+#[renderer(buffer)]
+fn render_error_name_empty(err: ErrorNameEmpty) {
+    r_println!("Error: {}", *err);
 }
 ```
  
@@ -63,6 +60,7 @@ Each Renderer does its own job; what the user sees depends on what the Chain ret
 ## Complete Example
 
 ```rust
+@@@use mingling::macros::buffer;
 dispatcher!("greet", CMDGreet => EntryGreet);
  
 pack!(ResultGreeting = String);
@@ -78,18 +76,14 @@ fn handle_greet(args: EntryGreet) -> Next {
     }
 }
  
-#[renderer]
-fn render_greeting(result: ResultGreeting) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_greet(result: ResultGreeting) {
+    r_println!("Hello, {}!", *result);
 }
  
-#[renderer]
-fn render_error_name_empty(err: ErrorNameEmpty) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Error: {}", *err).ok();
-    r
+#[renderer(buffer)]
+fn render_error_name_empty(err: ErrorNameEmpty) {
+    r_println!("Error: {}", *err);
 }
  
 fn main() {

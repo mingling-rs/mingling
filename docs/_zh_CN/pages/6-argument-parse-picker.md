@@ -139,6 +139,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 
 ```rust
 // Features: ["parser", "extra_macros"]
+@@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 @@@pack!(ResultName = String);
@@ -155,11 +156,9 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
     ResultName::new(name).into()
 }
  
-#[renderer]
-fn render_greet(result: ResultName) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
-    r
+#[renderer(buffer)]
+fn render_greet(result: ResultName) {
+    r_println!("Hello, {}!", *result);
 }
 ```
  
@@ -225,6 +224,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 
 ```rust
 // Features: ["parser", "extra_macros"]
+@@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
 @@@pack!(ResultName = String);
@@ -247,19 +247,15 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
     ResultName::new(name).into()
 }
  
-#[renderer]
-fn render_name_too_long(prev: ErrorNameTooLong) -> RenderResult {
-    let mut r = RenderResult::new();
+#[renderer(buffer)]
+fn render_name_too_long(prev: ErrorNameTooLong) {
     let len = *prev;
-    writeln!(r, "Error: name too long (length: {} > 32)", len).ok();
-    r
+    r_println!("Error: name too long (length: {} > 32)", len);
 }
  
-#[renderer]
-fn render_name(prev: ResultName) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *prev).ok();
-    r
+#[renderer(buffer)]
+fn render_name(prev: ResultName) {
+    r_println!("Hello, {}!", *prev);
 }
 ```
  
@@ -314,6 +310,7 @@ fn parse_size() {
 
 ```rust
 // Features: ["parser"]
+@@@use mingling::macros::buffer;
 @@@use mingling::parser::{Pickable, Argument};
 @@@use mingling::Flag;
 #[derive(Default, Clone)]
@@ -341,11 +338,9 @@ fn handle_connect_entry(prev: EntryConnect) -> Next {
     ResultConnected::new(address).into()
 }
  
-#[renderer]
-fn render_connected(addr: ResultConnected) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Connected: IP: {} PORT: {}", addr.ip, addr.port).ok();
-    r
+#[renderer(buffer)]
+fn render_connected(addr: ResultConnected) {
+    r_println!("Connected: IP: {} PORT: {}", addr.ip, addr.port);
 }
 ```
  
@@ -362,6 +357,7 @@ Connected: IP: 127.0.0.1 PORT: 8080
 
 ```rust
 // Features: ["parser"]
+@@@use mingling::macros::buffer;
 @@@use mingling::parser::PickableEnum;
 @@@use mingling::EnumTag;
 #[derive(Debug, Default, EnumTag)]
@@ -382,11 +378,9 @@ fn handle_eat_entry(prev: EntryEat) -> Next {
     ResultFruit::new(fruit).into()
 }
  
-#[renderer]
-fn render_fruit(prev: ResultFruit) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Picked fruit: {:?}", *prev).ok();
-    r
+#[renderer(buffer)]
+fn render_fruit(prev: ResultFruit) {
+    r_println!("Picked fruit: {:?}", *prev);
 }
 ```
  
@@ -395,3 +389,4 @@ fn render_fruit(prev: ResultFruit) -> RenderResult {
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass
 </p>
+````

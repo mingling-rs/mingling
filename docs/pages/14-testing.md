@@ -16,7 +16,7 @@ Renderer is the easiest to test — call the function, assert the result:
 #[renderer]
 fn render_greet(result: ResultName) -> RenderResult {
     let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
+    r_println!(r, "Hello, {}!", *result);
     r
 }
  

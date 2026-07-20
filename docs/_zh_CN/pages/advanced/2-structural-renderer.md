@@ -27,6 +27,7 @@ features = ["structural_renderer"]
 // Features: ["structural_renderer"]
 // Dependencies:
 // serde = "1"
+@@@use mingling::macros::buffer;
 @@@use mingling::setup::StructuralRendererSetup;
 @@@dispatcher!("render", CMDRender => EntryRender);
  
@@ -40,11 +41,9 @@ fn handle_render(args: EntryRender) -> Next {
     ResultInfo::new((name, age)).into()
 }
  
-#[renderer]
-fn render_info(r: ResultInfo) -> RenderResult {
-    let mut result = RenderResult::new();
-    writeln!(result, "{:?}", *r).ok();
-    result
+#[renderer(buffer)]
+fn render_info(r: ResultInfo) {
+    r_println!("{:?}", *r);
 }
 ```
  
@@ -68,6 +67,7 @@ fn render_info(r: ResultInfo) -> RenderResult {
 // Features: ["structural_renderer"]
 // Dependencies:
 // serde = "1"
+@@@use mingling::macros::buffer;
 @@@use mingling::prelude::*;
 @@@use mingling::setup::StructuralRendererSetup;
 @@@use mingling::StructuralData;
@@ -87,11 +87,9 @@ fn handle_render(args: EntryRender) -> Next {
     Info { name, age }.to_render()
 }
  
-#[renderer]
-fn render_info(info: Info) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "{} is {} years old", info.name, info.age).ok();
-    r
+#[renderer(buffer)]
+fn render_info(info: Info) {
+    r_println!("{} is {} years old", info.name, info.age);
 }
 @@@
 @@@fn main() {

@@ -13,18 +13,17 @@ Mingling 里用 `#[help]` 宏给命令添加帮助文本。
 
 ```rust
 @@@use mingling::macros::help;
+@@@use mingling::macros::buffer;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
-#[help]
-fn help_greet(_entry: EntryGreet) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Usage: greet [name]").ok();
-    writeln!(r, "Say hello to someone.").ok();
-    r
+#[help(buffer)]
+fn help_greet(_entry: EntryGreet) {
+    r_println!("Usage: greet [name]");
+    r_println!("Say hello to someone.");
 }
 ```
  
 > [!NOTE]
-> 帮助函数同样通过 `writeln!` 向 `RenderResult` 写入内容，因为 `#[help]` 遵循渲染管线 —— 它是由 `--help` 标志提前触发的短路渲染，而不是管线之外的逻辑。
+> 帮助函数同样通过 `r_println!` 向 `RenderResult` 写入内容，因为 `#[help]` 遵循渲染管线 —— 它是由 `--help` 标志提前触发的短路渲染，而不是管线之外的逻辑。
 
 ## 全局帮助
 
@@ -32,14 +31,13 @@ fn help_greet(_entry: EntryGreet) -> RenderResult {
 
 ```rust
 @@@use mingling::macros::help;
+@@@use mingling::macros::buffer;
 // 用户直接输入 --help 时触发
-#[help]
-fn help_root(entry: ErrorDispatcherNotFound) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Usage: my-cli <command>").ok();
-    writeln!(r, "Commands:").ok();
-    writeln!(r, "  greet    Say hello").ok();
-    r
+#[help(buffer)]
+fn help_root(entry: ErrorDispatcherNotFound) {
+    r_println!("Usage: my-cli <command>");
+    r_println!("Commands:");
+    r_println!("  greet    Say hello");
 }
 ```
  
