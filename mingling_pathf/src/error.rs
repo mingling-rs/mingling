@@ -22,7 +22,9 @@ pub enum MinglingPathfinderError {
     /// `parent` is the directory containing the file that declared the module.
     /// `module_name` is the name of the module that could not be found.
     ModuleNotFound {
+        /// The directory containing the file that declared the module.
         parent: PathBuf,
+        /// The name of the module that could not be found.
         module_name: String,
     },
 
@@ -30,7 +32,12 @@ pub enum MinglingPathfinderError {
     ///
     /// `file` is the file containing the invalid attribute.
     /// `path_attr` is the value of the `#[path]` attribute.
-    PathPointsOutside { file: PathBuf, path_attr: String },
+    PathPointsOutside {
+        /// The file containing the invalid `#[path]` attribute.
+        file: PathBuf,
+        /// The value of the `#[path]` attribute that points outside the project.
+        path_attr: String,
+    },
 
     /// No entry point file (`main.rs`, `lib.rs`, or any file under `bin/`) was found.
     NoEntryPointFound,
@@ -39,7 +46,12 @@ pub enum MinglingPathfinderError {
     ///
     /// `path` is the file that failed to parse.
     /// `message` contains details from the parser.
-    SynError { path: PathBuf, message: String },
+    SynError {
+        /// The file that failed to parse.
+        path: PathBuf,
+        /// Details from the parser about the parse failure.
+        message: String,
+    },
 }
 
 impl fmt::Display for MinglingPathfinderError {

@@ -21,6 +21,7 @@ pub struct VecUntil<T> {
 }
 
 impl<T> VecUntil<T> {
+    /// Consumes `self` and returns the underlying [`Vec<T>`].
     pub fn into_inner(self) -> Vec<T> {
         self.inner
     }

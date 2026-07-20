@@ -1,4 +1,8 @@
 #![doc(html_logo_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/icon3.png")]
+#![doc(
+    html_favicon_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/favicon_small.png"
+)]
+#![deny(missing_docs)]
 #![doc = include_str!("lib.md")]
 
 #[cfg(feature = "core")]

@@ -53,10 +53,30 @@ where
     #[cfg(not(feature = "dispatch_tree"))]
     pub(crate) dispatcher: Vec<Box<dyn Dispatcher<C> + Send + Sync>>,
 
+    /// Program stdout settings.
+    ///
+    /// This struct controls the program's output behavior, including whether
+    /// to output errors, render results, suppress panic messages, enable
+    /// verbose/quiet/debug modes, colored output, and progress indicators.
+    ///
+    /// # Convention-only fields
+    ///
+    /// Fields marked with convention only are not enforced by the framework;
+    /// they serve as a shared convention for applications to follow consistently.
     pub stdout_setting: ProgramStdoutSetting,
+
+    /// User-defined context that can be accessed throughout the program.
+    ///
+    /// This field holds a user-defined context value that can be
+    /// accessed and modified at any point during program execution. It is
+    /// useful for passing shared state or configuration across different
+    /// parts of the program.
     pub user_context: ProgramUserContext,
 
     #[cfg(feature = "structural_renderer")]
+    /// Setting for the structural renderer.
+    ///
+    /// This field is only available when the `structural_renderer` feature is enabled.
     pub structural_renderer_name: StructuralRendererSetting,
 
     pub(crate) hooks: Vec<ProgramHook<C>>,

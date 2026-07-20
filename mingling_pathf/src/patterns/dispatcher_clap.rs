@@ -29,10 +29,16 @@ use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 /// - `#[dispatcher_clap("greet", CMDGreet, help = true)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet, help = true)] struct EntryGreet { ... }`
 pub struct DispatcherClapPattern {
+    /// Whether to include the `__internal_dispatcher_*` dispatch tree static in the analysis.
     pub use_dispatch_tree: bool,
 }
 
 impl DispatcherClapPattern {
+    /// Creates a new `DispatcherClapPattern` with the given configuration.
+    ///
+    /// # Parameters
+    /// - `use_dispatch_tree`: When `true`, enables analysis of the `__internal_dispatcher_*`
+    ///   static dispatch tree for each matched command.
     pub fn new(use_dispatch_tree: bool) -> Self {
         Self { use_dispatch_tree }
     }

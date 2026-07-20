@@ -5,13 +5,29 @@ use crate::{
 };
 
 /// Boundary check for multi-value positional parameters.
+///
+/// Determines whether a raw string marks the end of a multi-value
+/// parameter's input range.
 pub trait BoundaryCheck {
+    /// Returns `true` if `raw` indicates a boundary (i.e., the start of
+    /// a new parameter), stopping greedy collection.
     fn check_boundary(raw: &str) -> bool;
 }
 
 /// Trait for multi-value parameters.
+///
+/// Implementors define how a sequence of raw strings is converted into
+/// a single value, with an associated [`BoundaryCheck`] to control where
+/// collection stops.
 pub trait MultiPickableWithBoundary: Sized {
+    /// The boundary checker type that determines when to stop consuming
+    /// positional arguments.
     type Checker: BoundaryCheck;
+
+    /// Parse and collect multiple raw string values into `Self`.
+    ///
+    /// The caller should stop passing additional items once the
+    /// associated [`Checker`](Self::Checker) signals a boundary.
     fn pick_multi(raw: Vec<String>) -> PickerArgResult<Self>;
 }
 

@@ -141,6 +141,8 @@
 //! }
 //! ```
 
+#![deny(missing_docs)]
+
 #[cfg(feature = "extra_macros")]
 use quote::quote;
 
@@ -270,6 +272,36 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
     entry.contains(&format!(":: {variant_name} =>"))
 }
 
+/// Registers an outside type (from `std` or other crates) as a type recognizable
+/// by the Mingling framework, without modifying the original type definition.
+///
+/// This macro generates a newtype wrapper around the given type that implements
+/// `Grouped`, `Into<AnyOutput>`, `Into<ChainProcess>`, and the `Routable` trait,
+/// making the outside type usable in `#[chain]` and `#[renderer]` functions.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// // Simple form — creates a wrapper named after the type's last segment:
+/// group!(ParseIntError);
+///
+/// // Aliased form — creates a wrapper with a custom name:
+/// group!(ErrorIo = std::io::Error);
+/// ```
+///
+/// # Example
+///
+/// See the full example in the crate documentation or run:
+/// ```bash
+/// cargo run --example example-outside-type -- parse 42
+/// cargo run --example example-outside-type -- parse hello
+/// cargo run --example example-outside-type -- error
+/// ```
+///
+/// # Requirements
+///
+/// - The type must be accessible at the call site (imported or fully qualified).
+/// - The alias name (if provided) must not conflict with existing types.
 #[cfg(feature = "extra_macros")]
 #[proc_macro]
 pub fn group(input: TokenStream) -> TokenStream {
@@ -1570,6 +1602,28 @@ pub fn gen_program(input: TokenStream) -> TokenStream {
     func::gen_program::gen_program_impl(input)
 }
 
+/// Internal macro used by `gen_program!` to generate the completion infrastructure for
+/// shell completion support.
+///
+/// **This macro is only available with the `comp` feature.**
+///
+/// The `program_comp_gen!` macro generates:
+/// 1. A hidden `__internal_completion_mod` module containing:
+///    - A `CompletionContext` packed type (wrapping `ShellContext`), dispatched via `"__comp"`.
+///    - A `CompletionSuggest` packed type (wrapping `(ShellContext, Suggest)`).
+///    - An internal dispatcher (`CMDCompletion`) for the `"__comp"` command path.
+/// 2. An internal chain function `__exec_completion` that:
+///    - Reads a `ShellContext` from the packed `CompletionContext`.
+///    - Calls `CompletionHelper::exec_completion::<ThisProgram>(&ctx)` to generate suggestions.
+///    - Routes the result to the completion renderer via `CompletionSuggest`.
+/// 3. An internal renderer `__render_completion` that renders the suggestions via
+///    `CompletionHelper::render_suggest`.
+///
+/// When the `dispatch_tree` feature is enabled, it also imports the internal dispatcher
+/// from the generated module into the parent scope for trie-based dispatch.
+///
+/// This macro is called automatically by `gen_program!` and should not be called
+/// directly by user code.
 #[cfg(feature = "comp")]
 #[proc_macro]
 pub fn program_comp_gen(input: TokenStream) -> TokenStream {
@@ -1601,16 +1655,47 @@ pub fn register_type(input: TokenStream) -> TokenStream {
     func::gen_program::register_type_impl(input)
 }
 
+/// Registers a chain mapping function into the global chain registry.
+///
+/// This macro is called internally by `#[chain]` and is generally not needed
+/// in user code. Each call stores a string entry containing the source-to-target
+/// type mapping, which is later consumed by `gen_program!` to generate the
+/// `has_chain` and `do_chain` dispatch logic in `ProgramCollect`.
+///
+/// The entry string format is a match arm: the source variant maps to a call
+/// that converts the value into a `ChainProcess` via the destination type.
+///
+/// # Panics
+///
+/// Panics if the global `CHAINS` mutex is poisoned.
 #[proc_macro]
 pub fn register_chain(input: TokenStream) -> TokenStream {
     func::gen_program::register_chain_impl(input)
 }
 
+/// Registers a renderer mapping function into the global renderer registry.
+///
+/// This macro is called internally by `#[renderer]` and is generally not
+/// needed in user code. Each call stores a string entry containing the
+/// type-to-render mapping, which is later consumed by `gen_program!` to
+/// generate the `has_renderer` and `render` dispatch logic in `ProgramCollect`.
+///
+/// The entry string format is a match arm: the type variant maps to a call
+/// of the registered renderer function that produces a `RenderResult`.
+///
+/// # Panics
+///
+/// Panics if the global `RENDERERS` mutex is poisoned.
 #[proc_macro]
 pub fn register_renderer(input: TokenStream) -> TokenStream {
     func::gen_program::register_renderer_impl(input)
 }
 
+/// Internal macro used by `gen_program!` to generate the fallback types for
+/// error cases when no dispatcher or renderer is found.
+///
+/// This macro is called automatically by `gen_program!` and should not
+/// be called directly by user code.
 #[proc_macro]
 pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
     func::gen_program::program_fallback_gen_impl(input)

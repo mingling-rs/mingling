@@ -20,10 +20,18 @@ use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 /// - `CMD*` — the dispatcher struct (always)
 /// - `__internal_dispatcher_*` — dispatch tree static (when `use_dispatch_tree` is true)
 pub struct DispatcherPattern {
+    /// Whether the dispatcher generates a dispatch tree static (`__internal_dispatcher_*`).
     pub use_dispatch_tree: bool,
 }
 
 impl DispatcherPattern {
+    /// Creates a new `DispatcherPattern`.
+    ///
+    /// # Arguments
+    ///
+    /// * `use_dispatch_tree` — when `true`, the generated dispatcher also produces a
+    ///   `__internal_dispatcher_*` static dispatch tree item. Set this based on whether
+    ///   your macro invocation includes the `use_dispatch_tree` configuration.
     pub fn new(use_dispatch_tree: bool) -> Self {
         Self { use_dispatch_tree }
     }

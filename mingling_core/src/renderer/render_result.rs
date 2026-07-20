@@ -8,6 +8,11 @@ use std::{
 #[derive(Default, Debug, PartialEq)]
 pub struct RenderResult {
     render_text: String,
+
+    /// The exit code to return from the rendering process.
+    ///
+    /// A value of `0` indicates success, while non-zero values indicate
+    /// various error conditions.
     pub exit_code: i32,
 }
 

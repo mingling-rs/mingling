@@ -19,7 +19,9 @@ where
 /// meaning only the last configured instance will take effect globally.
 /// Do not configure multiple prompts with different values — only one will be used.
 pub enum BasicREPLPromptSetup {
+    /// A static prompt string that is displayed before each REPL input.
     Prompt(String),
+    /// A function that returns a dynamic prompt string each time the REPL reads input.
     Func(fn() -> String),
 }
 

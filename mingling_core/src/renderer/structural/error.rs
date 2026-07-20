@@ -9,6 +9,7 @@ pub struct StructuralRendererSerializeError {
 }
 
 impl StructuralRendererSerializeError {
+    /// Creates a new `StructuralRendererSerializeError` with the given error message.
     #[must_use]
     pub fn new(error: String) -> Self {
         Self { error }

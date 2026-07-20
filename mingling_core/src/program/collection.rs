@@ -21,8 +21,16 @@ pub use mock::*;
 pub trait ProgramCollect {
     /// Enum type representing internal IDs for the program
     type Enum;
+    /// Error type when a dispatcher is not found for the given member
     type ErrorDispatcherNotFound: Grouped<Self::Enum>;
+
+    /// Error type when a renderer is not found for the given member
     type ErrorRendererNotFound: Grouped<Self::Enum>;
+
+    /// Result type for an empty chain result
+    ///
+    /// When the `extra_macros` feature is enabled,
+    /// you can use the `empty_result!()` macro to create this
     type ResultEmpty: Grouped<Self::Enum>;
 
     /// Use a prefix tree to quickly match arguments and dispatch to an Entry

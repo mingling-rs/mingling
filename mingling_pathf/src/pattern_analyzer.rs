@@ -100,10 +100,12 @@ pub struct PatternAnalyzer {
 }
 
 impl PatternAnalyzer {
+    /// Creates a new empty `PatternAnalyzer`.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Registers a new pattern for analysis.
     pub fn add_pattern(&mut self, pattern: impl AnalyzePattern + 'static) {
         self.patterns.push(Box::new(pattern));
     }

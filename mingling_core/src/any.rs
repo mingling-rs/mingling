@@ -17,7 +17,18 @@ pub mod group;
 #[derive(Debug)]
 pub struct AnyOutput<G> {
     pub(crate) inner: Box<dyn std::any::Any + Send + 'static>,
+
+    /// The [`TypeId`] of the concrete type stored in `inner`.
+    ///
+    /// This is set during construction and used for type-checking
+    /// in downcast, restore, and is methods.
     pub type_id: std::any::TypeId,
+
+    /// The variant identifier returned by [`Grouped::member_id`] for the
+    /// concrete type stored in `inner`.
+    ///
+    /// This is used by the scheduler to dispatch on the correct enum
+    /// variant when routing the output.
     pub member_id: G,
 }
 
@@ -106,7 +117,9 @@ impl<G> std::ops::DerefMut for AnyOutput<G> {
 /// - Returns `Ok((`[`AnyOutput`](./struct.AnyOutput.html)`, `[`NextProcess::Renderer`](./enum.NextProcess.html)`))` to render this type next and output to the terminal
 /// - Returns `Err(`[`ChainProcessError`](./error/enum.ChainProcessError.html)`]` to terminate the program directly
 pub enum ChainProcess<G> {
+    /// Indicates success, containing the output value and the next step to execute.
     Ok((AnyOutput<G>, NextProcess)),
+    /// Indicates a processing failure, containing the error that occurred.
     Err(ChainProcessError),
 }
 
@@ -117,7 +130,9 @@ pub enum ChainProcess<G> {
 #[derive(Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum NextProcess {
+    /// Continue execution to the next chain
     Chain,
+    /// Send output to renderer and end execution
     Renderer,
 }
 

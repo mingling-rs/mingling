@@ -8,6 +8,8 @@
 //!
 //! Recommended to import [mingling](https://crates.io/crates/mingling) to use its features.
 
+#![deny(missing_docs)]
+
 mod any;
 mod asset;
 mod program;
@@ -77,6 +79,10 @@ pub mod comp;
 #[cfg(feature = "comp")]
 pub use crate::comp::*;
 
+/// Module for setting up a `Mingling` program.
+///
+/// This module provides the [`ProgramSetup`] type, which allows users to configure
+/// and initialize the program's execution environment.
 pub mod setup {
     pub use crate::program::setup::ProgramSetup;
 }
