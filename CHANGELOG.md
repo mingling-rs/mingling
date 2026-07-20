@@ -54,7 +54,14 @@ None
 
 #### Fixes:
 
-None
+1. **[`pathf:patterns`]** Fixed pattern detection logic in `mingling_pathf` for multiple patterns to correctly detect opening bracket forms (e.g., `[chain`, `[renderer`, `[help`, `[completion`) in addition to the previously supported closing bracket forms (e.g., `chain]`, `renderer]`, `help]`, `completion]`). This ensures that attribute macro usages like `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` are properly detected regardless of which side of the attribute the pattern matcher examines.
+
+    - **`ChainPattern`**: Changed `content.contains("chain]")` → `content.contains("[chain") || content.contains("chain]")`
+    - **`RendererPattern`**: Changed `content.contains("renderer]")` → `content.contains("[renderer") || content.contains("renderer]")`
+    - **`HelpPattern`**: Changed `content.contains("help]")` → `content.contains("[help") || content.contains("help]")`
+    - **`CompletionPattern`**: Changed `content.contains("completion(")` → `content.contains("completion(") || content.contains("[completion")`
+
+2. **[`pathf:patterns`]** Updated `PackPattern` detection to recognize `pack_structural!` and `pack_err_structural!` macros, which were previously missed by the pattern matcher. The `contains` method now checks for these additional macro names alongside the existing `pack!` and `pack_err!` checks.
 
 #### Optimizations:
 
