@@ -13,6 +13,10 @@ categories = ["command-line-interface"]
 
 [[bin]]
 name = "mling"
+path = "src/bin/wrapper.rs"
+
+[[bin]]
+name = "mingling-cli"
 path = "src/main.rs"
 
 [dependencies.mingling]
@@ -56,5 +60,11 @@ serde_json = "1.0.151"
 
 # Code gen
 just_template = "0.2.0"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
 
 [workspace]
