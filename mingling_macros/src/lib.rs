@@ -1343,6 +1343,25 @@ pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
     help::help_attr(item)
 }
 
+/// Marker attribute for the Mingling lint system.
+///
+/// The content of this attribute is ignored by rustc and reserved for
+/// the mlint tool to interpret. All it does is pass the item through
+/// unchanged.
+///
+/// # Examples
+///
+/// ```rust,ignore
+/// #[mlint(allow(MLINT_SOME_LINT))]
+/// #[mlint(warn(MLINT_SOME_LINT))]
+/// #[mlint(deny(MLINT_SOME_LINT))]
+/// fn some_item() {}
+/// ```
+#[proc_macro_attribute]
+pub fn mlint(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    item
+}
+
 /// Extension attribute macro that transforms `expr?` into `route!(expr)`.
 ///
 /// Designed for use with `#[chain(routeify, ...)]` to enable concise error

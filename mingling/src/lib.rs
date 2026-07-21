@@ -75,6 +75,9 @@ pub mod macros {
     pub use mingling_macros::group_structural;
     /// `#[help]` - Used to generate a struct implementing the `HelpRequest` trait via a method
     pub use mingling_macros::help;
+    /// `#[mlint(...)]` - Marker attribute for the Mingling lint system.
+    /// Content is ignored by rustc and reserved for mlint tooling.
+    pub use mingling_macros::mlint;
     /// `node!("remote.rm")` - Used to create a `Node` struct via a literal
     pub use mingling_macros::node;
     /// `pack!(StateGreet = String)` - Used to create a wrapper type for use with `Chain` and `Renderer`

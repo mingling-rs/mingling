@@ -404,6 +404,19 @@ None
     - Added `mingling_macros/src/extensions/renderify.rs` with `renderify_impl` implementation.
     - Registered `#[proc_macro] pub fn render_route` and `#[proc_macro_attribute] pub fn renderify` in `mingling_macros/src/lib.rs`.
 
+15. **[`macros`]** Added the `#[mlint(...)]` marker attribute macro — a no-op attribute that passes its attached item through unchanged. The attribute content is ignored by `rustc` and reserved for the Mingling lint (`mlint`) tooling system.
+
+    The `#[mlint]` attribute is registered as a `#[proc_macro_attribute]` and re-exported as `mingling::macros::mlint`. It supports three styles of lint configuration:
+
+    ```rust,ignore
+    #[mlint(allow(MLINT_SOME_LINT))]
+    #[mlint(warn(MLINT_SOME_LINT))]
+    #[mlint(deny(MLINT_SOME_LINT))]
+    fn some_item() {}
+    ```
+
+    Since the attribute is a no-op at compile time, it has no effect on code generation, type checking, or runtime behavior. Its purpose is to serve as a structured annotation that `mlint` tooling can parse from the AST. The attribute is feature-gated behind `extra_macros`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros from being implicitly injected by `#[renderer]` and `#[help]` macros. These macros still exist, but must now be used **explicitly** — either with an explicit buffer argument, or via the `#[buffer]` extension attribute that re-enables implicit buffer injection.
