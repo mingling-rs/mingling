@@ -3,7 +3,10 @@ use mingling::{
     macros::{chain, dispatcher, entry, program_setup},
 };
 
-use crate::linter::cmd_mlint::{CMDMinglingLinter, EntryMinglingLinter};
+use crate::{
+    linter::cmd_mlint::{CMDMinglingLinter, EntryMinglingLinter},
+    metadata::setup::ResUsingJson,
+};
 
 pub mod cmd_mlint;
 pub mod mlint_attr;
@@ -37,16 +40,28 @@ dispatcher!("ra-lint",
 );
 
 #[chain]
-pub fn handle_ra_lint(_: EntryLinterSupportRustAnalyzer) -> EntryMinglingLinter {
+pub fn handle_ra_lint(
+    _: EntryLinterSupportRustAnalyzer,
+    use_json: &mut ResUsingJson,
+) -> EntryMinglingLinter {
+    use_json.using = true;
     entry!("--message-format=json")
 }
 
 #[chain]
-pub fn handle_ra_lint_check(_: EntryLinterSupportRustAnalyzerWithCheck) -> EntryMinglingLinter {
+pub fn handle_ra_lint_check(
+    _: EntryLinterSupportRustAnalyzerWithCheck,
+    use_json: &mut ResUsingJson,
+) -> EntryMinglingLinter {
+    use_json.using = true;
     entry!("--message-format=json", "--with-checker=cargo,check")
 }
 
 #[chain]
-pub fn handle_ra_lint_clippy(_: EntryLinterSupportRustAnalyzerWithClippy) -> EntryMinglingLinter {
+pub fn handle_ra_lint_clippy(
+    _: EntryLinterSupportRustAnalyzerWithClippy,
+    use_json: &mut ResUsingJson,
+) -> EntryMinglingLinter {
+    use_json.using = true;
     entry!("--message-format=json", "--with-checker=cargo,clippy")
 }
