@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use cargo_metadata::diagnostic::{
     DiagnosticCodeBuilder, DiagnosticLevel as CargoLevel, DiagnosticSpanBuilder,
     DiagnosticSpanLineBuilder,
@@ -6,7 +8,7 @@ use cargo_metadata::diagnostic::{
 use cargo_metadata::{Message, PackageId};
 
 use annotate_snippets::level::{ERROR, HELP, NOTE, WARNING};
-use annotate_snippets::{AnnotationKind, Group, Renderer, Snippet};
+use annotate_snippets::{AnnotationKind, Group, Patch, Renderer, Snippet};
 use mingling::macros::{buffer, chain, pack, r_append, r_eprintln, renderer};
 use mingling::{AnyOutput, ProgramCollect, Routable};
 
@@ -48,6 +50,9 @@ pub struct MlintReport {
 
     /// Compilation target source file path that this report belongs to
     pub target_src_path: Option<String>,
+
+    /// A suggestion for automatic fix (shown as diff in annotated output)
+    pub suggestion: Option<LintSuggestion>,
 }
 
 /// Report severity level, indicating the seriousness of the Lint result.
@@ -84,6 +89,19 @@ pub struct LintSpanLine {
     pub highlight_start: usize,
     /// Highlight end (1-based char offset)
     pub highlight_end: usize,
+}
+
+/// A suggestion shown as a diff in the output (e.g. `- old code` / `+ new code`).
+#[derive(Clone, Debug, Default)]
+pub struct LintSuggestion {
+    /// Source text that the suggestion applies to (a single line or snippet)
+    pub source: String,
+    /// Line number where the suggestion applies
+    pub line_start: usize,
+    /// Byte range within `source` to replace
+    pub byte_range: Range<usize>,
+    /// Replacement text
+    pub replacement: String,
 }
 
 impl MlintReport {
@@ -230,6 +248,18 @@ impl MlintReport {
             group = group.element(msg);
         }
 
+        // Render suggestion as a diff (Element::Suggestion)
+        if let Some(sugg) = &self.suggestion {
+            let patch_snippet = Snippet::source(sugg.source.clone())
+                .line_start(sugg.line_start)
+                .path(&self.file_name)
+                .patch(Patch::new(
+                    sugg.byte_range.clone(),
+                    sugg.replacement.clone(),
+                ));
+            group = group.element(patch_snippet);
+        }
+
         if !self.lint_code.is_empty() {
             let level_name = match self.level {
                 MlintLevel::Error => "deny",
@@ -374,8 +404,12 @@ impl MlintReport {
                     .collect::<Vec<_>>(),
             )
             .label(span.label.clone())
-            .suggested_replacement(None::<String>)
-            .suggestion_applicability(None::<cargo_metadata::diagnostic::Applicability>)
+            .suggested_replacement(self.suggestion.as_ref().map(|s| s.replacement.clone()))
+            .suggestion_applicability(if self.suggestion.is_some() {
+                Some(cargo_metadata::diagnostic::Applicability::MachineApplicable)
+            } else {
+                None
+            })
             .expansion(None)
             .build()
             .unwrap()

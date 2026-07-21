@@ -1,17 +1,33 @@
 #![allow(unused)]
 use crate::linter::mlint_report::{MlintLevel, MlintReport};
 
+mod non_mingling_naming_style;
+pub use non_mingling_naming_style::linter as non_mingling_naming_style;
 mod template_linter;
 pub use template_linter::linter as template_linter;
 mod unnecessary_render_result_creation;
 pub use unnecessary_render_result_creation::linter as unnecessary_render_result_creation;
+pub use non_mingling_naming_style::check_file as non_mingling_naming_style_file;
 
 /// Run all registered lints on a parsed file with its source text.
 pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
     use crate::linter::mlint_attr::{get_mlint_override, MlintLevelOverride};
-    let mut reports = vec![];
+
+    // File-level lints (check types, modules, etc.)
+    let mut reports: Vec<MlintReport> = vec![];
+    reports.extend(non_mingling_naming_style::check_file(file, source));
+
+    // Item-level lints (check each function)
     for item in &file.items {
         if let syn::Item::Fn(f) = item {
+            let skip = get_mlint_override(&f.attrs, "non_mingling_naming_style") == Some(MlintLevelOverride::Allow);
+            if !skip {
+                let mut rs = non_mingling_naming_style::linter(f.clone(), source);
+                if get_mlint_override(&f.attrs, "non_mingling_naming_style") == Some(MlintLevelOverride::Deny) {
+                    for r in &mut rs { r.level = MlintLevel::Error; }
+                }
+                reports.extend(rs);
+            }
             let skip = get_mlint_override(&f.attrs, "template_linter") == Some(MlintLevelOverride::Allow);
             if !skip {
                 let mut rs = template_linter::linter(f.clone(), source);
@@ -28,12 +44,12 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
                 }
                 reports.extend(rs);
             }
-
         }
     }
+
+    // Apply file-level #![mlint(allow/warn/deny(...))] overrides
     for r in &mut reports {
-        let name = &r.lint_code;
-        if let Some(override_level) = get_mlint_override(&file.attrs, name) {
+        if let Some(override_level) = get_mlint_override(&file.attrs, &r.lint_code) {
             match override_level {
                 MlintLevelOverride::Allow => r.level = MlintLevel::Help,
                 MlintLevelOverride::Deny => r.level = MlintLevel::Error,
@@ -50,8 +66,6 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
 #[macro_export]
 macro_rules! assert_detected {
     ($linter:expr, $ast_type:ty => { $($code:tt)* }) => {
-        // $($code:tt)* captures tokens INSIDE the braces, not including the braces
-        // e.g. `fn foo() { ... }` — exactly what syn::ItemFn expects
         let source = stringify!($($code)*);
         let ast: $ast_type = syn::parse_str(&source).unwrap();
         assert!(!$linter(ast, &source).is_empty());

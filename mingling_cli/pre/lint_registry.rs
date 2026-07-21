@@ -43,6 +43,22 @@ pub fn gen_mod_file() -> Result<(), Error> {
         })
     }
 
+    // Generate file-level lint calls (lints that have `pub fn check_file`)
+    for name in &entries {
+        let file_path = lints_dir.join(format!("{name}.rs"));
+        let has_check_file = fs::read_to_string(&file_path)
+            .map(|c| c.contains("pub fn check_file("))
+            .unwrap_or(false);
+        if has_check_file {
+            tmpl!(template, file_calls {
+                name = name
+            });
+            tmpl!(template, file_lints {
+                name = name
+            });
+        }
+    }
+
     fs::write(&mod_file, template.to_string())?;
 
     Ok(())

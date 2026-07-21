@@ -4,7 +4,7 @@ pub mod pre;
 
 fn main() {
     // Perform path analysis and build type mapping table
-    analyze_and_build_type_mapping().unwrap();
+    analyze_and_build_type_mapping().ok();
 
     // Generate lint registry
     pre::gen_mod_file().unwrap();

@@ -2,30 +2,26 @@
 use crate::linter::mlint_report::{MlintLevel, MlintReport};
 
 >>>>>>>>>> impls;
+>>>>>>>>>> file_lints;
 
 /// Run all registered lints on a parsed file with its source text.
 pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
     use crate::linter::mlint_attr::{get_mlint_override, MlintLevelOverride};
-    let mut reports = vec![];
+
+    // File-level lints (check types, modules, etc.)
+    let mut reports: Vec<MlintReport> = vec![];
+>>>>>>>>>> file_calls;
+
+    // Item-level lints (check each function)
     for item in &file.items {
         if let syn::Item::Fn(f) = item {
 >>>>>>>>>> calls;
-
-@@@ >>> calls
-            let skip = get_mlint_override(&f.attrs, "<<<name>>>") == Some(MlintLevelOverride::Allow);
-            if !skip {
-                let mut rs = <<<name>>>::linter(f.clone(), source);
-                if get_mlint_override(&f.attrs, "<<<name>>>") == Some(MlintLevelOverride::Deny) {
-                    for r in &mut rs { r.level = MlintLevel::Error; }
-                }
-                reports.extend(rs);
-            }
-@@@ <<<
         }
     }
+
+    // Apply file-level #![mlint(allow/warn/deny(...))] overrides
     for r in &mut reports {
-        let name = &r.lint_code;
-        if let Some(override_level) = get_mlint_override(&file.attrs, name) {
+        if let Some(override_level) = get_mlint_override(&file.attrs, &r.lint_code) {
             match override_level {
                 MlintLevelOverride::Allow => r.level = MlintLevel::Help,
                 MlintLevelOverride::Deny => r.level = MlintLevel::Error,
@@ -42,8 +38,6 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
 #[macro_export]
 macro_rules! assert_detected {
     ($linter:expr, $ast_type:ty => { $($code:tt)* }) => {
-        // $($code:tt)* captures tokens INSIDE the braces, not including the braces
-        // e.g. `fn foo() { ... }` — exactly what syn::ItemFn expects
         let source = stringify!($($code)*);
         let ast: $ast_type = syn::parse_str(&source).unwrap();
         assert!(!$linter(ast, &source).is_empty());
@@ -59,7 +53,26 @@ macro_rules! assert_not_detected {
     };
 }
 
+@@@ >>> file_calls
+    reports.extend(<<<name>>>::check_file(file, source));
+@@@ <<<
+
+@@@ >>> file_lints
+pub use <<<name>>>::check_file as <<<name>>>_file;
+@@@ <<<
+
 @@@ >>> impls
 mod <<<mod_name>>>;
 pub use <<<mod_name>>>::linter as <<<mod_name>>>;
+@@@ <<<
+
+@@@ >>> calls
+            let skip = get_mlint_override(&f.attrs, "<<<name>>>") == Some(MlintLevelOverride::Allow);
+            if !skip {
+                let mut rs = <<<name>>>::linter(f.clone(), source);
+                if get_mlint_override(&f.attrs, "<<<name>>>") == Some(MlintLevelOverride::Deny) {
+                    for r in &mut rs { r.level = MlintLevel::Error; }
+                }
+                reports.extend(rs);
+            }
 @@@ <<<
