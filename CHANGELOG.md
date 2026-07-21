@@ -566,6 +566,41 @@ None
 
     All examples and internal usages have been updated across the codebase to reflect these changes (e.g., `repl_basic_setup` now calls `println!("{}", r.result)` instead of `println!("{}", r.result.trim())`, since `Display` no longer adds a trailing newline).
 
+7. **[`any`]** **[`macros`]** Made `AnyOutput`'s `type_id` and `member_id` fields private (`pub(crate)`) and added public accessor methods `type_id()` and `member_id()`. Added the `unsafe fn new_bare<T>(value: T, member_id: G) -> Self` constructor that bypasses the `Grouped` trait, allowing manual specification of `member_id` without requiring the concrete type to implement `Grouped`.
+
+    - **`type_id`** field changed from `pub` to `pub(crate)` — accessible via `type_id()` accessor.
+    - **`member_id`** field changed from `pub` to `pub(crate)` — accessible via `member_id()` accessor (requires `G: Copy`).
+    - **`new_bare`** — Unsafe constructor that takes a raw `member_id` value without invoking `Grouped::member_id()`. The caller must ensure the provided `member_id` correctly corresponds to the concrete type `T`.
+    - Updated all internal `match any.member_id { ... }` patterns in `gen_program.rs` to use `match any.member_id() { ... }` instead.
+    - Updated the panic message in `do_chain` (both sync and async) from `any.type_id` to `any.type_id()`.
+    - Updated the example-hook `main.rs` to call `info.output.member_id()` instead of accessing `info.output.member_id` directly.
+    - Added `Copy` derive to the generated enum to enable `member_id()`'s `Copy` requirement on the enum type.
+
+    _No behavioral changes for existing code — the accessor methods provide the same values as the previously-public fields._
+
+8. **[`any`]** **[`macros`]** **[BREAKING]** Marked `Grouped` trait as `unsafe trait`. The `Grouped` trait has always been inherently unsafe — the `member_id()` return value must exactly correspond to the variant registered by `register_type!` for the concrete type, otherwise dispatching on that type will result in **undefined behavior**. This unsoundness has existed since the trait's inception but was previously unenforced at the type system level.
+
+    By making `Grouped` an `unsafe trait`, implementors must now explicitly acknowledge this safety contract with `unsafe impl Grouped<...> for ...`. This change makes the existing safety invariant visible to developers and enables soundness warnings at compile time.
+
+    **Changes made:**
+
+    - **`Grouped` trait** in `mingling_core/src/any/group.rs` changed from `pub trait Grouped<Group>` to `pub unsafe trait Grouped<Group>`, with a safety doc comment explaining that manually implementing the trait with an incorrect `member_id` leads to undefined behavior.
+
+    - **Derive macros** (`#[derive(Grouped)]`, `#[derive(GroupedSerialize)]`) now generate `unsafe impl` instead of `impl`, with a SAFETY comment stating that the derive macro guarantees correctness because the `Ident` used in `register_type!` matches the `Ident` returned by `member_id()`.
+
+    - **`pack!`, `pack_structural!`, `group!`, `group_structural!`** macros now generate `unsafe impl` instead of `impl`, with analogous SAFETY comments.
+
+    - **All manual test implementations** of `Grouped` across the codebase (in `any.rs` tests, `hook.rs` tests, `mock.rs`) updated to `unsafe impl` with SAFETY comments explaining why they are safe in their test contexts.
+
+    - **`MockProgramCollect::member_id()`** changed from `MockProgramCollect::Foo` to `panic!("Attempting to read an unsafe enum type")` to prevent accidental execution in production paths.
+
+    **Migration guide:**
+
+    - Existing code that uses `Grouped` only through the derive macro or `pack!`/`group!` macros is automatically migrated — no changes needed.
+    - Code with **manual** `impl Grouped<...> for ...` blocks must add `unsafe` before `impl` and verify that the `member_id()` return value correctly corresponds to the type's registered variant. Only proceed if the correspondence is guaranteed.
+
+    _This is a breaking change only for code with manual `Grouped` implementations._
+
 ---
 
 ## Release 0.2.2 (2026-07-10)

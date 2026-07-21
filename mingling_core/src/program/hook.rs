@@ -695,7 +695,17 @@ mod tests {
         }
     }
 
-    impl Grouped<MockHookEnum> for MockHookEnum {
+    /// SAFETY:
+    ///
+    /// This implementation is only for testing purposes to satisfy trait bounds.
+    /// Since this code only constructs `AnyOutput` and calls methods like
+    /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+    /// none of which involve `ProgramCollect::do_chain` or
+    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// never exploited in an unsafe way here.
+    /// The caller must ensure that the associated `member_id` correctly
+    /// corresponds to the type's role in the group.
+    unsafe impl Grouped<MockHookEnum> for MockHookEnum {
         fn member_id() -> MockHookEnum {
             MockHookEnum::A
         }

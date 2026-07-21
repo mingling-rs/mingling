@@ -40,7 +40,7 @@ fn main() {
             .on_pre_chain(|info| {
                 println!("[DEBUG] Pre chain: {}", info.input);
             })
-            .on_post_chain(|info| println!("[DEBUG] Post chain: {}", info.output.member_id))
+            .on_post_chain(|info| println!("[DEBUG] Post chain: {}", info.output.member_id()))
             .on_finish(|_| {
                 println!("[DEBUG] Loop end");
                 ProgramControlUnit::OverrideExitCode(0) // Override exit code

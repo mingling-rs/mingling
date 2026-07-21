@@ -342,7 +342,7 @@ fn main() {
         ) -> Result<::mingling::RenderResult, ::mingling::error::StructuralRendererSerializeError> {
             #[allow(unused_imports)]
             #(#pathf_uses)*
-            match any.member_id {
+            match any.member_id() {
                 #(#structural_renderer_tokens)*
                 _ => {
                     // Non-structural types: render ResultEmpty (which implements
@@ -408,7 +408,7 @@ fn main() {
         fn do_comp(any: &::mingling::AnyOutput<Self::Enum>, ctx: &::mingling::ShellContext) -> ::mingling::Suggest {
             #[allow(unused_imports)]
             #(#pathf_uses)*
-            match any.member_id {
+            match any.member_id() {
                 #(#completion_tokens)*
                 _ => ::mingling::Suggest::FileCompletion,
             }
@@ -442,7 +442,7 @@ fn main() {
         }).collect();
             quote! {
                 fn render(any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::RenderResult {
-                    match any.member_id {
+                    match any.member_id() {
                         #(#render_arms)*
                         _ => ::mingling::RenderResult::default(),
                     }
@@ -494,9 +494,9 @@ fn main() {
             fn do_chain(
                 any: ::mingling::AnyOutput<Self::Enum>,
             ) -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ::mingling::ChainProcess<Self::Enum>> + ::std::marker::Send>> {
-                match any.member_id {
+                match any.member_id() {
                     #(#chain_arms_async)*
-                    _ => ::core::panic!("No chain found for type id: {:?}", any.type_id),
+                    _ => ::core::panic!("No chain found for type id: {:?}", any.type_id()),
                 }
             }
         }
@@ -505,9 +505,9 @@ fn main() {
             fn do_chain(
                 any: ::mingling::AnyOutput<Self::Enum>,
             ) -> ::mingling::ChainProcess<Self::Enum> {
-                match any.member_id {
+                match any.member_id() {
                     #(#chain_arms_sync)*
-                    _ => ::core::panic!("No chain found for type id: {:?}", any.type_id),
+                    _ => ::core::panic!("No chain found for type id: {:?}", any.type_id()),
                 }
             }
         }
@@ -535,7 +535,7 @@ fn main() {
     let expanded = quote! {
         #pathf_hint
 
-        #[derive(Debug, PartialEq, Eq, Clone)]
+        #[derive(Debug, PartialEq, Eq, Clone, Copy)]
         #[repr(#repr_type)]
         #[allow(nonstandard_style)]
         pub enum #name {
@@ -569,19 +569,19 @@ fn main() {
             fn render_help(any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::RenderResult {
                 #[allow(unused_imports)]
                 #(#pathf_uses)*
-                match any.member_id {
+                match any.member_id() {
                     #(#help_tokens)*
                     _ => ::mingling::RenderResult::default(),
                 }
             }
             fn has_renderer(any: &::mingling::AnyOutput<Self::Enum>) -> bool {
-                match any.member_id {
+                match any.member_id() {
                     #(#renderer_exist_tokens)*
                     _ => false
                 }
             }
             fn has_chain(any: &::mingling::AnyOutput<Self::Enum>) -> bool {
-                match any.member_id {
+                match any.member_id() {
                     #(#chain_exist_tokens)*
                     _ => false
                 }

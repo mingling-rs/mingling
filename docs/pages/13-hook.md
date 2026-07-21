@@ -71,7 +71,7 @@ fn main() {
                 eprintln!("[hook] executing chain for: {}", info.input);
             })
             .on_post_chain(|info| {
-                eprintln!("[hook] chain output: {}", info.output.member_id);
+                eprintln!("[hook] chain output: {}", info.output.member_id());
             }),
     );
  

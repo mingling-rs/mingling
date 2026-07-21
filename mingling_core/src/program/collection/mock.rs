@@ -23,9 +23,12 @@ pub enum MockProgramCollect {
     Bar,
 }
 
-impl Grouped<MockProgramCollect> for MockProgramCollect {
+/// SAFETY: This is a mock type used only for temporary testing.
+/// It will never actually enter the macro system.
+/// The internal `panic!` ensures that `member_id` will never be executed.
+unsafe impl Grouped<MockProgramCollect> for MockProgramCollect {
     fn member_id() -> MockProgramCollect {
-        MockProgramCollect::Foo
+        panic!("Attempting to read an unsafe enum type");
     }
 }
 

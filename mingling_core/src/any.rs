@@ -22,14 +22,14 @@ pub struct AnyOutput<G> {
     ///
     /// This is set during construction and used for type-checking
     /// in downcast, restore, and is methods.
-    pub type_id: std::any::TypeId,
+    pub(crate) type_id: std::any::TypeId,
 
     /// The variant identifier returned by [`Grouped::member_id`] for the
     /// concrete type stored in `inner`.
     ///
     /// This is used by the scheduler to dispatch on the correct enum
     /// variant when routing the output.
-    pub member_id: G,
+    pub(crate) member_id: G,
 }
 
 impl<G> AnyOutput<G> {
@@ -43,6 +43,52 @@ impl<G> AnyOutput<G> {
             type_id: std::any::TypeId::of::<T>(),
             member_id: T::member_id(),
         }
+    }
+
+    /// Create an `AnyOutput` from a raw value with a manually specified member_id.
+    ///
+    /// This function bypasses the [`Grouped`] trait, meaning the `member_id` you provide
+    /// does **not** have to match the actual concrete type `T`. The scheduler uses
+    /// `member_id` to determine which enum variant the output belongs to, and later
+    /// attempts to restore the value to the concrete type `T` based on that variant.
+    ///
+    /// # Safety
+    ///
+    /// - The caller must ensure that `member_id` correctly corresponds to the concrete
+    ///   type `T` according to the scheduling logic. If `member_id` does not match,
+    ///   calling [`restore`](Self::restore) or [`downcast`](Self::downcast) with the
+    ///   type associated with `member_id` will cause **undefined behavior**.
+    /// - This safety contract is the caller's responsibility; the compiler cannot
+    ///   enforce the correspondence between `member_id` and the stored type.
+    pub unsafe fn new_bare<T>(value: T, member_id: G) -> Self
+    where
+        T: Send + 'static,
+    {
+        Self {
+            inner: Box::new(value),
+            type_id: std::any::TypeId::of::<T>(),
+            member_id,
+        }
+    }
+
+    /// Get the [`TypeId`] of the concrete type stored in `inner`.
+    ///
+    /// The `TypeId` is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
+    /// and is used for subsequent downcasting and type checking.
+    pub fn type_id(&self) -> std::any::TypeId {
+        self.type_id
+    }
+
+    /// Get the [`member_id`] of the concrete type stored in `inner`.
+    ///
+    /// [`member_id`] is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
+    /// and identifies which variant of the output enum this value corresponds to.
+    /// The scheduler uses this value to dispatch the output to the correct next step.
+    pub fn member_id(&self) -> G
+    where
+        G: Copy,
+    {
+        self.member_id
     }
 
     /// Attempt to downcast the `AnyOutput` to a concrete type.
@@ -190,7 +236,17 @@ mod tests {
         value: i32,
     }
 
-    impl Grouped<MockGroup> for AlphaData {
+    /// # Safety
+    ///
+    /// This implementation is only for testing purposes to satisfy trait bounds.
+    /// Since this code only constructs `AnyOutput` and calls methods like
+    /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+    /// none of which involve `ProgramCollect::do_chain` or
+    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// never exploited in an unsafe way here.
+    /// The caller must ensure that the associated `member_id` correctly
+    /// corresponds to the type's role in the group.
+    unsafe impl Grouped<MockGroup> for AlphaData {
         fn member_id() -> MockGroup {
             MockGroup::Alpha
         }
@@ -202,7 +258,17 @@ mod tests {
         name: String,
     }
 
-    impl Grouped<MockGroup> for BetaData {
+    /// # Safety
+    ///
+    /// This implementation is only for testing purposes to satisfy trait bounds.
+    /// Since this code only constructs `AnyOutput` and calls methods like
+    /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+    /// none of which involve `ProgramCollect::do_chain` or
+    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// never exploited in an unsafe way here.
+    /// The caller must ensure that the associated `member_id` correctly
+    /// corresponds to the type's role in the group.
+    unsafe impl Grouped<MockGroup> for BetaData {
         fn member_id() -> MockGroup {
             MockGroup::Beta
         }
@@ -213,7 +279,17 @@ mod tests {
     #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
     struct GammaData;
 
-    impl Grouped<MockGroup> for GammaData {
+    /// # Safety
+    ///
+    /// This implementation is only for testing purposes to satisfy trait bounds.
+    /// Since this code only constructs `AnyOutput` and calls methods like
+    /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+    /// none of which involve `ProgramCollect::do_chain` or
+    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// never exploited in an unsafe way here.
+    /// The caller must ensure that the associated `member_id` correctly
+    /// corresponds to the type's role in the group.
+    unsafe impl Grouped<MockGroup> for GammaData {
         fn member_id() -> MockGroup {
             MockGroup::Gamma
         }
@@ -369,7 +445,17 @@ mod tests {
             x: i32,
         }
 
-        impl Grouped<MockGroup> for SerData {
+        /// SAFETY:
+        ///
+        /// This implementation is only for testing purposes to satisfy trait bounds.
+        /// Since this code only constructs `AnyOutput` and calls methods like
+        /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+        /// none of which involve `ProgramCollect::do_chain` or
+        /// `ProgramCollect::render` — the type/member_id correspondence is
+        /// never exploited in an unsafe way here.
+        /// The caller must ensure that the associated `member_id` correctly
+        /// corresponds to the type's role in the group.
+        unsafe impl Grouped<MockGroup> for SerData {
             fn member_id() -> MockGroup {
                 MockGroup::Gamma
             }
@@ -396,13 +482,33 @@ mod tests {
             b: String,
         }
 
-        impl Grouped<MockGroup> for SerA {
+        /// SAFETY:
+        ///
+        /// This implementation is only for testing purposes to satisfy trait bounds.
+        /// Since this code only constructs `AnyOutput` and calls methods like
+        /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+        /// none of which involve `ProgramCollect::do_chain` or
+        /// `ProgramCollect::render` — the type/member_id correspondence is
+        /// never exploited in an unsafe way here.
+        /// The caller must ensure that the associated `member_id` correctly
+        /// corresponds to the type's role in the group.
+        unsafe impl Grouped<MockGroup> for SerA {
             fn member_id() -> MockGroup {
                 MockGroup::Alpha
             }
         }
 
-        impl Grouped<MockGroup> for SerB {
+        /// SAFETY:
+        ///
+        /// This implementation is only for testing purposes to satisfy trait bounds.
+        /// Since this code only constructs `AnyOutput` and calls methods like
+        /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
+        /// none of which involve `ProgramCollect::do_chain` or
+        /// `ProgramCollect::render` — the type/member_id correspondence is
+        /// never exploited in an unsafe way here.
+        /// The caller must ensure that the associated `member_id` correctly
+        /// corresponds to the type's role in the group.
+        unsafe impl Grouped<MockGroup> for SerB {
             fn member_id() -> MockGroup {
                 MockGroup::Beta
             }

@@ -133,7 +133,11 @@ pub(crate) fn group_macro(input: TokenStream) -> TokenStream {
             #type_use
             #alias_use
 
-            impl ::mingling::Grouped<__MinglingProgram> for #type_name {
+            /// SAFETY: This is an internal implementation of the `group!` macro,
+            /// guaranteeing that the enum value registered by the `register_type!` macro
+            /// is exactly the same as the actual return value,
+            /// which can be confirmed via the `Ident` in the `quote!` block.
+            unsafe impl ::mingling::Grouped<__MinglingProgram> for #type_name {
                 fn member_id() -> __MinglingProgram {
                     __MinglingProgram::#type_name
                 }

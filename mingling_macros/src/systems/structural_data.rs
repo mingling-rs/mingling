@@ -176,7 +176,11 @@ pub(crate) fn pack_structural(input: TokenStream) -> TokenStream {
             }
         }
 
-        impl ::mingling::Grouped<#program_path> for #type_name {
+        /// SAFETY: This is an internal implementation of the `pack_structural!` macro,
+        /// guaranteeing that the enum value registered by the `register_type!` macro
+        /// is exactly the same as the actual return value,
+        /// which can be confirmed via the `Ident` in the `quote!` block.
+        unsafe impl ::mingling::Grouped<#program_path> for #type_name {
             fn member_id() -> #program_path {
                 #program_path::#type_name
             }
@@ -297,7 +301,11 @@ pub(crate) fn group_structural(input: TokenStream) -> TokenStream {
             #type_use
             #alias_use
 
-            impl ::mingling::Grouped<__MinglingProgram> for #type_name {
+            /// SAFETY: This is an internal implementation of the `pack_structural!` macro,
+            /// guaranteeing that the enum value registered by the `register_type!` macro
+            /// is exactly the same as the actual return value,
+            /// which can be confirmed via the `Ident` in the `quote!` block.
+            unsafe impl ::mingling::Grouped<__MinglingProgram> for #type_name {
                 fn member_id() -> __MinglingProgram {
                     __MinglingProgram::#type_name
                 }

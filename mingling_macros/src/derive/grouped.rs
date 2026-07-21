@@ -16,7 +16,11 @@ pub(crate) fn derive_grouped(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         ::mingling::macros::register_type!(#struct_name);
 
-        impl ::mingling::Grouped<#group_ident> for #struct_name {
+        /// SAFETY: This is an internal implementation of the `Grouped` derive macro,
+        /// guaranteeing that the enum value registered by the `register_type!` macro
+        /// is exactly the same as the actual return value,
+        /// which can be confirmed via the `Ident` in the `quote!` block.
+        unsafe impl ::mingling::Grouped<#group_ident> for #struct_name {
             fn member_id() -> #group_ident {
                 #group_ident::#struct_name
             }
@@ -46,7 +50,11 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
 
         ::mingling::macros::register_type!(#struct_name);
 
-        impl ::mingling::Grouped<#group_ident> for #struct_name {
+        /// SAFETY: This is an internal implementation of the `Grouped` derive macro,
+        /// guaranteeing that the enum value registered by the `register_type!` macro
+        /// is exactly the same as the actual return value,
+        /// which can be confirmed via the `Ident` in the `quote!` block.
+        unsafe impl ::mingling::Grouped<#group_ident> for #struct_name {
             fn member_id() -> #group_ident {
                 #group_ident::#struct_name
             }
