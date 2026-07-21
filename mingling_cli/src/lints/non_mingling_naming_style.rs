@@ -337,6 +337,7 @@ mod lint_test {
             fn handle_greet() {}
         });
     }
+
     #[test]
     fn regular_fn_ok() {
         assert_not_detected!(super::linter, syn::ItemFn => {
