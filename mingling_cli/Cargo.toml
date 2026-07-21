@@ -40,6 +40,7 @@ annotate-snippets = "0.12.16"
 # Code analyze
 proc-macro2 = { version = "1.0.107", features = ["span-locations"] }
 syn = { version = "3.0.2", features = ["full", "extra-traits"] }
+quote = "1.0.47"
 
 # Configure & Serialization
 serde = { version = "1.0.229", features = ["derive"] }

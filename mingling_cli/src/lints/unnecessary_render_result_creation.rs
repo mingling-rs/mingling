@@ -15,6 +15,7 @@
 //! Default: `warn`
 
 use crate::linter::mlint_report::{MlintLevel, MlintReport};
+use quote::ToTokens;
 
 pub fn linter(ast: syn::ItemFn, source: &str) -> Vec<MlintReport> {
     if !has_renderer_attr(&ast) {
@@ -169,8 +170,19 @@ fn check_stmt_usage(stmt: &syn::Stmt, r_name: &str, print_count: &mut usize) -> 
         }
     }
 
-    let s = format!("{stmt:#?}");
-    !s.contains(&format!("\"{r_name}\""))
+    // Any other reference to r → not allowed
+    // Check the token stream for the variable name
+    let ts_string = stmt.to_token_stream().to_string();
+    if ts_string.contains(&format!("({r_name})"))
+        || ts_string.contains(&format!(" {r_name})"))
+        || ts_string.contains(&format!("(&mut {r_name})"))
+        || ts_string.contains(&format!("&{r_name}"))
+        || ts_string.contains(&format!("move {r_name}"))
+        || ts_string.contains(&format!(",{r_name},"))
+    {
+        return false;
+    }
+    true
 }
 
 #[cfg(test)]

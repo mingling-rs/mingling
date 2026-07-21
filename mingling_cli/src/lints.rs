@@ -12,21 +12,17 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
     let mut reports = vec![];
     for item in &file.items {
         if let syn::Item::Fn(f) = item {
-            // Check item-level #[mlint(allow/warn/deny(template_linter))]
             let skip = get_mlint_override(&f.attrs, "template_linter") == Some(MlintLevelOverride::Allow);
             if !skip {
                 let mut rs = template_linter::linter(f.clone(), source);
-                // Apply deny override at item level
                 if get_mlint_override(&f.attrs, "template_linter") == Some(MlintLevelOverride::Deny) {
                     for r in &mut rs { r.level = MlintLevel::Error; }
                 }
                 reports.extend(rs);
             }
-            // Check item-level #[mlint(allow/warn/deny(unnecessary_render_result_creation))]
             let skip = get_mlint_override(&f.attrs, "unnecessary_render_result_creation") == Some(MlintLevelOverride::Allow);
             if !skip {
                 let mut rs = unnecessary_render_result_creation::linter(f.clone(), source);
-                // Apply deny override at item level
                 if get_mlint_override(&f.attrs, "unnecessary_render_result_creation") == Some(MlintLevelOverride::Deny) {
                     for r in &mut rs { r.level = MlintLevel::Error; }
                 }
@@ -35,45 +31,38 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
 
         }
     }
-    // Apply file-level #![mlint(allow/warn/deny(...))] overrides
     for r in &mut reports {
         let name = &r.lint_code;
         if let Some(override_level) = get_mlint_override(&file.attrs, name) {
             match override_level {
-                MlintLevelOverride::Allow => {
-                    // remove by marking; filtered below
-                    r.level = MlintLevel::Help; // sentinel: filtered out
-                }
-                MlintLevelOverride::Deny => {
-                    r.level = MlintLevel::Error;
-                }
+                MlintLevelOverride::Allow => r.level = MlintLevel::Help,
+                MlintLevelOverride::Deny => r.level = MlintLevel::Error,
                 MlintLevelOverride::Warn => {
-                    if r.level != MlintLevel::Error {
-                        r.level = MlintLevel::Warning;
-                    }
+                    if r.level != MlintLevel::Error { r.level = MlintLevel::Warning; }
                 }
             }
         }
     }
-    // Remove allowed reports (sentinel = Help)
     reports.retain(|r| r.level != MlintLevel::Help);
     reports
 }
 
 #[macro_export]
 macro_rules! assert_detected {
-    ($linter:expr, $ast_type:ty => $code:tt) => {
-        // Parse the string into a syn::ItemFn
-        let ast: $ast_type = syn::parse_str(&stringify!($code)).unwrap();
-        assert!(!$linter(ast, &stringify!($code).to_string()).is_empty());
+    ($linter:expr, $ast_type:ty => { $($code:tt)* }) => {
+        // $($code:tt)* captures tokens INSIDE the braces, not including the braces
+        // e.g. `fn foo() { ... }` — exactly what syn::ItemFn expects
+        let source = stringify!($($code)*);
+        let ast: $ast_type = syn::parse_str(&source).unwrap();
+        assert!(!$linter(ast, &source).is_empty());
     };
 }
 
 #[macro_export]
 macro_rules! assert_not_detected {
-    ($linter:expr, $ast_type:ty => $code:tt) => {
-        // Parse the string into a syn::ItemFn
-        let ast: $ast_type = syn::parse_str(&stringify!($code)).unwrap();
-        assert!($linter(ast, &stringify!($code).to_string()).is_empty());
+    ($linter:expr, $ast_type:ty => { $($code:tt)* }) => {
+        let source = stringify!($($code)*);
+        let ast: $ast_type = syn::parse_str(&source).unwrap();
+        assert!($linter(ast, &source).is_empty());
     };
 }
