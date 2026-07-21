@@ -13,7 +13,7 @@
 //! > This section is the **Metadata** section, which needs to be filled in correctly.
 //! > These contents will eventually be compiled as the Linter's behavior.
 //!
-//! Author: `Weicao-CatilGrass`
+//! Author: `Your-Name`
 //! Default: `allow`
 //            ^^^^^ Supported parameters: `warn`, `allow`, `deny`
 
