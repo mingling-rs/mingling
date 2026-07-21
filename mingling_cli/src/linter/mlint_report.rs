@@ -14,6 +14,7 @@ use crate::Next;
 use crate::metadata::setup::ResUsingJson;
 
 /// Complete structure of a Lint report, containing inspection results and associated metadata.
+#[derive(Default)]
 pub struct MlintReport {
     /// Source file name
     pub file_name: String,
@@ -50,11 +51,12 @@ pub struct MlintReport {
 }
 
 /// Report severity level, indicating the seriousness of the Lint result.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum MlintLevel {
+    #[default]
+    Note,
     Error,
     Warning,
-    Note,
     Help,
 }
 
@@ -228,17 +230,13 @@ impl MlintReport {
             group = group.element(msg);
         }
 
-        // 添加 note: `#[mlint(level([code]))]` on by default
         if !self.lint_code.is_empty() {
             let level_name = match self.level {
                 MlintLevel::Error => "deny",
                 MlintLevel::Warning => "warn",
                 MlintLevel::Note | MlintLevel::Help => "allow",
             };
-            let note_text = format!(
-                "`#[mlint({level_name}([{}]))]` on by default",
-                self.lint_code
-            );
+            let note_text = format!("`#[mlint({level_name}({}))]` on by default", self.lint_code);
             let note_msg = NOTE.clone().message(note_text);
             group = group.element(note_msg);
         }

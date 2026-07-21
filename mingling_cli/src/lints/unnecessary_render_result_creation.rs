@@ -45,7 +45,6 @@ pub fn linter(ast: syn::ItemFn, source: &str) -> Vec<MlintReport> {
     if only_print_and_return && print_count > 0 {
         let span = MlintReport::span_from_syn(&ast.sig, source);
         vec![MlintReport {
-            file_name: String::new(),
             source_code: source.to_string(),
             level: MlintLevel::Warning,
             lint_code: "unnecessary_render_result_creation".into(),
@@ -55,22 +54,14 @@ pub fn linter(ast: syn::ItemFn, source: &str) -> Vec<MlintReport> {
             ),
             spans: vec![span],
             attached_reports: vec![MlintReport {
-                file_name: String::new(),
-                source_code: String::new(),
                 level: MlintLevel::Help,
-                lint_code: String::new(),
-                message: "change to `#[renderer(buffer)]` and use `r_println!(...)` without the `r` parameter".into(),
-                spans: vec![],
-                attached_reports: vec![],
-                package_id: None,
-                target_name: None,
-                target_kind: None,
-                target_src_path: None,
+                message: format!(
+                    "change to `#[renderer(buffer)]` and use `r_println!(...)` without the `{}` parameter",
+                    r_name,
+                ),
+                ..Default::default()
             }],
-            package_id: None,
-            target_name: None,
-            target_kind: None,
-            target_src_path: None,
+            ..Default::default()
         }]
     } else {
         vec![]
@@ -103,11 +94,37 @@ fn find_render_result_new(stmts: &[syn::Stmt]) -> Option<(proc_macro2::Ident, us
         {
             let segs = &expr_path.path.segments;
             let matches = match segs.len() {
-                2 => segs[0].ident == "RenderResult" && segs[1].ident == "new",
+                2 => {
+                    segs[0].ident == "RenderResult"
+                        && (segs[1].ident == "new" || segs[1].ident == "default")
+                }
                 3 => {
                     segs[0].ident == "mingling"
                         && segs[1].ident == "RenderResult"
-                        && segs[2].ident == "new"
+                        && (segs[2].ident == "new" || segs[2].ident == "default")
+                }
+                _ => false,
+            };
+            if matches {
+                return Some((pat_id.ident.clone(), i));
+            }
+        }
+
+        // Also handle `RenderResult::from(...)` and `mingling::RenderResult::from(...)`
+        if let syn::Stmt::Local(local) = stmt
+            && let Some(init) = &local.init
+            && let syn::Pat::Ident(pat_id) = &local.pat
+            && pat_id.mutability.is_some()
+            && let syn::Expr::Call(call) = &*init.expr
+            && let syn::Expr::Path(expr_path) = call.func.as_ref()
+        {
+            let segs = &expr_path.path.segments;
+            let matches = match segs.len() {
+                2 => segs[0].ident == "RenderResult" && segs[1].ident == "from",
+                3 => {
+                    segs[0].ident == "mingling"
+                        && segs[1].ident == "RenderResult"
+                        && segs[2].ident == "from"
                 }
                 _ => false,
             };
