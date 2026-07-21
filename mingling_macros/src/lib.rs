@@ -634,7 +634,7 @@ pub fn render_route(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         match #expr {
             Ok(r) => r,
-            Err(e) => return crate::ThisProgram::render(::mingling::AnyOutput::new(e)),
+            Err(e) => return <crate::ThisProgram as ::mingling::ProgramCollect>::render(::mingling::AnyOutput::new(e)),
         }
     };
     TokenStream::from(expanded)
