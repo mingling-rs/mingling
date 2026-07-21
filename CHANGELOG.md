@@ -52,6 +52,16 @@ None
 
 ### Release 0.3.0 (Unreleased)
 
+> In detail, the changes in Mingling 0.3.0 are as follows:
+
+1. **Added `arg-picker`** — Mingling has never had a comfortable argument parsing solution. You either suffered with `parser` or went all-in on `clap`. So I wrote a smarter `arg-picker`. The API style is close to the original `parser`, but it's more type-safe, more robust, and more extensible. See the main text for details.
+
+2. **Made implicit behavior explicit**. For a long time, Mingling's attribute macros have been making **implicit** modifications to the original function — I have to admit, that's dirty. In the new version, I've removed **all** implicit modifications to the original function by attribute macros. In other words, `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` will no longer modify your original function in any way unless you explicitly specify it. Use the Extension Attribute (`#[chain(/* ... */)]`) mechanism to explicitly inject implicit behavior into your functions.
+
+3. I was originally planning to remove `r_println!` because I couldn't stand that `__renderer_inner_result` thing implicitly injected by the `#[renderer]` macro. But now I've rewritten it: `#[buffer]` injects an implicit `__render_result_buffer` value into the function, and then `r_println!` calls it. It's an extra step, but it also means: the dirt is your choice, not something I'm forcing on you :)
+
+4. **Finally**, a philosophical point. Mingling will move forward with a preference for **"selectively dirty"** over **"invisibly, forcibly dirty"** — this is the biggest direction going forward, building a more comfortable API on this foundation.
+
 #### Fixes:
 
 1. **[`pathf:patterns`]** Fixed pattern detection logic in `mingling_pathf` for multiple patterns to correctly detect opening bracket forms (e.g., `[chain`, `[renderer`, `[help`, `[completion`) in addition to the previously supported closing bracket forms (e.g., `chain]`, `renderer]`, `help]`, `completion]`). This ensures that attribute macro usages like `#[chain]`, `#[renderer]`, `#[help]`, and `#[completion]` are properly detected regardless of which side of the attribute the pattern matcher examines.
