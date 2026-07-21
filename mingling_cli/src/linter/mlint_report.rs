@@ -51,8 +51,8 @@ pub struct MlintReport {
     /// Compilation target source file path that this report belongs to
     pub target_src_path: Option<String>,
 
-    /// A suggestion for automatic fix (shown as diff in annotated output)
-    pub suggestion: Option<LintSuggestion>,
+    /// Suggestions for automatic fix (shown as diff in annotated output)
+    pub suggestions: Vec<LintSuggestion>,
 }
 
 /// Report severity level, indicating the seriousness of the Lint result.
@@ -248,8 +248,8 @@ impl MlintReport {
             group = group.element(msg);
         }
 
-        // Render suggestion as a diff (Element::Suggestion)
-        if let Some(sugg) = &self.suggestion {
+        // Render suggestions as diffs
+        for sugg in &self.suggestions {
             let patch_snippet = Snippet::source(sugg.source.clone())
                 .line_start(sugg.line_start)
                 .path(&self.file_name)
@@ -404,8 +404,8 @@ impl MlintReport {
                     .collect::<Vec<_>>(),
             )
             .label(span.label.clone())
-            .suggested_replacement(self.suggestion.as_ref().map(|s| s.replacement.clone()))
-            .suggestion_applicability(if self.suggestion.is_some() {
+            .suggested_replacement(self.suggestions.first().map(|s| s.replacement.clone()))
+            .suggestion_applicability(if !self.suggestions.is_empty() {
                 Some(cargo_metadata::diagnostic::Applicability::MachineApplicable)
             } else {
                 None

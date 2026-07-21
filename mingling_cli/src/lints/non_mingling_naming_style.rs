@@ -153,12 +153,12 @@ fn check_fn_name(func: &syn::ItemFn, source: &str) -> Vec<MlintReport> {
             lint_code: "non_mingling_naming_style".into(),
             message: msg,
             spans: vec![span],
-            suggestion: Some(LintSuggestion {
+            suggestions: vec![LintSuggestion {
                 source: source_line.to_string(),
                 line_start: func.sig.span().start().line,
                 byte_range,
                 replacement: suggestion_target,
-            }),
+            }],
             attached_reports: vec![MlintReport {
                 level: MlintLevel::Help,
                 message: format!("expected `{expected_fn}` ↔ `{expected_type}`"),
