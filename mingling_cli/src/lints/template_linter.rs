@@ -46,3 +46,11 @@ pub fn linter(_ast: syn::ItemFn, _source: &str) -> Vec<MlintReport> {
     //                               | syn::ItemUnion
     vec![]
 }
+
+#[cfg(test)]
+mod lint_test {
+    use crate::{assert_detected, assert_not_detected};
+
+    #[test]
+    fn test() {}
+}

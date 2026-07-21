@@ -172,3 +172,88 @@ fn check_stmt_usage(stmt: &syn::Stmt, r_name: &str, print_count: &mut usize) -> 
     let s = format!("{stmt:#?}");
     !s.contains(&format!("\"{r_name}\""))
 }
+
+#[cfg(test)]
+mod lint_test {
+    use crate::{assert_detected, assert_not_detected};
+
+    #[test]
+    fn test_detected_render_result_new() {
+        assert_detected!(super::linter, syn::ItemFn => {
+            #[renderer]
+            fn render_somesthing(_: Prev) -> RenderResult {
+                let mut r = RenderResult::new();
+                r_println!(r, "");
+                r
+            }
+        });
+    }
+
+    #[test]
+    fn test_detected_render_result_default() {
+        assert_detected!(super::linter, syn::ItemFn => {
+            #[renderer]
+            fn render_somesthing(_: Prev) -> RenderResult {
+                let mut r = RenderResult::default();
+                r_println!(r, "");
+                r
+            }
+        });
+    }
+
+    #[test]
+    fn test_detected_render_result_from() {
+        assert_detected!(super::linter, syn::ItemFn => {
+            #[renderer]
+            fn render_somesthing(_: Prev) -> RenderResult {
+                let mut r = RenderResult::from("Hello".to_string());
+                r_println!(r, "");
+                r
+            }
+        });
+    }
+
+    #[test]
+    fn test_not_detected_with_other_function_call() {
+        assert_not_detected!(super::linter, syn::ItemFn => {
+            #[renderer]
+            fn render_somesthing(_: Prev) -> RenderResult {
+                let mut r = RenderResult::new();
+                r_println!(r, "");
+                other(&mut r);
+                r
+            }
+        });
+    }
+
+    #[test]
+    fn test_not_detected_without_renderer_attr() {
+        assert_not_detected!(super::linter, syn::ItemFn => {
+            fn render_somesthing(_: Prev) -> RenderResult {
+                let mut r = RenderResult::new();
+                r_println!(r, "");
+                r
+            }
+        });
+    }
+
+    #[test]
+    fn test_not_detected_with_buffer_attr() {
+        assert_not_detected!(super::linter, syn::ItemFn => {
+            #[::mingling::macros::renderer(::mingling::macros::buffer)]
+            fn render_somesthing(_: Prev) {
+                r_println!("");
+            }
+        });
+    }
+
+    #[test]
+    fn test_not_detected_with_buffer_attr_fully_qualified() {
+        assert_not_detected!(super::linter, syn::ItemFn => {
+            #[::mingling::macros::renderer(::mingling::macros::buffer)]
+            fn render_somesthing(_: Prev) {
+                r_println!("");
+            }
+        });
+    }
+}

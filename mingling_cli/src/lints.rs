@@ -59,3 +59,21 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
     reports.retain(|r| r.level != MlintLevel::Help);
     reports
 }
+
+#[macro_export]
+macro_rules! assert_detected {
+    ($linter:expr, $ast_type:ty => $code:tt) => {
+        // Parse the string into a syn::ItemFn
+        let ast: $ast_type = syn::parse_str(&stringify!($code)).unwrap();
+        assert!(!$linter(ast, &stringify!($code).to_string()).is_empty());
+    };
+}
+
+#[macro_export]
+macro_rules! assert_not_detected {
+    ($linter:expr, $ast_type:ty => $code:tt) => {
+        // Parse the string into a syn::ItemFn
+        let ast: $ast_type = syn::parse_str(&stringify!($code)).unwrap();
+        assert!($linter(ast, &stringify!($code).to_string()).is_empty());
+    };
+}
