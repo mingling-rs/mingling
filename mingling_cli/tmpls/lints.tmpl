@@ -1,0 +1,56 @@
+#![allow(unused)]
+use crate::linter::mlint_report::{MlintLevel, MlintReport};
+
+>>>>>>>>>> impls;
+
+/// Run all registered lints on a parsed file with its source text.
+pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
+    use crate::linter::mlint_attr::{get_mlint_override, MlintLevelOverride};
+    let mut reports = vec![];
+    for item in &file.items {
+        if let syn::Item::Fn(f) = item {
+>>>>>>>>>> calls;
+
+@@@ >>> calls
+            // Check item-level #[mlint(allow/warn/deny(<<<name>>>))]
+            let skip = get_mlint_override(&f.attrs, "<<<name>>>") == Some(MlintLevelOverride::Allow);
+            if !skip {
+                let mut rs = <<<name>>>::linter(f.clone(), source);
+                // Apply deny override at item level
+                if get_mlint_override(&f.attrs, "<<<name>>>") == Some(MlintLevelOverride::Deny) {
+                    for r in &mut rs { r.level = MlintLevel::Error; }
+                }
+                reports.extend(rs);
+            }
+@@@ <<<
+        }
+    }
+    // Apply file-level #![mlint(allow/warn/deny(...))] overrides
+    for r in &mut reports {
+        let name = &r.lint_code;
+        if let Some(override_level) = get_mlint_override(&file.attrs, name) {
+            match override_level {
+                MlintLevelOverride::Allow => {
+                    // remove by marking; filtered below
+                    r.level = MlintLevel::Help; // sentinel: filtered out
+                }
+                MlintLevelOverride::Deny => {
+                    r.level = MlintLevel::Error;
+                }
+                MlintLevelOverride::Warn => {
+                    if r.level != MlintLevel::Error {
+                        r.level = MlintLevel::Warning;
+                    }
+                }
+            }
+        }
+    }
+    // Remove allowed reports (sentinel = Help)
+    reports.retain(|r| r.level != MlintLevel::Help);
+    reports
+}
+
+@@@ >>> impls
+mod <<<mod_name>>>;
+pub use <<<mod_name>>>::linter as <<<mod_name>>>;
+@@@ <<<

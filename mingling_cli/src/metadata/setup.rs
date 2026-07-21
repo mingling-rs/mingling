@@ -3,7 +3,6 @@ use std::{env::current_dir, path::PathBuf};
 use cargo_metadata::{CargoOpt, MetadataCommand};
 use mingling::{
     LazyInit, Program,
-    consts::REMAINS,
     macros::program_setup,
     picker::{IntoPicker, value::Flag},
     prelude::*,
@@ -16,9 +15,26 @@ pub const CARGO_TOML: &str = "Cargo.toml";
 use cargo_metadata::Metadata;
 use serde::Serialize;
 
+/// Resource holding parsed `cargo metadata` output.
+///
+/// This is lazily initialized during program setup by calling `cargo metadata`
+/// with the appropriate CLI flags (e.g., `--features`, `--all-features`,
+/// `--no-default-features`, `--no-deps`, `--message-format`).
+///
+/// Access the inner [`Metadata`] via [`ResMetadata::data()`], which panics if
+/// called before initialization (guaranteed not to happen in normal usage).
 #[derive(Default, Clone, Serialize)]
 pub struct ResMetadata {
     data: Option<Metadata>,
+}
+
+/// Resource indicating whether the output format is JSON.
+///
+/// Set to `true` when `--message-format json` (or similar) is passed.
+/// Used by renderers to decide whether to serialize structs as JSON.
+#[derive(Default, Clone, Serialize)]
+pub struct ResUsingJson {
+    pub using: bool,
 }
 
 impl ResMetadata {
@@ -38,7 +54,8 @@ impl ResMetadata {
 
 #[program_setup]
 pub fn cargo_metadata_setup(program: &mut Program<crate::ThisProgram>) {
-    let args = program.take_args();
+    let args = program.get_args().to_vec();
+
     let (
         feature_args,
         manifest_path,
@@ -46,7 +63,6 @@ pub fn cargo_metadata_setup(program: &mut Program<crate::ThisProgram>) {
         enable_all_features,
         no_default_features,
         no_deps,
-        args,
     ) = args
         .pick(&arg![features: Vec<String>])
         .pick(&arg![manifest_path: Option<String>])
@@ -54,12 +70,12 @@ pub fn cargo_metadata_setup(program: &mut Program<crate::ThisProgram>) {
         .pick(&arg![all_features: Flag])
         .pick(&arg![no_default_features: Flag])
         .pick(&arg![no_deps: Flag])
-        .pick(&REMAINS)
         .unwrap();
-    program.replace_args(args.into());
 
-    // Bind format setting to StructuralRenderer
-    program.structural_renderer_name = message_format.into();
+    // Is Using Json
+    program.with_resource(ResUsingJson {
+        using: message_format.contains("json"),
+    });
 
     // Current Dir
     let current_dir = current_dir().unwrap();

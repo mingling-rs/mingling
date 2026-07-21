@@ -1,16 +1,17 @@
+use cargo_metadata::Metadata;
 use mingling::{
     LazyRes,
-    macros::{chain, dispatcher, pack_structural},
+    macros::{chain, dispatcher, pack},
 };
 
 use crate::metadata::setup::ResMetadata;
 
 dispatcher!("metadata");
 
-pack_structural!(ResultMetadata = ResMetadata);
+pack!(ResultMetadata = ResMetadata);
 
 #[chain]
-pub fn handle_metadata(_: EntryMetadata, metadata: &mut LazyRes<ResMetadata>) -> ResultMetadata {
+pub fn handle_metadata(_: EntryMetadata, metadata: &mut LazyRes<ResMetadata>) -> Metadata {
     let metadata = metadata.get_ref().clone();
-    ResultMetadata::new(metadata)
+    metadata.data().clone()
 }
