@@ -142,6 +142,11 @@ fn ci(test_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
             exit_code = exit_code.max(code);
         }
 
+        println_cargo_style!("Phase: Try Build API docs");
+        if let Err(code) = deploy_api_docs() {
+            exit_code = exit_code.max(code);
+        }
+
         if exit_code != 0 {
             return Err(exit_code);
         }
@@ -223,6 +228,12 @@ fn test_all() -> Result<(), i32> {
         tasks.push((label, crate_name, cmd));
     }
     run_parallel("Testing", tasks)
+}
+
+fn deploy_api_docs() -> Result<(), i32> {
+    run_cmd!(
+        "cargo run --manifest-path .run/Cargo.toml --color always --bin deploy-api-docs -- --docsrs"
+    )
 }
 
 fn docs_refresh() -> Result<(), i32> {
