@@ -1,0 +1,9 @@
+checkOnSave = true
+
+# Use mling with ra-lint-check for code checking
+#
+# This tool will:
+#   1. first run `cargo check` to perform basic checks on your workspace
+#   2.  then run `mling lint`  to perform additional checks
+#       on the `Mingling` framework code in your workspace
+check.overrideCommand = ["mling", "ra-lint-check"]

@@ -6,7 +6,7 @@ use mingling::macros::{arg, chain, dispatcher, pack};
 use mingling::picker::EntryPicker;
 use tokio::task::JoinSet;
 
-dispatcher!("lint", CMDMinglingLinter => EntryMinglingLinter);
+dispatcher!("lint", CMDLint => EntryLint);
 
 /// Main linting function that processes all packages in the metadata.
 ///
@@ -71,7 +71,7 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
 pack!(StateBeginLinter = ());
 
 #[chain]
-pub fn handle_lint(args: EntryMinglingLinter) -> StateBeginLinter {
+pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
     let (with_checker, checker_args) = args
         .pick_or(&arg![with_checker: Option<String>], || {
             Some("cargo,check".to_string())
