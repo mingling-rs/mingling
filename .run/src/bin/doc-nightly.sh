@@ -1,3 +1,8 @@
 #!/bin/bash
 
-cargo dev_tool deploy-api-docs -- --docsrs --open
+cargo rustdoc \
+  --manifest-path mingling/Cargo.toml \
+  --features docs_rs,core,macros,builds,structural_renderer,repl,comp,parser,picker,clap,extra_macros \
+  --open \
+  -- \
+  --cfg docsrs

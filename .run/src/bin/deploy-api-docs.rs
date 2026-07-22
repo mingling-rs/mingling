@@ -6,9 +6,8 @@ use tools::{println_cargo_style, run_cmd};
 const OUTPUT_DIR: &str = "docs/api-docs";
 
 fn main() {
-    let (using_docsrs, open) = Picker::from_args()
+    let using_docsrs = Picker::from_args()
         .pick_or_default(&arg![docsrs: bool])
-        .pick_or_default(&arg![open: bool, 'O'])
         .unwrap();
 
     let repo_root = find_git_repo().expect("Failed to find git repository root");
@@ -28,15 +27,13 @@ fn main() {
     // Build cargo doc command
     let cmd = if using_docsrs {
         format!(
-            "cargo +nightly rustdoc {} --features \"{}\" -p mingling --target-dir \"{}\" --color always -- --cfg docsrs",
-            if open { "--open" } else { "" },
+            "cargo +nightly rustdoc --features \"{}\" -p mingling --target-dir \"{}\" --color always -- --cfg docsrs",
             features_arg,
             output_path.join("target").to_string_lossy()
         )
     } else {
         format!(
-            "cargo doc --no-deps {} --features \"{}\" -p mingling --target-dir \"{}\" --color always",
-            if open { "--open" } else { "" },
+            "cargo doc --no-deps --features \"{}\" -p mingling --target-dir \"{}\" --color always",
             features_arg,
             output_path.join("target").to_string_lossy()
         )
