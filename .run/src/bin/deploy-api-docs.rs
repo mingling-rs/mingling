@@ -1,10 +1,16 @@
 use std::path::Path;
 
+use arg_picker::{Picker, macros::arg};
 use tools::{println_cargo_style, run_cmd};
 
 const OUTPUT_DIR: &str = "docs/api-docs";
 
 fn main() {
+    let (using_docsrs, open) = Picker::from_args()
+        .pick_or_default(&arg![docsrs: bool])
+        .pick_or_default(&arg![open: bool, 'O'])
+        .unwrap();
+
     let repo_root = find_git_repo().expect("Failed to find git repository root");
 
     // Read features from [package.metadata.docs.rs]
@@ -20,11 +26,21 @@ fn main() {
     std::fs::create_dir_all(&output_path).expect("Failed to create output directory");
 
     // Build cargo doc command
-    let cmd = format!(
-        "cargo doc --no-deps --features \"{}\" -p mingling --target-dir \"{}\" --color always",
-        features_arg,
-        output_path.join("target").to_string_lossy()
-    );
+    let cmd = if using_docsrs {
+        format!(
+            "cargo +nightly rustdoc {} --features \"{}\" -p mingling --target-dir \"{}\" --color always -- --cfg docsrs",
+            if open { "--open" } else { "" },
+            features_arg,
+            output_path.join("target").to_string_lossy()
+        )
+    } else {
+        format!(
+            "cargo doc --no-deps {} --features \"{}\" -p mingling --target-dir \"{}\" --color always",
+            if open { "--open" } else { "" },
+            features_arg,
+            output_path.join("target").to_string_lossy()
+        )
+    };
 
     println_cargo_style!("Features: {}", features_arg);
     println_cargo_style!("Output: {}", output_path.display());
