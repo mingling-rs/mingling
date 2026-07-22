@@ -85,6 +85,9 @@ jobs:
       - name: Install nightly toolchain
         run: rustup toolchain install nightly
 
+      - name: Delete .temp directory before deployment
+        run: rm -rf .temp
+
       - name: Build API docs
         run: cargo +nightly run --manifest-path .run/Cargo.toml --bin deploy-api-docs -- --docsrs
 
