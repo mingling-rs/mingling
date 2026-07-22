@@ -31,7 +31,7 @@ features = [
 [build-dependencies.mingling]
 path = "../mingling"
 features = [
-    "builds",
+    "build",
     "pathf",
 ]
 

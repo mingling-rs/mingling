@@ -15,8 +15,8 @@ features = ["comp"]
 [build-dependencies.mingling]
 features = [
     "comp",
-    # 启用 `builds` 特性以提供构建期支持
-    "builds"
+    # 启用 `build` 特性以提供构建期支持
+    "build"
 ]
 ```
  

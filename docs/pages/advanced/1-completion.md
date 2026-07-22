@@ -15,8 +15,8 @@ features = ["comp"]
 [build-dependencies.mingling]
 features = [
     "comp",
-    # Enable `builds` for build-time support
-    "builds"
+    # Enable `build` for build-time support
+    "build"
 ]
 ```
  

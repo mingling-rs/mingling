@@ -1,26 +1,9 @@
-#[doc(hidden)]
-pub mod chain;
-
-#[doc(hidden)]
-pub mod dispatcher;
-
-#[doc(hidden)]
-pub mod enum_tag;
-
-#[doc(hidden)]
-pub mod global_resource;
-
-#[doc(hidden)]
-pub mod help;
-
-#[doc(hidden)]
-pub mod lazy_resource;
-
-#[doc(hidden)]
-pub mod node;
-
-#[doc(hidden)]
-pub mod renderer;
-
-#[doc(hidden)]
-pub mod routable;
+pub(crate) mod chain;
+pub(crate) mod dispatcher;
+pub(crate) mod enum_tag;
+pub(crate) mod global_resource;
+pub(crate) mod help;
+pub(crate) mod lazy_resource;
+pub(crate) mod node;
+pub(crate) mod renderer;
+pub(crate) mod routable;

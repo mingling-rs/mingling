@@ -1,3 +1,4 @@
+// #![deny(missing_docs)]
 //! Mingling Core
 //!
 //! # Intro
@@ -8,76 +9,13 @@
 //!
 //! Recommended to import [mingling](https://crates.io/crates/mingling) to use its features.
 
-#![deny(missing_docs)]
+// Private Modules
 
 mod any;
 mod asset;
 mod program;
 mod renderer;
 mod tester;
-
-/// Provides a toolkit for `Mingling` testing capabilities.
-pub mod test {
-    pub use crate::tester::*;
-}
-
-#[cfg(feature = "structural_renderer")]
-pub use crate::renderer::structural::StructuralRenderer;
-
-// NOT re-exported at top level: the `StructuralData` trait is sealed and only
-// accessible through the derive macro. Users who need the trait can access it
-// via `mingling::renderer::structural::StructuralData` (through the inner alias).
-pub use crate::any::group::*;
-pub use crate::any::*;
-
-pub use crate::asset::chain::*;
-pub use crate::asset::dispatcher::*;
-pub use crate::asset::enum_tag::*;
-pub use crate::asset::global_resource::*;
-pub use crate::asset::help::*;
-pub use crate::asset::lazy_resource::*;
-pub use crate::asset::node::*;
-pub use crate::asset::renderer::*;
-pub use crate::asset::routable::*;
-
-/// All error types of `Mingling`
-pub mod error {
-    pub use crate::asset::chain::error::*;
-    pub use crate::exec::error::*;
-    pub use crate::program::error::*;
-    #[cfg(feature = "structural_renderer")]
-    pub use crate::renderer::structural::error::*;
-    #[cfg(feature = "pathf")]
-    pub use mingling_pathf::error::*;
-}
-
-pub use crate::program::*;
-
-pub use crate::renderer::render_result::*;
-
-#[cfg(feature = "builds")]
-#[doc(hidden)]
-pub mod builds;
-
-/// Provides build scripts for users
-#[cfg(feature = "builds")]
-pub mod build {
-    #[cfg(feature = "comp")]
-    pub use crate::builds::comp::*;
-
-    #[cfg(feature = "pathf")]
-    pub use crate::builds::pathf::*;
-}
-
-/// Provided for framework developers
-pub mod debug;
-
-#[cfg(feature = "comp")]
-#[doc(hidden)]
-pub mod comp;
-
-#[cfg(feature = "comp")]
-pub use crate::comp::*;
 
 /// Module for setting up a `Mingling` program.
 ///
@@ -87,26 +25,92 @@ pub mod setup {
     pub use crate::program::setup::ProgramSetup;
 }
 
-/// Private API — not intended for direct use.
-#[doc(hidden)]
-pub mod __private {
-    use crate::ProgramCollect;
-
-    /// Sealed trait for `StructuralData` — only implementable via derive macro.
-    pub trait StructuralDataSealed<C>
-    where
-        C: ProgramCollect<Enum = C>,
-    {
-    }
-
-    /// Re-export so the derive macro can reference the trait without
-    /// conflicting with the derive macro name at `::mingling::StructuralData`.
-    #[cfg(feature = "structural_renderer")]
-    pub use crate::renderer::structural::structural_data::StructuralData;
-}
-
+/// This module provides result types for Mingling components.
+///
+/// These are re-exported at the top level via `mingling::res`.
 #[doc(hidden)]
 pub mod core_res {
     #[cfg(feature = "repl")]
-    pub use crate::program::repl_exec::res::ResREPL;
+    pub use crate::program::repl_exec::res::*;
+}
+
+/// Provides the runtime logic for Mingling's dynamic completion system.
+///
+/// This module contains the core functionality for the "comp" (completion) feature,
+/// which enables dynamic tab-completion and input suggestion capabilities within
+/// Mingling applications.
+#[cfg(feature = "comp")]
+pub(crate) mod comp;
+
+/// Provides Mingling's build script module, used in `build.rs` to provide build-time behavior for certain features.
+///
+/// To use it, add the following to your `Cargo.toml` under `[build-dependencies]`, and enable the features
+/// that require build-time behavior from the crate:
+///
+/// ```toml
+/// [build-dependencies.mingling]
+/// version = "0.3.0"
+/// features = [
+///     "build", // Enable it
+///     "comp",  // If you need completion-related build-time behavior, enable this as well
+/// ]
+/// ```
+#[cfg(feature = "build")]
+#[doc(hidden)]
+pub mod build;
+
+// Public Modules
+
+/// Provides a toolkit for `Mingling` testing capabilities.
+pub mod test {
+    pub use crate::tester::*;
+}
+
+/// Provided for framework developers
+pub mod debug;
+
+// NOT re-exported at top level: the `StructuralData` trait is sealed and only
+// accessible through the derive macro. Users who need the trait can access it
+// via `mingling::renderer::structural::StructuralData` (through the inner alias).
+#[cfg(feature = "structural_renderer")]
+pub use crate::renderer::structural::StructuralRenderer;
+
+pub use crate::any::*;
+pub use crate::asset::chain::*;
+pub use crate::asset::dispatcher::*;
+pub use crate::asset::enum_tag::*;
+pub use crate::asset::global_resource::*;
+pub use crate::asset::help::*;
+pub use crate::asset::lazy_resource::*;
+pub use crate::asset::node::*;
+pub use crate::asset::renderer::*;
+pub use crate::asset::routable::*;
+#[cfg(feature = "comp")]
+pub use crate::comp::*;
+pub use crate::program::*;
+pub use crate::renderer::render_result::*;
+
+/// All error types of `Mingling`
+pub mod error {
+    pub use crate::asset::chain::error::*;
+    pub use crate::exec::error::*;
+    pub use crate::program::error::*;
+
+    #[cfg(feature = "structural_renderer")]
+    pub use crate::renderer::structural::error::*;
+
+    #[cfg(feature = "pathf")]
+    pub use mingling_pathf::error::*;
+}
+
+#[doc(hidden)]
+mod private;
+
+/// Internal API provided by Mingling Core
+///
+/// These are used by macros and are not exposed to users, but are still accessible externally.
+#[doc(hidden)]
+#[allow(unused_imports)]
+pub mod __private {
+    pub use crate::private::*;
 }

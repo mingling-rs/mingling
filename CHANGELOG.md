@@ -171,6 +171,13 @@ None
 
     _No migration is required — these are purely additive derives that expand the type's capabilities without affecting existing behavior._
 
+**[`core`]** Added the `build` feature (renamed from `builds`) to `mingling_core` and `mingling`. The old `builds` feature has been deprecated in favor of `build`, with a backward-compatibility alias retained in `mingling/Cargo.toml`:
+
+- **`mingling_core/Cargo.toml`**: Renamed the feature from `builds` to `build`.
+- **`mingling/Cargo.toml`**: Changed the feature dependency from `mingling_core/builds` to `mingling_core/build`. A deprecated `builds` feature alias is kept as `builds = ["mingling_core/build"]` with a note indicating it will be removed in a future breaking change.
+
+    _No behavioral changes — the `build` feature provides identical functionality to the old `builds` feature. Downstream code using `builds` continues to work via the alias, but should migrate to `build`._
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

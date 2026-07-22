@@ -239,7 +239,7 @@ In your `build.rs`, generate the shell scripts:
 
 ```rust
 // BUILD TIME
-// Features: ["comp", "builds"]
+// Features: ["comp", "build"]
 mingling::build::build_comp_scripts(env!("CARGO_PKG_NAME")).unwrap();
 ```
 

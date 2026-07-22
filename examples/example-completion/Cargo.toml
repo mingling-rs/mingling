@@ -20,8 +20,8 @@ features = [
     "comp",
 
     # If you want to build completion scripts,
-    # enable `builds` features
-    "builds",
+    # enable `build` features
+    "build",
 ]
 
 [workspace]

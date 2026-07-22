@@ -18,8 +18,8 @@ features = [
     # Enable `pathf` features
     "pathf",
 
-    # Enable the `builds` feature for build-time support
-    "builds",
+    # Enable the `build` feature for build-time support
+    "build",
 ]
 
 [workspace]

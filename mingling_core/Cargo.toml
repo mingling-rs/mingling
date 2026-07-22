@@ -14,7 +14,7 @@ categories = ["command-line-interface"]
 nightly = []
 default = []
 async = []
-builds = []
+build = []
 picker = []
 
 dispatch_tree = []

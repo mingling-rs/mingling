@@ -1,8 +1,8 @@
+use crate::ProgramCollect;
 use crate::error::ChainProcessError;
-use crate::{Grouped, ProgramCollect};
 
-#[doc(hidden)]
-pub mod group;
+mod group;
+pub use group::*;
 
 /// Any type output
 ///

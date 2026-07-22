@@ -7,7 +7,7 @@
 //! To make your completions work, you need to generate a completion script using Mingling's tools
 //!
 //! 1. Enable features
-//!    You need to enable the `builds` and `comp` features for `mingling` in `[build-dependencies]`
+//!    You need to enable the `build` and `comp` features for `mingling` in `[build-dependencies]`
 //!
 //! 2. Write `build.rs`
 //!    Write the following in `build.rs`
