@@ -164,6 +164,13 @@ None
 
     _No behavioral changes — this is purely a type-system refactoring to enable `group_structural!` to work with external types. Since both traits are defined in `::mingling::__private`, this change has **no impact on the public API** — end users interact with `StructuralData` only through auto-generated derive macros and `pack_structural!`/`group_structural!` macros, which are automatically updated. Only users with manual `impl StructuralData` blocks (an advanced/rare case) need to update their code.
 
+7. **[`core`]** **`RenderResult` now derives `Clone` and `Eq` in addition to `Default`, `Debug`, and `PartialEq`.** Added `Clone` and `Eq` derive macros to the `RenderResult` struct in `mingling_core/src/renderer/render_result.rs`. These additions enable `RenderResult` values to be explicitly cloned and support equality comparisons that are both reflexive and transitive.
+
+    - **`Clone`** — Allows a `RenderResult` to be duplicated via `.clone()`, which is useful for scenarios where the same render output needs to be reused or stored in multiple locations.
+    - **`Eq`** — Enables `RenderResult` to be used in contexts that require full equivalence (e.g., `assert_eq!` with `Eq` bounds, `HashMap`/`HashSet` keys when combined with `Hash`).
+
+    _No migration is required — these are purely additive derives that expand the type's capabilities without affecting existing behavior._
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

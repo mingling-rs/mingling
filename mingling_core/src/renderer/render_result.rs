@@ -6,7 +6,7 @@ use std::{
 use crate::RenderResultMode::{Stderr, Stdout};
 
 /// Render result, containing the rendered text content.
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct RenderResult {
     /// Whether the output should be written immediately.
     ///
