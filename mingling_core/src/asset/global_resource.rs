@@ -184,7 +184,10 @@ pub trait ResourceMarker {
         C: ProgramCollect<Enum = C> + 'static;
 }
 
-impl<T: Default + Clone + Send + Sync + 'static> ResourceMarker for T {
+impl<T> ResourceMarker for T
+where
+    T: Default + Clone + Send + Sync + 'static,
+{
     fn res_clone(&self) -> Self {
         Clone::clone(self)
     }
