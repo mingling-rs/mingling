@@ -1,6 +1,7 @@
 use std::io::Write as _;
 use std::process::exit;
 
+use arg_picker::{Picker, macros::arg};
 use tools::{
     cargo_tomls, crate_name_from, eprintln_cargo_style, println_cargo_style, run_cmd, run_parallel,
 };
@@ -35,19 +36,20 @@ fn main() {
     let _ = colored::control::set_virtual_terminal(true);
     println!("{}", include_str!("../../../docs/res/ci_banner.txt"));
 
-    let args: Vec<String> = std::env::args().collect();
+    let (auto_yes, dirty, test_docs, refresh_docs, test_codes, help) = Picker::from_args()
+        .pick_or_default(&arg![yes: bool, 'y'])
+        .pick_or_default(&arg![dirty: bool])
+        .pick_or_default(&arg![test_docs: bool])
+        .pick_or_default(&arg![refresh_docs: bool])
+        .pick_or_default(&arg![test_codes: bool])
+        .pick_or_default(&arg![help: bool, 'h'])
+        .unwrap();
 
-    if args.iter().any(|a| a == "-h" || a == "--help") {
+    if help {
         print_help();
         return;
     }
 
-    let auto_yes = args.iter().any(|a| a == "-y");
-    let dirty = args.iter().any(|a| a == "--dirty");
-
-    let test_docs = args.iter().any(|a| a == "--test-docs");
-    let refresh_docs = args.iter().any(|a| a == "--refresh-docs");
-    let test_codes = args.iter().any(|a| a == "--test-codes");
     let any_specified = test_docs || refresh_docs || test_codes;
     let run_all = !any_specified;
 
