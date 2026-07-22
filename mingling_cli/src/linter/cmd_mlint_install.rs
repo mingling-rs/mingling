@@ -4,7 +4,7 @@ use crate::linter::mlint_report::{
 };
 use mingling::Routable;
 use mingling::macros::{buffer, chain, dispatcher, pack, r_eprintln, renderer, routeify};
-use mingling::res::ResCurrentDir;
+use mingling::res::{ResCurrentDir, ResExitCode};
 use std::ops::Range;
 use std::path::PathBuf;
 
@@ -81,7 +81,10 @@ pub fn render_mling_linter_config_installed(result: ResultMlingLinterConfigInsta
 pub fn handle_state_suggest_mling_linter_setup(
     _: StateSuggestMlingLinterSetup,
     current_dir: &ResCurrentDir,
+    ec: &mut ResExitCode,
 ) -> StateLintReports {
+    ec.exit_code = 1;
+
     let cfg_file_path = current_dir.join(CFG_FILE_NAME);
     let file_name = cfg_file_path.to_string_lossy().to_string();
 
