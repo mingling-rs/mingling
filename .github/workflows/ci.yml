@@ -85,9 +85,6 @@ jobs:
       - name: Install nightly toolchain
         run: rustup toolchain install nightly
 
-      - name: Delete .temp directory before deployment
-        run: rm -rf .temp
-
       - name: Build API docs
         run: cargo +nightly run --manifest-path .run/Cargo.toml --bin deploy-api-docs -- --docsrs
 
@@ -97,12 +94,17 @@ jobs:
       - name: Run cov-test
         run: cargo run --manifest-path .run/Cargo.toml --bin cov-test
 
+      - name: Delete .temp directory before deployment
+        run: rm -rf .temp
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: "."
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
