@@ -4,15 +4,11 @@ use mingling::{
 };
 
 use crate::{
-    linter::{
-        cmd_mlint::{CMDLint, EntryLint},
-        cmd_mlint_install::CMDLintInstall,
-    },
+    linter::cmd_mlint::{CMDLint, EntryLint},
     metadata::setup::ResUsingJson,
 };
 
 pub mod cmd_mlint;
-pub mod cmd_mlint_install;
 pub mod mlint_attr;
 pub mod mlint_report;
 
@@ -24,7 +20,6 @@ pub fn mingling_linter_setup(program: &mut Program<crate::ThisProgram>) {
 #[program_setup]
 pub fn mingling_linter_command_setup(program: &mut Program<crate::ThisProgram>) {
     program.with_dispatcher(CMDLint);
-    program.with_dispatcher(CMDLintInstall);
     program.with_dispatcher(CMDLinterSupportRustAnalyzer);
     program.with_dispatcher(CMDLinterSupportRustAnalyzerWithClippy);
     program.with_dispatcher(CMDLinterSupportRustAnalyzerWithCheck);
