@@ -4,6 +4,7 @@ use mingling::LazyRes;
 use mingling::consts::REMAINS;
 use mingling::macros::{arg, chain, dispatcher, pack};
 use mingling::picker::EntryPicker;
+use tokio::task::JoinSet;
 
 dispatcher!("lint", CMDMinglingLinter => EntryMinglingLinter);
 
@@ -13,42 +14,54 @@ dispatcher!("lint", CMDMinglingLinter => EntryMinglingLinter);
 /// reads Rust source files (`.rs`), parses them into ASTs, runs lint checks,
 /// and enriches each report with metadata information.
 async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
-    // Vector to accumulate all lint reports
-    let mut all_reports = Vec::new();
+    let mut join_set = JoinSet::new();
 
-    // Iterate over all packages in the metadata
     for package in &metadata.packages {
-        // Iterate over all targets within a package (e.g., bin, lib, test, etc.)
         for target in &package.targets {
             let path = &target.src_path;
             // Only process Rust source files (with `.rs` extension)
             if !path.as_str().ends_with(".rs") {
                 continue;
             }
-            // Read the source file content
-            let source = match std::fs::read_to_string(path.as_str()) {
-                Ok(s) => s,
-                Err(_) => continue,
-            };
-            // Parse the source file into an AST (Abstract Syntax Tree)
-            let ast = match syn::parse_file(&source) {
-                Ok(f) => f,
-                Err(_) => continue,
-            };
 
-            // Run all lint checks and collect reports
-            let reports = crate::lints::run_all_lints(&ast, &source);
-            //
-            for mut r in reports {
-                // Enrich report with metadata information
-                r.file_name = path.as_str().to_string();
-                r.source_code = source.clone();
-                r.package_id = Some(package.id.to_string());
-                r.target_name = Some(target.name.clone());
-                r.target_kind = target.kind.first().map(|k| k.to_string());
-                r.target_src_path = Some(path.as_str().to_string());
-                all_reports.push(r);
-            }
+            // Clone/move all data needed inside the blocking closure
+            let path_str = path.as_str().to_string();
+            let package_id = package.id.to_string();
+            let target_name = target.name.clone();
+            let target_kind = target.kind.first().map(|k| k.to_string());
+
+            join_set.spawn_blocking(move || {
+                // Read the source file content
+                let source = std::fs::read_to_string(&path_str).ok()?;
+                // Parse the source file into an AST
+                let ast = syn::parse_file(&source).ok()?;
+                // Run all lint checks and collect reports
+                let reports = crate::lints::run_all_lints(&ast, &source);
+
+                // Enrich each report with metadata information
+                let enriched: Vec<MlintReport> = reports
+                    .into_iter()
+                    .map(|mut r| {
+                        r.file_name = path_str.clone();
+                        r.source_code = source.clone();
+                        r.package_id = Some(package_id.clone());
+                        r.target_name = Some(target_name.clone());
+                        r.target_kind = target_kind.clone();
+                        r.target_src_path = Some(path_str.clone());
+                        r
+                    })
+                    .collect();
+
+                Some(enriched)
+            });
+        }
+    }
+
+    let mut all_reports = Vec::new();
+    while let Some(res) = join_set.join_next().await {
+        // `spawn_blocking` panics are propagated, `None` means task skipped (read/parse failure)
+        if let Ok(Some(reports)) = res {
+            all_reports.extend(reports);
         }
     }
 
