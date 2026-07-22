@@ -4,6 +4,7 @@
 )]
 #![deny(missing_docs)]
 #![doc = include_str!("lib.md")]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "core")]
 mod example_docs;
