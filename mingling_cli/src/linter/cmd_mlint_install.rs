@@ -19,7 +19,6 @@ const VALUE_CHECK_ON_SAVE_TRUE: &str = "true";
 const DISPLAY_CHECK_ON_SAVE_TRUE: &str = "checkOnSave = true";
 
 // File names
-const CFG_FILE_NAME: &str = ".rust-analyzer.toml";
 const SOURCE_FILE_NAME: &str = "rust-analyzer.toml";
 
 const MSG_ALREADY_CORRECT: &str = "`.rust-analyzer.toml` already has the correct mling settings";
@@ -52,7 +51,7 @@ pack!(ResultMlingLinterConfigInstalled = PathBuf);
 
 #[chain]
 pub fn handle_lint_install(_: EntryLintInstall, current_dir: &ResCurrentDir) -> Next {
-    let cfg_file_path = current_dir.join(CFG_FILE_NAME);
+    let cfg_file_path = current_dir.join(SOURCE_FILE_NAME);
 
     if !cfg_file_path.exists() {
         return StateWriteMlingLinterConfig::new(cfg_file_path).to_chain();
@@ -85,7 +84,7 @@ pub fn handle_state_suggest_mling_linter_setup(
 ) -> StateLintReports {
     ec.exit_code = 1;
 
-    let cfg_file_path = current_dir.join(CFG_FILE_NAME);
+    let cfg_file_path = current_dir.join(SOURCE_FILE_NAME);
     let file_name = cfg_file_path.to_string_lossy().to_string();
 
     let content = match std::fs::read_to_string(&cfg_file_path) {
