@@ -1,6 +1,6 @@
 use mingling::MockProgramCollect;
 use mingling::Program;
-use mingling::comp::{ShellContext, ShellFlag, Suggest, SuggestItem};
+use mingling::{ShellContext, ShellFlag, Suggest, SuggestItem};
 
 #[test]
 fn test_shell_context_parsing_full() {

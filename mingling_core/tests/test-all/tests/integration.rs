@@ -7,9 +7,9 @@ use mingling::StringVec;
 use mingling::StructuralData;
 use mingling::StructuralRenderer;
 use mingling::StructuralRendererSetting;
-use mingling::comp::{ShellContext, ShellFlag, Suggest};
 use mingling::core_res::ResREPL;
 use mingling::hook::ProgramHook;
+use mingling::{ShellContext, ShellFlag, Suggest};
 use serde::Serialize;
 use std::sync::atomic::{AtomicBool, Ordering};
 

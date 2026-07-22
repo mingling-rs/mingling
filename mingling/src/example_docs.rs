@@ -777,7 +777,7 @@ pub mod example_combine_pathf_dispatch_tree {}
 ///  To make your completions work, you need to generate a completion script using Mingling's tools
 ///
 ///  1. Enable features
-///     You need to enable the `builds` and `comp` features for `mingling` in `[build-dependencies]`
+///     You need to enable the `build` and `comp` features for `mingling` in `[build-dependencies]`
 ///
 ///  2. Write `build.rs`
 ///     Write the following in `build.rs`
@@ -838,8 +838,8 @@ pub mod example_combine_pathf_dispatch_tree {}
 ///     "comp",
 ///
 ///     # If you want to build completion scripts,
-///     # enable `builds` features
-///     "builds",
+///     # enable `build` features
+///     "build",
 /// ]
 ///
 /// [workspace]
@@ -2268,8 +2268,8 @@ pub mod example_panic_unwind {}
 ///     # Enable `pathf` features
 ///     "pathf",
 ///
-///     # Enable the `builds` feature for build-time support
-///     "builds",
+///     # Enable the `build` feature for build-time support
+///     "build",
 /// ]
 ///
 /// [workspace]
