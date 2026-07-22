@@ -77,3 +77,9 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 strip = true
+
+[package]
+name = "mingling-workspace"
+version.workspace = true
+edition.workspace = true
+publish = false
