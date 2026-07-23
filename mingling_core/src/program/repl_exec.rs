@@ -13,61 +13,6 @@ use crate::program::repl_exec::splitter::split_input_string;
 use crate::{Program, ProgramCollect, RenderResult};
 use crate::{program::repl_exec::res::ResREPL, this};
 
-#[cfg(not(feature = "async"))]
-impl<C> Program<C>
-where
-    C: ProgramCollect<Enum = C> + Send + Sync + 'static,
-{
-    /// Executes the REPL interactive CLI mode.
-    ///
-    /// This method starts an infinite loop that continuously reads user input, parses commands, executes them,
-    /// and displays the execution result or error message. It is suitable for scenarios requiring command-line interaction with the user.
-    pub fn exec_repl(mut self) {
-        // Inject default REPL resource
-        self.with_resource(ResREPL::default());
-
-        self.run_hook_repl_on_begin(crate::hook::HookREPLBeginInfo {});
-
-        self.exec_wrapper(|p| -> () {
-            loop {
-                p.run_hook_repl_pre_readline(crate::hook::HookREPLPreReadlineInfo {});
-                let mut readline = p
-                    .run_hook_repl_readline(crate::hook::HookREPLReadlineInfo {})
-                    .unwrap_or_default();
-                p.run_hook_repl_post_readline(crate::hook::HookREPLPostReadlineInfo {
-                    line: &mut readline,
-                });
-
-                let args = split_input_string(readline.clone());
-
-                p.run_hook_repl_pre_exec(crate::hook::HookREPLPreExecInfo { args: &args });
-                match exec_once(p, args) {
-                    Ok(r) => {
-                        p.run_hook_repl_on_receive_result(
-                            crate::hook::HookREPLOnReceiveResultInfo { result: &r },
-                        );
-                    }
-                    Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
-                        p.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo {
-                            panic: &panic,
-                        });
-                    }
-                    _ => {}
-                }
-                p.run_hook_repl_post_exec(crate::hook::HookREPLPostExecInfo {});
-
-                if this::<C>().res::<ResREPL>().unwrap().exit {
-                    p.run_hook_repl_exit(crate::hook::HookREPLExitInfo {});
-                    break;
-                }
-
-                p.run_hook_repl_loop_once(crate::hook::HookREPLLoopOnceInfo {});
-            }
-        });
-    }
-}
-
-#[cfg(feature = "async")]
 impl<C> Program<C>
 where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,
@@ -79,49 +24,60 @@ where
     ///
     /// **Note:** When the `async` feature is enabled, panic unwinding is not supported.
     /// Any panics during command execution will result in an abort rather than being caught and handled gracefully.
-    pub async fn exec_repl(mut self) {
+    #[might_be_async::func]
+    pub fn exec_repl(mut self) {
         // Inject default REPL resource
         self.with_resource(ResREPL::default());
 
         self.run_hook_repl_on_begin(crate::hook::HookREPLBeginInfo {});
 
-        self.exec_wrapper(async |p| -> () {
-            loop {
-                p.run_hook_repl_pre_readline(crate::hook::HookREPLPreReadlineInfo {});
-                let mut readline = p
-                    .run_hook_repl_readline(crate::hook::HookREPLReadlineInfo {})
-                    .unwrap_or_default();
-                p.run_hook_repl_post_readline(crate::hook::HookREPLPostReadlineInfo {
-                    line: &mut readline,
+        might_be_async::select!(
+            self.exec_wrapper(async |p| -> () {
+                    repl_loop(p).await;
+                })
+            else
+            self.exec_wrapper(|p| -> () { repl_loop(p); }
+            )
+        );
+    }
+}
+
+#[might_be_async::func]
+fn repl_loop<C>(p: &'static Program<C>)
+where
+    C: ProgramCollect<Enum = C> + Send + Sync + 'static,
+{
+    loop {
+        p.run_hook_repl_pre_readline(crate::hook::HookREPLPreReadlineInfo {});
+        let mut readline = p
+            .run_hook_repl_readline(crate::hook::HookREPLReadlineInfo {})
+            .unwrap_or_default();
+        p.run_hook_repl_post_readline(crate::hook::HookREPLPostReadlineInfo {
+            line: &mut readline,
+        });
+
+        let args = split_input_string(readline.clone());
+
+        p.run_hook_repl_pre_exec(crate::hook::HookREPLPreExecInfo { args: &args });
+        match might_be_async::invoke!(exec_once(p, args)) {
+            Ok(r) => {
+                p.run_hook_repl_on_receive_result(crate::hook::HookREPLOnReceiveResultInfo {
+                    result: &r,
                 });
-
-                let args = split_input_string(readline.clone());
-
-                p.run_hook_repl_pre_exec(crate::hook::HookREPLPreExecInfo { args: &args });
-                match exec_once(p, args).await {
-                    Ok(r) => {
-                        p.run_hook_repl_on_receive_result(
-                            crate::hook::HookREPLOnReceiveResultInfo { result: &r },
-                        );
-                    }
-                    Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
-                        p.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo {
-                            panic: &panic,
-                        });
-                    }
-                    _ => {}
-                }
-                p.run_hook_repl_post_exec(crate::hook::HookREPLPostExecInfo {});
-
-                if this::<C>().res::<ResREPL>().unwrap().exit {
-                    p.run_hook_repl_exit(crate::hook::HookREPLExitInfo {});
-                    break;
-                }
-
-                p.run_hook_repl_loop_once(crate::hook::HookREPLLoopOnceInfo {});
             }
-        })
-        .await;
+            Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
+                p.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo { panic: &panic });
+            }
+            _ => {}
+        }
+        p.run_hook_repl_post_exec(crate::hook::HookREPLPostExecInfo {});
+
+        if this::<C>().res::<ResREPL>().unwrap().exit {
+            p.run_hook_repl_exit(crate::hook::HookREPLExitInfo {});
+            break;
+        }
+
+        p.run_hook_repl_loop_once(crate::hook::HookREPLLoopOnceInfo {});
     }
 }
 
