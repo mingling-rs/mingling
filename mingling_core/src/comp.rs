@@ -34,7 +34,17 @@ use crate::exec::match_user_input;
 /// Types implementing this trait can provide custom completion suggestions
 /// based on the current shell context.
 pub trait Completion {
+    /// The entry point type that the completion functionality will act on.
+    ///
+    /// It marks the **previous** type, which typically represents an `EntryXXX` type
+    /// (unless you have specific requirements).
     type Previous;
+
+    /// Generates completion suggestions based on the current shell context.
+    ///
+    /// This method is called when the completion system needs to provide
+    /// custom suggestions for the current command or argument. Implementations
+    /// should use the provided [`ShellContext`] to determine what to suggest.
     fn comp(ctx: &ShellContext) -> Suggest;
 }
 
@@ -44,6 +54,18 @@ pub trait Completion {
 /// automatically implement this trait for `Entry` types to extract the
 /// arguments from user input for completion suggestions.
 pub trait CompletionEntry {
+    /// Extracts the user input arguments for completion processing.
+    ///
+    /// This method is called when the completion system needs to retrieve
+    /// the raw input arguments from the user's command line. The returned
+    /// vector of strings represents the parsed arguments that will be used
+    /// to match against the program's command tree and generate completion
+    /// suggestions.
+    ///
+    /// # Returns
+    ///
+    /// A vector of strings containing the individual arguments from the
+    /// user's command-line input.
     fn get_input(self) -> Vec<String>;
 }
 
@@ -54,6 +76,27 @@ pub trait CompletionEntry {
 /// format appropriate for the target shell.
 pub struct CompletionHelper;
 impl CompletionHelper {
+    /// Executes the completion logic for the given program type (`P`).
+    ///
+    /// This is the **entry point** of the Mingling Completion system. It converts
+    /// the user's shell context (current command line, cursor position, previous
+    /// words, etc.) into actual completion suggestions.
+    ///
+    /// The function first attempts to match the input arguments against the
+    /// program's command tree. If a matching dispatcher is found, it delegates to
+    /// the program's custom completion logic (`P::do_comp`). If no match is found
+    /// or the dispatcher signals "not found", a default completion is used instead,
+    /// which provides subcommand suggestions based on the input path.
+    ///
+    /// # Type Parameters
+    ///
+    /// * `P` — The top-level program type that implements [`ProgramCollect`], can be
+    ///   displayed, compared for equality, and kept alive for the program's lifetime.
+    ///
+    /// # Returns
+    ///
+    /// A [`Suggest`] value containing either file completion instructions or a set
+    /// of candidate suggestions.
     #[must_use]
     pub fn exec_completion<P>(ctx: &ShellContext) -> Suggest
     where
@@ -126,7 +169,17 @@ impl CompletionHelper {
         }
     }
 
-    #[allow(clippy::needless_pass_by_value)]
+    /// Renders the completion suggestions to standard output.
+    ///
+    /// This method takes the [`Suggest`] value produced by
+    /// [`exec_completion`], and prints the results in a format appropriate for the
+    /// user's shell environment.
+    ///
+    /// - If the suggestion is [`Suggest::FileCompletion`], it prints `"_file_"` and
+    ///   exits, instructing the shell to fall back to file completion.
+    /// - If the suggestion is [`Suggest::Suggest`] with a set of candidates, it
+    ///   formats and prints them according to the shell type (Zsh/PowerShell, Fish,
+    ///   or default).
     pub fn render_suggest<P>(ctx: ShellContext, suggest: Suggest)
     where
         P: ProgramCollect<Enum = P> + Display + 'static,
