@@ -12,6 +12,7 @@ pub trait Chain<G> {
     #[cfg(feature = "async")]
     fn proc(p: Self::Previous) -> impl Future<Output = ChainProcess<G>> + Send;
 
+    /// Process the previous value and return a future that resolves to a [`ChainProcess<G>`](./enum.ChainProcess.html)
     #[cfg(not(feature = "async"))]
     fn proc(p: Self::Previous) -> ChainProcess<G>;
 }

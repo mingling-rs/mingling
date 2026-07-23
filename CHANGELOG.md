@@ -178,6 +178,16 @@ None
 
     _No behavioral changes — the `build` feature provides identical functionality to the old `builds` feature. Downstream code using `builds` continues to work via the alias, but should migrate to `build`._
 
+8. **[`core`]** Renamed `ResourceMarker` methods from public names (`res_clone`, `res_default`, `modify`) to doc-hidden internal names (`__resource_marker_clone`, `__resource_marker_default`, `__resource_marker_modify`). These methods are internal implementation details of the resource injection system and should not be called directly by user code. By prefixing with `__` and adding `#[doc(hidden)]`, they are still technically accessible but hidden from documentation and tooling, reducing API surface confusion.
+
+    - **`res_clone()`** → **`__resource_marker_clone()`** — Internal method for cloning a resource value during resource injection.
+    - **`res_default()`** → **`__resource_marker_default()`** — Internal method for creating a default resource value during resource injection.
+    - **`modify<C>()`** → **`__resource_marker_modify<C>()`** — Internal method for in-place modification of a resource during resource injection.
+
+    All internal usages within `global_resource.rs` and `lazy_resource.rs` have been updated to use the renamed methods. Test code has been updated accordingly.
+
+    A new module `mingling_core::asset::core_invokes` has been added to provide a centralized location for internal invocation helpers.
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.

@@ -280,7 +280,7 @@ where
 {
     /// Clones the lazy resource. The cloned resource retains any initialized value,
     /// but the initializer is reset to `T::default()`.
-    fn res_clone(&self) -> Self {
+    fn __resource_marker_clone(&self) -> Self {
         match &self.inner {
             LazyInner::Init(t, _) => Self {
                 inner: LazyInner::Init(t.clone(), None),
@@ -290,7 +290,7 @@ where
     }
 
     /// Returns a default lazy resource (uninitialized, using `T::default()` as the initializer).
-    fn res_default() -> Self
+    fn __resource_marker_default() -> Self
     where
         T: Default,
     {
@@ -298,7 +298,7 @@ where
     }
 
     /// Modifies the current lazy resource via the `this` context provided by `C`.
-    fn modify<C>(f: impl FnOnce(&mut Self))
+    fn __resource_marker_modify<C>(f: impl FnOnce(&mut Self))
     where
         C: ProgramCollect<Enum = C> + 'static,
     {
@@ -583,7 +583,7 @@ mod tests {
     fn res_clone_of_initialized_clones_value() {
         let mut r = LazyRes::new(|| vec![1, 2, 3]);
         r.get_ref();
-        let cloned = r.res_clone();
+        let cloned = r.__resource_marker_clone();
         assert!(cloned.is_initialized());
         assert_eq!(cloned.into_inner(), Some(vec![1, 2, 3]));
     }
@@ -591,14 +591,14 @@ mod tests {
     #[test]
     fn res_clone_of_uninitialized_creates_default() {
         let r: LazyRes<Vec<i32>> = LazyRes::new(|| vec![1, 2, 3]);
-        let cloned = r.res_clone();
+        let cloned = r.__resource_marker_clone();
         // The source is uninitialized, so res_clone returns a default lazy
         assert!(!cloned.is_initialized());
     }
 
     #[test]
     fn res_default_returns_uninitialized() {
-        let r: LazyRes<i32> = LazyRes::<i32>::res_default();
+        let r: LazyRes<i32> = LazyRes::<i32>::__resource_marker_default();
         assert!(!r.is_initialized());
     }
 

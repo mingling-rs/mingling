@@ -38,7 +38,7 @@ where
         {
             let mut new_res = match Arc::try_unwrap(std::mem::take(arc_res)) {
                 Ok(val) => val,
-                Err(arc) => (*arc).res_clone(),
+                Err(arc) => (*arc).__resource_marker_clone(),
             };
             let r = f(&mut new_res);
             *arc_res = Arc::new(new_res);
@@ -57,7 +57,7 @@ where
         Res: 'static + Default + ResourceMarker + Send + Sync,
     {
         let Ok(mut guard) = self.resources.lock() else {
-            let mut default_res = Res::res_default();
+            let mut default_res = Res::__resource_marker_default();
             return f(&mut default_res);
         };
         if let Some(arc_res) = guard
@@ -66,13 +66,13 @@ where
         {
             let mut new_res = match Arc::try_unwrap(std::mem::take(arc_res)) {
                 Ok(val) => val,
-                Err(arc) => (*arc).res_clone(),
+                Err(arc) => (*arc).__resource_marker_clone(),
             };
             let r = f(&mut new_res);
             *arc_res = Arc::new(new_res);
             r
         } else {
-            let mut default_res = Res::res_default();
+            let mut default_res = Res::__resource_marker_default();
             f(&mut default_res)
         }
     }
@@ -85,7 +85,7 @@ where
     #[must_use]
     pub fn __extract_res_mut<Res: 'static + Default + ResourceMarker + Send + Sync>(&self) -> Res {
         let Ok(mut guard) = self.resources.lock() else {
-            return Res::res_default();
+            return Res::__resource_marker_default();
         };
         if let Some(arc_res) = guard
             .get_mut(&TypeId::of::<Res>())
@@ -93,10 +93,10 @@ where
         {
             match Arc::try_unwrap(std::mem::take(arc_res)) {
                 Ok(val) => val,
-                Err(arc) => (*arc).res_clone(),
+                Err(arc) => (*arc).__resource_marker_clone(),
             }
         } else {
-            Res::res_default()
+            Res::__resource_marker_default()
         }
     }
 
@@ -136,7 +136,7 @@ where
         &self,
     ) -> GlobalResource<Res> {
         self.res()
-            .unwrap_or_else(|| GlobalResource::from(Arc::new(Res::res_default())))
+            .unwrap_or_else(|| GlobalResource::from(Arc::new(Res::__resource_marker_default())))
     }
 }
 
@@ -176,10 +176,21 @@ impl<ResType: 'static + Send + Sync> AsRef<ResType> for GlobalResource<ResType> 
 
 /// Resource marker trait, types that implement the Clone and Default traits can be considered as resources
 pub trait ResourceMarker {
+    /// Clone the resource. This is an internal method used by the resource injection system
+    /// and should not be called directly by user code.
     #[must_use]
-    fn res_clone(&self) -> Self;
-    fn res_default() -> Self;
-    fn modify<C>(f: impl FnOnce(&mut Self))
+    #[doc(hidden)]
+    fn __resource_marker_clone(&self) -> Self;
+
+    /// Create a default instance of the resource. This is an internal method used by the
+    /// resource injection system and should not be called directly by user code.
+    #[doc(hidden)]
+    fn __resource_marker_default() -> Self;
+
+    /// Modify the resource using a closure. This is an internal method used by the resource
+    /// injection system and should not be called directly by user code.
+    #[doc(hidden)]
+    fn __resource_marker_modify<C>(f: impl FnOnce(&mut Self))
     where
         C: ProgramCollect<Enum = C> + 'static;
 }
@@ -188,15 +199,15 @@ impl<T> ResourceMarker for T
 where
     T: Default + Clone + Send + Sync + 'static,
 {
-    fn res_clone(&self) -> Self {
+    fn __resource_marker_clone(&self) -> Self {
         Clone::clone(self)
     }
 
-    fn res_default() -> Self {
+    fn __resource_marker_default() -> Self {
         Default::default()
     }
 
-    fn modify<C>(f: impl FnOnce(&mut Self))
+    fn __resource_marker_modify<C>(f: impl FnOnce(&mut Self))
     where
         C: ProgramCollect<Enum = C> + 'static,
     {
@@ -230,38 +241,41 @@ mod tests {
     #[test]
     fn resource_marker_i32_res_clone() {
         let val = 42i32;
-        let cloned = val.res_clone();
+        let cloned = val.__resource_marker_clone();
         assert_eq!(cloned, 42);
     }
 
     #[test]
     fn resource_marker_i32_res_default() {
-        assert_eq!(<i32 as ResourceMarker>::res_default(), 0i32);
+        assert_eq!(<i32 as ResourceMarker>::__resource_marker_default(), 0i32);
     }
 
     #[test]
     fn resource_marker_string_res_clone() {
         let val = "hello".to_string();
-        let cloned = val.res_clone();
+        let cloned = val.__resource_marker_clone();
         assert_eq!(cloned, "hello");
     }
 
     #[test]
     fn resource_marker_string_res_default() {
-        assert_eq!(<String as ResourceMarker>::res_default(), "");
+        assert_eq!(<String as ResourceMarker>::__resource_marker_default(), "");
     }
 
     #[test]
     fn resource_marker_vec_res_clone() {
         let val = vec![1, 2, 3];
-        let cloned = val.res_clone();
+        let cloned = val.__resource_marker_clone();
         assert_eq!(cloned, vec![1, 2, 3]);
     }
 
     #[test]
     fn resource_marker_vec_res_default() {
         let empty: Vec<i32> = vec![];
-        assert_eq!(<Vec<i32> as ResourceMarker>::res_default(), empty);
+        assert_eq!(
+            <Vec<i32> as ResourceMarker>::__resource_marker_default(),
+            empty
+        );
     }
 
     // Note: Tests for Program::with_resource, res(), res_or_route(), res_or_default(),
