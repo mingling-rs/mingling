@@ -49,3 +49,5 @@ toml = { workspace = true, optional = true }
 # debug
 log = { workspace = true, optional = true }
 env_logger = { workspace = true, optional = true }
+
+might_be_async.workspace = true
