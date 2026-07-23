@@ -77,6 +77,7 @@ pub use crate::renderer::structural::StructuralRenderer;
 
 pub use crate::any::*;
 pub use crate::asset::chain::*;
+pub use crate::asset::core_invokes::*;
 pub use crate::asset::dispatcher::*;
 pub use crate::asset::enum_tag::*;
 pub use crate::asset::global_resource::*;

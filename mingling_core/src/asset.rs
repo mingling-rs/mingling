@@ -1,4 +1,5 @@
 pub(crate) mod chain;
+pub(crate) mod core_invokes;
 pub(crate) mod dispatcher;
 pub(crate) mod enum_tag;
 pub(crate) mod global_resource;

@@ -451,6 +451,56 @@ None
 
     Since the attribute is a no-op at compile time, it has no effect on code generation, type checking, or runtime behavior. Its purpose is to serve as a structured annotation that `mlint` tooling can parse from the AST. The attribute is feature-gated behind `extra_macros`.
 
+16. **[`core`]** Added `RendererInvoker<T, C>` and `ChainInvoker<T, C>` types to `mingling_core::asset::core_invokes`, providing a mechanism for selectively invoking renderer and chain pipelines for specific types from within chain/renderer functions via resource injection.
+
+    These types are designed to be created **only** through the resource injection system (via `ResourceMarker::__resource_marker_default`), and attempting to invoke them without being properly injected will panic. They are marked `#[non_exhaustive]` with private fields, so they cannot be constructed by user code.
+
+    ### `RendererInvoker<T, C>`
+
+    Allows invoking the renderer pipeline for a specific type `T`. Use cases include:
+    - **Reusing** — calling another renderer's output from within a `#[renderer]` or `#[chain]` function
+    - **Bypassing** — directly rendering intermediate values without going through the chain pipeline
+
+    ```rust,ignore
+    #[renderer(buffer)]
+    fn render_foo(_: ResultFoo, renderer: &RendererInvoker<Bar>) {
+        let bar = Bar::default();
+        r_append!(renderer.invoke(bar));
+    }
+    ```
+
+    **Methods:**
+    - `invoke(&self, value: T) -> RenderResult` — Invokes the renderer for value `T`, returning the rendered output. Does **not** execute program hooks (by design — this is for bypassing/reusing, not flow control).
+
+    ### `ChainInvoker<T, C>`
+
+    Allows executing chain steps for a specific type `T`. Use cases include:
+    - **Sub-routing** — dispatching to a sub-chain from within a chain handler
+    - **Re-entering** — re-processing a value through the chain pipeline
+
+    ```rust,ignore
+    #[chain]
+    fn handle_foo(_: EntryFoo, chain: &ChainInvoker<StateBar>) -> Next {
+        let bar = Bar::default();
+        // Execute one step of the chain
+        let next = chain.invoke_once(bar);
+        // ... handle the result
+        next
+    }
+    ```
+
+    **Methods:**
+    - `invoke_once(&self, value: T) -> ChainProcess<C>` — Executes a **single step** of chain processing for value `T`. If no chain exists for the type, it converts the value into a `ChainProcess::Ok` with `NextProcess::Chain` routing. Does **not** execute program hooks.
+    - `invoke_to_last(&self, value: T) -> ChainProcess<C>` — Continuously executes the chain for value `T` until it is routed to a renderer or can no longer continue. Each step calls `C::do_chain(any)`. If a step produces a `ChainProcess::Ok` with `NextProcess::Chain` and the next type has no chain handler, it stops and returns that state. Non-chain results (e.g., `ChainProcess::Err`) are returned immediately.
+    - `invoke_to_result(&self, value: T) -> RenderResult` — Convenience method that runs the chain to completion via `invoke_to_last` and then renders the final result. If the final result lacks a renderer or is an error, returns an empty `RenderResult`.
+
+    Both types implement `ResourceMarker` (via `__resource_marker_clone`, `__resource_marker_default`, and `__resource_marker_modify`) which:
+    - `__resource_marker_default` creates instances with `create_by_res_injection: true`, allowing invocation.
+    - `__resource_marker_clone` preserves the `create_by_res_injection` flag.
+    - `__resource_marker_modify` is a no-op (these invokers are not meant to be modified at runtime).
+
+    The types are re-exported from `mingling_core` and exposed to the `mingling` crate root.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros:renderer`]** **[`macros:help`]** Removed `r_println!` and `r_print!` macros from being implicitly injected by `#[renderer]` and `#[help]` macros. These macros still exist, but must now be used **explicitly** — either with an explicit buffer argument, or via the `#[buffer]` extension attribute that re-enables implicit buffer injection.
