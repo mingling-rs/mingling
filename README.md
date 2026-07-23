@@ -130,11 +130,11 @@ features = []
     - [x] [[0.2.0](https://docs.rs/mingling/0.2.0/mingling/)] Complete documentation, tests, and examples
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
     - [ ] [`mling` / `mingling-cli`]
-        - [ ] **Mingling** Linter
+        - [x] **Mingling** Linter
         - [ ] **Mingling** Project Generator
         - [ ] **Mingling** Program Installer & Manager (For development)
         - [ ] Helpdoc Editor
-    - [ ] [`picker`] A more efficient and intelligent argument parser
+    - [x] [`picker`] A more efficient and intelligent argument parser
     - [x] [`macros`] ~~Remove r_print! / r_println! macros~~ (see below)
     - [x] [`macros`] Make implicit modifications to functions explicit
 - [ ] Milestone.3 "Unplanned"
