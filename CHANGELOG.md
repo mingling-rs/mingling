@@ -188,6 +188,16 @@ None
 
     A new module `mingling_core::asset::core_invokes` has been added to provide a centralized location for internal invocation helpers.
 
+9. **[`core:exec`]** Refactored the program execution pipeline (`exec` and `exec_with_args`) to use the `might_be_async` crate instead of manual `#[cfg(feature = "async")]` duplication. The previously separate sync and async implementations have been consolidated into a single `#[might_be_async::func]`-annotated function, with `might_be_async::invoke!()` wrapping the `C::do_chain(current)` call inside `exec_with_args` and the delegation from `exec` to `exec_with_args`.
+
+    The `exec` function no longer contains the full execution loop inline. Instead, it delegates to `exec_with_args` (which now also carries the `#[might_be_async::func]` annotation), reducing code duplication and centralizing the execution logic.
+
+    - **`exec`**: Changed from separate `#[cfg(feature = "async")]` and `#[cfg(not(feature = "async"))]` implementations to a single `#[might_be_async::func]` function that calls `might_be_async::invoke!(exec_with_args(program, &program.args))`.
+    - **`exec_with_args`**: Changed from separate implementations to a single `#[might_be_async::func]` function. The `C::do_chain(current)` call is now wrapped with `might_be_async::invoke!(C::do_chain(current))` to support both sync and async chain execution.
+    - **Removed**: The `error.rs` submodule import remains, but the separate sync/async code blocks in the function bodies have been eliminated.
+
+    _No behavioral changes. All existing functionality — hooks, help handling, chain execution, renderer dispatch, and exit code management — is preserved identically._
+
 #### Features:
 
 1. **[`core`]** Added `RenderResult::new()` method for creating a new `RenderResult` with default values (empty text and exit code 0). This provides a more explicit and discoverable constructor compared to `RenderResult::default()`, making it clearer when a fresh result is being created for use with `write!`/`writeln!`.
