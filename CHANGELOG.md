@@ -171,14 +171,13 @@ None
 
     _No migration is required — these are purely additive derives that expand the type's capabilities without affecting existing behavior._
 
-**[`core`]** Added the `build` feature (renamed from `builds`) to `mingling_core` and `mingling`. The old `builds` feature has been deprecated in favor of `build`, with a backward-compatibility alias retained in `mingling/Cargo.toml`:
+8. **[`core`]** Added the `build` feature (renamed from `builds`) to `mingling_core` and `mingling`. The old `builds` feature has been deprecated in favor of `build`, with a backward-compatibility alias retained in `mingling/Cargo.toml`:
 
 - **`mingling_core/Cargo.toml`**: Renamed the feature from `builds` to `build`.
 - **`mingling/Cargo.toml`**: Changed the feature dependency from `mingling_core/builds` to `mingling_core/build`. A deprecated `builds` feature alias is kept as `builds = ["mingling_core/build"]` with a note indicating it will be removed in a future breaking change.
 
     _No behavioral changes — the `build` feature provides identical functionality to the old `builds` feature. Downstream code using `builds` continues to work via the alias, but should migrate to `build`._
-
-8. **[`core`]** Renamed `ResourceMarker` methods from public names (`res_clone`, `res_default`, `modify`) to doc-hidden internal names (`__resource_marker_clone`, `__resource_marker_default`, `__resource_marker_modify`). These methods are internal implementation details of the resource injection system and should not be called directly by user code. By prefixing with `__` and adding `#[doc(hidden)]`, they are still technically accessible but hidden from documentation and tooling, reducing API surface confusion.
+9. **[`core`]** Renamed `ResourceMarker` methods from public names (`res_clone`, `res_default`, `modify`) to doc-hidden internal names (`__resource_marker_clone`, `__resource_marker_default`, `__resource_marker_modify`). These methods are internal implementation details of the resource injection system and should not be called directly by user code. By prefixing with `__` and adding `#[doc(hidden)]`, they are still technically accessible but hidden from documentation and tooling, reducing API surface confusion.
 
     - **`res_clone()`** → **`__resource_marker_clone()`** — Internal method for cloning a resource value during resource injection.
     - **`res_default()`** → **`__resource_marker_default()`** — Internal method for creating a default resource value during resource injection.
@@ -188,7 +187,7 @@ None
 
     A new module `mingling_core::asset::core_invokes` has been added to provide a centralized location for internal invocation helpers.
 
-9. **[`core:exec`]** Refactored the program execution pipeline (`exec` and `exec_with_args`) to use the `might_be_async` crate instead of manual `#[cfg(feature = "async")]` duplication. The previously separate sync and async implementations have been consolidated into a single `#[might_be_async::func]`-annotated function, with `might_be_async::invoke!()` wrapping the `C::do_chain(current)` call inside `exec_with_args` and the delegation from `exec` to `exec_with_args`.
+10. **[`core:exec`]** Refactored the program execution pipeline (`exec` and `exec_with_args`) to use the `might_be_async` crate instead of manual `#[cfg(feature = "async")]` duplication. The previously separate sync and async implementations have been consolidated into a single `#[might_be_async::func]`-annotated function, with `might_be_async::invoke!()` wrapping the `C::do_chain(current)` call inside `exec_with_args` and the delegation from `exec` to `exec_with_args`.
 
     The `exec` function no longer contains the full execution loop inline. Instead, it delegates to `exec_with_args` (which now also carries the `#[might_be_async::func]` annotation), reducing code duplication and centralizing the execution logic.
 
