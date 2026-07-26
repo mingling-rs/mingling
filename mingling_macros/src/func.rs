@@ -12,7 +12,7 @@ pub(crate) mod node;
 pub(crate) mod pack;
 #[cfg(feature = "extra_macros")]
 pub(crate) mod pack_err;
-#[cfg(feature = "structural_renderer")]
+#[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
 pub(crate) mod pack_err_structural;
 #[cfg(feature = "structural_renderer")]
 pub(crate) mod pack_structural;
