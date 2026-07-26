@@ -3,50 +3,36 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Ident, Token, Type, parse_macro_input};
 
-enum PackErrInput {
-    /// pack_err!(ErrorNotFound)
-    Simple { type_name: Ident },
-    /// pack_err!(ErrorNotDir = PathBuf)
-    Typed {
-        type_name: Ident,
-        inner_type: Box<Type>,
-    },
-}
-
-impl syn::parse::Parse for PackErrInput {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let type_name: Ident = input.parse()?;
-
-        if input.peek(Token![=]) {
-            input.parse::<Token![=]>()?;
-            let inner_type: Type = input.parse()?;
-            Ok(PackErrInput::Typed {
-                type_name,
-                inner_type: Box::new(inner_type),
-            })
-        } else {
-            Ok(PackErrInput::Simple { type_name })
-        }
-    }
-}
-
-#[allow(clippy::too_many_lines)]
-pub(crate) fn pack_err(input: TokenStream) -> TokenStream {
+/// `pack_err_structural!` — like `pack_err!` but also marks the type as
+/// supporting structured output via `StructuralData`.
+pub(crate) fn pack_err_structural(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as PackErrInput);
 
+    let type_name = match &parsed {
+        PackErrInput::Simple { type_name } => type_name.clone(),
+        PackErrInput::Typed { type_name, .. } => type_name.clone(),
+    };
+
+    // Register in STRUCTURED_TYPES
+    let type_name_str = type_name.to_string();
+    crate::get_global_set(&crate::STRUCTURED_TYPES)
+        .lock()
+        .unwrap()
+        .insert(type_name_str);
+
+    let structural_data = quote! {
+        impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
+        impl ::mingling::__private::StructuralData<crate::ThisProgram> for #type_name {}
+    };
+
+    // Generate the struct + impls (same as pack_err! but with Serialize derive + sealed)
     match parsed {
         PackErrInput::Simple { type_name } => {
             let name_str = type_name.to_string();
             let snake_name = snake_case!(&name_str);
 
-            // Note: No longer derives Serialize under structural_renderer.
-            // Use pack_err_structural for structured output support.
-            let derive = quote! {
-                #[derive(::mingling::Grouped)]
-            };
-
             let expanded = quote! {
-                #derive
+                #[derive(::mingling::Grouped, ::serde::Serialize)]
                 pub struct #type_name {
                     /// The snake_case name of this error, automatically set at compile time.
                     pub name: String,
@@ -61,6 +47,8 @@ pub(crate) fn pack_err(input: TokenStream) -> TokenStream {
                 }
 
                 ::mingling::macros::register_type!(#type_name);
+
+                #structural_data
             };
 
             expanded.into()
@@ -72,14 +60,8 @@ pub(crate) fn pack_err(input: TokenStream) -> TokenStream {
             let name_str = type_name.to_string();
             let snake_name = snake_case!(&name_str);
 
-            // Note: No longer derives Serialize under structural_renderer.
-            // Use pack_err_structural for structured output support.
-            let derive = quote! {
-                #[derive(::mingling::Grouped)]
-            };
-
             let expanded = quote! {
-                #derive
+                #[derive(::mingling::Grouped, ::serde::Serialize)]
                 pub struct #type_name {
                     /// The snake_case name of this error, automatically set at compile time.
                     pub name: String,
@@ -99,9 +81,39 @@ pub(crate) fn pack_err(input: TokenStream) -> TokenStream {
                 }
 
                 ::mingling::macros::register_type!(#type_name);
+
+                #structural_data
             };
 
             expanded.into()
+        }
+    }
+}
+
+// Re-use pack_err's input parser
+enum PackErrInput {
+    Simple {
+        type_name: Ident,
+    },
+    Typed {
+        type_name: Ident,
+        inner_type: Box<Type>,
+    },
+}
+
+impl syn::parse::Parse for PackErrInput {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let type_name: Ident = input.parse()?;
+
+        if input.peek(Token![=]) {
+            input.parse::<Token![=]>()?;
+            let inner_type: Type = input.parse()?;
+            Ok(PackErrInput::Typed {
+                type_name,
+                inner_type: Box::new(inner_type),
+            })
+        } else {
+            Ok(PackErrInput::Simple { type_name })
         }
     }
 }

@@ -91,11 +91,11 @@ None
 
     The `Routable` trait is defined in `mingling_core::asset::routable` and provides unified routing capabilities (`to_chain` / `to_render`) for any type that can be dispatched into the program's pipeline. A blanket implementation is provided for all `T: Grouped<C> + Send`, ensuring backward compatibility — existing types that implement `Grouped` automatically implement `Routable`.
 
-2. **[`macros`]** Restructured the `mingling_macros` crate's internal module hierarchy. The previously flat module structure has been reorganized into a logical directory-based layout:
+2. **[`macros`]** Restructured the `mingling_macros` crate's internal module hierarchy. The previously flat module structure has been reorganized into a logical directory-based layout, with **each macro moved to its own dedicated `.rs` file**:
 
-    - **`attr/`** — Attribute macro implementations (e.g., `#[chain]`, `#[renderer]`, `#[help]`, `#[completion]`, `#[dispatcher_clap]`, `#[program_setup]`)
-    - **`derive/`** — Derive macro implementations (e.g., `#[derive(Grouped)]`, `#[derive(EnumTag)]`)
-    - **`func/`** — Function-like macro implementations (e.g., `pack!`, `group!`, `dispatcher!`, `suggest!`, `entry!`, `node!`, `gen_program!` and its sub-macros)
+    - **`attr/`** — Attribute macro implementations (e.g., `#[chain]` → `attr/chain.rs`, `#[renderer]` → `attr/renderer.rs`, `#[help]` → `attr/help.rs`, `#[completion]` → `attr/completion.rs`, `#[dispatcher_clap]` → `attr/dispatcher_clap.rs`, `#[program_setup]` → `attr/program_setup.rs`)
+    - **`derive/`** — Derive macro implementations (e.g., `#[derive(Grouped)]` → `derive/grouped.rs`, `#[derive(EnumTag)]` → `derive/enum_tag.rs`)
+    - **`func/`** — Function-like macro implementations, each in its own file (e.g., `pack!` → `func/pack.rs`, `group!` → `func/group.rs`, `dispatcher!` → `func/dispatcher.rs`, `suggest!` → `func/suggest.rs`, `entry!` → `func/entry.rs`, `node!` → `func/node.rs`, `gen_program!` → `func/gen_program.rs`, and its sub-macros each in separate files)
     - **`systems/`** — Cross-cutting systems (e.g., resource injection, dispatch tree generation, structural data derive support)
     - **`extensions/`** — Extension point mechanism for attribute macros (unchanged)
     - **`utils.rs`** — Shared utility module for future common helpers
@@ -177,6 +177,7 @@ None
 - **`mingling/Cargo.toml`**: Changed the feature dependency from `mingling_core/builds` to `mingling_core/build`. A deprecated `builds` feature alias is kept as `builds = ["mingling_core/build"]` with a note indicating it will be removed in a future breaking change.
 
     _No behavioral changes — the `build` feature provides identical functionality to the old `builds` feature. Downstream code using `builds` continues to work via the alias, but should migrate to `build`._
+
 9. **[`core`]** Renamed `ResourceMarker` methods from public names (`res_clone`, `res_default`, `modify`) to doc-hidden internal names (`__resource_marker_clone`, `__resource_marker_default`, `__resource_marker_modify`). These methods are internal implementation details of the resource injection system and should not be called directly by user code. By prefixing with `__` and adding `#[doc(hidden)]`, they are still technically accessible but hidden from documentation and tooling, reducing API surface confusion.
 
     - **`res_clone()`** → **`__resource_marker_clone()`** — Internal method for cloning a resource value during resource injection.

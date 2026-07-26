@@ -143,12 +143,6 @@
 
 #![deny(missing_docs)]
 
-#[cfg(feature = "extra_macros")]
-use quote::quote;
-
-#[cfg(feature = "extra_macros")]
-use syn::parse_macro_input;
-
 use proc_macro::TokenStream;
 use std::collections::BTreeSet;
 use std::sync::Mutex;
@@ -183,9 +177,6 @@ use func::pack_err;
 use func::suggest;
 use func::{dispatcher, node, pack};
 use systems::res_injection;
-#[cfg(feature = "structural_renderer")]
-pub(crate) use systems::structural_data;
-
 pub(crate) fn default_program_path() -> proc_macro2::TokenStream {
     quote::quote! { crate::ThisProgram }
 }
@@ -322,7 +313,7 @@ pub fn group(input: TokenStream) -> TokenStream {
 #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
 #[proc_macro]
 pub fn group_structural(input: TokenStream) -> TokenStream {
-    structural_data::group_structural(input)
+    func::group_structural::group_structural(input)
 }
 
 /// Creates a `Node` from a dot-separated path string.
@@ -435,7 +426,7 @@ pub fn pack(input: TokenStream) -> TokenStream {
 #[cfg(feature = "structural_renderer")]
 #[proc_macro]
 pub fn pack_structural(input: TokenStream) -> TokenStream {
-    structural_data::pack_structural(input)
+    func::pack_structural::pack_structural(input)
 }
 
 /// Creates an error struct with a `name: String` field and optional `info: Type` field.
@@ -520,7 +511,7 @@ pub fn pack_err(input: TokenStream) -> TokenStream {
 #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
 #[proc_macro]
 pub fn pack_err_structural(input: TokenStream) -> TokenStream {
-    pack_err::pack_err_structural(input)
+    func::pack_err_structural::pack_err_structural(input)
 }
 
 /// Early-returns the error from a `Result`, converting the `Ok` branch to the
@@ -580,14 +571,7 @@ pub fn pack_err_structural(input: TokenStream) -> TokenStream {
 #[cfg(feature = "extra_macros")]
 #[proc_macro]
 pub fn route(input: TokenStream) -> TokenStream {
-    let expr = parse_macro_input!(input as syn::Expr);
-    let expanded = quote! {
-        match #expr {
-            Ok(r) => r,
-            Err(e) => return ::mingling::Routable::to_chain(e),
-        }
-    };
-    TokenStream::from(expanded)
+    func::route::route(input)
 }
 
 /// Routes errors to the rendering pipeline instead of the chain pipeline.
@@ -630,14 +614,7 @@ pub fn route(input: TokenStream) -> TokenStream {
 #[cfg(feature = "extra_macros")]
 #[proc_macro]
 pub fn render_route(input: TokenStream) -> TokenStream {
-    let expr = parse_macro_input!(input as syn::Expr);
-    let expanded = quote! {
-        match #expr {
-            Ok(r) => r,
-            Err(e) => return <crate::ThisProgram as ::mingling::ProgramCollect>::render(::mingling::AnyOutput::new(e)),
-        }
-    };
-    TokenStream::from(expanded)
+    func::render_route::render_route(input)
 }
 
 /// Creates an empty result value wrapped in `ChainProcess` for early return
@@ -690,11 +667,8 @@ pub fn render_route(input: TokenStream) -> TokenStream {
 /// [`ChainProcess`]: https://docs.rs/mingling/latest/mingling/enum.ChainProcess.html
 #[cfg(feature = "extra_macros")]
 #[proc_macro]
-pub fn empty_result(_input: TokenStream) -> TokenStream {
-    let expanded = quote! {
-        <crate::ResultEmpty as ::mingling::Routable::<crate::ThisProgram>>::to_chain(crate::ResultEmpty)
-    };
-    TokenStream::from(expanded)
+pub fn empty_result(input: TokenStream) -> TokenStream {
+    func::empty_result::empty_result(input)
 }
 
 /// Creates a `Dispatcher` implementation for a subcommand.
@@ -1233,7 +1207,7 @@ pub fn entry(input: TokenStream) -> TokenStream {
 /// enum variant for `EntryType` to the help rendering logic in `HelpStruct`.
 #[proc_macro]
 pub fn register_help(input: TokenStream) -> TokenStream {
-    help::register_help(input)
+    func::register_help::register_help(input)
 }
 
 /// Registers a dispatcher at compile time for the `dispatch_tree` feature.
@@ -1262,7 +1236,7 @@ pub fn register_help(input: TokenStream) -> TokenStream {
 /// - `dispatch_tree_gen` module — The trie generation logic.
 #[proc_macro]
 pub fn register_dispatcher(input: TokenStream) -> TokenStream {
-    dispatcher::register_dispatcher(input)
+    func::register_dispatcher::register_dispatcher(input)
 }
 
 /// Declares a help rendering function for an entry type.
@@ -1358,8 +1332,8 @@ pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// fn some_item() {}
 /// ```
 #[proc_macro_attribute]
-pub fn mlint(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    item
+pub fn mlint(attr: TokenStream, item: TokenStream) -> TokenStream {
+    attr::mlint::mlint(attr, item)
 }
 
 /// Extension attribute macro that transforms `expr?` into `route!(expr)`.
@@ -1475,7 +1449,7 @@ pub fn buffer(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn r_println(input: TokenStream) -> TokenStream {
-    func::r_print::r_println(input)
+    func::r_println::r_println(input)
 }
 
 /// Prints text to a `RenderResult` buffer, without a trailing newline.
@@ -1537,7 +1511,7 @@ pub fn r_print(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn r_eprintln(input: TokenStream) -> TokenStream {
-    func::r_print::r_eprintln(input)
+    func::r_eprintln::r_eprintln(input)
 }
 
 /// Prints text to a `RenderResult` buffer (standard error style), without a trailing newline.
@@ -1570,7 +1544,7 @@ pub fn r_eprintln(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn r_eprint(input: TokenStream) -> TokenStream {
-    func::r_print::r_eprint(input)
+    func::r_eprint::r_eprint(input)
 }
 
 /// Appends the contents of one `RenderResult` to another.
@@ -1600,7 +1574,7 @@ pub fn r_eprint(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn r_append(input: TokenStream) -> TokenStream {
-    func::r_print::r_append(input)
+    func::r_append::r_append(input)
 }
 
 /// Derive macro for automatically implementing the `Grouped` trait on a struct.
@@ -1701,7 +1675,7 @@ pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
 #[cfg(feature = "structural_renderer")]
 #[proc_macro_derive(StructuralData)]
 pub fn derive_structural_data(input: TokenStream) -> TokenStream {
-    structural_data::derive_structural_data(input)
+    derive::structural_data::derive_structural_data(input)
 }
 
 /// Derive macro for implementing both `Grouped` and `serde::Serialize` on a struct.
@@ -1818,7 +1792,7 @@ pub fn gen_program(input: TokenStream) -> TokenStream {
 #[cfg(feature = "comp")]
 #[proc_macro]
 pub fn program_comp_gen(input: TokenStream) -> TokenStream {
-    func::gen_program::program_comp_gen_impl(input)
+    func::program_comp_gen::program_comp_gen_impl(input)
 }
 
 /// Registers a type into the global packed types registry for inclusion in
@@ -1843,7 +1817,7 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
 /// Panics if the global `PACKED_TYPES` mutex is poisoned.
 #[proc_macro]
 pub fn register_type(input: TokenStream) -> TokenStream {
-    func::gen_program::register_type_impl(input)
+    func::register_type::register_type_impl(input)
 }
 
 /// Registers a chain mapping function into the global chain registry.
@@ -1861,7 +1835,7 @@ pub fn register_type(input: TokenStream) -> TokenStream {
 /// Panics if the global `CHAINS` mutex is poisoned.
 #[proc_macro]
 pub fn register_chain(input: TokenStream) -> TokenStream {
-    func::gen_program::register_chain_impl(input)
+    func::register_chain::register_chain_impl(input)
 }
 
 /// Registers a renderer mapping function into the global renderer registry.
@@ -1879,7 +1853,7 @@ pub fn register_chain(input: TokenStream) -> TokenStream {
 /// Panics if the global `RENDERERS` mutex is poisoned.
 #[proc_macro]
 pub fn register_renderer(input: TokenStream) -> TokenStream {
-    func::gen_program::register_renderer_impl(input)
+    func::register_renderer::register_renderer_impl(input)
 }
 
 /// Internal macro used by `gen_program!` to generate the fallback types for
@@ -1889,7 +1863,7 @@ pub fn register_renderer(input: TokenStream) -> TokenStream {
 /// be called directly by user code.
 #[proc_macro]
 pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
-    func::gen_program::program_fallback_gen_impl(input)
+    func::program_fallback_gen::program_fallback_gen_impl(input)
 }
 
 /// Internal macro used by `gen_program!` to generate the final program enum
@@ -1943,7 +1917,7 @@ pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro]
 pub fn program_final_gen(input: TokenStream) -> TokenStream {
-    func::gen_program::program_final_gen_impl(input)
+    func::program_final_gen::program_final_gen_impl(input)
 }
 
 /// Builds a `Suggest` instance with inline suggestion items.
@@ -2064,5 +2038,5 @@ pub fn suggest(input: TokenStream) -> TokenStream {
 #[cfg(feature = "comp")]
 #[proc_macro]
 pub fn suggest_enum(input: TokenStream) -> TokenStream {
-    suggest::suggest_enum(input)
+    func::suggest_enum::suggest_enum(input)
 }

@@ -1,0 +1,7 @@
+use proc_macro::TokenStream;
+
+use crate::func::r_print::expand_print;
+
+pub(crate) fn r_eprintln(input: TokenStream) -> TokenStream {
+    expand_print(input, "eprintln")
+}

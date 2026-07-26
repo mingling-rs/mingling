@@ -9,7 +9,7 @@ use syn::{Ident, Token};
 /// Two forms:
 /// - `(ident, format_args...)`       — explicit buffer
 /// - `(format_args...)`              — implicit `__render_result_buffer`
-enum PrintInput {
+pub(crate) enum PrintInput {
     Explicit { dst: Ident, args: TokenStream2 },
     Implicit { args: TokenStream2 },
 }
@@ -29,7 +29,7 @@ impl Parse for PrintInput {
     }
 }
 
-fn expand_print(input: TokenStream, method: &str) -> TokenStream {
+pub(crate) fn expand_print(input: TokenStream, method: &str) -> TokenStream {
     let parsed: PrintInput = match syn::parse(input) {
         Ok(p) => p,
         Err(e) => return e.to_compile_error().into(),
@@ -53,20 +53,8 @@ fn expand_print(input: TokenStream, method: &str) -> TokenStream {
     expanded.into()
 }
 
-pub(crate) fn r_println(input: TokenStream) -> TokenStream {
-    expand_print(input, "println")
-}
-
 pub(crate) fn r_print(input: TokenStream) -> TokenStream {
     expand_print(input, "print")
-}
-
-pub(crate) fn r_eprintln(input: TokenStream) -> TokenStream {
-    expand_print(input, "eprintln")
-}
-
-pub(crate) fn r_eprint(input: TokenStream) -> TokenStream {
-    expand_print(input, "eprint")
 }
 
 /// Parsed input for `r_append!`.
@@ -74,9 +62,9 @@ pub(crate) fn r_eprint(input: TokenStream) -> TokenStream {
 /// Two forms:
 /// - `(dst, src)`       — explicit buffer and source
 /// - `(src)`            — implicit `__render_result_buffer`
-struct AppendInput {
-    dst: Option<Ident>,
-    src: proc_macro2::TokenStream,
+pub(crate) struct AppendInput {
+    pub(crate) dst: Option<Ident>,
+    pub(crate) src: proc_macro2::TokenStream,
 }
 
 impl Parse for AppendInput {
@@ -94,34 +82,4 @@ impl Parse for AppendInput {
             Ok(AppendInput { dst: None, src })
         }
     }
-}
-
-/// `r_append!` macro: appends the contents of another `RenderResult` to this one.
-///
-/// Two forms:
-/// - `r_append!(dst, src)` — appends `src` into `dst`
-/// - `r_append!(src)`      — appends `src` into `__render_result_buffer`
-pub(crate) fn r_append(input: TokenStream) -> TokenStream {
-    let parsed: AppendInput = match syn::parse(input) {
-        Ok(p) => p,
-        Err(e) => return e.to_compile_error().into(),
-    };
-
-    let dst_ident = parsed.dst.clone();
-    let src_tokens = parsed.src;
-
-    let expanded = match dst_ident {
-        Some(dst) => {
-            quote! {
-                #dst.append_other(#src_tokens);
-            }
-        }
-        None => {
-            quote! {
-                __render_result_buffer.append_other(#src_tokens);
-            }
-        }
-    };
-
-    expanded.into()
 }

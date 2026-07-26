@@ -4,7 +4,7 @@ use just_fmt::snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::func::gen_program::resolve_type;
+use crate::func::program_final_gen::resolve_type;
 
 /// Generate the `get_nodes()` function body for a ProgramCollect impl.
 /// If `pathf_map` is non-empty, resolves internal dispatcher statics using full paths.
