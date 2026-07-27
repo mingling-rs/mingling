@@ -1,8 +1,10 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use flate2::read::GzDecoder;
 use serde::Deserialize;
 use tar::Archive;
+use toml::Table as TomlTable;
 use tools::{
     dependency_order::find_workspace_root, eprintln_cargo_style, println_cargo_style,
     run_cmd_capture_with_dir, wprintln_cargo_style,
@@ -76,14 +78,12 @@ fn main() {
     }
 
     // Build version map: crate_name -> version
-    let mut version_map: std::collections::HashMap<String, String> =
-        std::collections::HashMap::new();
+    let mut version_map: HashMap<String, String> = HashMap::new();
     for m in &members {
         version_map.insert(m.name.clone(), m.version.clone());
     }
 
     // Collect unique member directories that need to be copied
-    // Compute relative path by stripping workspace_root prefix
     let mut member_dirs: Vec<PathBuf> = Vec::new();
     for m in &members {
         let dir = Path::new(&m.manifest_path)
@@ -104,20 +104,17 @@ fn main() {
     // 4. Copy files to the temp directory, preserving the workspace directory structure
     println_cargo_style!("Copy: project structure to .temp/pre-release/");
 
-    // Copy .cargo directory
     copy_dir(
         &workspace_root.join(".cargo"),
         &pre_release_dir.join(".cargo"),
     );
 
-    // Copy each member directory
     for dir in &member_dirs {
         let src = workspace_root.join(dir);
         let dst = pre_release_dir.join(dir);
         copy_dir(&src, &dst);
     }
 
-    // Copy root Cargo.toml and Cargo.lock
     copy_file(
         &workspace_root.join("Cargo.toml"),
         &pre_release_dir.join("Cargo.toml"),
@@ -127,24 +124,20 @@ fn main() {
         &pre_release_dir.join("Cargo.lock"),
     );
 
-    // 5. Replace workspace dependency paths with version numbers in the root Cargo.toml
-    //    For workspace-member crates, keep path so cargo can resolve locally during
-    //    `cargo package --workspace`. `cargo package` automatically converts path deps
-    //    to version deps in the final .crate manifest.
-    println_cargo_style!("Patch: resolve workspace dependency versions");
+    // 5. Fully resolve ALL workspace inheritance in every member's Cargo.toml,
+    //    so each crate becomes monomorphic (no `workspace = true` references).
+    //    Then strip `[workspace.dependencies]` and `[workspace.package]` from the
+    //    root Cargo.toml, since they are no longer needed.
+    println_cargo_style!("Resolve: inline all workspace inheritance");
 
-    let pre_release_cargo = pre_release_dir.join("Cargo.toml");
-    let content = std::fs::read_to_string(&pre_release_cargo)
-        .unwrap_or_else(|e| panic!("failed to read {}: {e}", pre_release_cargo.display()));
+    // Parse workspace config from the COPIED root Cargo.toml
+    let root_cargo_path = pre_release_dir.join("Cargo.toml");
+    let root_content = std::fs::read_to_string(&root_cargo_path)
+        .unwrap_or_else(|e| panic!("failed to read {}: {e}", root_cargo_path.display()));
 
-    let patched = patch_workspace_deps(&content, &version_map);
+    let (ws_package, ws_deps) = parse_workspace_config(&root_content);
 
-    std::fs::write(&pre_release_cargo, &patched)
-        .unwrap_or_else(|e| panic!("failed to write {}: {e}", pre_release_cargo.display()));
-
-    // Member cargo.toml files: replace direct `path = "..."` deps (pointing to other
-    // workspace members) with version qualification, so `cargo package` can produce
-    // a valid .crate without path dependencies.
+    // Resolve each member's Cargo.toml
     for dir in &member_dirs {
         let member_cargo = pre_release_dir.join(dir).join("Cargo.toml");
         if !member_cargo.exists() {
@@ -152,12 +145,17 @@ fn main() {
         }
         let member_content = std::fs::read_to_string(&member_cargo)
             .unwrap_or_else(|e| panic!("failed to read {}: {e}", member_cargo.display()));
-        let member_patched = patch_member_path_deps(&member_content, &version_map);
-        if member_patched != member_content {
-            std::fs::write(&member_cargo, &member_patched)
-                .unwrap_or_else(|e| panic!("failed to write {}: {e}", member_cargo.display()));
-        }
+        let resolved =
+            resolve_member_manifest(&member_content, dir, &ws_package, &ws_deps, &version_map);
+        std::fs::write(&member_cargo, &resolved)
+            .unwrap_or_else(|e| panic!("failed to write {}: {e}", member_cargo.display()));
     }
+
+    // Strip [workspace.dependencies], [workspace.package], and root [package]
+    // from root Cargo.toml, making it a pure virtual manifest.
+    let stripped = strip_workspace_config(&root_content);
+    std::fs::write(&root_cargo_path, &stripped)
+        .unwrap_or_else(|e| panic!("failed to write {}: {e}", root_cargo_path.display()));
 
     println_cargo_style!("Package: running cargo package --workspace --no-verify");
 
@@ -274,6 +272,22 @@ fn main() {
         // Also remove Cargo.lock — standalone crate doesn't need it for publish
         let _ = std::fs::remove_file(target_dir.join("Cargo.lock"));
 
+        // Append an empty [workspace] section so each crate is a valid workspace root
+        let cargo_toml_path = target_dir.join("Cargo.toml");
+        if cargo_toml_path.exists() {
+            let mut cargo_content = std::fs::read_to_string(&cargo_toml_path)
+                .unwrap_or_else(|e| panic!("failed to read {}: {e}", cargo_toml_path.display()));
+            // Only append if there isn't already a [workspace] section
+            if !cargo_content.contains("\n[workspace]\n")
+                && !cargo_content.ends_with("\n[workspace]\n")
+            {
+                cargo_content.push_str("\n[workspace]\n");
+                std::fs::write(&cargo_toml_path, &cargo_content).unwrap_or_else(|e| {
+                    panic!("failed to write {}: {e}", cargo_toml_path.display())
+                });
+            }
+        }
+
         println_cargo_style!("Export: {}", crate_dir_name);
     }
 
@@ -286,57 +300,289 @@ fn main() {
     }
 }
 
-/// Replace path-based workspace dependencies with version strings.
-///
-/// Keeps the path form so that `cargo package --workspace` resolves to local workspace
-/// members, but also adds `version = "..."` so the generated .crate has the correct
-/// version dependency.
-fn patch_workspace_deps(
+/// Parse `[workspace.package]` and `[workspace.dependencies]` from the root Cargo.toml.
+/// Returns (package_fields, dep_values).
+fn parse_workspace_config(
     content: &str,
-    version_map: &std::collections::HashMap<String, String>,
+) -> (HashMap<String, String>, HashMap<String, toml::Value>) {
+    let table: TomlTable = content.parse().expect("failed to parse root Cargo.toml");
+
+    let mut package_fields = HashMap::new();
+    if let Some(workspace) = table.get("workspace").and_then(|w| w.as_table())
+        && let Some(pkg_table) = workspace.get("package").and_then(|p| p.as_table())
+    {
+        for (k, v) in pkg_table {
+            if let Some(s) = v.as_str() {
+                package_fields.insert(k.clone(), s.to_string());
+            }
+        }
+    }
+
+    let mut dep_values = HashMap::new();
+    if let Some(workspace) = table.get("workspace").and_then(|w| w.as_table())
+        && let Some(deps_table) = workspace.get("dependencies").and_then(|d| d.as_table())
+    {
+        for (k, v) in deps_table {
+            dep_values.insert(k.clone(), v.clone());
+        }
+    }
+
+    (package_fields, dep_values)
+}
+
+/// Serialize a `toml::Value` into Cargo-toml-compatible inline representation.
+fn toml_value_str(v: &toml::Value) -> String {
+    match v {
+        toml::Value::String(s) => format!("\"{}\"", s),
+        toml::Value::Table(t) => {
+            let items: Vec<String> = t
+                .iter()
+                .map(|(k, val)| format!("{} = {}", k, toml_value_str(val)))
+                .collect();
+            format!("{{ {} }}", items.join(", "))
+        }
+        toml::Value::Array(a) => {
+            let items: Vec<String> = a.iter().map(toml_value_str).collect();
+            format!("[{}]", items.join(", "))
+        }
+        toml::Value::Boolean(b) => b.to_string(),
+        toml::Value::Integer(i) => i.to_string(),
+        toml::Value::Float(f) => f.to_string(),
+        toml::Value::Datetime(dt) => format!("\"{}\"", dt),
+    }
+}
+
+/// Compute the relative path from `member_rel_dir` to `target_path`.
+/// Both are relative to workspace root.
+/// e.g. member_rel_dir="mingling", target_path="mingling_core" → "../mingling_core"
+fn make_path_relative_to_member(target_path: &str, member_rel_dir: &Path) -> String {
+    if member_rel_dir.as_os_str().is_empty() || member_rel_dir == Path::new(".") {
+        return target_path.to_string();
+    }
+    let depth = member_rel_dir.components().count();
+    let mut result = PathBuf::new();
+    for _ in 0..depth {
+        result.push("..");
+    }
+    result.push(target_path);
+    result.to_string_lossy().to_string()
+}
+
+/// Resolve a dependency definition from `[workspace.dependencies]` to an inline string.
+/// If the definition contains a path to a workspace member, add `version = "..."`
+/// and adjust the path to be relative to the member's directory.
+fn resolve_dep_def(
+    dep_name: &str,
+    dep_def: &toml::Value,
+    member_rel_dir: &Path,
+    version_map: &HashMap<String, String>,
+) -> String {
+    match dep_def {
+        toml::Value::String(ver) => {
+            format!("\"{}\"", ver)
+        }
+        toml::Value::Table(t) => {
+            let mut resolved = t.clone();
+            let has_path = t.contains_key("path");
+            let is_ws_member = version_map.contains_key(dep_name);
+
+            // Fix path to be relative to member's directory
+            if has_path && let Some(path_val) = t.get("path").and_then(|v| v.as_str()) {
+                let rel = make_path_relative_to_member(path_val, member_rel_dir);
+                resolved.insert("path".to_string(), toml::Value::String(rel));
+            }
+
+            // Add version for workspace member path deps
+            if has_path
+                && is_ws_member
+                && let Some(version) = version_map.get(dep_name)
+            {
+                resolved.insert("version".to_string(), toml::Value::String(version.clone()));
+            }
+
+            let items: Vec<String> = resolved
+                .iter()
+                .map(|(k, val)| format!("{} = {}", k, toml_value_str(val)))
+                .collect();
+            format!("{{ {} }}", items.join(", "))
+        }
+        _ => toml_value_str(dep_def),
+    }
+}
+
+/// Merge an inline `{ workspace = true, optional = true, ... }` with the workspace definition.
+/// Returns the full resolved dependency value string (without the leading `dep_name = `).
+fn merge_inline_dep(
+    inline_rest: &str,
+    dep_name: &str,
+    dep_def: &toml::Value,
+    member_rel_dir: &Path,
+    version_map: &HashMap<String, String>,
+) -> String {
+    // inline_rest is the part after `=`: `{ workspace = true, optional = true }`
+    let inner = inline_rest
+        .trim()
+        .strip_prefix('{')
+        .and_then(|s| s.strip_suffix('}'))
+        .unwrap_or("");
+
+    match dep_def {
+        toml::Value::String(ver) => {
+            // Workspace def is just a version string
+            // Collect extras: everything except `workspace = true`
+            let extras: Vec<&str> = inner
+                .split(',')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty() && *s != "workspace = true")
+                .collect();
+
+            if extras.is_empty() {
+                format!("\"{}\"", ver)
+            } else {
+                // Serialize as inline table: version + extras
+                let mut parts = vec![format!("version = \"{}\"", ver)];
+                parts.extend(extras.iter().map(|s| s.to_string()));
+                format!("{{ {} }}", parts.join(", "))
+            }
+        }
+        toml::Value::Table(t) => {
+            // Start from workspace def
+            let mut merged = t.clone();
+
+            // Fix path to be relative to member's directory
+            if let Some(path_val) = t.get("path").and_then(|v| v.as_str()) {
+                let rel = make_path_relative_to_member(path_val, member_rel_dir);
+                merged.insert("path".to_string(), toml::Value::String(rel));
+            }
+
+            // If this dep is a workspace member with a path dep, add version
+            if t.contains_key("path")
+                && version_map.contains_key(dep_name)
+                && let Some(version) = version_map.get(dep_name)
+            {
+                merged.insert("version".to_string(), toml::Value::String(version.clone()));
+            }
+
+            // Apply extra fields from the inline
+            for piece in inner.split(',').map(|s| s.trim()) {
+                let piece = piece.trim();
+                if piece.is_empty() || piece == "workspace = true" {
+                    continue;
+                }
+                // Parse `key = value` pairs
+                if let Some((raw_key, raw_val)) = piece.split_once('=') {
+                    let k = raw_key.trim();
+                    let v = raw_val.trim();
+                    if k.is_empty() {
+                        continue;
+                    }
+                    // Try to infer the value type
+                    if v == "true" {
+                        merged.insert(k.to_string(), toml::Value::Boolean(true));
+                    } else if v == "false" {
+                        merged.insert(k.to_string(), toml::Value::Boolean(false));
+                    } else if v.starts_with('"') && v.ends_with('"') {
+                        merged.insert(
+                            k.to_string(),
+                            toml::Value::String(v[1..v.len() - 1].to_string()),
+                        );
+                    } else if v.starts_with('[') && v.ends_with(']') {
+                        // Simple array parsing: strings only
+                        let arr: Vec<toml::Value> = v[1..v.len() - 1]
+                            .split(',')
+                            .map(|s| {
+                                let s = s.trim().trim_matches('"');
+                                toml::Value::String(s.to_string())
+                            })
+                            .collect();
+                        merged.insert(k.to_string(), toml::Value::Array(arr));
+                    } else if let Ok(n) = v.parse::<i64>() {
+                        merged.insert(k.to_string(), toml::Value::Integer(n));
+                    } else if let Ok(f) = v.parse::<f64>() {
+                        merged.insert(k.to_string(), toml::Value::Float(f));
+                    } else {
+                        // Treat as string
+                        merged.insert(k.to_string(), toml::Value::String(v.to_string()));
+                    }
+                }
+            }
+
+            let items: Vec<String> = merged
+                .iter()
+                .map(|(k, val)| format!("{} = {}", k, toml_value_str(val)))
+                .collect();
+            format!("{{ {} }}", items.join(", "))
+        }
+        _ => toml_value_str(dep_def),
+    }
+}
+
+/// Resolve ALL workspace inheritance in a single member crate's Cargo.toml:
+///   - `version.workspace = true` → `version = "0.3.0"`
+///   - `dep.workspace = true` → inline the full definition from ws_deps
+///   - `dep = { workspace = true, ... }` → merge with ws_deps definition
+fn resolve_member_manifest(
+    content: &str,
+    member_rel_dir: &Path,
+    ws_package: &HashMap<String, String>,
+    ws_deps: &HashMap<String, toml::Value>,
+    version_map: &HashMap<String, String>,
 ) -> String {
     let mut result = String::new();
-    let mut in_workspace_deps = false;
+    let mut in_package = false;
+    let mut in_section_with_deps = false;
 
     for line in content.lines() {
         let trimmed = line.trim();
+        let indent: String = line.chars().take_while(|c| c.is_whitespace()).collect();
 
-        if trimmed == "[workspace.dependencies]" {
-            in_workspace_deps = true;
+        // Track sections
+        if trimmed.starts_with('[') {
+            in_package = trimmed == "[package]";
+            in_section_with_deps = trimmed.starts_with("[dependencies")
+                || trimmed.starts_with("[build-dependencies")
+                || trimmed.starts_with("[dev-dependencies");
             result.push_str(line);
             result.push('\n');
             continue;
         }
 
-        // Detect end of workspace.dependencies section
-        if in_workspace_deps && trimmed.starts_with('[') {
-            in_workspace_deps = false;
+        // [package] section: resolve `field.workspace = true`
+        if in_package && trimmed.ends_with(".workspace = true") {
+            let key = trimmed.strip_suffix(".workspace = true").unwrap().trim();
+            if let Some(value) = ws_package.get(key) {
+                result.push_str(&format!("{indent}{key} = \"{value}\"\n"));
+                continue;
+            }
+            // Also check workspace.dependencies (for fields like `version.workspace`)
+            // when the member has its own version field inherited from workspace.package
         }
 
-        if in_workspace_deps
-            && let Some(dep_name) = trimmed.split('=').next().map(|s| s.trim())
-            && let Some(version) = version_map.get(dep_name)
-        {
-            let indent = line
-                .chars()
-                .take_while(|c| c.is_whitespace())
-                .collect::<String>();
-
-            if trimmed.contains("path =") {
-                let path_value = extract_path_value(trimmed);
-                let patched_line: String = if let Some(pv) = path_value {
-                    trimmed.replace(
-                        &format!("path = \"{}\"", pv),
-                        &format!("path = \"{}\", version = \"{}\"", pv, version),
-                    )
-                } else {
-                    trimmed.to_string()
-                };
-                result.push_str(&format!("{indent}{patched_line}\n"));
-            } else {
-                result.push_str(&format!("{indent}{dep_name} = \"{version}\"\n"));
+        // Dependency sections
+        if in_section_with_deps {
+            // Shorthand: `foo.workspace = true`
+            if trimmed.ends_with(".workspace = true") {
+                let key = trimmed.strip_suffix(".workspace = true").unwrap().trim();
+                if let Some(dep_def) = ws_deps.get(key) {
+                    let resolved = resolve_dep_def(key, dep_def, member_rel_dir, version_map);
+                    result.push_str(&format!("{indent}{key} = {resolved}\n"));
+                    continue;
+                }
             }
-            continue;
+
+            // Inline: `foo = { workspace = true, optional = true, ... }`
+            if let Some(eq_pos) = trimmed.find("= {")
+                && trimmed.contains("workspace = true")
+            {
+                let dep_name = trimmed[..eq_pos].trim();
+                if let Some(dep_def) = ws_deps.get(dep_name) {
+                    let after_eq = trimmed[eq_pos + 1..].trim();
+                    let merged =
+                        merge_inline_dep(after_eq, dep_name, dep_def, member_rel_dir, version_map);
+                    result.push_str(&format!("{indent}{dep_name} = {merged}\n"));
+                    continue;
+                }
+            }
         }
 
         result.push_str(line);
@@ -346,61 +592,54 @@ fn patch_workspace_deps(
     result
 }
 
-/// Extract the path value from a dependency line like:
-/// `mingling_core = { path = "mingling_core", default-features = false }`
-fn extract_path_value(line: &str) -> Option<String> {
-    let line = line.trim();
-    if let Some(start) = line.find("path = \"") {
-        let after_path = &line[start + 8..];
-        if let Some(end) = after_path.find('"') {
-            return Some(after_path[..end].to_string());
-        }
-    }
-    None
-}
-
-/// Patch a member crate's Cargo.toml: add `version = "..."` to direct `path = "..."`
-/// dependencies that point to other workspace members.
-fn patch_member_path_deps(
-    content: &str,
-    version_map: &std::collections::HashMap<String, String>,
-) -> String {
+/// Remove `[workspace.dependencies]`, `[workspace.package]`, and the root `[package]`
+/// section from root Cargo.toml, making it a pure virtual manifest.
+/// Keeps `[workspace]` with `members`, `resolver`, `exclude` so packaging still works.
+fn strip_workspace_config(content: &str) -> String {
     let mut result = String::new();
-    let mut in_deps = false;
-    let mut in_build_deps = false;
+    let mut in_ws_deps = false;
+    let mut in_ws_package = false;
+    let mut in_root_package = false;
 
     for line in content.lines() {
         let trimmed = line.trim();
 
-        if trimmed == "[dependencies]" || trimmed.starts_with("[dependencies.") {
-            in_deps = true;
-            in_build_deps = false;
-        } else if trimmed == "[build-dependencies]" || trimmed.starts_with("[build-dependencies.") {
-            in_build_deps = true;
-            in_deps = false;
-        } else if trimmed.starts_with('[') {
-            in_deps = false;
-            in_build_deps = false;
+        if trimmed == "[workspace.dependencies]" {
+            in_ws_deps = true;
+            continue;
+        }
+        if trimmed == "[workspace.package]" {
+            in_ws_package = true;
+            continue;
+        }
+        if trimmed == "[package]" && !in_ws_deps && !in_ws_package {
+            // Remove the root [package] section entirely (virtual manifest)
+            in_root_package = true;
+            continue;
         }
 
-        if (in_deps || in_build_deps)
-            && trimmed.contains("path = \"")
-            && !trimmed.contains("workspace = true")
-            && let Some(dep_name) = trimmed.split('=').next().map(|s| s.trim())
-            && let Some(version) = version_map.get(dep_name.trim_end_matches(".workspace"))
-            && !trimmed.contains("version = \"")
-        {
-            let indent = line
-                .chars()
-                .take_while(|c| c.is_whitespace())
-                .collect::<String>();
-            let path_val = extract_path_value(trimmed).unwrap_or_default();
-            let patched = trimmed.replace(
-                &format!("path = \"{path_val}\""),
-                &format!("path = \"{path_val}\", version = \"{version}\""),
-            );
-            result.push_str(&format!("{indent}{patched}\n"));
-            continue;
+        if in_ws_deps {
+            if trimmed.starts_with('[') {
+                in_ws_deps = false;
+            } else {
+                continue;
+            }
+        }
+
+        if in_ws_package {
+            if trimmed.starts_with('[') {
+                in_ws_package = false;
+            } else {
+                continue;
+            }
+        }
+
+        if in_root_package {
+            if trimmed.starts_with('[') {
+                in_root_package = false;
+            } else {
+                continue;
+            }
         }
 
         result.push_str(line);
