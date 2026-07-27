@@ -1,7 +1,11 @@
-<h1 align="center">The Picker2 Arguments Parser</h1>
+<h1 align="center">[Solved] The Picker2 Arguments Parser</h1>
 <p align="center">
     A smarter, faster alternative to Picker
 </p>
+
+> [!NOTE]
+>
+> This issue has been fully resolved and is thus archived for preservation.
 
 ## Intro
 
@@ -94,7 +98,7 @@ pub struct PickerResult<Tuple> {
     - [x] Added `parselib` providing parsing logic
     - [x] Added `Pickable` for extensibility
     - [x] Comprehensive testing!
-    - [ ] Improve documentation
+    - [x] Improve documentation
     - [x] Add examples
-    - [ ] Update README
-- [ ] Complete
+    - [x] Update README
+- [x] Complete

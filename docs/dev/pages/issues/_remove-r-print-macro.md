@@ -1,4 +1,8 @@
-<h1 align="center">Remove r_print! and r_println! Macros</h1>
+<h1 align="center">[Solved] Remove r_print! and r_println! Macros</h1>
+
+> [!NOTE]
+>
+> This issue has been fully resolved and is thus archived for preservation.
 
 `r_print!` and `r_println!` are important macros in Mingling for use inside `#[help]` and `#[renderer]` functions, but their implementation is not clean: they implicitly introduce a `__renderer_inner_result` field. While this might look elegant at the API level, it is **incorrect** and even **objectionable**.
 
