@@ -113,7 +113,7 @@ features = []
 ```
 
 > [!NOTE]
-> To learn more, check out [Writing with Mingling](https://github.com/mingling-rs/mingling/blob/main/GETTING_STARTED.md)
+> To learn more, check out [Writing with Mingling](https://github.com/mingling-rs/mingling/blob/main/GETTING-STARTED.md)
 
 ## Roadmap
 
