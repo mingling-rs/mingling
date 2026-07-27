@@ -56,11 +56,11 @@ fn main() {
     println_cargo_style!("Version: {} -> {}", current_ver, new_ver);
 
     // Read version-files.toml
-    let config_path = Path::new(".run").join("version-files.toml");
+    let config_path = Path::new(".config").join("version-files.toml");
     let config_str =
-        std::fs::read_to_string(&config_path).expect("Failed to read .run/version-files.toml");
+        std::fs::read_to_string(&config_path).expect("Failed to read .config/version-files.toml");
     let config: Config =
-        toml::from_str(&config_str).expect("Failed to parse .run/version-files.toml");
+        toml::from_str(&config_str).expect("Failed to parse .config/version-files.toml");
 
     let mut updated_count = 0;
     let mut skipped_count = 0;

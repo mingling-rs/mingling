@@ -21,7 +21,7 @@ async fn main() {
     #[cfg(windows)]
     let _ = colored::control::set_virtual_terminal(true);
 
-    let config_path = PathBuf::from("verified-docs.toml");
+    let config_path = PathBuf::from(".config/verified-docs.toml");
     if !config_path.exists() {
         eprintln_cargo_style!("verified-docs.toml not found in current directory");
         std::process::exit(1);
