@@ -79,6 +79,14 @@ None
 
     Each type implements `SinglePickable`, performing filesystem validation at parse time and returning `NotFound` when the precondition is not met.
 
+2. **[`picker:parsing`]** Added convenience methods to the internal `repeat!`-generated tuple implementations for `PickArgParsed<T1, T2, ...>` structs in `arg_picker::picker::parse`:
+
+    - **`unwrap_or_default(self)`** — Returns the parsed values, using `Default::default()` for any missing required arguments. Panics if a route was selected.
+    - **`unwrap_or_else<F>(self, op: F)`** — Returns the parsed values, using the provided closure to generate default values for any missing required arguments. Panics if a route was selected.
+    - **`expect(self, msg: &str)`** — Returns the parsed values, or panics with the given message if a route was selected. Requires `Route: std::fmt::Debug`.
+
+    These methods provide ergonomic alternatives to `to_result()` + `unwrap()` / `unwrap_or_default()` / `unwrap_or_else()` / `expect()` chaining, reducing boilerplate when working with `PickArgParsed` tuples directly.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 None

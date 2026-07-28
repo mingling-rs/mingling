@@ -33,6 +33,55 @@ internal_repeat!(1..=32 => {
             ((p.v$.expect(concat!("missing required argument at position ", $)),+))
         }
 
+        /// Returns the parsed values, using the default values for any missing
+        /// required arguments, or panicking if a route was selected.
+        ///
+        /// # Panics
+        ///
+        /// Panics if a route was selected.
+        ///
+        /// # Type Constraints
+        ///
+        /// All types in the tuple must implement [`Default`].
+        pub fn unwrap_or_default(self) -> ((T$,+))
+        where
+            (
+                T$: Default,
+            +) {
+            let p = self.parse();
+            ((p.v$.unwrap_or_default(),+))
+        }
+
+        /// Returns the parsed values, using the provided closure to generate
+        /// default values for any missing required arguments, or panicking if
+        /// a route was selected.
+        ///
+        /// # Panics
+        ///
+        /// Panics if a route was selected.
+        pub fn unwrap_or_else<F>(self, op: F) -> ((T$,+))
+        where
+            F: FnOnce(Route) -> ((T$,+)),
+        {
+            let r = self.to_result();
+            r.unwrap_or_else(op)
+        }
+
+        /// Returns the parsed values, or panics with the given message if
+        /// a route was selected.
+        ///
+        /// # Panics
+        ///
+        /// Panics if a route was selected, with the provided message.
+        ///
+        /// # Type Constraints
+        ///
+        /// `Route` must implement [`std::fmt::Debug`] so that the error
+        /// message can include the route value.
+        pub fn expect(self, msg: &str) -> ((T$,+)) where Route: std::fmt::Debug {
+            self.to_result().expect(msg)
+        }
+
         /// Returns the individual option values without checking the route.
         pub fn unpack(self) -> ((Option<T$>,+)) {
             let p = self.parse();
