@@ -1,7 +1,7 @@
 use std::{
     fmt::{Display, Formatter},
     io::Write,
-    process::ExitCode,
+    process::{ExitCode, exit},
 };
 
 use crate::RenderResultMode::{Stderr, Stdout};
@@ -495,6 +495,24 @@ impl RenderResult {
             immediate_output: self.immediate_output,
             exit_code: self.exit_code,
         }
+    }
+
+    /// Exits the process with the exit code stored in this `RenderResult`.
+    ///
+    /// This method calls `std::process::exit()` with the `exit_code` value,
+    /// terminating the current process immediately.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::new();
+    /// result.exit_code = 42;
+    /// // result.exit_process(); // would exit with code 42
+    /// ```
+    pub fn exit_process(&self) {
+        exit(self.exit_code)
     }
 }
 
