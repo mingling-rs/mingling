@@ -50,6 +50,8 @@ pub struct AnalyzeItem {
     pub item_name: String,
     /// Whether the item is from an external crate (resolved via `use`), bypassing the file's own module path.
     pub is_foreign: bool,
+    /// When `true`, this item is a module whose contents should be glob-imported (`::*`).
+    pub is_module: bool,
 }
 
 impl AnalyzeItem {
@@ -59,6 +61,17 @@ impl AnalyzeItem {
             module,
             item_name,
             is_foreign: false,
+            is_module: false,
+        }
+    }
+
+    /// Creates a local module item — generates a `use path::item_name::*;` glob import.
+    pub fn local_module(module: String, item_name: String) -> Self {
+        Self {
+            module,
+            item_name,
+            is_foreign: false,
+            is_module: true,
         }
     }
 
@@ -68,6 +81,7 @@ impl AnalyzeItem {
             module,
             item_name,
             is_foreign: true,
+            is_module: false,
         }
     }
 }

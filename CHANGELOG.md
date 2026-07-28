@@ -60,7 +60,13 @@ None
 
 #### Optimizations:
 
-None
+1. **[`pathf`]** Moved pathf type resolution from `program_final_gen` (compile-time loading and parsing of `type_using.rs`) to `gen_program!()` (build-time `include!()`). The `program_final_gen` macro no longer loads `type_using.rs` at compile time or embeds `use` statements in generated code. Instead, `gen_program!()` now emits `include!(concat!(env!("OUT_DIR"), "/", env!("CARGO_PKG_NAME"), "/type_using.rs"))` (feature-gated behind `pathf`), which brings all discovered types into scope as bare idents.
+
+    Consequently, all type resolution in `program_final_gen` (chain arms, render arms, help arms, completion arms, and dispatch tree generation) now uses simple idents (`ident_tokens(name)`) instead of the former `resolve_type(name, &pathf_map)` call that produced full qualified paths. The `resolve_type` function, `load_pathf_map`, and all associated `HashMap<String, String>` plumbing have been removed from `program_final_gen.rs`.
+
+    In `dispatch_tree_gen.rs`, `gen_get_nodes` and `gen_dispatch_args_trie` no longer accept a `pathf_map` parameter; dispatcher static names and dispatching type names are now emitted as bare idents.
+
+2. **[`pathf`]** Added `is_module` field to `AnalyzeItem` and a new constructor `AnalyzeItem::local_module(module, item_name)` which sets `is_module: true`. The `type_mapping_builder` now tracks whether an item is a module: when generating `type_using.rs`, module items produce `use path::to::module::*;` (glob import) instead of the standard `use path::to::TypeName;` direct import. Non-module items continue to use direct imports as before. The internal data structure changed from `Vec<(String, String)>` to `Vec<(String, String, bool)>` to carry the `is_module` flag through the pipeline.
 
 #### Features:
 

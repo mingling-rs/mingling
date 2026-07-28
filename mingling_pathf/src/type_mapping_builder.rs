@@ -25,7 +25,7 @@ pub fn analyze_and_build_type_mapping_for(
     let module_mapping = module_pathf::analyze(crate_dir)?;
     let analyzer = pattern_analyzer::init_with_config(config.clone());
 
-    let mut type_mappings: Vec<(String, String)> = Vec::new();
+    let mut type_mappings: Vec<(String, String, bool)> = Vec::new();
 
     for item in module_mapping {
         let file_abs = crate_dir.join(item.file_path());
@@ -40,14 +40,13 @@ pub fn analyze_and_build_type_mapping_for(
 
         for ai in analyze_items {
             let full_path = if ai.is_foreign {
-                // Foreign item — use its own module path as-is
                 format!("{}::{}", ai.module, ai.item_name)
             } else if ai.module.is_empty() {
                 format!("{}::{}", module_path, ai.item_name)
             } else {
                 format!("{}::{}::{}", module_path, ai.module, ai.item_name)
             };
-            type_mappings.push((ai.item_name, full_path));
+            type_mappings.push((ai.item_name, full_path, ai.is_module));
         }
     }
 
@@ -56,7 +55,7 @@ pub fn analyze_and_build_type_mapping_for(
 
     // Deduplicate by type name, keeping the first occurrence
     let mut seen = HashSet::new();
-    type_mappings.retain(|(name, _)| seen.insert(name.clone()));
+    type_mappings.retain(|(name, _, _)| seen.insert(name.clone()));
 
     // Create output directory
     std::fs::create_dir_all(output_dir)?;
@@ -66,14 +65,18 @@ pub fn analyze_and_build_type_mapping_for(
     let type_using_path = output_dir.join("type_using.rs");
 
     let mut content_mapping = String::new();
-    for (name, path) in &type_mappings {
+    for (name, path, _) in &type_mappings {
         content_mapping.push_str(&format!("{name} = {path}\n"));
     }
     std::fs::write(&output_path, content_mapping)?;
 
     let mut content_using = String::new();
-    for (_, path) in &type_mappings {
-        content_using.push_str(&format!("use {path};\n"));
+    for (_, path, is_module) in &type_mappings {
+        if *is_module {
+            content_using.push_str(&format!("use {path}::*;\n"));
+        } else {
+            content_using.push_str(&format!("use {path};\n"));
+        }
     }
     std::fs::write(&type_using_path, content_using)?;
 

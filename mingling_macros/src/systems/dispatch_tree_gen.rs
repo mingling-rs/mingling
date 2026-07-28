@@ -1,27 +1,22 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use just_fmt::snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-use crate::func::program_final_gen::resolve_type;
-
 /// Generate the `get_nodes()` function body for a ProgramCollect impl.
-/// If `pathf_map` is non-empty, resolves internal dispatcher statics using full paths.
-pub(crate) fn gen_get_nodes(
-    entries: &[(String, String, String)],
-    pathf_map: &HashMap<String, String>,
-) -> TokenStream {
+pub(crate) fn gen_get_nodes(entries: &[(String, String, String)]) -> TokenStream {
     let mut node_entries = Vec::new();
 
     for (node_name, _disp_type, _entry_name) in entries {
         let static_name_str = format!("__internal_dispatcher_{}", snake_case!(node_name));
-        let resolved = resolve_type(&static_name_str, pathf_map);
+        let static_ident =
+            proc_macro2::Ident::new(&static_name_str, proc_macro2::Span::call_site());
         let node_display_name = node_name.replace('.', " ");
         let node_display_lit = syn::LitStr::new(&node_display_name, proc_macro2::Span::call_site());
 
         node_entries.push(quote! {
-            (#node_display_lit.to_string(), & #resolved)
+            (#node_display_lit.to_string(), &#static_ident)
         });
     }
 
@@ -38,20 +33,13 @@ pub(crate) fn gen_get_nodes(
 ///
 /// Builds a hardcoded match tree: at each depth, group nodes by character.
 /// Single-node groups use `starts_with`; multi-node groups recurse with `nth()` match.
-///
-/// If `pathf_map` is non-empty, resolves dispatcher types using full paths.
-pub(crate) fn gen_dispatch_args_trie(
-    entries: &[(String, String, String)],
-    pathf_map: &HashMap<String, String>,
-) -> TokenStream {
-    // Prepare (display_name, disp_type) pairs.
-    // display_name = node_name.replace('.', " ")
+pub(crate) fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> TokenStream {
     let nodes: Vec<(String, String)> = entries
         .iter()
         .map(|(name, disp, _)| (name.replace('.', " "), disp.clone()))
         .collect();
 
-    let dispatch_body = build_dispatch_body(&nodes, 0, pathf_map);
+    let dispatch_body = build_dispatch_body(&nodes, 0);
 
     quote! {
         fn dispatch_args_trie(
@@ -70,19 +58,13 @@ pub(crate) fn gen_dispatch_args_trie(
 ///
 /// `nodes`: slice of (display_name, disp_type) for commands that share the same prefix so far.
 /// `depth`: The character index currently being matched.
-/// `pathf_map`: optional mapping from type name to full path for resolving dispatchers.
-fn build_dispatch_body(
-    nodes: &[(String, String)],
-    depth: usize,
-    pathf_map: &HashMap<String, String>,
-) -> TokenStream {
+fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream {
     if nodes.is_empty() {
         return quote! {
             return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
         };
     }
 
-    // Group by character at `depth`
     let mut groups: BTreeMap<char, Vec<(String, String)>> = BTreeMap::new();
     let mut exact_nodes: Vec<(String, String)> = Vec::new();
 
@@ -97,18 +79,17 @@ fn build_dispatch_body(
         }
     }
 
-    // Build a dispatch arm for a single node via `starts_with`
     let make_starts_with_arm = |name: &str, disp_type: &str| -> TokenStream {
         let name_space = format!("{} ", name);
         let name_lit = syn::LitStr::new(&name_space, proc_macro2::Span::call_site());
-        let disp_resolved = resolve_type(disp_type, pathf_map);
+        let disp_ident = proc_macro2::Ident::new(disp_type, proc_macro2::Span::call_site());
         let prefix_word_count = name.split_whitespace().count();
         quote! {
             if raw_str.starts_with(#name_lit) {
                 let prefix_len = #prefix_word_count;
                 let trimmed_args: Vec<String> = raw.iter().skip(prefix_len).cloned().collect();
-                let __cp = <#disp_resolved as ::mingling::Dispatcher<Self::Enum>>::begin(
-                    &#disp_resolved::default(),
+                let __cp = <#disp_ident as ::mingling::Dispatcher<Self::Enum>>::begin(
+                    &#disp_ident::default(),
                     trimmed_args,
                 );
                 return match __cp {
@@ -136,7 +117,7 @@ fn build_dispatch_body(
                 }
             });
         } else {
-            let sub_body = build_dispatch_body(sub_nodes, depth + 1, pathf_map);
+            let sub_body = build_dispatch_body(sub_nodes, depth + 1);
             arms.push(quote! {
                 Some(#ch_char) => {
                     #sub_body
