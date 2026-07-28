@@ -1,0 +1,10 @@
+[example]
+id = "example-command-macro"
+name = "Command Macro"
+icon = "🚀"
+category = "advanced"
+desc = """
+Introduced how to use the `#[command]` macro to generate commands with minimal boilerplate
+"""
+tags = ["#[command]", "dispatcher!", "#[chain]"]
+files = ["src/main.rs", "Cargo.toml"]

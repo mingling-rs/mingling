@@ -1,0 +1,16 @@
+[package]
+name = "example-command-macro"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies.mingling]
+path = "../../mingling"
+features = [
+    # Use `extra_macros` to introduce the `#[command]` macro
+    "extra_macros",
+
+    # Use `picker` to parse arguments
+    "picker",
+]
+
+[workspace]
