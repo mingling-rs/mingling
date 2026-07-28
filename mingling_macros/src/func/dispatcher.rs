@@ -99,7 +99,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
             command_name,
         } => {
             let command_name_str = command_name.value();
-            let pascal = dotted_to_pascal_case(&command_name_str);
+            let pascal = just_fmt::pascal_case!(&command_name_str);
             let command_struct = Ident::new(&format!("CMD{pascal}"), command_name.span());
             let pack = Ident::new(&format!("Entry{pascal}"), command_name.span());
             (command_name, command_struct, pack, cmd_attrs, Vec::new())
@@ -177,22 +177,4 @@ fn get_dispatch_tree_entry(
     _entry_name: &Ident,
 ) -> TokenStream2 {
     quote! {}
-}
-
-/// Converts a dotted command name (e.g. "remote.add") to `PascalCase` (e.g. "`RemoteAdd`").
-///
-/// Each segment is split by `.`, the first character of each segment is uppercased,
-/// and the segments are joined. This is used by the abbreviated `dispatcher!` syntax
-/// (when `Command => Entry` is omitted) to auto-derive struct names.
-#[cfg(feature = "extra_macros")]
-pub(crate) fn dotted_to_pascal_case(s: &str) -> String {
-    s.split('.')
-        .map(|segment| {
-            let mut chars = segment.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(c) => c.to_uppercase().to_string() + chars.as_str(),
-            }
-        })
-        .collect()
 }
