@@ -52,6 +52,9 @@ pub mod macros {
     pub use mingling_macros::buffer;
     /// `#[chain]` - Used to generate a struct implementing the `Chain` trait via a method
     pub use mingling_macros::chain;
+    /// `#[command]` - Declares a command from a plain function with `Vec<String>` entry
+    #[cfg(feature = "extra_macros")]
+    pub use mingling_macros::command;
     /// `#[completion(EntryType)]` - Used to generate completion entry
     #[cfg(feature = "comp")]
     pub use mingling_macros::completion;
@@ -223,6 +226,9 @@ pub mod prelude {
     /// Re-export of the `chain` macro for defining a chain of commands.
     #[cfg(feature = "macros")]
     pub use crate::macros::chain;
+    /// Re-export of the `#[command]` macro for declaring commands from plain functions.
+    #[cfg(all(feature = "extra_macros", feature = "macros"))]
+    pub use crate::macros::command;
     /// Re-export of the `dispatcher` macro for routing commands.
     #[cfg(feature = "macros")]
     pub use crate::macros::dispatcher;

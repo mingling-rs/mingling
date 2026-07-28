@@ -1,4 +1,6 @@
 pub(crate) mod chain;
+#[cfg(feature = "extra_macros")]
+pub(crate) mod command;
 #[cfg(feature = "comp")]
 pub(crate) mod completion;
 #[cfg(feature = "clap")]

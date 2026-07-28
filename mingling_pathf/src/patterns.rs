@@ -2,6 +2,7 @@
 
 pub use basic_struct::*;
 pub use chain::*;
+pub use command::*;
 pub use completion::*;
 pub use dispatcher::*;
 pub use dispatcher_clap::*;
@@ -13,6 +14,7 @@ pub use renderer::*;
 
 mod basic_struct;
 mod chain;
+mod command;
 mod completion;
 mod dispatcher;
 mod dispatcher_clap;

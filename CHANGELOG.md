@@ -93,6 +93,46 @@ None
 
     These methods provide ergonomic alternatives to `to_result()` + `unwrap()` / `unwrap_or_default()` / `unwrap_or_else()` / `expect()` chaining, reducing boilerplate when working with `PickArgParsed` tuples directly.
 
+3. **[`macros:command`]** Added the `#[command]` attribute macro (feature-gated behind `extra_macros`) that converts a plain function with a `Vec<String>` parameter into a fully wired Mingling command. The macro:
+
+    - Calls `dispatcher!("command_name")` to register the dispatcher entry.
+    - Generates a `#[chain]` wrapper that bridges the entry type (`Entry{Pascal}`) to the original function.
+    - Preserves the original function unchanged (including attributes, extensions, visibility, and asyncness).
+
+    **Syntax variants:**
+
+    ```rust,ignore
+    // Simple form — auto-derives names from function name
+    #[command]
+    fn greet(args: Vec<String>) -> Next { /* ... */ }
+    // → dispatcher!("greet"), CMDGreet, EntryGreet
+
+    // Explicit node path
+    #[command(node = "hello.world")]
+    fn greet(args: Vec<String>) -> Next { /* ... */ }
+    // → dispatcher!("hello.world", CMDGreet => EntryGreet)
+
+    // Explicit name/entry overrides
+    #[command(name = MyDispatcher, entry = MyEntry)]
+    fn greet(args: Vec<String>) -> Next { /* ... */ }
+    // → dispatcher!("greet", MyDispatcher => MyEntry)
+    ```
+
+    **Extension attributes** (e.g. `buffer`, `routeify`) passed as bare paths in `#[command(...)]` are applied as `#[ext]` attributes **on the original function**, not on the generated chain wrapper. The chain wrapper always uses bare `#[::mingling::macros::chain]`.
+
+    **Resource injection:** Parameters after the first are treated as resource injections and passed through to the generated `#[chain]` wrapper unchanged.
+
+    **Hidden module:** Each `#[command]` generates a `#[doc(hidden)]` module `__command_{fn_name}_module` that re-exports all generated types (`CMD*`, `Entry*`, chain struct, dispatcher static) for pathf / external access.
+
+    Internally, the implementation:
+    - Parses `#[command(...)]` arguments via `CommandArgs` supporting `node`, `name`, `entry` keys and extension paths.
+    - Validates function constraints (no `self`, at least one parameter).
+    - Handles async functions (rejected without the `async` feature).
+    - Resolves default names via `just_fmt::dot_case!` / `just_fmt::pascal_case!`.
+    - Builds a chain wrapper that calls the original function with `entry.into()` for the first argument.
+
+4. **[`pathf:patterns`]** Added `CommandPattern` to the `pathf` pattern analyzer, matching functions annotated with `#[command]`. The pattern tracks the generated hidden module (`__command_{fn}_module`) and marks it as a local module item via `AnalyzeItem::local_module()`. The build system generates a glob re-export `use path::__command_{fn}_module::*;` to bring all generated types (`Entry*`, `CMD*`, chain struct, dispatcher static) into scope.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 None

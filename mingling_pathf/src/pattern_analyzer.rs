@@ -33,6 +33,7 @@ pub fn init_with_config(config: PathfinderConfig) -> PatternAnalyzer {
     analyzer.add_pattern(GroupPattern);
     analyzer.add_pattern(GroupedDerivePattern);
     analyzer.add_pattern(ChainPattern);
+    analyzer.add_pattern(CommandPattern);
     analyzer.add_pattern(RendererPattern);
     analyzer.add_pattern(HelpPattern);
     analyzer.add_pattern(CompletionPattern);

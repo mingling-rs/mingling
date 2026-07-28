@@ -1100,6 +1100,93 @@ pub fn program_setup(attr: TokenStream, item: TokenStream) -> TokenStream {
     program_setup::setup_attr(attr, item)
 }
 
+/// Declares a command from a plain function.
+///
+/// **This macro is only available with the `extra_macros` feature.**
+///
+/// The `#[command]` attribute converts a function taking `Vec<String>` into a
+/// Mingling command by:
+/// 1. Calling `dispatcher!("command_name")` to register the dispatcher entry.
+/// 2. Generating a `#[chain]` wrapper that bridges the entry type (`Entry{Pascal}`)
+///    to the original function.
+/// 3. Preserving the original function unchanged (including attributes, extensions,
+///    visibility, and asyncness).
+///
+/// # Syntax
+///
+/// ## Simple form (auto-derives names from function name)
+///
+/// ```rust,ignore
+/// #[command]
+/// fn greet(args: Vec<String>) -> Next {
+///     // ...
+/// }
+/// ```
+///
+/// This deduces:
+/// - Command path: `"greet"` (via `dot_case` of function name)
+/// - Dispatcher struct: `CMDGreet`
+/// - Entry struct: `EntryGreet`
+/// - Dispatches via `dispatcher!("greet")`
+///
+/// ## Explicit attributes
+///
+/// ```rust,ignore
+/// #[command(node = "hello.world")]
+/// fn greet(args: Vec<String>) -> Next {
+///     // ...
+/// }
+/// // → dispatcher!("hello.world", CMDGreet => EntryGreet)
+/// ```
+///
+/// ```rust,ignore
+/// #[command(name = MyDispatcher, entry = MyEntry)]
+/// fn greet(args: Vec<String>) -> Next {
+///     // ...
+/// }
+/// // → dispatcher!("greet", MyDispatcher => MyEntry)
+/// ```
+///
+/// ## Extension attributes
+///
+/// Extra bare paths (e.g. `buffer`, `routeify`, `::mingling::macros::routeify`)
+/// are emitted as `#[ext]` attributes **on the original function**, not on the
+/// chain wrapper. The chain wrapper always uses bare `#[::mingling::macros::chain]`.
+///
+/// ```rust,ignore
+/// #[command(buffer)]
+/// fn greet(args: Vec<String>) {
+///     r_println!("Hello!");
+/// }
+/// ```
+///
+/// # Resource injection
+///
+/// Parameters after the first are treated as resource injections and passed
+/// through to the generated `#[chain]` wrapper unchanged (as reference params):
+///
+/// ```rust,ignore
+/// #[command]
+/// fn greet(args: Vec<String>, ec: &mut ResExitCode) -> Next {
+///     ec.exit_code = 0;
+///     // ...
+/// }
+/// ```
+///
+/// The generated chain wrapper calls the original function with `entry.into()`
+/// for the first argument and passes all subsequent arguments directly.
+///
+/// # Requirements
+///
+/// - The function must have at least one parameter (the `Vec<String>` entry argument).
+/// - The function must not have a `self` parameter.
+/// - Visibility (`pub` etc.) and `async` are preserved on the original function.
+#[cfg(feature = "extra_macros")]
+#[proc_macro_attribute]
+pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
+    attr::command::command_attr(attr, item)
+}
+
 /// Declares a `Dispatcher` that uses `clap::Parser` for argument parsing.
 ///
 /// **This macro is only available with the `clap` feature.**
