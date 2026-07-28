@@ -50,6 +50,41 @@ None
 
 ---
 
+## Contents
+
+### ?.?.? (Unreleased)
+
+#### Fixes:
+
+None
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+1. **[`picker:value:paths`]** Added new path wrapper types to `arg_picker::value` for filesystem-aware argument parsing:
+
+    - **`FilePath`** — Wraps `PathBuf`, validated at parse time to exist and be a file.
+    - **`NoFilePath`** — Wraps `PathBuf`, validated at parse time to _not_ exist as a file.
+    - **`DirPath`** — Wraps `PathBuf`, validated at parse time to exist and be a directory.
+    - **`NoDirPath`** — Wraps `PathBuf`, validated at parse time to _not_ exist as a directory.
+    - **`SymlinkPath`** — Wraps `PathBuf`, validated at parse time to exist and be a symlink.
+    - **`NoSymlinkPath`** — Wraps `PathBuf`, validated at parse time to _not_ exist as a symlink.
+    - **`NoPath`** — Wraps `PathBuf`, validated at parse time to have no filesystem entry at all.
+    - **`RecursiveFiles`** — Wraps `Vec<PathBuf>`. If given a file path, returns a single-element list; if given a directory path, recursively collects all files (and symlinks) under it.
+
+    All single-path types implement `From<PathBuf>`, `From<&PathBuf>`, `AsRef<Path>`, `Deref<Target = PathBuf>`, `DerefMut`, and `Into<PathBuf>`. `RecursiveFiles` additionally provides `len()`, `is_empty()`, `iter()`, `From<Vec<RecursiveFiles>>` for merging multiple collections, and the `IntoRecursiveFiles` trait for ergonomic combination from `Vec<T>`, `&[T]`, and `[T; N]`.
+
+    Each type implements `SinglePickable`, performing filesystem validation at parse time and returning `NotFound` when the precondition is not met.
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
+
 ### Release 0.3.0 (2026-07-27)
 
 > In detail, the changes in Mingling 0.3.0 are as follows:
