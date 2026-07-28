@@ -1,6 +1,7 @@
 use std::{
     fmt::{Display, Formatter},
     io::Write,
+    process::ExitCode,
 };
 
 use crate::RenderResultMode::{Stderr, Stdout};
@@ -98,6 +99,18 @@ macro_rules! impl_from_int {
 }
 
 impl_from_int!(i32, i16, i8, u32, u16, u8, usize);
+
+impl From<RenderResult> for ExitCode {
+    fn from(value: RenderResult) -> Self {
+        ExitCode::from(value.exit_code as u8)
+    }
+}
+
+impl From<&RenderResult> for ExitCode {
+    fn from(value: &RenderResult) -> Self {
+        ExitCode::from(value.exit_code as u8)
+    }
+}
 
 impl From<&String> for RenderResult {
     fn from(value: &String) -> Self {
