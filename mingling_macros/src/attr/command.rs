@@ -325,10 +325,13 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
     #[cfg(feature = "dispatch_tree")]
     let snaked_node = just_fmt::snake_case!(names.node_lit.value());
     #[cfg(feature = "dispatch_tree")]
-    let dispatcher_internal = Ident::new(
-        &format!("__internal_dispatcher_{}", snaked_node),
-        fn_name.span(),
-    );
+    let dispatcher_internal = {
+        let ident = Ident::new(
+            &format!("__internal_dispatcher_{}", snaked_node),
+            fn_name.span(),
+        );
+        quote! { #vis use super::#ident; }
+    };
     #[cfg(not(feature = "dispatch_tree"))]
     let dispatcher_internal = quote! {};
 
@@ -354,7 +357,7 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
             #vis use super::#cmd_name;
             #vis use super::#entry_type;
             #vis use super::#chain_internal;
-            #vis use super::#dispatcher_internal;
+            #dispatcher_internal
         }
     };
 
