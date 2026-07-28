@@ -121,6 +121,12 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
 
         ::mingling::macros::pack!(#(#entry_attrs)* #pack = Vec<String>);
 
+        impl From<#pack> for crate::Entry {
+            fn from(value: #pack) -> Self {
+                crate::Entry::new(value.inner)
+            }
+        }
+
         #comp_entry
         #dispatch_tree_entry
 
