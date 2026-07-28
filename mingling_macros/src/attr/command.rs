@@ -98,14 +98,6 @@ fn validate_function(f: &ItemFn) -> Result<(), TokenStream2> {
         .to_compile_error());
     }
 
-    if f.sig.inputs.is_empty() {
-        return Err(syn::Error::new(
-            f.sig.span(),
-            "#[command] function must have at least one parameter (e.g., `args: Vec<String>`)",
-        )
-        .to_compile_error());
-    }
-
     Ok(())
 }
 
@@ -184,27 +176,57 @@ fn build_ext_attrs(exts: &[syn::Path]) -> Vec<TokenStream2> {
     exts.iter().map(|ext| quote! { #[#ext] }).collect()
 }
 
-/// Builds the wrapper function's parameter list by replacing the first
-/// parameter's type with the entry type (e.g. `Vec<String>` → `EntryGreet`).
+/// Returns `true` if the function has a first non-reference (owned) parameter that
+/// serves as the "args" input.
+fn has_args_param(sig: &syn::Signature) -> bool {
+    sig.inputs.first().map_or(false, |arg| {
+        if let FnArg::Typed(pat_type) = arg {
+            !matches!(&*pat_type.ty, Type::Reference(_))
+        } else {
+            false
+        }
+    })
+}
+
+/// Builds the wrapper function's parameter list.
+///
+/// - If the function has an "args" param (first non-reference): replaces its type
+///   with the entry type (e.g. `Vec<String>` → `EntryGreet`).
+/// - If not (no params, or first param is a reference): inserts a new entry param
+///   at the front to satisfy `#[chain]`'s requirement for an owned first parameter.
 fn build_wrapper_params(
     sig: &syn::Signature,
     entry_type: &Ident,
 ) -> syn::punctuated::Punctuated<FnArg, syn::token::Comma> {
-    let mut params = sig.inputs.clone();
-    if let Some(FnArg::Typed(first)) = params.first_mut() {
-        first.ty = Box::new(Type::Path(syn::TypePath {
-            qself: None,
-            path: syn::Path::from(entry_type.clone()),
-        }));
+    if has_args_param(sig) {
+        // First param is owned (args) -> replace its type with entry type
+        let mut params = sig.inputs.clone();
+        if let Some(FnArg::Typed(first)) = params.first_mut() {
+            first.ty = Box::new(Type::Path(syn::TypePath {
+                qself: None,
+                path: syn::Path::from(entry_type.clone()),
+            }));
+        }
+        params
+    } else {
+        // No args param -> insert an entry param at the front, keep rest as-is
+        let mut params = syn::punctuated::Punctuated::new();
+        let entry_param: FnArg = syn::parse_quote! { _args: #entry_type };
+        params.push(entry_param);
+        for arg in sig.inputs.iter() {
+            params.push(arg.clone());
+        }
+        params
     }
-    params
 }
 
 /// Builds call arguments for the original function call inside the wrapper.
 ///
-/// - The first argument gets `.into()` (converts `EntryGreet` → `Vec<String>`).
-/// - Resource injection params (2nd onward) pass through as-is.
+/// - If the function has an "args" param (first non-reference): first arg gets
+///   `.into()` (converts `EntryGreet` → `Vec<String>`), rest pass through as-is.
+/// - If not (no args): all params are resources — pass none, return empty.
 fn build_call_args(sig: &syn::Signature) -> Vec<TokenStream2> {
+    let has_args = has_args_param(sig);
     sig.inputs
         .iter()
         .enumerate()
@@ -213,7 +235,7 @@ fn build_call_args(sig: &syn::Signature) -> Vec<TokenStream2> {
                 FnArg::Typed(PatType { pat, .. }) => quote! { #pat },
                 FnArg::Receiver(_) => unreachable!(),
             };
-            if i == 0 {
+            if has_args && i == 0 {
                 quote! { #pat.into() }
             } else {
                 pat
