@@ -14,7 +14,7 @@ pub(crate) fn program_comp_gen_impl(_input: TokenStream) -> TokenStream {
             match read_ctx {
                 Ok(ctx) => {
                     let suggest = ::mingling::CompletionHelper::exec_completion::<crate::ThisProgram>(&ctx);
-                    ::mingling::Routable::<crate::ThisProgram>::to_render(crate::CompletionSuggest::new((ctx, suggest)))
+                    ::mingling::Routable::<crate::ThisProgram>::to_render(CompletionSuggest::new((ctx, suggest)))
                 }
                 Err(_) => std::process::exit(1),
             }
@@ -32,7 +32,7 @@ pub(crate) fn program_comp_gen_impl(_input: TokenStream) -> TokenStream {
             match read_ctx {
                 Ok(ctx) => {
                     let suggest = ::mingling::CompletionHelper::exec_completion::<crate::ThisProgram>(&ctx);
-                    ::mingling::Routable::<crate::ThisProgram>::to_render(crate::CompletionSuggest::new((ctx, suggest)))
+                    ::mingling::Routable::<crate::ThisProgram>::to_render(CompletionSuggest::new((ctx, suggest)))
                 }
                 Err(_) => std::process::exit(1),
             }
