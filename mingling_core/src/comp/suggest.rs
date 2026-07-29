@@ -41,6 +41,21 @@ impl Suggest {
     pub fn strip_typed_argument(self, ctx: &ShellContext) -> Self {
         ctx.strip_typed_argument(self)
     }
+
+    /// Combines two `Suggest` values.
+    ///
+    /// If both values are `Suggest::Suggest`, their `BTreeSet`s are merged
+    /// (all items from `other` are added into `self`). Otherwise, the first
+    /// `Suggest::Suggest` (or `FileCompletion`) is returned unchanged.
+    pub fn combine(self, other: impl Into<Suggest>) -> Self {
+        let other = other.into();
+        match (self, other) {
+            (Suggest::Suggest(suggest), Suggest::Suggest(other)) => {
+                Suggest::Suggest(suggest.into_iter().chain(other).collect())
+            }
+            (suggest, _) => suggest,
+        }
+    }
 }
 
 impl<T> From<T> for Suggest
