@@ -142,6 +142,14 @@ None
 
 7. **[`core`]** **[`comp`]** Added `Suggest::combine(self, other: impl Into<Suggest>) -> Self` method that merges two `Suggest` values. If both are `Suggest::Suggest`, their inner `BTreeSet`s are merged (all items from `other` are added into `self`). Otherwise, the first `Suggest::Suggest` (or `FileCompletion`) is returned unchanged, and the other value is discarded. This enables ergonomic aggregation of completion suggestions from multiple sources.
 
+8. **[`picker_comp`]** Added `mingling::picker_comp` module behind `cfg(all(feature = "picker", feature = "comp"))` with a `PickerArgSuggest` trait and its implementation for `&PickerArg<'a, T>`. The trait provides:
+
+    - **`into_suggest(self)`** — Converts the picker argument's known flags into a `Suggest` collection of `SuggestItem::Simple` entries.
+    - **`into_suggest_with_desc(self, description)`** — Same as `into_suggest` but wraps each flag in `SuggestItem::WithDescription`.
+    - **`into_suggest_raw(self, description: Option<&String>)`** — The core method; builds the list of possible flags from `arg_picker::parselib::build_possible_flags` and inserts each into the `Suggest` set, optionally carrying a description.
+
+    This bridges the `picker` and `comp` (completion) subsystems, allowing picker arguments to be reused as completion candidates.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 None

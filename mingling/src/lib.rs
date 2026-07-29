@@ -24,6 +24,10 @@ pub mod parser;
 #[cfg(feature = "picker")]
 pub mod picker;
 
+/// Functionality when combining `picker` and `comp`
+#[cfg(all(feature = "picker", feature = "comp"))]
+pub mod picker_comp;
+
 mod constants;
 
 /// Constants used throughout the Mingling framework.
