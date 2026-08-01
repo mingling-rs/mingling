@@ -84,7 +84,7 @@
     "tags": [
       "pathf",
       "dispatch_tree",
-      "extra_macros",
+      "extras",
       "build.rs"
     ],
     "files": [
@@ -230,7 +230,7 @@
     "name": "Implicit Dispatcher",
     "icon": "🫥",
     "category": "dispatch",
-    "desc": "Shows the abbreviated `dispatcher!(\"cmd.path\")` syntax from `extra_macros` that auto-derives struct names from the command path.\n",
+    "desc": "Shows the abbreviated `dispatcher!(\"cmd.path\")` syntax from `extras` that auto-derives struct names from the command path.\n",
     "tags": [
       "implicit"
     ],
@@ -261,7 +261,7 @@
     "desc": "Demonstrates how to use the `group!()` macro to convert an external type into a type recognizable by Mingling\n",
     "tags": [
       "group!",
-      "extra_macros"
+      "extras"
     ],
     "files": [
       "src/main.rs",
@@ -276,7 +276,7 @@
     "desc": "Demonstrates how to use the `pack_err!` macro to define error types with automatic `name` field (snake_case at compile time) and optional `info` field. Also shows `--json` serialization when `structural_renderer` is enabled.\n",
     "tags": [
       "pack_err!",
-      "extra_macros",
+      "extras",
       "structural_renderer",
       "--json"
     ],
@@ -354,7 +354,7 @@
     "desc": "Demonstrates how to build a custom `ProgramSetup` with `#[program_setup]` for modular configuration of program behaviour.\n",
     "tags": [
       "#[setup]",
-      "extra_macros"
+      "extras"
     ],
     "files": [
       "src/main.rs",
@@ -385,7 +385,7 @@
     "desc": "Shows how to write unit tests for Chain and Renderer functions using the `entry!` macro and assertion helpers.\n",
     "tags": [
       "testing",
-      "extra_macros"
+      "extras"
     ],
     "files": [
       "src/main.rs",

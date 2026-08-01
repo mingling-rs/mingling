@@ -8,7 +8,7 @@ When a program needs to do some init work at startup—like parsing global args 
 ## Initialize with Setup
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
 #[program_setup]
@@ -32,14 +32,14 @@ A function annotated with `#[program_setup]` receives `&mut Program<ThisProgram>
 Register it in `main` via `program.with_setup(...)` to use it.
 
 > [!NOTE]
-> `#[program_setup]` requires the `extra_macros` feature. Without it, you can manually implement the `ProgramSetup` trait.
+> `#[program_setup]` requires the `extras` feature. Without it, you can manually implement the `ProgramSetup` trait.
 
 ## Extract Global Args
 
 The most common use of Setup is extracting global args. Mingling provides a few helper methods:
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
 #[program_setup]

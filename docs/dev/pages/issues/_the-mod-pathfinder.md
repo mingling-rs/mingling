@@ -32,7 +32,7 @@ mod sub {
 }
 ```
  
-There are a few exceptions, such as the implicit Dispatcher provided by `extra_macros`, but these can be inferred from the node name:
+There are a few exceptions, such as the implicit Dispatcher provided by `extras`, but these can be inferred from the node name:
 
 ```rust
 dispatcher!("remote.add"); // although the type is unknown, we can infer CMDRemoteAdd and EntryRemoteAdd

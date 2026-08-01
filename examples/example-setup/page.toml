@@ -6,5 +6,5 @@ category = "core"
 desc = """
 Demonstrates how to build a custom `ProgramSetup` with `#[program_setup]` for modular configuration of program behaviour.
 """
-tags = ["#[setup]", "extra_macros"]
+tags = ["#[setup]", "extras"]
 files = ["src/main.rs", "Cargo.toml"]

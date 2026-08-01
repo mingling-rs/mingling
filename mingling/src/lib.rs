@@ -53,29 +53,29 @@ pub mod macros {
     pub use arg_picker::macros::*;
     pub use mingling_macros::buffer;
     pub use mingling_macros::chain;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::command;
     #[cfg(feature = "comp")]
     pub use mingling_macros::completion;
     pub use mingling_macros::dispatcher;
     #[cfg(feature = "clap")]
     pub use mingling_macros::dispatcher_clap;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::empty_result;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::entry;
     pub use mingling_macros::gen_program;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::group;
-    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
+    #[cfg(all(feature = "structural_renderer", feature = "extras"))]
     pub use mingling_macros::group_structural;
     pub use mingling_macros::help;
     pub use mingling_macros::mlint;
     pub use mingling_macros::node;
     pub use mingling_macros::pack;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::pack_err;
-    #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
+    #[cfg(all(feature = "structural_renderer", feature = "extras"))]
     pub use mingling_macros::pack_err_structural;
     #[cfg(feature = "structural_renderer")]
     pub use mingling_macros::pack_structural;
@@ -86,7 +86,7 @@ pub mod macros {
     pub use mingling_macros::program_fallback_gen;
     #[doc(hidden)]
     pub use mingling_macros::program_final_gen;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::program_setup;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;
@@ -103,14 +103,14 @@ pub mod macros {
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]
     pub use mingling_macros::register_type;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::render_route;
     pub use mingling_macros::renderer;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::renderify;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::route;
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     pub use mingling_macros::routeify;
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest;
@@ -181,24 +181,24 @@ pub mod prelude {
     pub use crate::Routable;
     #[cfg(feature = "macros")]
     pub use crate::macros::chain;
-    #[cfg(all(feature = "extra_macros", feature = "macros"))]
+    #[cfg(all(feature = "extras", feature = "macros"))]
     pub use crate::macros::command;
     #[cfg(feature = "macros")]
     pub use crate::macros::dispatcher;
-    #[cfg(all(feature = "extra_macros", feature = "macros"))]
+    #[cfg(all(feature = "extras", feature = "macros"))]
     pub use crate::macros::empty_result;
     #[cfg(feature = "macros")]
     pub use crate::macros::gen_program;
     #[cfg(feature = "macros")]
     pub use crate::macros::pack;
-    #[cfg(all(feature = "extra_macros", feature = "macros"))]
+    #[cfg(all(feature = "extras", feature = "macros"))]
     pub use crate::macros::pack_err;
     #[cfg(feature = "macros")]
     pub use crate::macros::renderer;
     #[cfg(all(
         feature = "macros",
         feature = "structural_renderer",
-        feature = "extra_macros"
+        feature = "extras"
     ))]
     pub use mingling_macros::pack_err_structural;
     #[cfg(all(feature = "macros", feature = "structural_renderer"))]

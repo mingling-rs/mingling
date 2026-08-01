@@ -11,7 +11,7 @@ serde_json = "1.0.150"
 path = "../../mingling"
 features = [
     "parser",
-    "extra_macros",
+    "extras",
     "structural_renderer",
 ]
 

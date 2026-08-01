@@ -7,4 +7,4 @@ publish = false
 [workspace]
 
 [dependencies]
-mingling = { path = "../../../mingling", features = ["repl", "extra_macros"] }
+mingling = { path = "../../../mingling", features = ["repl", "extras"] }

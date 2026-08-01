@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies.mingling]
 path = "../../mingling"
 features = [
-    # Use `extra_macros` to introduce the `#[command]` macro
-    "extra_macros",
+    # Use `extras` to introduce the `#[command]` macro
+    "extras",
 
     # Use `picker` to parse arguments
     "picker",

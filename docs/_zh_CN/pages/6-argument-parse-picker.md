@@ -138,7 +138,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 先来看一个简单示例
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
@@ -164,10 +164,10 @@ fn render_greet(result: ResultName) {
  
 若使用 `pick_or_route`，写法会变得相对复杂：因为 `.unpack()` 不再直接返回参数，而是 `Result<Value, Route>`。
 
-不过 **Mingling** 的 `extra_macros` 特性提供了简化展开的宏 `route!`，它不复杂，只是省略了一部分样板代码：
+不过 **Mingling** 的 `extras` 特性提供了简化展开的宏 `route!`，它不复杂，只是省略了一部分样板代码：
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@ pack!(ErrorFail = ());
 @@@ use mingling::macros::route;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
@@ -181,7 +181,7 @@ let name = route!(pick_result);
 它展开为：
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@ pack!(ErrorFail = ());
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
@@ -223,7 +223,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 同样，你可以使用 `after_or_route` 来处理输入参数的格式错误
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);

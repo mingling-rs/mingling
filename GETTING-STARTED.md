@@ -49,10 +49,10 @@ fn main() {
 }
 ```
 
-Mingling also supports an abbreviated form (with the `extra_macros` feature):
+Mingling also supports an abbreviated form (with the `extras` feature):
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 
 // Auto-generates CMDGreet / EntryGreet from "greet"
 dispatcher!("greet");
@@ -192,7 +192,7 @@ The flow is:
 With the `comp` feature, Mingling provides a fully dynamic completion system. You write a function that returns `Suggest` based on the current shell context, and Mingling generates the completion scripts for bash, zsh, fish, and pwsh.
 
 ```rust
-// Features: ["comp", "extra_macros"]
+// Features: ["comp", "extras"]
 
 use mingling::{macros::suggest, ShellContext, Suggest};
 
@@ -246,7 +246,7 @@ mingling::build::build_comp_scripts(env!("CARGO_PKG_NAME")).unwrap();
 For enum-based completions, use `suggest_enum!`:
 
 ```rust
-// Features: ["comp", "extra_macros"]
+// Features: ["comp", "extras"]
 
 use mingling::{ShellContext, Suggest};
 use mingling::macros::suggest_enum;
@@ -323,7 +323,7 @@ Two built-in fallback types are always available:
 Chain and renderer functions can accept **additional parameters** for the program's global state. Resources are singleton values registered with `program.with_resource(...)`.
 
 ```rust
-// Features: ["picker", "extra_macros"]
+// Features: ["picker", "extras"]
 
 use std::path::PathBuf;
 
@@ -492,7 +492,7 @@ fn main() {
 Mingling provides built-in REPL setups:
 
 ```rust
-// Features: ["repl", "extra_macros"]
+// Features: ["repl", "extras"]
 
 use mingling::{
     res::ResREPL,

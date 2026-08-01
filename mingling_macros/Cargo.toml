@@ -25,7 +25,7 @@ structural_renderer = []
 repl = []
 pathf = []
 
-extra_macros = []
+extras = []
 
 [dependencies]
 syn.workspace = true

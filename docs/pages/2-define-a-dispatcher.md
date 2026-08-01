@@ -79,10 +79,10 @@ When the user types `greet Alice Bob` on the command line, `EntryGreet.inner` be
 
 ## Advanced: Implicit Declaration
 
-The above is the standard syntax. If you enable the `extra_macros` feature, you can be more concise:
+The above is the standard syntax. If you enable the `extras` feature, you can be more concise:
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 // Omit CMDType and EntryType, names are auto-derived
    dispatcher!("greet");
 // dispatcher!("greet", CMDGreet => EntryGreet);

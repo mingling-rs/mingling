@@ -83,7 +83,7 @@ build_comp_scripts("myprogram").unwrap();
 
 详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-dispatch-tree)
 
-## 特性 `extra_macros`
+## 特性 `extras`
 
 **介绍:**
 
@@ -106,7 +106,7 @@ build_comp_scripts("myprogram").unwrap();
 ### `empty_result!()`
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
  
 pack!(StatePrev1 = ());
 pack!(StatePrev2 = ());
@@ -134,7 +134,7 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
 ### `#[program_setup]`
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use mingling::{macros::program_setup, Program};
  
 fn main() {
@@ -154,7 +154,7 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
 ### `entry!`
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use mingling::macros::entry;
  
 pack!(EntryHello = Vec<String>);
@@ -174,7 +174,7 @@ fn handle_hello(args: EntryHello) {}
 类型名会直接作为枚举变体，与 `pack!` 或 `#[derive(Grouped)]` 一致。
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use mingling::macros::group;
 use std::num::ParseIntError;
  
@@ -189,7 +189,7 @@ group!(std::num::ParseIntError);
 可选择包裹一个内部类型以携带额外上下文。
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use std::path::PathBuf;
  
 // 简单形式——仅包含 name 字段：

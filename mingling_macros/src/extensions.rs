@@ -10,11 +10,11 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Ident, Token};
 
 /// Extension: `#[routeify]` — transforms `expr?` into `route!(expr)`.
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod routeify;
 
 /// Extension: `#[renderify]` — transforms `expr?` into `render_route!(expr)`.
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod renderify;
 
 /// Extension: `#[buffer]` — wraps a unit-returning function to return `RenderResult`.

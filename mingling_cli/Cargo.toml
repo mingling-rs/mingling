@@ -22,7 +22,7 @@ path = "src/main.rs"
 [dependencies.mingling]
 path = "../mingling"
 features = [
-    "extra_macros",
+    "extras",
     "picker",
     "pathf",
     "async",

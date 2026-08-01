@@ -33,7 +33,7 @@ features = [
     "parser",
     "picker",
     "clap",
-    "extra_macros",
+    "extras",
 ]
 
 [features]
@@ -88,13 +88,15 @@ yaml_serde_fmt = ["mingling_core/yaml_serde_fmt"]
 toml_serde_fmt = ["mingling_core/toml_serde_fmt"]
 ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 
-extra_macros = ["mingling_macros/extra_macros"]
+extras = ["mingling_macros/extras"]
 
 # Section only shown in docs.rs
 docs_rs = []
 
-# This is an old name, will be Breaking Change in the future
+# These are old names, will be Breaking Change in the future
+
 builds = ["mingling_core/build"]
+extra_macros = ["mingling_macros/extras"]
 
 [dependencies]
 mingling_core = { workspace = true, optional = true }

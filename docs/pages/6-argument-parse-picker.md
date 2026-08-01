@@ -138,7 +138,7 @@ As the saying goes: "never trust your users." To handle missing required params,
 Here's a simple example:
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);
@@ -164,10 +164,10 @@ fn render_greet(result: ResultName) {
  
 With `pick_or_route`, the code becomes more involved: `.unpack()` no longer returns the value directly, but `Result<Value, Route>`.
 
-However, **Mingling**'s `extra_macros` feature provides the `route!` macro for simplified expansion. It's not complex — it just reduces boilerplate:
+However, **Mingling**'s `extras` feature provides the `route!` macro for simplified expansion. It's not complex — it just reduces boilerplate:
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@ pack!(ErrorFail = ());
 @@@ use mingling::macros::route;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
@@ -181,7 +181,7 @@ let name = route!(pick_result);
 It expands to:
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@ pack!(ErrorFail = ());
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
@@ -223,7 +223,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 Similarly, you can use `after_or_route` to handle input format errors:
 
 ```rust
-// Features: ["parser", "extra_macros"]
+// Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", CMDGreet => EntryGreet);

@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 mingling = { path = "../../mingling", features = [
     "dispatch_tree",
-    "extra_macros",
+    "extras",
     "pathf",
 ] }
 

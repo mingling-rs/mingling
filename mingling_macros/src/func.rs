@@ -1,18 +1,18 @@
 pub(crate) mod dispatcher;
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod empty_result;
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod entry;
 pub(crate) mod gen_program;
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod group;
-#[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
+#[cfg(all(feature = "structural_renderer", feature = "extras"))]
 pub(crate) mod group_structural;
 pub(crate) mod node;
 pub(crate) mod pack;
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod pack_err;
-#[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
+#[cfg(all(feature = "structural_renderer", feature = "extras"))]
 pub(crate) mod pack_err_structural;
 #[cfg(feature = "structural_renderer")]
 pub(crate) mod pack_structural;
@@ -30,9 +30,9 @@ pub(crate) mod register_dispatcher;
 pub(crate) mod register_help;
 pub(crate) mod register_renderer;
 pub(crate) mod register_type;
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod render_route;
-#[cfg(feature = "extra_macros")]
+#[cfg(feature = "extras")]
 pub(crate) mod route;
 #[cfg(feature = "comp")]
 pub(crate) mod suggest;

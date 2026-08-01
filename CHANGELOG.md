@@ -11,6 +11,7 @@ Any contributor making changes to the project must record their changes in this 
 **- Milestone.1 "MVP" -**
 
 - [Unreleased](#unreleased)
+- [Release 0.4.0 (Unreleased)](#release-040-unreleased)
 - [Release 0.3.0 (2026-07-27)](#release-030-2026-07-27)
 - [Release 0.2.2 (2026-07-10)](#release-022-2026-07-10)
 - [Release 0.2.1 (2026-07-01)](#release-021-2026-07-01)
@@ -52,7 +53,7 @@ None
 
 ## Contents
 
-### ?.?.? (Unreleased)
+### 0.4.0 (Unreleased)
 
 #### Fixes:
 
@@ -96,7 +97,7 @@ None
 
     These methods provide ergonomic alternatives to `to_result()` + `unwrap()` / `unwrap_or_default()` / `unwrap_or_else()` / `expect()` chaining, reducing boilerplate when working with `PickArgParsed` tuples directly.
 
-3. **[`macros:command`]** Added the `#[command]` attribute macro (feature-gated behind `extra_macros`) that converts a plain function with a `Vec<String>` parameter into a fully wired Mingling command. The macro:
+3. **[`macros:command`]** Added the `#[command]` attribute macro (feature-gated behind `extras`) that converts a plain function with a `Vec<String>` parameter into a fully wired Mingling command. The macro:
 
     - Calls `dispatcher!("command_name")` to register the dispatcher entry.
     - Generates a `#[chain]` wrapper that bridges the entry type (`Entry{Pascal}`) to the original function.
@@ -152,7 +153,27 @@ None
 
 #### **BREAKING CHANGES** (API CHANGES):
 
-None
+1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.
+
+    **Affected macros** (all previously gated behind `extra_macros`, now `extras`):
+    - `#[command]`
+    - `empty_result!`
+    - `entry!`
+    - `group!`
+    - `group_structural!` (also requires `structural_renderer`)
+    - `pack_err!`
+    - `pack_err_structural!` (also requires `structural_renderer`)
+    - `#[program_setup]`
+    - `render_route!`
+    - `#[renderify]`
+    - `route!`
+    - `#[routeify]`
+
+    **Migration guide:**
+    - Update `Cargo.toml` feature declarations from `extra_macros` to `extras`.
+    - If your code references `mingling::feature::MINGLING_EXTRA_MACROS`, update it to `mingling::feature::MINGLING_EXTRAS`.
+
+    _No behavioral changes — this is a pure feature rename. The `extras` feature provides identical functionality to the old `extra_macros` feature; all prelude and macros module re-exports remain the same under the new feature name._
 
 ---
 
@@ -480,7 +501,7 @@ None
     }
     ```
 
-    The `#[routeify]` macro is feature-gated behind `extra_macros` and re-exported as `mingling::macros::routeify`.
+    The `#[routeify]` macro is feature-gated behind `extras` and re-exported as `mingling::macros::routeify`.
 
     Internal changes:
     - Added `mingling_macros/src/extensions/routeify.rs` with `routeify_impl` implementation.
@@ -548,7 +569,7 @@ None
 
     When used as a renderer/help extension, the `renderify` identifier is detected by the extension point mechanism, stripped from the attribute arguments, and `#[renderify]` is applied as an outer attribute on top of `#[renderer]`/`#[help]` — just like `routeify` works with `#[chain]`.
 
-    Both `render_route!` and `#[renderify]` are feature-gated behind `extra_macros` and re-exported as `mingling::macros::render_route` and `mingling::macros::renderify` respectively.
+    Both `render_route!` and `#[renderify]` are feature-gated behind `extras` and re-exported as `mingling::macros::render_route` and `mingling::macros::renderify` respectively.
 
     Internal changes:
     - Added `mingling_macros/src/extensions/renderify.rs` with `renderify_impl` implementation.
@@ -565,7 +586,7 @@ None
     fn some_item() {}
     ```
 
-    Since the attribute is a no-op at compile time, it has no effect on code generation, type checking, or runtime behavior. Its purpose is to serve as a structured annotation that `mlint` tooling can parse from the AST. The attribute is feature-gated behind `extra_macros`.
+    Since the attribute is a no-op at compile time, it has no effect on code generation, type checking, or runtime behavior. Its purpose is to serve as a structured annotation that `mlint` tooling can parse from the AST. The attribute is feature-gated behind `extras`.
 
 16. **[`core`]** Added `RendererInvoker<T, C>` and `ChainInvoker<T, C>` types to `mingling_core::asset::core_invokes`, providing a mechanism for selectively invoking renderer and chain pipelines for specific types from within chain/renderer functions via resource injection.
 
@@ -878,7 +899,7 @@ None
     - `test-basic`: Basic type tests with default features (Node, Flag, RenderResult, NextProcess, StringVec)
     - `test-comp`: ShellContext, Suggest, SuggestItem, is_completing with `comp + builds` features
     - `test-structural-renderer`: StructuralRenderer output in various formats with `structural_renderer_full + parser` features
-    - `test-repl`: ResREPL and basic types with `repl + extra_macros` features
+    - `test-repl`: ResREPL and basic types with `repl + extras` features
     - `test-dispatch-tree`: Basic types with `dispatch_tree` feature
     - `test-all`: Comprehensive testing with all feature combinations (ShellContext, Suggest, ResREPL, StructuralRenderer, Hooks, basic types, etc.)
 
@@ -1042,7 +1063,7 @@ impl ErrorNotDir {
 }
 ```
 
-This macro is only available with the `extra_macros` feature.
+This macro is only available with the `extras` feature.
 
 9. **[`mingling`]** Added `Groupped` trait to the `mingling::prelude` module, so it can now be imported via `use mingling::prelude::*` without needing to separately import the trait from the `mingling` crate root.
 
@@ -1061,7 +1082,7 @@ An aliased syntax is also supported for descriptive variant naming:
 group!(IoError = std::io::Error);
 ```
 
-This macro is only available with the `extra_macros` feature.
+This macro is only available with the `extras` feature.
 
 11. **[`macros`]** `#[help]` and `#[completion]` now support resource injection parameters, consistent with `#[chain]` and `#[renderer]`. Specific changes:
 
@@ -1452,7 +1473,7 @@ fn render(prev: Previous) { // Implicitly introduces `__renderer_inner_result`
 }
 ```
 
-5. **[`macros`]** Moved the `entry!`, `route!`, `#[program_setup]` macros into the `extra_macros` feature
+5. **[`macros`]** Moved the `entry!`, `route!`, `#[program_setup]` macros into the `extras` feature
 
 6. **[`macros`]** The `crate::Next` generated by `gen_program!()` now requires explicit import into the project
 

@@ -83,7 +83,7 @@ When enabled, Mingling **at compile time** hard-codes the subcommand structure a
 
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-dispatch-tree)
 
-## Feature `extra_macros`
+## Feature `extras`
 
 **Description:**
 
@@ -106,7 +106,7 @@ For example, allows the shorthand form `dispatcher!("greet")`, which auto-genera
 ### `empty_result!()`
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
  
 pack!(StatePrev1 = ());
 pack!(StatePrev2 = ());
@@ -134,7 +134,7 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
 ### `#[program_setup]`
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use mingling::{macros::program_setup, Program};
  
 fn main() {
@@ -154,7 +154,7 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
 ### `entry!`
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use mingling::macros::entry;
  
 pack!(EntryHello = Vec<String>);
@@ -174,7 +174,7 @@ Registers an external type as a member of the program group without modifying it
 The type's simple name is used as the enum variant, just like `pack!` or `#[derive(Grouped)]`.
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use mingling::macros::group;
 use std::num::ParseIntError;
  
@@ -189,7 +189,7 @@ Creates an error struct with an automatic `name: String` field set to the snake_
 of the struct name. Optionally wraps an inner type for additional context.
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 use std::path::PathBuf;
  
 // Simple form — only a name field:

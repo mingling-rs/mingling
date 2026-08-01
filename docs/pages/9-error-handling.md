@@ -107,10 +107,10 @@ Error: name is required
  
 ## About `pack_err!`
 
-If you've enabled `extra_macros`, you can use `pack_err!` to quickly declare an error type with an auto-generated `name` field:
+If you've enabled `extras`, you can use `pack_err!` to quickly declare an error type with an auto-generated `name` field:
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 pack_err!(ErrorNotFound);
 // Generates: struct ErrorNotFound { pub name: String }
 ```

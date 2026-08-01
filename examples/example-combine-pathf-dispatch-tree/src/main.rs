@@ -8,7 +8,7 @@
 //! > AND `[build-dependencies]` so that pathf's builder can detect
 //! > `__internal_dispatcher_*` types needed by the dispatch tree.
 //! >
-//! > Also requires `extra_macros` for the implicit `dispatcher!("hello")` form.
+//! > Also requires `extras` for the implicit `dispatcher!("hello")` form.
 //!
 //! Run:
 //! ```bash

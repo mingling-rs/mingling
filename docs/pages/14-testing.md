@@ -70,10 +70,10 @@ What the three test macros do:
 
 ## Constructing Data with the entry! Macro
 
-If `extra_macros` is enabled, you can use `entry!` to quickly construct an Entry:
+If `extras` is enabled, you can use `entry!` to quickly construct an Entry:
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
  
 @@@use mingling::{assert_member_id, unpack_chain_process};
 @@@use mingling::macros::entry;

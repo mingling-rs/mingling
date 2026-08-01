@@ -29,7 +29,7 @@ pub trait ProgramCollect {
 
     /// Result type for an empty chain result
     ///
-    /// When the `extra_macros` feature is enabled,
+    /// When the `extras` feature is enabled,
     /// you can use the `empty_result!()` macro to create this
     type ResultEmpty: Grouped<Self::Enum>;
 

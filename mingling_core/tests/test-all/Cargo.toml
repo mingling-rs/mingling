@@ -14,7 +14,7 @@ mingling = { path = "../../../mingling", features = [
     "repl",
     "dispatch_tree",
     "parser",
-    "extra_macros",
+    "extras",
 ] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }

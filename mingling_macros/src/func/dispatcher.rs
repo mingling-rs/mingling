@@ -12,7 +12,7 @@ enum DispatcherChainInput {
         command_struct: Ident,
         pack: Ident,
     },
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     Auto {
         cmd_attrs: Vec<Attribute>,
         command_name: syn::LitStr,
@@ -30,14 +30,14 @@ impl Parse for DispatcherChainInput {
 
             // Check if this is the abbreviated form: just "command_name" without ", CMD => Entry"
             if input.is_empty() {
-                #[cfg(feature = "extra_macros")]
+                #[cfg(feature = "extras")]
                 {
                     return Ok(DispatcherChainInput::Auto {
                         cmd_attrs,
                         command_name,
                     });
                 }
-                #[cfg(not(feature = "extra_macros"))]
+                #[cfg(not(feature = "extras"))]
                 {
                     return Err(syn::Error::new(
                         command_name.span(),
@@ -74,7 +74,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
     // Parse the input
     let dispatcher_input = syn::parse_macro_input!(input as DispatcherChainInput);
 
-    #[cfg(not(feature = "extra_macros"))]
+    #[cfg(not(feature = "extras"))]
     let (command_name, command_struct, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
         DispatcherChainInput::Default {
             cmd_attrs,
@@ -85,7 +85,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
         } => (command_name, command_struct, pack, cmd_attrs, entry_attrs),
     };
 
-    #[cfg(feature = "extra_macros")]
+    #[cfg(feature = "extras")]
     let (command_name, command_struct, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
         DispatcherChainInput::Default {
             cmd_attrs,

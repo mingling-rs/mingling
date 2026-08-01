@@ -16,7 +16,7 @@ For a long time, creating a command in Mingling required the following steps:
 dispatcher!("greet", CMDGreet => EntryGreet);
 ```
  
-Or use the implicit syntax provided by `extra_macros` (automatically deriving `CMDGreet` and `EntryGreet`):
+Or use the implicit syntax provided by `extras` (automatically deriving `CMDGreet` and `EntryGreet`):
 
 ```rust
 dispatcher!("greet");
@@ -151,11 +151,11 @@ In Mingling, there is no concept called `Command` — all behavior is the result
 
 ## Enabling
 
-This macro requires the `extra_macros` feature. Enable it in your `Cargo.toml`:
+This macro requires the `extras` feature. Enable it in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-mingling = { version = "...", features = ["extra_macros"] }
+mingling = { version = "...", features = ["extras"] }
 ```
  
 ## Caveats

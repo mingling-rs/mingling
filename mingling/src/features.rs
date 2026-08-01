@@ -130,6 +130,17 @@ pub const MINGLING_EXTRA_MACROS: bool = false;
 #[cfg(feature = "extra_macros")]
 #[allow(unused)]
 pub const MINGLING_EXTRA_MACROS: bool = true;
+/// Whether the `extras` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "extras"))]
+#[allow(unused)]
+pub const MINGLING_EXTRAS: bool = false;
+
+/// Whether the `extras` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "extras")]
+#[allow(unused)]
+pub const MINGLING_EXTRAS: bool = true;
 /// Whether the `json_serde_fmt` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "json_serde_fmt"))]

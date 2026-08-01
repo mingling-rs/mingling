@@ -31,7 +31,7 @@
 /// path = "../../mingling"
 ///
 /// # Enable `parser` features
-/// features = ["parser", "extra_macros"]
+/// features = ["parser", "extras"]
 ///
 /// [workspace]
 /// ```
@@ -161,7 +161,7 @@ pub mod example_argument_parse {}
 /// path = "../../mingling"
 ///
 /// # Enable `picker` features
-/// features = ["picker", "extra_macros"]
+/// features = ["picker", "extras"]
 ///
 /// [workspace]
 /// ```
@@ -713,7 +713,7 @@ pub mod example_clap_binding {}
 ///  > AND `[build-dependencies]` so that pathf's builder can detect
 ///  > `__internal_dispatcher_*` types needed by the dispatch tree.
 ///  >
-///  > Also requires `extra_macros` for the implicit `dispatcher!("hello")` form.
+///  > Also requires `extras` for the implicit `dispatcher!("hello")` form.
 ///
 ///  Run:
 ///  ```bash
@@ -735,7 +735,7 @@ pub mod example_clap_binding {}
 /// [dependencies]
 /// mingling = { path = "../../mingling", features = [
 ///     "dispatch_tree",
-///     "extra_macros",
+///     "extras",
 ///     "pathf",
 /// ] }
 ///
@@ -796,8 +796,8 @@ pub mod example_combine_pathf_dispatch_tree {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = [
-///     # Use `extra_macros` to introduce the `#[command]` macro
-///     "extra_macros",
+///     # Use `extras` to introduce the `#[command]` macro
+///     "extras",
 ///
 ///     # Use `picker` to parse arguments
 ///     "picker",
@@ -1052,7 +1052,7 @@ pub mod example_completion {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 ///
-/// features = ["parser", "extra_macros"]
+/// features = ["parser", "extras"]
 ///
 /// [workspace]
 /// ```
@@ -1780,7 +1780,7 @@ pub mod example_help {}
 pub mod example_hook {}
 /// Example Implicit Dispatcher
 ///
-///  > This example demonstrates how to use the implicit `dispatcher!` definition syntax enabled by `extra_macros`
+///  > This example demonstrates how to use the implicit `dispatcher!` definition syntax enabled by `extras`
 ///
 /// Source code (./Cargo.toml)
 /// ```toml
@@ -1791,7 +1791,7 @@ pub mod example_hook {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["extra_macros"]
+/// features = ["extras"]
 ///
 /// [workspace]
 /// ```
@@ -1965,7 +1965,7 @@ pub mod example_lazy_resources {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = [
-///     "extra_macros",
+///     "extras",
 /// ]
 ///
 /// [workspace]
@@ -2096,7 +2096,7 @@ pub mod example_outside_type {}
 /// path = "../../mingling"
 /// features = [
 ///     "structural_renderer",
-///     "extra_macros",
+///     "extras",
 /// ]
 ///
 /// [workspace]
@@ -2399,7 +2399,7 @@ pub mod example_pathfinder {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["repl", "parser", "extra_macros"]
+/// features = ["repl", "parser", "extras"]
 ///
 /// [dependencies]
 /// just_fmt = "0.1.2"
@@ -2691,7 +2691,7 @@ pub mod example_resources {}
 /// edition = "2024"
 ///
 /// [dependencies]
-/// mingling = { path = "../../mingling", features = ["extra_macros"] }
+/// mingling = { path = "../../mingling", features = ["extras"] }
 ///
 /// [workspace]
 /// ```
@@ -2843,7 +2843,7 @@ pub mod example_structural_renderer {}
 /// edition = "2024"
 ///
 /// [dependencies]
-/// mingling = { path = "../../mingling", features = ["extra_macros"] }
+/// mingling = { path = "../../mingling", features = ["extras"] }
 ///
 /// [workspace]
 /// ```

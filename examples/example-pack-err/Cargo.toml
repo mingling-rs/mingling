@@ -10,7 +10,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 path = "../../mingling"
 features = [
     "structural_renderer",
-    "extra_macros",
+    "extras",
 ]
 
 [workspace]

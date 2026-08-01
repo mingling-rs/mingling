@@ -1,6 +1,6 @@
 //! Example Implicit Dispatcher
 //!
-//! > This example demonstrates how to use the implicit `dispatcher!` definition syntax enabled by `extra_macros`
+//! > This example demonstrates how to use the implicit `dispatcher!` definition syntax enabled by `extras`
 
 use mingling::prelude::*;
 

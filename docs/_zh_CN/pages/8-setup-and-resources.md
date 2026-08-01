@@ -8,7 +8,7 @@
 ## 用 Setup 做初始化
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
 #[program_setup]
@@ -32,14 +32,14 @@ fn my_setup(program: &mut Program<ThisProgram>) {
 在 `main` 里通过 `program.with_setup(...)` 注册即可使用。
 
 > [!NOTE]
-> `#[program_setup]` 需要 `extra_macros` 特性。没有此特性时，可以手动实现 `ProgramSetup` trait。
+> `#[program_setup]` 需要 `extras` 特性。没有此特性时，可以手动实现 `ProgramSetup` trait。
 
 ## 提取全局参数
 
 Setup 里最常用的操作就是提取全局参数。Mingling 提供了几个辅助方法：
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
 #[program_setup]

@@ -107,10 +107,10 @@ Error: name is required
  
 ## 关于 `pack_err!`
 
-如果你启用了 `extra_macros`，还可以用 `pack_err!` 快速声明带有自动 `name` 字段的错误类型：
+如果你启用了 `extras`，还可以用 `pack_err!` 快速声明带有自动 `name` 字段的错误类型：
 
 ```rust
-// Features: ["extra_macros"]
+// Features: ["extras"]
 pack_err!(ErrorNotFound);
 // 生成: struct ErrorNotFound { pub name: String }
 ```

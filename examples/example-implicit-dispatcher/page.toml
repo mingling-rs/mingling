@@ -4,7 +4,7 @@ name = "Implicit Dispatcher"
 icon = "🫥"
 category = "dispatch"
 desc = """
-Shows the abbreviated `dispatcher!("cmd.path")` syntax from `extra_macros` that auto-derives struct names from the command path.
+Shows the abbreviated `dispatcher!("cmd.path")` syntax from `extras` that auto-derives struct names from the command path.
 """
 tags = ["implicit"]
 files = ["src/main.rs", "Cargo.toml"]

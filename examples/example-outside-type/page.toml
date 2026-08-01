@@ -6,5 +6,5 @@ category = "advanced"
 desc = """
 Demonstrates how to use the `group!()` macro to convert an external type into a type recognizable by Mingling
 """
-tags = ["group!", "extra_macros"]
+tags = ["group!", "extras"]
 files = ["src/main.rs", "Cargo.toml"]
