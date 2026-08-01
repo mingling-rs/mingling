@@ -172,7 +172,7 @@ pub use mingling_macros::Grouped;
 #[cfg(feature = "structural_renderer")]
 pub use mingling_macros::StructuralData;
 
-/// Example projects for `Mingling`, for learning how to use `Mingling`
+#[doc = include_str!("docs/docsrs_examples.md")]
 #[cfg(all(feature = "core", feature = "docs_rs"))]
 #[allow(nonstandard_style)]
 pub mod EXAMPLES {
