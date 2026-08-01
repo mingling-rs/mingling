@@ -3,7 +3,7 @@
     html_favicon_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/favicon_small.png"
 )]
 #![deny(missing_docs)]
-#![doc = include_str!("lib.md")]
+#![doc = include_str!("docs/lib.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "core")]
