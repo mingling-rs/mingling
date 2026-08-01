@@ -49,54 +49,34 @@ pub mod consts {
 #[allow(unused_imports)]
 #[cfg(feature = "macros")]
 pub mod macros {
-    /// New Parser provided by the `picker` feature
     #[cfg(feature = "picker")]
     pub use arg_picker::macros::*;
-    /// `#[buffer]` - Wraps a unit-returning function to produce a `RenderResult`.
     pub use mingling_macros::buffer;
-    /// `#[chain]` - Used to generate a struct implementing the `Chain` trait via a method
     pub use mingling_macros::chain;
-    /// `#[command]` - Declares a command from a plain function with `Vec<String>` entry
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::command;
-    /// `#[completion(EntryType)]` - Used to generate completion entry
     #[cfg(feature = "comp")]
     pub use mingling_macros::completion;
-    /// `dispatcher!("greet", CMDGreet => EntryGreet)` - Used to create a dispatcher that routes to a `Chain`
     pub use mingling_macros::dispatcher;
-    /// `#[dispatcher_clap("greet", CMDGreet)]` - Used to create a dispatcher with clap argument parsing
     #[cfg(feature = "clap")]
     pub use mingling_macros::dispatcher_clap;
-    /// `empty_result!()` - Used to create an empty result value for early return from a chain function
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::empty_result;
-    /// `entry!["--greet", "Alice"]` - Creates a packed entry value from a list of string literals
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::entry;
-    /// `gen_program!()` - Used to collect data and create a command-line context
     pub use mingling_macros::gen_program;
-    /// `group!(ErrorIo = std::io::Error)` - Used to register an external type as a group member
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::group;
-    /// `group_structural!(ErrorIo = std::io::Error)` - Like `group!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::group_structural;
-    /// `#[help]` - Used to generate a struct implementing the `HelpRequest` trait via a method
     pub use mingling_macros::help;
-    /// `#[mlint(...)]` - Marker attribute for the Mingling lint system.
-    /// Content is ignored by rustc and reserved for mlint tooling.
     pub use mingling_macros::mlint;
-    /// `node!("remote.rm")` - Used to create a `Node` struct via a literal
     pub use mingling_macros::node;
-    /// `pack!(StateGreet = String)` - Used to create a wrapper type for use with `Chain` and `Renderer`
     pub use mingling_macros::pack;
-    /// `pack_err!(ErrorUnknown)` - Used to create an error struct with automatic `name` field
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::pack_err;
-    /// `pack_err_structural!(ErrorUnknown)` - Like `pack_err!` but also marks the type for structured output
     #[cfg(all(feature = "structural_renderer", feature = "extra_macros"))]
     pub use mingling_macros::pack_err_structural;
-    /// `pack_structural!(StateGreet = String)` - Like `pack!` but also marks the type for structured output
     #[cfg(feature = "structural_renderer")]
     pub use mingling_macros::pack_structural;
     #[cfg(feature = "comp")]
@@ -106,23 +86,12 @@ pub mod macros {
     pub use mingling_macros::program_fallback_gen;
     #[doc(hidden)]
     pub use mingling_macros::program_final_gen;
-    /// `#[program_setup]` - Used to generate program setup
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::program_setup;
-    /// `r_append!` - Appends the contents of one `RenderResult` to another.
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_append;
-    /// `r_eprint!` - Prints text to a `RenderResult` error buffer (without newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_eprint;
-    /// `r_eprintln!` - Prints text to a `RenderResult` error buffer (with newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_eprintln;
-    /// `r_print!` - Prints text to a `RenderResult` buffer (without newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_print;
-    /// `r_println!` - Prints text to a `RenderResult` buffer (with newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_println;
     #[doc(hidden)]
     pub use mingling_macros::register_chain;
@@ -134,41 +103,27 @@ pub mod macros {
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]
     pub use mingling_macros::register_type;
-    /// `render_route! { /* ... */ }` - Routes errors to the rendering pipeline.
-    /// Similar to `route!`, but used in `#[renderer]` and `#[help]` functions
-    /// where the return type is `RenderResult` instead of `ChainProcess`.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::render_route;
-    /// `#[renderer]` - Used to generate a struct implementing the `Renderer` trait via a method
     pub use mingling_macros::renderer;
-    /// `#[renderify]` - An extension attribute macro that transforms `expr?` into `render_route!(expr)`.
-    /// Can be used standalone or as a renderer/help extension: `#[renderer(renderify, ...)]`, `#[help(renderify, ...)]`.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::renderify;
-    /// `route! { /* ... */ }` - Used to generate a route that either returns a successful result or early returns an error.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::route;
-    /// `#[routeify]` - An extension attribute macro that transforms `expr?` into `route!(expr)`.
-    /// Can be used standalone or as a chain/renderer extension: `#[chain(routeify, ...)]`.
     #[cfg(feature = "extra_macros")]
     pub use mingling_macros::routeify;
-    /// `suggest! { "hello", "bye" }` - Used to generate suggestions
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest;
-    /// `suggest_enum!(EnumNames)` - Used to generate enum suggestions
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest_enum;
 }
 
-/// derive macro `EnumTag`
 #[cfg(feature = "macros")]
 pub use mingling_macros::EnumTag;
 
-/// derive macro Grouped
 #[cfg(feature = "macros")]
 pub use mingling_macros::Grouped;
 
-/// derive macro `StructuralData` — marks a type as supporting structured output
 #[cfg(feature = "structural_renderer")]
 pub use mingling_macros::StructuralData;
 
@@ -218,70 +173,45 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
-    /// Re-export of the `Grouped` trait
     #[cfg(feature = "core")]
     pub use crate::Grouped;
-    /// Re-export of the `RenderResult` struct for outputting rendering result
     #[cfg(feature = "core")]
     pub use crate::RenderResult;
-    /// Re-export of the `Routable` trait
     #[cfg(feature = "core")]
     pub use crate::Routable;
-    /// Re-export of the `chain` macro for defining a chain of commands.
     #[cfg(feature = "macros")]
     pub use crate::macros::chain;
-    /// Re-export of the `#[command]` macro for declaring commands from plain functions.
     #[cfg(all(feature = "extra_macros", feature = "macros"))]
     pub use crate::macros::command;
-    /// Re-export of the `dispatcher` macro for routing commands.
     #[cfg(feature = "macros")]
     pub use crate::macros::dispatcher;
-    /// Re-export of the `empty_result` macro for creating an empty result value for early return.
     #[cfg(all(feature = "extra_macros", feature = "macros"))]
     pub use crate::macros::empty_result;
-    /// Re-export of the `gen_program` macro for generating the program entry point.
     #[cfg(feature = "macros")]
     pub use crate::macros::gen_program;
-    /// Re-export of the `pack` macro for creating wrapper types.
     #[cfg(feature = "macros")]
     pub use crate::macros::pack;
-    /// Re-export of the `pack_err` macro for creating error types.
     #[cfg(all(feature = "extra_macros", feature = "macros"))]
     pub use crate::macros::pack_err;
-    /// Re-export of the `renderer` macro for defining renderer functions.
     #[cfg(feature = "macros")]
     pub use crate::macros::renderer;
-    /// Like `pack_err!` but also marks the type for structured output
     #[cfg(all(
         feature = "macros",
         feature = "structural_renderer",
         feature = "extra_macros"
     ))]
     pub use mingling_macros::pack_err_structural;
-    /// Like `pack!` but also marks the type for structured output
     #[cfg(all(feature = "macros", feature = "structural_renderer"))]
     pub use mingling_macros::pack_structural;
-    /// `r_append!` - Appends the contents of one `RenderResult` to another.
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_append;
-    /// `r_eprint!` - Prints text to a `RenderResult` error buffer (without newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_eprint;
-    /// `r_eprintln!` - Prints text to a `RenderResult` error buffer (with newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_eprintln;
-    /// `r_print!` - Prints text to a `RenderResult` buffer (without newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_print;
-    /// `r_println!` - Prints text to a `RenderResult` buffer (with newline).
-    /// See the macro documentation for implicit vs. explicit buffer usage.
     pub use mingling_macros::r_println;
 
-    /// Re-export of the `completion` macro for generating completion entries.
     #[cfg(all(feature = "macros", feature = "comp"))]
     pub use crate::macros::completion;
 
-    /// Re-export of the `AsPicker` trait for picker functionality.
     #[cfg(feature = "parser")]
     pub use crate::parser::AsPicker;
 
