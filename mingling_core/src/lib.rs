@@ -67,7 +67,7 @@ pub mod test {
 }
 
 /// Provided for framework developers
-pub mod debug;
+mod debug;
 
 // NOT re-exported at top level: the `StructuralData` trait is sealed and only
 // accessible through the derive macro. Users who need the trait can access it
