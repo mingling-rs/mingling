@@ -6,6 +6,16 @@
 #![doc = include_str!("docs/lib.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+#[cfg(all(feature = "core", feature = "docs_rs"))]
+mod gen_program;
+
+#[cfg(all(feature = "core", feature = "docs_rs"))]
+#[doc = include_str!("docs/gen_program.md")]
+#[allow(nonstandard_style)]
+pub mod CRATE_ROOT {
+    pub use crate::gen_program::*;
+}
+
 #[cfg(feature = "core")]
 mod example_docs;
 

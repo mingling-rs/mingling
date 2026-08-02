@@ -15,7 +15,7 @@
                     "mingling_cli/Cargo.toml"
                 ],
                 "cargo": {
-                    "features": []
+                    "features": ["docs_rs", "core"]
                 },
                 "procMacro": {
                     "enable": true,
