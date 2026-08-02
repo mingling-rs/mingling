@@ -179,7 +179,7 @@ fn build_ext_attrs(exts: &[syn::Path]) -> Vec<TokenStream2> {
 /// Returns `true` if the function has a first non-reference (owned) parameter that
 /// serves as the "args" input.
 fn has_args_param(sig: &syn::Signature) -> bool {
-    sig.inputs.first().map_or(false, |arg| {
+    sig.inputs.first().is_some_and(|arg| {
         if let FnArg::Typed(pat_type) = arg {
             !matches!(&*pat_type.ty, Type::Reference(_))
         } else {
@@ -202,10 +202,10 @@ fn build_wrapper_params(
         // First param is owned (args) -> replace its type with entry type
         let mut params = sig.inputs.clone();
         if let Some(FnArg::Typed(first)) = params.first_mut() {
-            first.ty = Box::new(Type::Path(syn::TypePath {
+            *first.ty = Type::Path(syn::TypePath {
                 qself: None,
                 path: syn::Path::from(entry_type.clone()),
-            }));
+            });
         }
         params
     } else {
