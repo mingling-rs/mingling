@@ -8,9 +8,78 @@
 #  You can go to [https://catilgrass.github.io/run] to install it
 #                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# Version: 0.1.1
+# Version: 0.1.2
 
 Set-Location -Path (Split-Path -Parent $MyInvocation.MyCommand.Path) -ErrorAction Stop
+
+function Get-SortedNames {
+    return @($tools.Keys | Sort-Object @{Expression={if ($_[0] -cmatch '[A-Z]') {0} else {1}}}, @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
+}
+
+function Show-List {
+    param([string]$Highlight = "")
+
+    $sorted = Get-SortedNames
+    $total = $sorted.Count
+    $num_w = $total.ToString().Length
+
+    $max_name = ($sorted | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum
+
+    $inner_w = 2 + $num_w + 1 + 1 + $max_name + 2 + 10 + 1 + 2
+    if ($inner_w -lt 38) { $inner_w = 38 }
+
+    $title = '.\run.ps1 <NUMBER/NAME> [ARGS...]'
+    $title_len = $title.Length
+    $dash_total = $inner_w - 2 - $title_len
+    $dash_left = [Math]::Floor($dash_total / 2)
+    $dash_right = $dash_total - $dash_left
+
+    Write-Host ("┌" + ("─" * $dash_left) + " " + $title + " " + ("─" * $dash_right) + "┐")
+    Write-Host ("│" + (" " * $inner_w) + "│")
+
+    $esc = [char]27
+    $boldBlue = "$esc[1;34m"
+    $reset = "$esc[0m"
+
+    for ($idx = 0; $idx -lt $sorted.Count; $idx++) {
+        $name = $sorted[$idx]
+        $plain = $name -replace '[_\-]', '-'
+        if ($Highlight) {
+            if (-not $plain.StartsWith($Highlight, [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+        }
+        $type = $tools[$name].Type
+        $lang = switch ($type) {
+            "ps1" { "PowerShell" }
+            "cs"  { "C#" }
+            "exe" { "Binary" }
+            "go"  { "Go" }
+            "nim" { "Nim" }
+            "pl"  { "Perl" }
+            "py"  { "Python" }
+            "rb"  { "Ruby" }
+            "rs"  { "Rust" }
+            "zig" { "Zig" }
+        }
+        if ($Highlight) {
+            $preLen = $Highlight.Length
+            $prefix = $plain.Substring(0, $preLen)
+            $rest = $plain.Substring($preLen)
+            $displayName = $boldBlue + $prefix + $reset + $rest
+        } else {
+            $displayName = $plain
+        }
+        $i = $idx + 1
+        $numPart = "  " + $i.ToString().PadRight($num_w) + ") "
+        $pad = $max_name - $plain.Length
+        $langPart = " [$lang]"
+        $row = $numPart + $displayName + (" " * $pad) + $langPart
+        $outerPad = $inner_w - ($numPart.Length + $plain.Length + $pad + $langPart.Length)
+        Write-Host ("│" + $row + (" " * $outerPad) + "│")
+    }
+
+    Write-Host ("│" + (" " * $inner_w) + "│")
+    Write-Host ("└" + ("─" * $inner_w) + "┘")
+}
 
 $tools = @{}
 
@@ -75,54 +144,14 @@ if (Test-Path ".run/src/bin/*.zig") {
 }
 
 if ($args.Count -eq 0) {
-    $sorted = @($tools.Keys | Sort-Object @{Expression={if ($_[0] -cmatch '[A-Z]') {0} else {1}}}, @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
-    $total = $sorted.Count
-    $num_w = $total.ToString().Length
-
-    $max_name = ($sorted | ForEach-Object { $_.Length } | Measure-Object -Maximum).Maximum
-
-    $inner_w = 2 + $num_w + 1 + 1 + $max_name + 2 + 10 + 1 + 2
-    if ($inner_w -lt 38) { $inner_w = 38 }
-
-    $title = '.\run.ps1 <NUMBER/NAME> [ARGS...]'
-    $title_len = $title.Length
-    $dash_total = $inner_w - 2 - $title_len
-    $dash_left = [Math]::Floor($dash_total / 2)
-    $dash_right = $dash_total - $dash_left
-
-    Write-Host ("┌" + ("─" * $dash_left) + " " + $title + " " + ("─" * $dash_right) + "┐")
-    Write-Host ("│" + (" " * $inner_w) + "│")
-
-    $i = 1
-    foreach ($name in $sorted) {
-        $type = $tools[$name].Type
-        $lang = switch ($type) {
-            "ps1" { "PowerShell" }
-            "cs"  { "C#" }
-            "exe" { "Binary" }
-            "go"  { "Go" }
-            "nim" { "Nim" }
-            "pl"  { "Perl" }
-            "py"  { "Python" }
-            "rb"  { "Ruby" }
-            "rs"  { "Rust" }
-            "zig" { "Zig" }
-        }
-        $displayName = $name -replace '[_\-]', ' '
-        $entry = "  " + $i.ToString().PadRight($num_w) + ") " + $displayName.PadRight($max_name) + " [$lang]"
-        Write-Host ("│" + $entry.PadRight($inner_w) + "│")
-        $i++
-    }
-
-    Write-Host ("│" + (" " * $inner_w) + "│")
-    Write-Host ("└" + ("─" * $inner_w) + "┘")
+    Show-List
     exit 1
 }
 
 $target_name = $args[0]
 
 if ($target_name -match '^\d+$') {
-    $sorted = @($tools.Keys | Sort-Object @{Expression={if ($_[0] -cmatch '[A-Z]') {0} else {1}}}, @{Expression={if ($tools[$_].Type -eq 'ps1') {0} else {1}}}, {$_})
+    $sorted = Get-SortedNames
     $idx = [int]$target_name - 1
     if ($idx -ge 0 -and $idx -lt $sorted.Count) {
         $target_name = $sorted[$idx]
@@ -145,6 +174,19 @@ if (-not $tools.ContainsKey($target_name)) {
     if ($found) {
         $target_name = $found
     } else {
+        $sorted = Get-SortedNames
+        $hasHit = $false
+        foreach ($name in $sorted) {
+            $plain = $name -replace '[_\-]', '-'
+            if ($plain.StartsWith($target_name, [System.StringComparison]::OrdinalIgnoreCase)) {
+                $hasHit = $true
+                break
+            }
+        }
+        if ($hasHit) {
+            Show-List -Highlight $target_name
+            exit 1
+        }
         Write-Host "Error: target '$target_name' does not exist"
         exit 1
     }

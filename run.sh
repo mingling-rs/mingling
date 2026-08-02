@@ -10,7 +10,7 @@
 #  You can go to [https://catilgrass.github.io/run] to install it
 #                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-# Version: 0.1.1
+# Version: 0.1.2
 
 cd "$(dirname "$0")" || exit 1
 
@@ -88,47 +88,60 @@ for file in .run/src/bin/*.zig; do
     fi
 done
 
-if [ $# -eq 0 ]; then
-    sorted_names=($(
-        for name in "${!tools[@]}"; do
-            first_char="${name:0:1}"
-            if [[ "$first_char" =~ [A-Z] ]]; then
-                case_pri="0"
-            else
-                case_pri="1"
-            fi
-            if [ "${tools[$name]}" = "sh" ]; then
-                lang_pri="0"
-            else
-                lang_pri="1"
-            fi
-            echo "$case_pri$lang_pri $name"
-        done | sort | while read -r _ n; do echo "$n"; done
-    ))
-    total=${#sorted_names[@]}
-    num_w=${#total}
+get_sorted_names() {
+    for name in "${!tools[@]}"; do
+        first_char="${name:0:1}"
+        if [[ "$first_char" =~ [A-Z] ]]; then
+            case_pri="0"
+        else
+            case_pri="1"
+        fi
+        if [ "${tools[$name]}" = "sh" ]; then
+            lang_pri="0"
+        else
+            lang_pri="1"
+        fi
+        echo "$case_pri$lang_pri $name"
+    done | sort | while read -r _ n; do echo "$n"; done
+}
 
-    max_name=0
+show_list() {
+    local highlight="$1"
+
+    local total=${#sorted_names[@]}
+    local num_w=${#total}
+
+    local max_name=0
     for name in "${sorted_names[@]}"; do
         len=${#name}
         ((len > max_name)) && max_name=$len
     done
 
-    inner_w=$((2 + num_w + 1 + 1 + max_name + 2 + 6 + 1 + 2))
+    local inner_w=$((2 + num_w + 1 + 1 + max_name + 2 + 6 + 1 + 2))
     ((inner_w < 38)) && inner_w=38
 
-    title="./run.sh <NUMBER/NAME> [ARGS...]"
-    title_len=${#title}
-    dash_total=$((inner_w - 2 - title_len))
-    dash_left=$((dash_total / 2))
-    dash_right=$((dash_total - dash_left))
+    local title="./run.sh <NUMBER/NAME> [ARGS...]"
+    local title_len=${#title}
+    local dash_total=$((inner_w - 2 - title_len))
+    local dash_left=$((dash_total / 2))
+    local dash_right=$((dash_total - dash_left))
 
     echo "┌$(printf '─%.0s' $(seq 1 $dash_left)) $title $(printf '─%.0s' $(seq 1 $dash_right))┐"
     printf "│%*s│\n" $inner_w ""
 
-    i=1
-    for name in "${sorted_names[@]}"; do
-        type="${tools[$name]}"
+    local bold_blue=$'\033[1;34m'
+    local reset=$'\033[0m'
+
+    local lc_h=""
+    if [ -n "$highlight" ]; then
+        lc_h=$(echo "$highlight" | tr '[:upper:]' '[:lower:]')
+    fi
+
+    local i=1
+    for idx in "${!sorted_names[@]}"; do
+        local name="${sorted_names[$idx]}"
+        local type="${tools[$name]}"
+        local lang
         case "$type" in
             sh) lang="Shell";;
             binary) lang="Binary";;
@@ -141,14 +154,40 @@ if [ $# -eq 0 ]; then
             rs) lang="Rust";;
             zig) lang="Zig";;
         esac
-        display_name=$(echo "$name" | tr '_-' '  ')
-        entry=$(printf "  %-*d) %-*s [%s]" $num_w $i $max_name "$display_name" $lang)
-        printf "│%-*s│\n" $inner_w "$entry"
-        i=$((i + 1))
+
+        local display_name
+        display_name=$(echo "$name" | tr '_-' '--')
+
+        if [ -n "$highlight" ]; then
+            local lc_dn
+            lc_dn=$(echo "$display_name" | tr '[:upper:]' '[:lower:]')
+            [[ "$lc_dn" == "$lc_h"* ]] || continue
+
+            local hl_len=${#highlight}
+            local prefix="${display_name:0:hl_len}"
+            local rest="${display_name:hl_len}"
+            display_name="${bold_blue}${prefix}${reset}${rest}"
+        fi
+
+        i=$((idx + 1))
+        local num_part
+        num_part=$(printf "  %-*d) " $num_w $i)
+        local pad=$((max_name - ${#name}))
+        local pad_str
+        pad_str=$(printf '%*s' $pad '')
+        local lang_part=" [$lang]"
+        local visible_len=$(( ${#num_part} + ${#name} + pad + ${#lang_part} ))
+        local outer_pad=$((inner_w - visible_len))
+        printf "│%s%s%s%s%s│\n" "$num_part" "$display_name" "$pad_str" "$lang_part" "$(printf '%*s' $outer_pad '')"
     done
 
     printf "│%*s│\n" $inner_w ""
     echo "└$(printf '─%.0s' $(seq 1 $inner_w))┘"
+}
+
+if [ $# -eq 0 ]; then
+    sorted_names=($(get_sorted_names))
+    show_list ""
     exit 1
 fi
 
@@ -156,22 +195,7 @@ target_name="$1"
 shift
 
 if [[ "$target_name" =~ ^[0-9]+$ ]]; then
-    sorted=($(
-        for name in "${!tools[@]}"; do
-            first_char="${name:0:1}"
-            if [[ "$first_char" =~ [A-Z] ]]; then
-                case_pri="0"
-            else
-                case_pri="1"
-            fi
-            if [ "${tools[$name]}" = "sh" ]; then
-                lang_pri="0"
-            else
-                lang_pri="1"
-            fi
-            echo "$case_pri$lang_pri $name"
-        done | sort | while read -r _ n; do echo "$n"; done
-    ))
+    sorted=($(get_sorted_names))
     idx=$((target_name - 1))
     if [ "$idx" -ge 0 ] && [ "$idx" -lt "${#sorted[@]}" ]; then
         target_name="${sorted[$idx]}"
@@ -194,6 +218,20 @@ if [ -z "${tools[$target_name]}" ]; then
     if [ -n "$found" ]; then
         target_name="$found"
     else
+        sorted_names=($(get_sorted_names))
+        lc_user=$(echo "$target_name" | tr '[:upper:]' '[:lower:]')
+        hit=0
+        for name in "${sorted_names[@]}"; do
+            lc_name=$(echo "$name" | tr '_-' '--' | tr '[:upper:]' '[:lower:]')
+            if [[ "$lc_name" == "$lc_user"* ]]; then
+                hit=1
+                break
+            fi
+        done
+        if [ $hit -eq 1 ]; then
+            show_list "$target_name"
+            exit 1
+        fi
         echo "Error: target '$target_name' does not exist"
         exit 1
     fi
