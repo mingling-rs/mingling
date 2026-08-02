@@ -8,11 +8,7 @@ use tools::{
 };
 
 fn get_ignore_dirs() -> Vec<String> {
-    vec![
-        ".temp".to_string(),
-        "mling/res".to_string(),
-        "mling\\res".to_string(),
-    ]
+    vec![".temp".to_string()]
 }
 
 fn print_help() {
@@ -123,6 +119,9 @@ fn ci(test_docs: bool, test_codes: bool, run_all: bool) -> Result<(), i32> {
 
         println_cargo_style!("Phase: Test all crates");
         test_all()?;
+
+        println_cargo_style!("Phase: Test arg picker");
+        test_arg_picker()?;
     }
 
     if run_all || test_docs {
@@ -282,11 +281,12 @@ fn test_all() -> Result<(), i32> {
 
     // Workspace members: test with all documented features so that feature-gated
     // tests (comp/repl/picker/structural_renderer/...) are actually executed.
+    // `arg-picker` is excluded here and tested separately via [`test_arg_picker`].
     let features_arg = doc_features_arg();
     tasks.push((
         "Test: workspace".to_string(),
         "workspace".to_string(),
-        format!("cargo test --workspace{features_arg} --color always"),
+        format!("cargo test --workspace{features_arg} --exclude arg-picker --color always"),
     ));
 
     for cargo_toml in cargo_tomls {
@@ -310,6 +310,15 @@ fn test_all() -> Result<(), i32> {
         tasks.push((label, crate_name, cmd));
     }
     run_parallel("Testing", tasks)
+}
+
+/// `arg-picker` is excluded from the workspace test command: when built with
+/// `mingling_support` (enabled via `mingling/picker`), its README doctests
+/// expand `arg!` to `::mingling::picker::PickerArg`, which is not available
+/// inside the arg-picker crate itself. Test it separately with its default
+/// features instead.
+fn test_arg_picker() -> Result<(), i32> {
+    run_cmd!("cargo test -p arg-picker --color always")
 }
 
 fn deploy_api_docs() -> Result<(), i32> {
