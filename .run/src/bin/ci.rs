@@ -1,4 +1,5 @@
 use std::io::Write as _;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 
 use arg_picker::{Picker, macros::arg};
@@ -167,14 +168,54 @@ fn test_docs_code_blocks() -> Result<(), i32> {
     )
 }
 
+/// Returns the manifest paths of all workspace members (via `cargo metadata --no-deps`).
+///
+/// These crates are tested/built/clipped together with `--workspace` so that
+/// feature-gated code is covered, instead of relying on each crate's default features.
+fn workspace_manifests() -> Vec<PathBuf> {
+    let Ok(output) = tools::run_cmd_capture("cargo metadata --no-deps --format-version 1") else {
+        return Vec::new();
+    };
+    let Ok(json) = serde_json::from_str::<serde_json::Value>(&output) else {
+        return Vec::new();
+    };
+    json["packages"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|p| p["manifest_path"].as_str().map(PathBuf::from))
+        .collect()
+}
+
+fn same_path(a: &Path, b: &Path) -> bool {
+    let norm = |p: &Path| std::fs::canonicalize(p).unwrap_or_else(|_| p.to_path_buf());
+    norm(a) == norm(b)
+}
+
 fn build_all() -> Result<(), i32> {
     let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
+    let workspace_manifests = workspace_manifests();
     let mut tasks = Vec::new();
+
+    // Workspace members: build with all documented features (same set used by cov-test)
+    let features_arg = doc_features_arg();
+    tasks.push((
+        "Build: workspace".to_string(),
+        "workspace".to_string(),
+        format!("cargo build --workspace{features_arg} --color always"),
+    ));
+
     for cargo_toml in cargo_tomls {
-        let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
+        let path = cargo_toml.parent().unwrap_or(Path::new(""));
         let path_str = path.to_string_lossy();
         if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
+            continue;
+        }
+        if workspace_manifests
+            .iter()
+            .any(|m| same_path(m, &cargo_toml))
+        {
             continue;
         }
         let label = format!("Build: {}", cargo_toml.to_string_lossy());
@@ -191,11 +232,27 @@ fn build_all() -> Result<(), i32> {
 fn clippy_all() -> Result<(), i32> {
     let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
+    let workspace_manifests = workspace_manifests();
     let mut tasks = Vec::new();
+
+    // Workspace members: clippy with all documented features
+    let features_arg = doc_features_arg();
+    tasks.push((
+        "Clippy: workspace".to_string(),
+        "workspace".to_string(),
+        format!("cargo clippy --workspace{features_arg} --color always -- -D warnings"),
+    ));
+
     for cargo_toml in cargo_tomls {
-        let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
+        let path = cargo_toml.parent().unwrap_or(Path::new(""));
         let path_str = path.to_string_lossy();
         if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
+            continue;
+        }
+        if workspace_manifests
+            .iter()
+            .any(|m| same_path(m, &cargo_toml))
+        {
             continue;
         }
         let label = format!("Clippy: {}", cargo_toml.to_string_lossy());
@@ -209,17 +266,42 @@ fn clippy_all() -> Result<(), i32> {
     run_parallel("Clippy", tasks)
 }
 
+/// ` --features "<docs.rs features>"` (empty string when unavailable)
+fn doc_features_arg() -> String {
+    match tools::read_features() {
+        Ok(features) if !features.is_empty() => format!(" --features \"{}\"", features.join(",")),
+        _ => String::new(),
+    }
+}
+
 fn test_all() -> Result<(), i32> {
     let ignore_dirs = get_ignore_dirs();
     let cargo_tomls = cargo_tomls();
+    let workspace_manifests = workspace_manifests();
     let mut tasks = Vec::new();
+
+    // Workspace members: test with all documented features so that feature-gated
+    // tests (comp/repl/picker/structural_renderer/...) are actually executed.
+    let features_arg = doc_features_arg();
+    tasks.push((
+        "Test: workspace".to_string(),
+        "workspace".to_string(),
+        format!("cargo test --workspace{features_arg} --color always"),
+    ));
+
     for cargo_toml in cargo_tomls {
-        let path = cargo_toml.parent().unwrap_or(std::path::Path::new(""));
+        let path = cargo_toml.parent().unwrap_or(Path::new(""));
         let path_str = path.to_string_lossy();
         if ignore_dirs.iter().any(|d| path_str.contains(d.as_str())) {
             continue;
         }
-        let label = format!("Testing: {}", cargo_toml.to_string_lossy());
+        if workspace_manifests
+            .iter()
+            .any(|m| same_path(m, &cargo_toml))
+        {
+            continue;
+        }
+        let label = format!("Test: {}", cargo_toml.to_string_lossy());
         let crate_name = crate_name_from(&cargo_toml);
         let cmd = format!(
             "cargo test --manifest-path {} --color always",
