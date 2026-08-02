@@ -1,3 +1,5 @@
+#![allow(unused_imports)]
+
 pub use mingling_pathf::config::*;
 pub use mingling_pathf::module_pathf::*;
 pub use mingling_pathf::pattern_analyzer::*;
