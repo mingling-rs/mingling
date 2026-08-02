@@ -39,7 +39,7 @@ impl Parse for ClapOptions {
                 error_struct = Some(value);
             } else if key == "help" {
                 let value: LitBool = input.parse()?;
-                if value.value() == false {
+                if !value.value() {
                     // help = false is allowed but does nothing
                     help_enabled = false;
                 } else {
@@ -171,7 +171,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     };
 
     let dispatch_tree_entry =
-        get_dispatch_tree_entry(&command_name_str, dispatcher_struct, &struct_name);
+        get_dispatch_tree_entry(&command_name_str, dispatcher_struct, struct_name);
 
     let expanded = quote! {
         // Keep the original struct definition
