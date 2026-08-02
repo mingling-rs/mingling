@@ -1,4 +1,4 @@
-use crate::{Pickable, PickerArgInfo};
+use crate::{Pickable, PickerArgInfo, SinglePickable, parselib::ParserStyle};
 use std::marker::PhantomData;
 
 /// Represents a constraint definition for a parameter selection.
@@ -161,6 +161,22 @@ where
             multi: false,
             is_flag: false,
         }
+    }
+}
+
+impl<'a, Type> From<PickerArg<'a, Type>> for Vec<String>
+where
+    Type: SinglePickable,
+{
+    fn from(value: PickerArg<'a, Type>) -> Self {
+        let mut result = Vec::new();
+        let info = PickerArgInfo::from(value);
+        let possible_flags =
+            crate::parselib::build_possible_flags(ParserStyle::global_style(), &info);
+        for flag in possible_flags {
+            result.push(flag);
+        }
+        result
     }
 }
 
