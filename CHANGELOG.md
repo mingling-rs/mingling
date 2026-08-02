@@ -39,11 +39,7 @@ None
 
 #### Optimizations:
 
-1. **[`macros:gen_program`]** Added a `CRATE_ROOT` module that is only visible when the `docs_rs` feature is enabled. This module exists purely for docs.rs documentation purposes — it provides a placeholder view of the structures, enums, and other items that `gen_program!()` generates into `crate::*`, allowing users to inspect and understand the behavior behind `gen_program!()` through generated documentation.
-
-    When the `docs_rs` feature is enabled, `gen_program!()` emits a `#[doc(hidden)]` `CRATE_ROOT` module (with the hidden attribute removed when `docs_rs` is active) containing doc comments that describe the generated items and their relationships. This gives users browsing docs.rs a clear picture of what `gen_program!` expands to — the `ThisProgram` type alias, the `Enum` enum, the `Entry` pack type, chain process types, and related plumbing — without needing to manually trace macro expansions.
-
-    When `docs_rs` is disabled (the default), the `CRATE_ROOT` module is not emitted at all, so there is zero impact on normal builds, generated code size, or compilation times.
+None
 
 #### Features:
 
@@ -82,6 +78,12 @@ None
     - **`add_suggest_with_description(&mut self, items: impl Into<Vec<String>>, desc: impl Into<String>)`** — Wraps each item in `SuggestItem::WithDescription` using the provided description and inserts it into the set.
 
     These methods enable ergonomic batch population of suggestion sets from collections of strings, complementing the existing `insert()` method.
+
+4. **[`macros:gen_program`]** Added a `CRATE_ROOT` module that is only visible when the `docs_rs` feature is enabled. This module exists purely for docs.rs documentation purposes — it provides a placeholder view of the structures, enums, and other items that `gen_program!()` generates into `crate::*`, allowing users to inspect and understand the behavior behind `gen_program!()` through generated documentation.
+
+    When the `docs_rs` feature is enabled, `gen_program!()` emits a `#[doc(hidden)]` `CRATE_ROOT` module (with the hidden attribute removed when `docs_rs` is active) containing doc comments that describe the generated items and their relationships. This gives users browsing docs.rs a clear picture of what `gen_program!` expands to — the `ThisProgram` type alias, the `Enum` enum, the `Entry` pack type, chain process types, and related plumbing — without needing to manually trace macro expansions.
+
+    When `docs_rs` is disabled (the default), the `CRATE_ROOT` module is not emitted at all, so there is zero impact on normal builds, generated code size, or compilation times.
 
 #### Features:
 
