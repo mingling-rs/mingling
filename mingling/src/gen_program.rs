@@ -23,6 +23,8 @@ pub struct Entry {
 ///
 /// It contains the IDs of all types for this program, registered by the `register_type!` macro.
 pub enum ThisProgram {
+    /// The generic program entry point.
+    Entry,
     /// Indicates that no matching renderer was found for the given output.
     ErrorRendererNotFound,
     /// Indicates that no matching dispatcher was found for the given arguments.
