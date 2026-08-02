@@ -2,7 +2,7 @@
 
 use std::collections::HashSet;
 
-use crate::{Flag, ShellFlag, Suggest};
+use crate::{Flag, ShellFlag, Suggest, special_argument};
 
 /// Context passed from the shell to the completion system,
 /// providing information about the current command line state
@@ -38,43 +38,19 @@ pub struct ShellContext {
 impl TryFrom<Vec<String>> for ShellContext {
     type Error = String;
 
-    fn try_from(args: Vec<String>) -> Result<Self, Self::Error> {
-        use std::collections::HashMap;
-
-        // Parse arguments into a map for easy lookup
-        let mut arg_map = HashMap::new();
-        let mut i = 0;
-        while i < args.len() {
-            if args[i].starts_with('-') {
-                let key = args[i].clone();
-                if i + 1 < args.len() && !args[i + 1].starts_with('-') {
-                    arg_map.insert(key, args[i + 1].clone());
-                    i += 2;
-                } else {
-                    arg_map.insert(key, String::new());
-                    i += 1;
-                }
-            } else {
-                i += 1;
-            }
-        }
-
+    fn try_from(mut args: Vec<String>) -> Result<Self, Self::Error> {
         // Extract values with defaults
-        let command_line = arg_map.get("-f").cloned().unwrap_or_default();
-        let cursor_position = arg_map
-            .get("-C")
+        let command_line = special_argument!(args, "-f").unwrap_or_default();
+        let cursor_position = special_argument!(args, "-C")
             .and_then(|s| s.parse().ok())
             .unwrap_or_default();
-        let current_word = arg_map.get("-w").cloned().unwrap_or_default();
-        let previous_word = arg_map.get("-p").cloned().unwrap_or_default();
-        let command_name = arg_map.get("-c").cloned().unwrap_or_default();
-        let word_index = arg_map
-            .get("-i")
+        let current_word = special_argument!(args, "-w").unwrap_or_default();
+        let previous_word = special_argument!(args, "-p").unwrap_or_default();
+        let command_name = special_argument!(args, "-c").unwrap_or_default();
+        let word_index = special_argument!(args, "-i")
             .and_then(|s| s.parse().ok())
             .unwrap_or_default();
-        let shell_flag = arg_map
-            .get("-F")
-            .cloned()
+        let shell_flag = special_argument!(args, "-F")
             .map_or(ShellFlag::Other("unknown".to_string()), ShellFlag::from);
 
         let all_words = command_line
