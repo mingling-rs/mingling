@@ -4,10 +4,20 @@ use mingling_core::ChainProcess;
 use mingling_core::Dispatcher;
 use mingling_core::Grouped;
 use mingling_core::Node;
+use mingling_core::Program;
 use mingling_core::ProgramCollect;
 
 /// The next processing step for the current chain.
 pub type Next = ChainProcess<ThisProgram>;
+
+/// The generic program entry point.
+///
+/// This type is created by the `pack!` macro as a variant of the
+/// program's output type set (`ThisProgram`).
+pub struct Entry {
+    /// The arguments provided by the user
+    pub(crate) inner: Vec<String>,
+}
 
 /// An enum used to record the set of program type IDs.
 ///
@@ -33,7 +43,7 @@ pub enum ThisProgram {
 /// program's output type set (`ThisProgram`).
 pub struct ErrorRendererNotFound {
     /// The name of the renderer that was not found
-    inner: String,
+    pub(crate) inner: String,
 }
 
 /// A struct representing a "dispatcher not found" error.
@@ -42,7 +52,7 @@ pub struct ErrorRendererNotFound {
 /// program's output type set (`ThisProgram`).
 pub struct ErrorDispatcherNotFound {
     /// The arguments provided by the user
-    inner: Vec<String>,
+    pub(crate) inner: Vec<String>,
 }
 
 /// A struct representing an empty result.
@@ -64,7 +74,7 @@ pub struct CMDCompletion;
 #[cfg(feature = "comp")]
 pub struct CompletionContext {
     /// The arguments provided by the user
-    inner: Vec<String>,
+    pub(crate) inner: Vec<String>,
 }
 
 /// Represents a completion suggestion result.
@@ -94,6 +104,18 @@ impl Dispatcher<ThisProgram> for CMDCompletion {
 
     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
         todo!()
+    }
+}
+
+// SAFETY: These implementations are provided for demonstration purposes only.
+// The `member_id()` implementations map each type to its corresponding variant
+// in the `ThisProgram` enum, and the IDs correctly correspond to the actual types.
+// However, these are marked `unsafe` because the `Grouped` trait requires the
+// implementor to guarantee that the type is the only one associated with the
+// given enum variant — a guarantee that should be carefully verified in production code.
+unsafe impl Grouped<ThisProgram> for Entry {
+    fn member_id() -> ThisProgram {
+        ThisProgram::Entry
     }
 }
 
@@ -226,6 +248,18 @@ impl ProgramCollect for ThisProgram {
         _setting: &mingling_core::StructuralRendererSetting,
     ) -> Result<mingling_core::RenderResult, mingling_core::error::StructuralRendererSerializeError>
     {
+        todo!()
+    }
+}
+
+impl ThisProgram {
+    /// Create a program through this ProgramCollect.
+    pub fn new() -> Program<ThisProgram> {
+        todo!()
+    }
+
+    /// Get the global singleton of the current program.
+    pub fn this() -> &'static Program<ThisProgram> {
         todo!()
     }
 }
