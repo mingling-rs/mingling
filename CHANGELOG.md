@@ -72,6 +72,13 @@ None
 
     _No behavioral change for downstream code — all public items are re-exported with the same names. The `__this_program_impl` module is `#[doc(hidden)]` and not part of the public API._
 
+3. **[`core:comp`]** Added `add_suggest()` and `add_suggest_with_description()` methods to `Suggest` for batch-adding suggestion items:
+
+    - **`add_suggest(&mut self, items: impl Into<Vec<String>>)`** — Wraps each item in `SuggestItem::Simple` and inserts it into the underlying `BTreeSet`.
+    - **`add_suggest_with_description(&mut self, items: impl Into<Vec<String>>, desc: impl Into<String>)`** — Wraps each item in `SuggestItem::WithDescription` using the provided description and inserts it into the set.
+
+    These methods enable ergonomic batch population of suggestion sets from collections of strings, complementing the existing `insert()` method.
+
 #### Features:
 
 1. **[`picker:value:paths`]** Added new path wrapper types to `arg_picker::value` for filesystem-aware argument parsing:

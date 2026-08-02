@@ -56,6 +56,42 @@ impl Suggest {
             (suggest, _) => suggest,
         }
     }
+
+    /// Adds multiple simple suggestions (without descriptions) to the `Suggest` set.
+    ///
+    /// Each item produced by the iterator is wrapped in a [`SuggestItem::Simple`]
+    /// variant and inserted into the underlying `BTreeSet`.
+    ///
+    /// # Arguments
+    ///
+    /// * `items` — A collection of suggestion strings to add.
+    pub fn add_suggest(&mut self, items: impl Into<Vec<String>>) {
+        for item in items.into() {
+            self.insert(SuggestItem::Simple(item));
+        }
+    }
+
+    /// Adds multiple suggestions with a shared description to the `Suggest` set.
+    ///
+    /// Each item produced by the iterator is wrapped in a
+    /// [`SuggestItem::WithDescription`] variant using the provided description,
+    /// and inserted into the underlying `BTreeSet`.
+    ///
+    /// # Arguments
+    ///
+    /// * `items` — A collection of suggestion strings to add.
+    /// * `desc` — The description to attach to each suggestion. Must implement
+    ///   `Into<String>`.
+    pub fn add_suggest_with_description(
+        &mut self,
+        items: impl Into<Vec<String>>,
+        desc: impl Into<String>,
+    ) {
+        let desc_str = desc.into();
+        for item in items.into() {
+            self.insert(SuggestItem::WithDescription(item, desc_str.clone()));
+        }
+    }
 }
 
 impl<T> From<T> for Suggest
