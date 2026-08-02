@@ -50,8 +50,14 @@ impl TryFrom<Vec<String>> for ShellContext {
         let word_index = special_argument!(args, "-i")
             .and_then(|s| s.parse().ok())
             .unwrap_or_default();
-        let shell_flag = special_argument!(args, "-F")
-            .map_or(ShellFlag::Other("unknown".to_string()), ShellFlag::from);
+        // Distinguish "-F absent" (unknown shell) from "-F present without a value" (empty shell)
+        let has_shell_flag = args.iter().any(|arg| arg == "-F");
+        let shell_flag = if has_shell_flag {
+            special_argument!(args, "-F")
+                .map_or_else(|| ShellFlag::Other(String::new()), ShellFlag::from)
+        } else {
+            ShellFlag::Other("unknown".to_string())
+        };
 
         let all_words = command_line
             .split_whitespace()
