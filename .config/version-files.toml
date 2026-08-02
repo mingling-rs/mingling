@@ -3,7 +3,15 @@ file = "./Cargo.toml"
 pattern = "version = \"{VER}\""
 
 [[file]]
+file = "./mingling_cli/Cargo.toml"
+pattern = "version = \"{VER}\""
+
+[[file]]
 file = "./README.md"
+pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./mingling/README.md"
 pattern = "version = \"{VER}\""
 
 [[file]]
@@ -19,5 +27,5 @@ file = "./docs/res/guide.txt"
 pattern = "mingling = \"{VER}\""
 
 [[file]]
-file = "./mingling_core/src/lib.rs"
-pattern = "mingling = \"{VER}\""
+file = "./mingling_core/src/docs/build.md"
+pattern = "version = \"{VER}\""
