@@ -10,7 +10,7 @@
 
 ## Intro
 
-[`Mingling`](https://github.com/mingling-rs/mingling) is a **proc-macro and type system-based** Rust CLI framework, suitable for developing complex command-line programs with numerous subcommands.
+[`Mingling`](https://github.com/mingling-rs/mingling) is a **state-driven and data-driven** CLI workflow orchestration framework built in Rust.
 
 ## Use
 
