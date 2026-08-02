@@ -7,10 +7,12 @@ You can access them like this:
 ```rust
 # pub struct ThisProgram;
 # impl ThisProgram { fn new() -> Self { ThisProgram } }
+# fn main() {
 // main.rs / lib.rs
 
 // Use them here via crate::*
 let mut program = crate::ThisProgram::new();
+# }
 
 // `ThisProgram` is generated here
 // |
