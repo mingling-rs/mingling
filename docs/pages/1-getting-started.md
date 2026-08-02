@@ -19,7 +19,7 @@ features = []
  
 ## Enable Features
 
-**Mingling** has all features disabled by default and does **not** provide an all-in-one feature like `full`.
+**Mingling** by default only enables `core` and `macros`; the rest need to be enabled as needed.
 
 Some features **directly affect the entire lifecycle behavior**, so you need to enable them as needed, e.g.:
 

@@ -37,17 +37,28 @@ features = [
 ]
 
 [features]
+
+# Presets
+mini = ["extras", "picker"]
+advanced = ["extras", "picker", "repl", "comp", "dispatch_tree", "structural_renderer"]
+full = ["extras", "picker", "repl", "clap", "comp", "dispatch_tree", "structural_renderer_full", "pathf"]
+build_advanced = ["build", "comp"]
+build_full = ["build", "comp", "pathf", "dispatch_tree"]
+
+# Core
 core = ["dep:mingling_core", "mingling_core/default"]
 macros = ["dep:mingling_macros", "mingling_macros/default"]
 
+# Special features
 nightly = ["mingling_core/nightly", "mingling_macros/nightly"]
 debug = ["mingling_core/debug"]
 async = ["mingling_core/async", "mingling_macros/async"]
-
-build = ["mingling_core/build"]
-
 default = ["core", "macros"]
+build = ["mingling_core/build"]
+# - Section only shown in docs.rs
+docs_rs = []
 
+# Features
 clap = ["mingling_core/clap", "mingling_macros/clap"]
 dispatch_tree = ["mingling_core/dispatch_tree", "mingling_macros/dispatch_tree"]
 repl = ["mingling_core/repl", "mingling_macros/repl"]
@@ -90,9 +101,7 @@ ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 
 extras = ["mingling_macros/extras"]
 
-# Section only shown in docs.rs
-docs_rs = []
-
+# - LEGACY -
 # These are old names, will be Breaking Change in the future
 
 builds = ["mingling_core/build"]

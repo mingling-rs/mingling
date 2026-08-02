@@ -1,3 +1,14 @@
+/// Whether the `advanced` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "advanced"))]
+#[allow(unused)]
+pub const MINGLING_ADVANCED: bool = false;
+
+/// Whether the `advanced` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "advanced")]
+#[allow(unused)]
+pub const MINGLING_ADVANCED: bool = true;
 /// Whether the `all_serde_fmt` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "all_serde_fmt"))]
@@ -31,6 +42,28 @@ pub const MINGLING_BUILD: bool = false;
 #[cfg(feature = "build")]
 #[allow(unused)]
 pub const MINGLING_BUILD: bool = true;
+/// Whether the `build_advanced` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "build_advanced"))]
+#[allow(unused)]
+pub const MINGLING_BUILD_ADVANCED: bool = false;
+
+/// Whether the `build_advanced` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "build_advanced")]
+#[allow(unused)]
+pub const MINGLING_BUILD_ADVANCED: bool = true;
+/// Whether the `build_full` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "build_full"))]
+#[allow(unused)]
+pub const MINGLING_BUILD_FULL: bool = false;
+
+/// Whether the `build_full` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "build_full")]
+#[allow(unused)]
+pub const MINGLING_BUILD_FULL: bool = true;
 /// Whether the `builds` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "builds"))]
@@ -141,6 +174,17 @@ pub const MINGLING_EXTRAS: bool = false;
 #[cfg(feature = "extras")]
 #[allow(unused)]
 pub const MINGLING_EXTRAS: bool = true;
+/// Whether the `full` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "full"))]
+#[allow(unused)]
+pub const MINGLING_FULL: bool = false;
+
+/// Whether the `full` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "full")]
+#[allow(unused)]
+pub const MINGLING_FULL: bool = true;
 /// Whether the `json_serde_fmt` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "json_serde_fmt"))]
@@ -163,6 +207,17 @@ pub const MINGLING_MACROS: bool = false;
 #[cfg(feature = "macros")]
 #[allow(unused)]
 pub const MINGLING_MACROS: bool = true;
+/// Whether the `mini` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "mini"))]
+#[allow(unused)]
+pub const MINGLING_MINI: bool = false;
+
+/// Whether the `mini` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "mini")]
+#[allow(unused)]
+pub const MINGLING_MINI: bool = true;
 /// Whether the `nightly` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "nightly"))]

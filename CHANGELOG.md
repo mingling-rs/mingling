@@ -156,6 +156,18 @@ None
 
 7. **[`core`]** **[`comp`]** Added `Suggest::combine(self, other: impl Into<Suggest>) -> Self` method that merges two `Suggest` values. If both are `Suggest::Suggest`, their inner `BTreeSet`s are merged (all items from `other` are added into `self`). Otherwise, the first `Suggest::Suggest` (or `FileCompletion`) is returned unchanged, and the other value is discarded. This enables ergonomic aggregation of completion suggestions from multiple sources.
 
+**[`features`]** Added preset feature groups to `mingling/Cargo.toml`, providing convenience combinations for common use cases:
+
+- **`mini`** — `extras`, `picker`. Minimal mode for small CLI tools.
+- **`advanced`** — `extras`, `picker`, `repl`, `comp`, `dispatch_tree`, `structural_renderer`. Full-featured mode for medium-sized applications.
+- **`full`** — `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`, `pathf`. Complete mode for large, feature-comprehensive applications.
+- **`build_advanced`** — `build`, `comp`. Build-time configuration for generating completion scripts etc.
+- **`build_full`** — `build`, `comp`, `pathf`, `dispatch_tree`. Full build-time configuration including the path analyzer.
+
+    `build_advanced` and `build_full` are intended for use in `[build-dependencies]` alongside their corresponding runtime feature groups.
+
+    Also reorganized the `[features]` section of `mingling/Cargo.toml` into logical subsections (Presets, Core, Special features, Features, LEGACY) for improved maintainability and documentation.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.

@@ -3,6 +3,66 @@
     <b>Mingling</b> 的所有特性一览
 </p>
 
+# 预设特性组
+
+Mingling 提供了一系列**预设特性组**，方便用户按需组合启用特性。
+
+## `mini`
+
+**启用特性：** `extras`、`picker`
+
+**定位：** 精简模式，适合小型 CLI 工具或需要快速起步的项目。仅包含最核心的便捷宏和参数解析能力。
+
+## `advanced`
+
+**启用特性：** `extras`、`picker`、`repl`、`comp`、`dispatch_tree`、`structural_renderer`
+
+**定位：** 进阶模式，在 `mini` 的基础上加入了交互式 REPL 环境、代码补全、调度树加速以及基础的结构化输出能力，适合功能较完整的中型命令行应用。
+
+## `full`
+
+**启用特性：** `extras`、`picker`、`repl`、`clap`、`comp`、`dispatch_tree`、`structural_renderer_full`、`pathf`
+
+**定位：** 完整模式，启用 Mingling 的全部核心功能。在 `advanced` 的基础上额外包含 clap 集成、完整的结构化渲染器（含所有序列化格式）以及实验性的路径分析器，适合大型、功能全面的命令行应用。
+
+## `build_advanced`
+
+**启用特性：** `build`、`comp`
+
+**定位：** 构建期增强配置，用于在项目构建时生成补全脚本等构建辅助材料（`comp` 特性提供补全脚本生成能力）。
+
+> [!NOTE]
+>
+> 此特性组为**构建依赖**专用，需配合 `advanced` 特性使用。请在 `Cargo.toml` 的 `[build-dependencies]` 中启用：
+
+```toml
+[dependencies.mingling]
+features = ["advanced"]
+ 
+[build-dependencies.mingling]
+features = ["build_advanced"]
+```
+ 
+## `build_full`
+
+**启用特性：** `build`、`comp`、`pathf`、`dispatch_tree`
+
+**定位：** 完整的构建期配置，在 `build_advanced` 的基础上额外包含路径分析器（`pathf`）以自动解析类型模块路径，适合结构复杂、需要自动化构建期分析的项目。
+
+> [!NOTE]
+>
+> 此特性组为**构建依赖**专用，需配合 `full` 特性使用。请在 `Cargo.toml` 的 `[build-dependencies]` 中启用：
+
+```toml
+[dependencies.mingling]
+features = ["full"]
+ 
+[build-dependencies.mingling]
+features = ["build_full"]
+```
+ 
+# 特性详解
+
 ## 特性 `all_serde_fmt`
 
 **介绍:**

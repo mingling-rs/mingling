@@ -3,6 +3,67 @@
     <b>Mingling</b>'s complete feature list
 </p>
 
+# Preset Feature Groups
+
+Mingling provides a set of **preset feature groups** that make it easy to enable features in whatever combination you need.
+
+## `mini`
+
+**Enables features:** `extras`, `picker`
+
+**Positioning:** Minimal mode, suitable for small CLI tools or projects that need to get started quickly. Includes only the most essential convenience macros and argument parsing capabilities.
+
+## `advanced`
+
+**Enables features:** `extras`, `picker`, `repl`, `comp`, `dispatch_tree`, `structural_renderer`
+
+**Positioning:** Advanced mode, builds on `mini` by adding an interactive REPL environment, code completion, dispatch tree acceleration, and basic structured output capabilities. Suitable for medium-sized command-line applications with a fuller feature set.
+
+## `full`
+
+**Enables features:** `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`, `pathf`
+
+**Positioning:** Full mode, enables all of Mingling's core functionality. In addition to `advanced`, it includes clap integration, the full structural renderer (with all serialization formats), and the experimental path analyzer. Suitable for large, feature-complete command-line applications.
+
+## `build_advanced`
+
+**Enables features:** `build`, `comp`
+
+**Positioning:** Build-time enhanced configuration, used to generate build helpers such as completion scripts at build time (the `comp` feature provides completion script generation).
+
+> [!NOTE]
+>
+> This feature group is intended for **build dependencies** only and must be used alongside the `advanced` feature. Enable it in the `[build-dependencies]` section of `Cargo.toml`:
+
+```toml
+[dependencies.mingling]
+features = ["advanced"]
+ 
+[build-dependencies.mingling]
+features = ["build_advanced"]
+```
+ 
+## `build_full`
+
+**Enables features:** `build`, `comp`, `pathf`, `dispatch_tree`
+
+**Positioning:** Full build-time configuration, extends `build_advanced` with the path analyzer (`pathf`) to automatically resolve type module paths, suitable for projects with complex structures that require automated build-time analysis.
+
+> [!NOTE]
+>
+> This feature group is intended for **build dependencies** only and must be used alongside the `full` feature. Enable it in the `[build-dependencies]` section of `Cargo.toml`:
+
+```toml
+[dependencies.mingling]
+features = ["full"]
+ 
+[build-dependencies.mingling]
+features = ["build_full"]
+```
+ 
+# Feature Details
+
+
 ## Feature `all_serde_fmt`
 
 **Description:**
