@@ -182,7 +182,11 @@ impl CompletionHelper {
                     trace!("using default completion");
                     let fallback = P::do_comp(&P::build_entry_fallback(vec![]), ctx);
                     let default = default_completion::<P>(ctx);
-                    fallback.combine(default)
+                    if fallback == Suggest::FileCompletion {
+                        default
+                    } else {
+                        fallback.combine(default)
+                    }
                 }
             }
         }
