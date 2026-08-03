@@ -1,4 +1,4 @@
-cargo install --path mling
+cargo install --path mingling_cli
 
 New-Item -ItemType Directory -Force -Path .temp/comp | Out-Null
 # Copy all files containing _comp from the debug directory
