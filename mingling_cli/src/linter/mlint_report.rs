@@ -10,7 +10,7 @@ use cargo_metadata::{Message, PackageId};
 use annotate_snippets::level::{ERROR, HELP, NOTE, WARNING};
 use annotate_snippets::{AnnotationKind, Group, Patch, Renderer, Snippet};
 use mingling::macros::{buffer, chain, pack, r_append, r_eprintln, renderer};
-use mingling::{AnyOutput, ProgramCollect, Routable};
+use mingling::{RendererInvoker, Routable};
 
 use crate::Next;
 use crate::metadata::setup::ResUsingJson;
@@ -437,9 +437,13 @@ pub fn render_lint_reports(reports: ResultLintReportsAnnotateSnippet) {
 }
 
 #[renderer(buffer)]
-pub fn render_lint_reports_json(reports: ResultLintReportsJson) {
+pub fn render_lint_reports_json(
+    reports: ResultLintReportsJson,
+    message_renderer: &RendererInvoker<Message>,
+) {
     for report in reports.inner {
-        // DIRTY: Dispatch to the Message renderer using AnyOutput to obtain the render result and append it to the Buffer
-        r_append!(|| { crate::ThisProgram::render(AnyOutput::new(report.to_compiler_message())) });
+        let message = report.to_compiler_message();
+        let result = message_renderer.invoke(message);
+        r_append!(result);
     }
 }
