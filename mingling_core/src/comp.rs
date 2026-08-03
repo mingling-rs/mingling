@@ -107,7 +107,17 @@ impl CompletionHelper {
             trace_ctx(ctx);
         };
 
-        let args = ctx.all_words.iter().skip(1).cloned().collect::<Vec<_>>();
+        // Everything before the first argument that matches a command node
+        // is treated as global parameters (flags and their values), which do
+        // not participate in command tree matching.  The dispatch path starts
+        // at that first match, enabling `prog [PARAM]... <subcommand>`
+        // style invocations.
+        let all_args = ctx.all_words.iter().skip(1).cloned().collect::<Vec<_>>();
+        let first_cmd_match = first_command_arg_index::<P>(&all_args);
+        let args = match first_cmd_match {
+            Some(start) => all_args[start..].to_vec(),
+            None => Vec::new(),
+        };
         trace!("arguments=\"{}\"", args.join(", "));
 
         #[cfg(not(feature = "dispatch_tree"))]
@@ -162,10 +172,18 @@ impl CompletionHelper {
                 suggest
             }
             None => {
-                trace!("using default completion");
-                let fallback = P::do_comp(&P::build_entry_fallback(vec![]), ctx);
-                let default = default_completion::<P>(ctx);
-                fallback.combine(default)
+                if first_cmd_match.is_some() {
+                    // A command node has been matched: the global
+                    // EntryFallback must not run afterwards, only the
+                    // command path is completed.
+                    trace!("command node matched, skipping EntryFallback");
+                    default_completion::<P>(ctx)
+                } else {
+                    trace!("using default completion");
+                    let fallback = P::do_comp(&P::build_entry_fallback(vec![]), ctx);
+                    let default = default_completion::<P>(ctx);
+                    fallback.combine(default)
+                }
             }
         }
     }
@@ -213,6 +231,30 @@ impl CompletionHelper {
     }
 }
 
+/// Finds the index of the first argument that matches the head of a
+/// registered command node.
+///
+/// Everything before this index is treated as global parameters (flags and
+/// their values), which do not participate in command tree matching.  This
+/// allows `prog [PARAM]... <subcommand>` style invocations to resolve the
+/// subcommand, while a "broken" path such as `prog -v hello -a someone`
+/// still fails to match the `hello someone` node.
+fn first_command_arg_index<P>(args: &[String]) -> Option<usize>
+where
+    P: ProgramCollect<Enum = P> + Display + 'static,
+{
+    let cmd_heads: Vec<String> = this::<P>()
+        .get_nodes()
+        .into_iter()
+        .filter(|(s, _)| !s.starts_with('_'))
+        .map(|(s, _)| s.split(' ').next().unwrap_or("").to_string())
+        .collect();
+
+    args.iter().position(|arg| {
+        !arg.is_empty() && cmd_heads.iter().any(|head| head.starts_with(arg.as_str()))
+    })
+}
+
 fn default_completion<P>(ctx: &ShellContext) -> Suggest
 where
     P: ProgramCollect<Enum = P> + Display + 'static,
@@ -239,14 +281,17 @@ where
         &ctx.all_words.get(1..input_end).unwrap_or(&[])
     );
 
-    let input_path: Vec<&str> = ctx
-        .all_words
-        .get(1..input_end)
-        .unwrap_or(&[])
-        .iter()
-        .filter(|s| !s.is_empty())
-        .map(std::string::String::as_str)
-        .collect();
+    // Skip global parameters (arguments before the first command node match)
+    // when resolving the command path, so `prog [PARAM]... <subcommand>`
+    // style invocations suggest the subcommand.
+    let input_slice = ctx.all_words.get(1..input_end).unwrap_or(&[]);
+    let input_path: Vec<&str> = match first_command_arg_index::<P>(input_slice) {
+        Some(start) => input_slice[start..]
+            .iter()
+            .map(std::string::String::as_str)
+            .collect(),
+        None => Vec::new(),
+    };
     debug!(
         "input_path={:?}, current_word='{}'",
         input_path, ctx.current_word
