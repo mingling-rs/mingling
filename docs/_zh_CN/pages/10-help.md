@@ -27,14 +27,14 @@ fn help_greet(_entry: EntryGreet) {
 
 ## 全局帮助
 
-你也可以为 `ErrorDispatcherNotFound` 写帮助，作为"根帮助"：
+你也可以为 `EntryFallback` 写帮助，作为"根帮助"：
 
 ```rust
 @@@use mingling::macros::help;
 @@@use mingling::macros::buffer;
 // 用户直接输入 --help 时触发
 #[help(buffer)]
-fn help_root(entry: ErrorDispatcherNotFound) {
+fn help_root(entry: EntryFallback) {
     r_println!("Usage: my-cli <command>");
     r_println!("Commands:");
     r_println!("  greet    Say hello");
@@ -42,7 +42,7 @@ fn help_root(entry: ErrorDispatcherNotFound) {
 ```
  
 > [!TIP]
-> `ErrorDispatcherNotFound` 是 `gen_program!()` 自动生成的类型，代表"没有匹配到任何命令"的情况。为它写 `#[help]` 就是给程序的根命令加帮助。
+> `EntryFallback` 是 `gen_program!()` 自动生成的类型，代表"没有匹配到任何命令"的情况。为它写 `#[help]` 就是给程序的根命令加帮助。
 
 ## 需要 Setup 配合
 

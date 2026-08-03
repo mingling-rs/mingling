@@ -116,13 +116,13 @@ cargo run -- great
  
 ## Adding a Fallback
 
-`gen_program!()` auto-generates an `ErrorDispatcherNotFound` type wrapping `Vec<String>`—it holds the user input that didn't match any command. You just need to write a Renderer for it:
+`gen_program!()` auto-generates an `EntryFallback` type wrapping `Vec<String>`—it holds the user input that didn't match any command. You just need to write a Renderer for it:
 
 ```rust
 use mingling::macros::buffer;
  
 #[renderer(buffer)]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
+fn render_entry_fallback(err: EntryFallback) {
     if err.inner.is_empty() {
         r_println!("Unknown command");
     } else {

@@ -21,7 +21,7 @@
 - **`render`** —— 根据 `member_id` 调用对应的 `#[renderer]` 函数，写入 `RenderResult`
 - **`render_help`** —— 根据 `member_id` 调用对应的 `#[help]` 函数
 - **`has_chain` / `has_renderer`** —— 判断某个变体有没有对应的处理函数
-- **`build_dispatcher_not_found` / `build_renderer_not_found` / `build_empty_result`** —— 三个内置降级类型，处理边界情况
+- **`build_entry_fallback` / `build_renderer_not_found` / `build_empty_result`** —— 三个内置降级类型，处理边界情况
 
 这套映射在运行时通过枚举匹配来完成——编译期只生成了枚举和匹配分支，实际的函数调用发生在运行时。
 

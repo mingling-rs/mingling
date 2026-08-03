@@ -42,12 +42,12 @@ graph TD
 graph LR
     Input["用户输入"] --> M{匹配 Dispatcher}
     M -->|"匹配到"| E["调用 dispatcher.begin(args)<br/>返回包装好的 Entry"]
-    M -->|"未匹配"| NF["build_dispatcher_not_found<br/>生成 ErrorDispatcherNotFound"]
+    M -->|"未匹配"| NF["build_entry_fallback<br/>生成 EntryFallback"]
 ```
  
 匹配成功后调用 `dispatcher.begin(args)`，返回 `ChainProcess::Ok((AnyOutput, _))`，即包装好用户输入参数的 Entry 类型。
 
-如果没有匹配到任何 Dispatcher，则生成 `ErrorDispatcherNotFound`（包裹完整的输入参数），后续可以被 Renderer 处理显示 "Command not found"。
+如果没有匹配到任何 Dispatcher，则生成 `EntryFallback`（包裹完整的输入参数），后续可以被 Renderer 处理显示 "Command not found"。
 
 ### 2. Help 短路
 

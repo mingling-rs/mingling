@@ -139,7 +139,7 @@ impl CompletionHelper {
             trace!("entry type: {}", any.member_id);
 
             let dispatcher_not_found =
-                <P::ErrorDispatcherNotFound as crate::Grouped<P>>::member_id();
+                <P::EntryFallback as crate::Grouped<P>>::member_id();
 
             if dispatcher_not_found == any.member_id {
                 debug!("dispatcher_not_found matched");

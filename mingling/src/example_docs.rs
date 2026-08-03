@@ -1500,7 +1500,7 @@ pub mod example_enum_tag {}
 ///
 /// /// Renders the error when the dispatcher (subcommand) is not found.
 /// #[renderer]
-/// fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+/// fn render_entry_fallback(err: EntryFallback) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
 ///     writeln!(
 ///         render_result,
@@ -2580,7 +2580,7 @@ pub mod example_pathfinder {}
 /// /// Handle dispatcher not found event
 /// /// Renders the error when a command is not found.
 /// #[renderer]
-/// fn dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
+/// fn dispatcher_not_found(prev: EntryFallback) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
 ///     writeln!(render_result, "Command not found: \"{}\"", prev.join(", ")).ok();
 ///     render_result
@@ -2970,7 +2970,7 @@ pub mod example_structural_renderer {}
 ///
 /// /// Renders the error when the dispatcher (subcommand) is not found.
 /// #[renderer]
-/// fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+/// fn render_entry_fallback(err: EntryFallback) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
 ///     writeln!(
 ///         render_result,

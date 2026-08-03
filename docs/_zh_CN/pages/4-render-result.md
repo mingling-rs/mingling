@@ -116,13 +116,13 @@ cargo run -- great
  
 ## 补上 Fallback
 
-`gen_program!()` 自动生成了一个 `ErrorDispatcherNotFound` 类型，包裹 `Vec<String>`——它存的是用户输入的那些没匹配到的命令。你只需要给它写一个 Renderer：
+`gen_program!()` 自动生成了一个 `EntryFallback` 类型，包裹 `Vec<String>`——它存的是用户输入的那些没匹配到的命令。你只需要给它写一个 Renderer：
 
 ```rust
 use mingling::macros::buffer;
  
 #[renderer(buffer)]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) {
+fn render_entry_fallback(err: EntryFallback) {
     if err.inner.is_empty() {
         r_println!("Unknown command");
     } else {

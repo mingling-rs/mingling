@@ -36,7 +36,7 @@
 //! │  V                                                               │
 //! │  Reads all registries → generates ThisProgram with:              │
 //! │    • ProgramCollect impl (dispatch/render/chain dispatch tree)   │
-//! │    • Fallback types (ErrorDispatcherNotFound, etc.)              │
+//! │    • Fallback types (EntryFallback, etc.)              │
 //! │    • Completion logic (if `comp` feature enabled)                │
 //! └──────────────────────────────────────────────────────────────────┘
 //! ```
@@ -120,8 +120,8 @@
 //! ```rust,ignore
 //! // Example of what gen_program! generates (simplified):
 //! impl ProgramCollect for ThisProgram {
-//!     fn build_dispatcher_not_found(args: Vec<String>) -> AnyOutput {
-//!         AnyOutput::new(ErrorDispatcherNotFound::new(args))
+//!     fn build_entry_fallback(args: Vec<String>) -> AnyOutput {
+//!         AnyOutput::new(EntryFallback::new(args))
 //!     }
 //!     fn has_chain(any: &AnyOutput) -> bool {
 //!         match any.member_id() {
@@ -978,11 +978,11 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// The macros `gen_program!` automatically generates two fallback types that
 /// you can provide renderers for:
 /// - `ErrorRendererNotFound` — triggered when no matching renderer is found
-/// - `ErrorDispatcherNotFound` — triggered when no matching dispatcher is found
+/// - `EntryFallback` — triggered when no matching dispatcher is found
 ///
 /// ```rust,ignore
 /// #[renderer]
-/// fn fallback_dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
+/// fn fallback_dispatcher_not_found(prev: EntryFallback) -> RenderResult {
 ///     let mut result = RenderResult::new();
 ///     writeln!(result, "Unknown command: {}", prev.join(", "));
 ///     result
@@ -1819,7 +1819,7 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
 /// 1. **`pub type Next = ChainProcess<ProgramName>`** — A convenience type alias
 ///    for use in chain function return types.
 /// 2. **`program_comp_gen!(...)`** (with `comp` feature) — Generates completion infrastructure.
-/// 3. **`program_fallback_gen!(...)`** — Generates `ErrorRendererNotFound` and `ErrorDispatcherNotFound` types.
+/// 3. **`program_fallback_gen!(...)`** — Generates `ErrorRendererNotFound` and `EntryFallback` types.
 /// 4. **`program_final_gen!(...)`** — Generates the program enum with:
 ///    - An enum with all packed types as variants
 ///    - `Display` implementation for the enum

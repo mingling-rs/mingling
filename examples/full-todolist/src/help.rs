@@ -1,12 +1,12 @@
 //! This module provides help information for the `todolist` command line program
 
-use crate::{EntryAdd, EntryClean, EntryComplete, EntryList, ErrorDispatcherNotFound};
+use crate::{EntryAdd, EntryClean, EntryComplete, EntryList, EntryFallback};
 use mingling::{RenderResult, macros::help};
 use std::io::Write;
 
 /// Shows the global help message.
 #[help]
-pub fn help_global(_p: ErrorDispatcherNotFound) -> RenderResult {
+pub fn help_global(_p: EntryFallback) -> RenderResult {
     let mut render_result = RenderResult::new();
     writeln!(
         render_result,

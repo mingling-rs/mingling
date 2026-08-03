@@ -298,15 +298,15 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
 
         impl ::mingling::ProgramCollect for #name {
             type Enum = #name;
-            type ErrorDispatcherNotFound = ErrorDispatcherNotFound;
+            type EntryFallback = EntryFallback;
             type ErrorRendererNotFound = ErrorRendererNotFound;
             type ResultEmpty = ResultEmpty;
 
             fn build_renderer_not_found(member_id: Self::Enum) -> ::mingling::AnyOutput<Self::Enum> {
                 ::mingling::AnyOutput::new(ErrorRendererNotFound::new(member_id.to_string()))
             }
-            fn build_dispatcher_not_found(args: Vec<String>) -> ::mingling::AnyOutput<Self::Enum> {
-                ::mingling::AnyOutput::new(ErrorDispatcherNotFound::new(args))
+            fn build_entry_fallback(args: Vec<String>) -> ::mingling::AnyOutput<Self::Enum> {
+                ::mingling::AnyOutput::new(EntryFallback::new(args))
             }
             fn build_empty_result() -> ::mingling::AnyOutput<Self::Enum> {
                 ::mingling::AnyOutput::new(ResultEmpty)

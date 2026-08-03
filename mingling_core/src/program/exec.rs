@@ -45,7 +45,7 @@ where
     }
 
     // Current
-    let mut current = C::build_dispatcher_not_found(vec![]);
+    let mut current = C::build_entry_fallback(vec![]);
 
     // Run hooks
     control!(
@@ -193,7 +193,7 @@ where
         }
         Err(ProgramInternalExecuteError::DispatcherNotFound) => {
             // No matching Dispatcher is found
-            C::build_dispatcher_not_found(args.to_vec())
+            C::build_entry_fallback(args.to_vec())
         }
         Err(e) => return Err(e),
     };

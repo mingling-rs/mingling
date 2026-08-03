@@ -713,7 +713,7 @@ mod tests {
 
     impl ProgramCollect for MockHookEnum {
         type Enum = MockHookEnum;
-        type ErrorDispatcherNotFound = MockHookEnum;
+        type EntryFallback = MockHookEnum;
         type ErrorRendererNotFound = MockHookEnum;
         type ResultEmpty = MockHookEnum;
 
@@ -721,7 +721,7 @@ mod tests {
             unreachable!()
         }
 
-        fn build_dispatcher_not_found(_args: Vec<String>) -> crate::AnyOutput<MockHookEnum> {
+        fn build_entry_fallback(_args: Vec<String>) -> crate::AnyOutput<MockHookEnum> {
             unreachable!()
         }
 

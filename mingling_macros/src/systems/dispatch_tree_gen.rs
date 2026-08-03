@@ -61,7 +61,7 @@ pub(crate) fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> To
 fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream {
     if nodes.is_empty() {
         return quote! {
-            return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
+            return Ok(Self::build_entry_fallback(raw.to_vec()));
         };
     }
 
@@ -113,7 +113,7 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
             arms.push(quote! {
                 Some(#ch_char) => {
                     #arm
-                    return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
+                    return Ok(Self::build_entry_fallback(raw.to_vec()));
                 }
             });
         } else {
@@ -135,7 +135,7 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
         let match_body = quote! {
             match raw_chars.nth(0) {
                 #(#arms)*
-                _ => return Ok(Self::build_dispatcher_not_found(raw.to_vec())),
+                _ => return Ok(Self::build_entry_fallback(raw.to_vec())),
             }
         };
         quote! {
@@ -145,17 +145,17 @@ fn build_dispatch_body(nodes: &[(String, String)], depth: usize) -> TokenStream 
     } else if !exact_checks.is_empty() {
         quote! {
             #(#exact_checks)*
-            return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
+            return Ok(Self::build_entry_fallback(raw.to_vec()));
         }
     } else if arms.is_empty() {
         quote! {
-            return Ok(Self::build_dispatcher_not_found(raw.to_vec()));
+            return Ok(Self::build_entry_fallback(raw.to_vec()));
         }
     } else {
         quote! {
             match raw_chars.nth(0) {
                 #(#arms)*
-                _ => return Ok(Self::build_dispatcher_not_found(raw.to_vec())),
+                _ => return Ok(Self::build_entry_fallback(raw.to_vec())),
             }
         }
     }

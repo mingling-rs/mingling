@@ -178,7 +178,7 @@ fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) -> RenderResult
 /// Handle dispatcher not found event
 /// Renders the error when a command is not found.
 #[renderer]
-fn dispatcher_not_found(prev: ErrorDispatcherNotFound) -> RenderResult {
+fn dispatcher_not_found(prev: EntryFallback) -> RenderResult {
     let mut render_result = RenderResult::new();
     writeln!(render_result, "Command not found: \"{}\"", prev.join(", ")).ok();
     render_result

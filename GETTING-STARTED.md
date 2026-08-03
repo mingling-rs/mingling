@@ -117,7 +117,7 @@ use mingling::prelude::*;
 use std::io::Write;
 
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+fn render_entry_fallback(err: EntryFallback) -> RenderResult {
     let mut result = RenderResult::new();
     writeln!(result, "Command not found: [{}]", err.join(" ")).ok();
     result
@@ -313,7 +313,7 @@ fn render_too_long(len: ErrorNameTooLong) -> RenderResult {
 
 Two built-in fallback types are always available:
 
-- `ErrorDispatcherNotFound` — rendered when no dispatcher matches the input
+- `EntryFallback` — rendered when no dispatcher matches the input
 - `ErrorRendererNotFound` — rendered when no renderer is found for a result type
 
 ---

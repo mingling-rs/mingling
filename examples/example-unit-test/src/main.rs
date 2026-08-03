@@ -126,7 +126,7 @@ fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
 
 /// Renders the error when the dispatcher (subcommand) is not found.
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+fn render_entry_fallback(err: EntryFallback) -> RenderResult {
     let mut render_result = RenderResult::new();
     writeln!(
         render_result,

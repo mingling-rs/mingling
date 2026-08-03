@@ -34,7 +34,7 @@ unsafe impl Grouped<MockProgramCollect> for MockProgramCollect {
 
 impl ProgramCollect for MockProgramCollect {
     type Enum = MockProgramCollect;
-    type ErrorDispatcherNotFound = MockProgramCollect;
+    type EntryFallback = MockProgramCollect;
     type ErrorRendererNotFound = MockProgramCollect;
     type ResultEmpty = MockProgramCollect;
 
@@ -54,7 +54,7 @@ impl ProgramCollect for MockProgramCollect {
         unreachable!()
     }
 
-    fn build_dispatcher_not_found(_args: Vec<String>) -> AnyOutput<Self::Enum> {
+    fn build_entry_fallback(_args: Vec<String>) -> AnyOutput<Self::Enum> {
         unreachable!()
     }
 

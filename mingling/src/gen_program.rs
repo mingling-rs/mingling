@@ -28,7 +28,7 @@ pub enum ThisProgram {
     /// Indicates that no matching renderer was found for the given output.
     ErrorRendererNotFound,
     /// Indicates that no matching dispatcher was found for the given arguments.
-    ErrorDispatcherNotFound,
+    EntryFallback,
     /// Indicates that the result is empty.
     ResultEmpty,
     /// Indicates the completion suggestions computed by the program for rendering.
@@ -52,7 +52,7 @@ pub struct ErrorRendererNotFound {
 ///
 /// This type is created by the `pack!` macro as a variant of the
 /// program's output type set (`ThisProgram`).
-pub struct ErrorDispatcherNotFound {
+pub struct EntryFallback {
     /// The arguments provided by the user
     pub(crate) inner: Vec<String>,
 }
@@ -139,9 +139,9 @@ unsafe impl Grouped<ThisProgram> for ErrorRendererNotFound {
 // However, these are marked `unsafe` because the `Grouped` trait requires the
 // implementor to guarantee that the type is the only one associated with the
 // given enum variant — a guarantee that should be carefully verified in production code.
-unsafe impl Grouped<ThisProgram> for ErrorDispatcherNotFound {
+unsafe impl Grouped<ThisProgram> for EntryFallback {
     fn member_id() -> ThisProgram {
-        ThisProgram::ErrorDispatcherNotFound
+        ThisProgram::EntryFallback
     }
 }
 
@@ -186,7 +186,7 @@ unsafe impl Grouped<ThisProgram> for CompletionSuggest {
 impl ProgramCollect for ThisProgram {
     type Enum = ThisProgram;
 
-    type ErrorDispatcherNotFound = ErrorDispatcherNotFound;
+    type EntryFallback = EntryFallback;
 
     type ErrorRendererNotFound = ErrorRendererNotFound;
 
@@ -196,7 +196,7 @@ impl ProgramCollect for ThisProgram {
         todo!()
     }
 
-    fn build_dispatcher_not_found(_args: Vec<String>) -> mingling_core::AnyOutput<Self::Enum> {
+    fn build_entry_fallback(_args: Vec<String>) -> mingling_core::AnyOutput<Self::Enum> {
         todo!()
     }
 

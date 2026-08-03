@@ -51,7 +51,7 @@ fn render_name(name: ResultName) -> RenderResult {
 }
 
 #[renderer]
-fn render_dispatcher_not_found(err: ErrorDispatcherNotFound) -> RenderResult {
+fn render_entry_fallback(err: EntryFallback) -> RenderResult {
     let mut result = RenderResult::default();
     if err.len() > 0 {
         result.println(&format!("Command not found: [{}]", err.join(" ")));

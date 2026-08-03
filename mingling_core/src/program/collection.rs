@@ -22,7 +22,7 @@ pub trait ProgramCollect {
     /// Enum type representing internal IDs for the program
     type Enum;
     /// Error type when a dispatcher is not found for the given member
-    type ErrorDispatcherNotFound: Grouped<Self::Enum>;
+    type EntryFallback: Grouped<Self::Enum>;
 
     /// Error type when a renderer is not found for the given member
     type ErrorRendererNotFound: Grouped<Self::Enum>;
@@ -55,7 +55,7 @@ pub trait ProgramCollect {
     fn build_renderer_not_found(member_id: Self::Enum) -> AnyOutput<Self::Enum>;
 
     /// Build an [`AnyOutput`](./struct.AnyOutput.html) to indicate that a dispatcher was not found
-    fn build_dispatcher_not_found(args: Vec<String>) -> AnyOutput<Self::Enum>;
+    fn build_entry_fallback(args: Vec<String>) -> AnyOutput<Self::Enum>;
 
     /// Build an [`AnyOutput`](./struct.AnyOutput.html) to indicate that the chain returned an empty result
     fn build_empty_result() -> AnyOutput<Self::Enum>;

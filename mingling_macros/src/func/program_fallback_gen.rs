@@ -16,7 +16,7 @@ pub(crate) fn program_fallback_gen_impl(_input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         ::mingling::macros::pack!(ErrorRendererNotFound = String);
-        ::mingling::macros::pack!(ErrorDispatcherNotFound = Vec<String>);
+        ::mingling::macros::pack!(EntryFallback = Vec<String>);
         #pack_empty
     };
     TokenStream::from(expanded)

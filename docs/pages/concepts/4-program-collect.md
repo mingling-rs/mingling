@@ -21,7 +21,7 @@ This enum is the type of `G` in `AnyOutput<G>` — the scheduler uses enum varia
 - **`render`** — calls the corresponding `#[renderer]` function by `member_id`, writes to `RenderResult`
 - **`render_help`** — calls the corresponding `#[help]` function by `member_id`
 - **`has_chain` / `has_renderer`** — checks whether a variant has a corresponding handler
-- **`build_dispatcher_not_found` / `build_renderer_not_found` / `build_empty_result`** — three built-in fallback types for edge cases
+- **`build_entry_fallback` / `build_renderer_not_found` / `build_empty_result`** — three built-in fallback types for edge cases
 
 This mapping is resolved at runtime via enum matching — only the enum and match branches are generated at compile time; actual function calls happen at runtime.
 

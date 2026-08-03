@@ -42,12 +42,12 @@ The matching rule is **prefix matching** on space-separated tokens — the longe
 graph LR
     Input["user input"] --> M{"match Dispatcher"}
     M -->|"matched"| E["call dispatcher.begin(args)<br/>return wrapped Entry"]
-    M -->|"no match"| NF["build_dispatcher_not_found<br/>generate ErrorDispatcherNotFound"]
+    M -->|"no match"| NF["build_entry_fallback<br/>generate EntryFallback"]
 ```
  
 On a match, `dispatcher.begin(args)` is called, returning `ChainProcess::Ok((AnyOutput, _))` — the Entry type wrapping the user's input params.
 
-If no Dispatcher matches, `ErrorDispatcherNotFound` is generated (wrapping the full input), which a Renderer can later handle to display "Command not found".
+If no Dispatcher matches, `EntryFallback` is generated (wrapping the full input), which a Renderer can later handle to display "Command not found".
 
 ### 2. Help Shortcut
 
