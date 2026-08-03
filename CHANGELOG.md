@@ -70,6 +70,13 @@ None
 
     This enables `prog [PARAM]... <subcommand>` style invocations to resolve the subcommand correctly, while a "broken" path such as `prog -v hello -a someone` still fails to match a `hello someone` node (since `-a someone` lies _after_ the first matched node and participates normally).
 
+4. **[`core:comp`]** Added `add_prefix()` and `add_suffix()` methods to `Suggest` for batch-transforming suggestion text:
+
+    - **`add_prefix(self, prefix: impl Into<String>) -> Suggest`** — Takes the current `Suggest` value and prepends the given prefix to the suggestion text of every item. If the `Suggest` value is `Suggest::FileCompletion`, it is returned unchanged. For example, `["foo", "bar"]` with prefix `"--"` becomes `["--foo", "--bar"]`.
+    - **`add_suffix(self, suffix: impl Into<String>) -> Suggest`** — Takes the current `Suggest` value and appends the given suffix to the suggestion text of every item. If the `Suggest` value is `Suggest::FileCompletion`, it is returned unchanged. For example, `["foo", "bar"]` with suffix `"="` becomes `["foo=", "bar="]`.
+
+    Both methods consume the original `Suggest` value and return a new one, enabling ergonomic chaining with the existing `combine()` method for transforming completion suggestion sets.
+
 #### Optimizations:
 
 1. **[`pathf`]** Added `is_module` field to `AnalyzeItem` and a new constructor `AnalyzeItem::local_module(module, item_name)` which sets `is_module: true`. The `type_mapping_builder` now tracks whether an item is a module: when generating `type_using.rs`, module items produce `use path::to::module::*;` (glob import) instead of the standard `use path::to::TypeName;` direct import. Non-module items continue to use direct imports as before. The internal data structure changed from `Vec<(String, String)>` to `Vec<(String, String, bool)>` to carry the `is_module` flag through the pipeline.

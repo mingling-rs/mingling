@@ -92,6 +92,72 @@ impl Suggest {
             self.insert(SuggestItem::WithDescription(item, desc_str.clone()));
         }
     }
+
+    /// Adds a prefix to every suggestion in the `Suggest` set.
+    ///
+    /// This method takes the current `Suggest` value and prepends the given
+    /// prefix to the suggestion text of each item. If the `Suggest` value is
+    /// [`Suggest::FileCompletion`], it is returned unchanged.
+    ///
+    /// # Arguments
+    ///
+    /// * `prefix` — The string to prepend to each suggestion. Must implement
+    ///   `Into<String>`.
+    ///
+    /// # Returns
+    ///
+    /// A new `Suggest` value where each item's suggestion text is prefixed
+    /// with the given string. For example, `["foo", "bar"]` with prefix `"--"`
+    /// becomes `["--foo", "--bar"]`.
+    pub fn add_prefix(self, prefix: impl Into<String>) -> Suggest {
+        let suggest = match self {
+            Suggest::Suggest(s) => s,
+            Suggest::FileCompletion => return Suggest::FileCompletion,
+        };
+        let prefix = prefix.into();
+        let prefixed = suggest
+            .into_iter()
+            .map(|item| {
+                let mut new_item = item;
+                new_item.set_suggest(format!("{}{}", prefix, new_item.suggest()));
+                new_item
+            })
+            .collect();
+        Suggest::Suggest(prefixed)
+    }
+
+    /// Appends a suffix to every suggestion in the `Suggest` set.
+    ///
+    /// This method takes the current `Suggest` value and appends the given
+    /// suffix to the suggestion text of each item. If the `Suggest` value is
+    /// [`Suggest::FileCompletion`], it is returned unchanged.
+    ///
+    /// # Arguments
+    ///
+    /// * `suffix` — The string to append to each suggestion. Must implement
+    ///   `Into<String>`.
+    ///
+    /// # Returns
+    ///
+    /// A new `Suggest` value where each item's suggestion text is suffixed
+    /// with the given string. For example, `["foo", "bar"]` with suffix `"="`
+    /// becomes `["foo=", "bar="]`.
+    pub fn add_suffix(self, suffix: impl Into<String>) -> Suggest {
+        let suggest = match self {
+            Suggest::Suggest(s) => s,
+            Suggest::FileCompletion => return Suggest::FileCompletion,
+        };
+        let suffix = suffix.into();
+        let suffixed = suggest
+            .into_iter()
+            .map(|item| {
+                let mut new_item = item;
+                new_item.set_suggest(format!("{}{}", new_item.suggest(), suffix));
+                new_item
+            })
+            .collect();
+        Suggest::Suggest(suffixed)
+    }
 }
 
 impl<T> From<T> for Suggest
