@@ -12,6 +12,7 @@ docs/cov-test/
 # Drafts
 __*.md
 __*/
+__*.py
 
 # Fuck
 nul
