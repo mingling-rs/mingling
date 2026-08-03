@@ -1,6 +1,8 @@
-use crate::{linter::MinglingLinterSetup, metadata::MinglingMetadataSetup};
+use crate::metadata::MinglingMetadataSetup;
 use mingling::{
-    macros::gen_program,
+    ShellContext, Suggest,
+    consts::HELP_FLAG,
+    macros::{completion, gen_program, help, suggest},
     setup::{ExitCodeSetup, picker::HelpFlagSetup},
 };
 
@@ -20,10 +22,21 @@ async fn main() {
     program.with_setup(ExitCodeSetup::default());
 
     program.with_setup(MinglingMetadataSetup);
-    program.with_setup(MinglingLinterSetup);
 
     // Exec
     program.exec_and_exit().await;
+}
+
+#[help]
+pub fn help_global(_: EntryFallback) -> String {
+    include_str!("../help/help.txt").to_string()
+}
+
+#[completion(EntryFallback)]
+pub fn complete_global(_ctx: &ShellContext) -> Suggest {
+    suggest! {
+        HELP_FLAG: "Show help messages"
+    }
 }
 
 gen_program!();

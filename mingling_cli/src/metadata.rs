@@ -4,7 +4,7 @@ use mingling::{
     macros::{buffer, group, program_setup, r_println, renderer, renderify},
 };
 
-use crate::metadata::{cmd_metadata::CMDMetadata, setup::CargoMetadataSetup};
+use crate::metadata::setup::CargoMetadataSetup;
 
 pub mod cmd_metadata;
 pub mod setup;
@@ -12,7 +12,6 @@ pub mod setup;
 #[program_setup]
 pub fn mingling_metadata_setup(program: &mut Program<crate::ThisProgram>) {
     program.with_setup(CargoMetadataSetup);
-    program.with_dispatcher(CMDMetadata);
 }
 
 group!(Metadata);

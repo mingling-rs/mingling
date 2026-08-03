@@ -25,7 +25,9 @@ features = [
     "extras",
     "picker",
     "pathf",
+    "dispatch_tree",
     "async",
+    "comp"
 ]
 
 [build-dependencies.mingling]
@@ -33,6 +35,8 @@ path = "../mingling"
 features = [
     "build",
     "pathf",
+    "dispatch_tree",
+    "comp"
 ]
 
 [dependencies]

@@ -301,6 +301,7 @@ name = "mingling_core"
 version = "0.4.0"
 dependencies = [
  "just_fmt 0.2.0",
+ "just_template",
  "might_be_async",
  "mingling_pathf",
 ]

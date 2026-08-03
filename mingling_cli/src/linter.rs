@@ -1,29 +1,10 @@
-use mingling::{
-    Program,
-    macros::{chain, dispatcher, entry, program_setup},
-};
+use mingling::macros::{chain, dispatcher, entry};
 
-use crate::{
-    linter::cmd_mlint::{CMDLint, EntryLint},
-    metadata::setup::ResUsingJson,
-};
+use crate::{linter::cmd_mlint::EntryLint, metadata::setup::ResUsingJson};
 
 pub mod cmd_mlint;
 pub mod mlint_attr;
 pub mod mlint_report;
-
-#[program_setup]
-pub fn mingling_linter_setup(program: &mut Program<crate::ThisProgram>) {
-    program.with_setup(MinglingLinterCommandSetup);
-}
-
-#[program_setup]
-pub fn mingling_linter_command_setup(program: &mut Program<crate::ThisProgram>) {
-    program.with_dispatcher(CMDLint);
-    program.with_dispatcher(CMDLinterSupportRustAnalyzer);
-    program.with_dispatcher(CMDLinterSupportRustAnalyzerWithClippy);
-    program.with_dispatcher(CMDLinterSupportRustAnalyzerWithCheck);
-}
 
 // Aliases
 
