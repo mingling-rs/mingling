@@ -34,7 +34,7 @@ fn complete(ctx: &ShellContext) -> Suggest {
     // ...
 }
 ```
-
+ 
 Final implementation:
 
 By adding support for `EntryFallback` (formerly `ErrorDispatcherNotFound`) to the Completion system, `EntryFallback` can now be used as a completion entry point when no subcommand is matched:
