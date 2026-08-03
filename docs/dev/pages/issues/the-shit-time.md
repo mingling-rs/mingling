@@ -9,7 +9,7 @@ Of course, you can also contribute to this document.
 
 ---
 
-## Why is there no fallback completion logic?
+## Why is there no fallback completion logic? (Solved)
 
 (completion) (fallback)
 
@@ -32,6 +32,17 @@ Ideal solution:
 #[completion(EntryGlobal)]
 fn complete(ctx: &ShellContext) -> Suggest {
     // ...
+}
+```
+
+Final implementation:
+
+By adding support for `EntryFallback` (formerly `ErrorDispatcherNotFound`) to the Completion system, `EntryFallback` can now be used as a completion entry point when no subcommand is matched:
+
+```rust
+#[completion(EntryFallback)]
+fn complete_fallback(_ctx: &ShellContext) -> Suggest {
+    suggest! { "fallback" }
 }
 ```
  

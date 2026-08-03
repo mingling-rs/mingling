@@ -163,7 +163,9 @@ impl CompletionHelper {
             }
             None => {
                 trace!("using default completion");
-                default_completion::<P>(ctx)
+                let fallback = P::do_comp(&P::build_entry_fallback(vec![]), ctx);
+                let default = default_completion::<P>(ctx);
+                fallback.combine(default)
             }
         }
     }
