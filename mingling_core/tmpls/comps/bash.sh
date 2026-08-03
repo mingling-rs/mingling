@@ -1,22 +1,31 @@
 #!/usr/bin/env bash
 _<<<bin_name>>>_bash_completion() {
-    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local line="${COMP_LINE:0:COMP_POINT}"
+    local cur="${line##* }"
     local prev=""
-    [ $COMP_CWORD -gt 0 ] && prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local word_index=1
 
-    local word_index=$((COMP_CWORD + 1))
+    local before="${line:0:$(( ${#line} - ${#cur} ))}"
+    local -a before_words
+    if [[ -n "$before" ]]; then
+        read -ra before_words <<< "$before"
+        word_index=$(( ${#before_words[@]} + 1 ))
+        if [[ $word_index -gt 1 ]]; then
+            prev="${before_words[${#before_words[@]}-1]}"
+        fi
+    fi
 
     local args=()
-    args+=(-f="${COMP_LINE//-/^}")
-    args+=(-C="$COMP_POINT")
-    args+=(-w="${cur//-/^}")
-    args+=(-p="${prev//-/^}")
-    args+=(-c="${COMP_WORDS[0]//-/^}")
-    args+=(-i="$word_index")
-    args+=(-F="bash")
+    args+=(-f "${COMP_LINE//-/^}")
+    args+=(-C "$COMP_POINT")
+    args+=(-w "${cur//-/^}")
+    args+=(-p "${prev//-/^}")
+    args+=(-c "${COMP_WORDS[0]//-/^}")
+    args+=(-i "$word_index")
+    args+=(-F "bash")
 
     for word in "${COMP_WORDS[@]}"; do
-        args+=(-a="${word//-/^}")
+        args+=(-a "${word//-/^}")
     done
 
     local suggestions
@@ -36,7 +45,17 @@ _<<<bin_name>>>_bash_completion() {
                     [ -z "$cur" ] || [[ "$suggestion" == "$cur"* ]] && filtered+=("$suggestion")
                 done
 
-                [ ${#filtered[@]} -gt 0 ] && COMPREPLY=("${filtered[@]}")
+                if [ ${#filtered[@]} -gt 0 ]; then
+                    COMPREPLY=("${filtered[@]}")
+                    if [[ "$cur" == *:* && "$COMP_WORDBREAKS" == *:* ]]; then
+                        local colon_prefix="${cur%"${cur##*:}"}"
+                        local -a ltrimmed=()
+                        for suggestion in "${COMPREPLY[@]}"; do
+                            ltrimmed+=("${suggestion#"$colon_prefix"}")
+                        done
+                        COMPREPLY=("${ltrimmed[@]}")
+                    fi
+                fi
                 return
             fi
         fi
