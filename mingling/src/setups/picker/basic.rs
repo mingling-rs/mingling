@@ -3,7 +3,7 @@ use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
 use crate::{
     consts::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG},
-    picker::pick_global_flag,
+    picker::PickerHelper,
 };
 
 /// Performs basic program initialization:
@@ -43,7 +43,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let help = pick_global_flag(program, self.flag);
+        let help = program.pick_flag(self.flag);
         if help {
             program.user_context.help = true;
         }
@@ -75,7 +75,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let help = pick_global_flag(program, self.flag);
+        let help = program.pick_flag(self.flag);
         if help {
             program.stdout_setting.quiet = true;
         }
@@ -107,7 +107,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let help = pick_global_flag(program, self.flag);
+        let help = program.pick_flag(self.flag);
         if help {
             program.user_context.confirm = true;
         }

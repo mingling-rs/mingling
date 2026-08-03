@@ -235,6 +235,14 @@ None
 
     _No behavioral changes — this is a pure rename of the internal fallback type and its associated `ProgramCollect` methods. The type's semantics, shape (wrapping `Vec<String>`), and rendering behavior are unchanged.
 
+3. **[`picker:global`]** **[`setups:picker`]** Refactored the global picker utility functions into a trait-based API. The standalone functions `pick_global_flag(program, flag)` and `pick_global_argument(program, arg)` in `mingling::picker` have been replaced by the `PickerHelper<C>` trait, implemented for `Program<C>`. This trait provides `pick_flag(&mut self, flag: &PickerArg<Flag>) -> bool` and `pick_argument<A>(&mut self, arg: &PickerArg<A>) -> Option<A>`, and is backed by the `take_args` / `replace_args` methods on `Program`.
+
+    **Migration guide:**
+
+    - `pick_global_flag(program, flag)` → `program.pick_flag(flag)`
+    - `pick_global_argument(program, arg)` → `program.pick_argument(arg)`
+    - Import `mingling::picker::PickerHelper` instead of `mingling::picker::{pick_global_flag, pick_global_argument}`
+
 ---
 
 ### Release 0.3.0 (2026-07-27)
