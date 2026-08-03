@@ -13,6 +13,7 @@ docs/cov-test/
 __*.md
 __*/
 __*.py
+__*.rs
 
 # Fuck
 nul
