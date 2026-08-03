@@ -38,9 +38,9 @@ _<<<bin_name>>>_completion() {
             local -a parsed_completions
             for item in "${completions[@]}"; do
                 if [[ "$item" =~ '^([^$]+)\$\((.+)\)$' ]]; then
-                    parsed_completions+=("${match[1]}:${match[2]}")
+                    parsed_completions+=("${match[1]//:/\\:}:${match[2]}")
                 else
-                    parsed_completions+=("$item")
+                    parsed_completions+=("${item//:/\\:}")
                 fi
             done
 
@@ -48,8 +48,8 @@ _<<<bin_name>>>_completion() {
                 _describe '<<<bin_name>>> commands' parsed_completions
             else
                 local -a simple_completions
-                for item in "${parsed_completions[@]}"; do
-                    if [[ "$item" =~ '^([^:]+):(.+)$' ]]; then
+                for item in "${completions[@]}"; do
+                    if [[ "$item" =~ '^([^$]+)\$\((.+)\)$' ]]; then
                         simple_completions+=("${match[1]}")
                     else
                         simple_completions+=("$item")

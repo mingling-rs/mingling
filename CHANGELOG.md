@@ -57,7 +57,7 @@ None
 
 #### Fixes:
 
-None
+1. **[`comps:zsh`]** Fixed zsh completion script to properly escape colons in completion descriptions. The zsh completion script generated for the `zsh` output format now escapes colon characters in completion items (`${item//:/\\:}`) and description parts (`${match[1]//:/\\:}`) so that descriptions containing colons don't break the `_describe` command's parsing. Additionally, fixed the simple-completions branch to iterate over the original `completions` array (with the colon-escaped format matching) rather than the already-parsed `parsed_completions` array, correctly extracting the completion item when no description is present.
 
 #### Optimizations:
 
