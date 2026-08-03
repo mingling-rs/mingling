@@ -1,4 +1,10 @@
-use crate::metadata::MinglingMetadataSetup;
+use crate::metadata::{
+    MinglingMetadataSetup,
+    setup::{
+        ARG_ALL_FEATURES, ARG_FEATURES, ARG_MANIFEST_PATH, ARG_MESSAGE_FORMAT,
+        ARG_NO_DEFAULT_FEATURES, ARG_NO_DEPS,
+    },
+};
 use mingling::{
     ShellContext, Suggest,
     consts::HELP_FLAG,
@@ -35,7 +41,13 @@ pub fn help_global(_: EntryFallback) -> String {
 #[completion(EntryFallback)]
 pub fn complete_global(_ctx: &ShellContext) -> Suggest {
     suggest! {
-        HELP_FLAG: "Show help messages"
+        HELP_FLAG: "Show help messages",
+        ARG_FEATURES.clone(): "List of features to enable",
+        ARG_MANIFEST_PATH.clone(): "Custom path to Cargo.toml",
+        ARG_MESSAGE_FORMAT.clone(): "Output message format",
+        ARG_ALL_FEATURES: "Enable all features",
+        ARG_NO_DEFAULT_FEATURES: "Disable default features",
+        ARG_NO_DEPS: "Do not include dependencies in metadata",
     }
 }
 

@@ -4,7 +4,7 @@ use cargo_metadata::{CargoOpt, MetadataCommand};
 use mingling::{
     LazyInit, Program,
     macros::program_setup,
-    picker::{IntoPicker, value::Flag},
+    picker::{IntoPicker, PickerArg, value::Flag},
     prelude::*,
     res::ResCurrentDir,
 };
@@ -37,6 +37,24 @@ pub struct ResUsingJson {
     pub using: bool,
 }
 
+/// Argument: list of features to enable
+pub static ARG_FEATURES: PickerArg<Vec<String>> = arg![features: Vec<String>];
+
+/// Argument: custom path to Cargo.toml
+pub static ARG_MANIFEST_PATH: PickerArg<Option<String>> = arg![manifest_path: Option<String>];
+
+/// Argument: output message format
+pub static ARG_MESSAGE_FORMAT: PickerArg<String> = arg![message_format: String];
+
+/// Argument: enable all features
+pub static ARG_ALL_FEATURES: PickerArg<Flag> = arg![all_features: Flag];
+
+/// Argument: disable default features
+pub static ARG_NO_DEFAULT_FEATURES: PickerArg<Flag> = arg![no_default_features: Flag];
+
+/// Argument: do not include dependencies in metadata
+pub static ARG_NO_DEPS: PickerArg<Flag> = arg![no_deps: Flag];
+
 impl ResMetadata {
     /// Returns a reference to the parsed `cargo metadata`.
     ///
@@ -64,12 +82,12 @@ pub fn cargo_metadata_setup(program: &mut Program<crate::ThisProgram>) {
         no_default_features,
         no_deps,
     ) = args
-        .pick(&arg![features: Vec<String>])
-        .pick(&arg![manifest_path: Option<String>])
-        .pick_or(&arg![message_format: String], || "disable".to_string())
-        .pick(&arg![all_features: Flag])
-        .pick(&arg![no_default_features: Flag])
-        .pick(&arg![no_deps: Flag])
+        .pick(&ARG_FEATURES)
+        .pick(&ARG_MANIFEST_PATH)
+        .pick_or(&ARG_MESSAGE_FORMAT, || "disable".to_string())
+        .pick(&ARG_ALL_FEATURES)
+        .pick(&ARG_NO_DEFAULT_FEATURES)
+        .pick(&ARG_NO_DEPS)
         .unwrap();
 
     // Is Using Json
