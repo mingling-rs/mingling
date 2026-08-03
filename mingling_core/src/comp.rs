@@ -138,11 +138,10 @@ impl CompletionHelper {
             debug!("dispatch_args_trie OK, member_id = {:?}", any.member_id);
             trace!("entry type: {}", any.member_id);
 
-            let dispatcher_not_found =
-                <P::EntryFallback as crate::Grouped<P>>::member_id();
+            let entry_fallback = <P::EntryFallback as crate::Grouped<P>>::member_id();
 
-            if dispatcher_not_found == any.member_id {
-                debug!("dispatcher_not_found matched");
+            if entry_fallback == any.member_id {
+                debug!("entry_fallback matched");
                 trace!("begin not Ok");
                 None
             } else {
