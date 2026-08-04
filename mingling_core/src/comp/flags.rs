@@ -4,7 +4,7 @@ use just_fmt::snake_case;
 ///
 /// This enum defines the supported shell types that can be used for
 /// generating shell-specific command syntax, scripts, or completions.
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
 pub enum ShellFlag {
     /// Represents the Bash shell.
