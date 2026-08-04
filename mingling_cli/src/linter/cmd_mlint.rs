@@ -2,11 +2,17 @@ use crate::linter::mlint_report::{MlintReport, StateLintReports};
 use cargo_metadata::Metadata;
 use mingling::LazyRes;
 use mingling::consts::REMAINS;
-use mingling::macros::{arg, chain, dispatcher, pack};
+use mingling::macros::{arg, chain, dispatcher, metadata, pack};
+use mingling::metadata::Description;
 use mingling::picker::EntryPicker;
 use tokio::task::JoinSet;
 
 dispatcher!("lint", CMDLint => EntryLint);
+
+#[metadata(EntryLint)]
+pub fn desc_lint() -> Description {
+    "Mingling Linter".to_string().into()
+}
 
 /// Main linting function that processes all packages in the metadata.
 ///
