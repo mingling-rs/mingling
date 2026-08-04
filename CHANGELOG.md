@@ -77,6 +77,16 @@ None
 
     Both methods consume the original `Suggest` value and return a new one, enabling ergonomic chaining with the existing `combine()` method for transforming completion suggestion sets.
 
+5. **[`core:dispatch_tree`]** Refactored `build_dispatch_body` in `mingling_macros/src/systems/dispatch_tree_gen.rs` to use a caller-provided `no_match` fallback token stream instead of hardcoding `return Ok(Self::build_entry_fallback(raw.to_vec()));` at every level of the generated trie.
+
+    - The root call from `gen_dispatch_args_trie` passes the current fallback token stream as `no_match`.
+    - The `no_match` parameter is threaded down through recursive calls; when a subtree has no nodes, it returns the caller's `no_match` code instead of unconditionally emitting the fallback.
+    - For each node, `level_no_match` is computed as the exact-endpoint checks for that node followed by the caller's `no_match` code. This ensures exact endpoints at the current level are tried before giving up and bubbling up to the parent.
+    - When a node has children, the arm for each child runs the child's body first; if the child subtree fails to match, control falls through to `level_no_match` (exact endpoints here, then the parent's fallback), so longer registered paths are preferred over the exact endpoint at the same depth.
+    - When a node has no children, the generated code runs the exact-endpoint checks followed by `no_match`.
+
+    Behavioral result: the static trie dispatcher now follows the same "longest registered prefix wins" rule as the dynamic dispatcher — a child (longer) path is preferred over an exact endpoint at the same depth, and only when every descendant fails to match is the exact endpoint at the current depth dispatched.
+
 #### Optimizations:
 
 1. **[`pathf`]** Added `is_module` field to `AnalyzeItem` and a new constructor `AnalyzeItem::local_module(module, item_name)` which sets `is_module: true`. The `type_mapping_builder` now tracks whether an item is a module: when generating `type_using.rs`, module items produce `use path::to::module::*;` (glob import) instead of the standard `use path::to::TypeName;` direct import. Non-module items continue to use direct imports as before. The internal data structure changed from `Vec<(String, String)>` to `Vec<(String, String, bool)>` to carry the `is_module` flag through the pipeline.
