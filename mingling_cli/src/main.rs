@@ -18,6 +18,8 @@ pub mod linter;
 pub mod lints;
 pub mod message;
 pub mod metadata;
+pub mod pkg_mgr;
+pub mod proj_mgr;
 
 #[tokio::main]
 async fn main() {
