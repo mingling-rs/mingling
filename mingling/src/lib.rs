@@ -16,6 +16,10 @@ pub mod CRATE_ROOT {
     pub use crate::gen_program::*;
 }
 
+/// Mingling's convention metadatas, which can be bound to types using `#[metadata]`, to provide identification for types
+#[cfg(feature = "core")]
+pub mod metadata;
+
 #[cfg(feature = "core")]
 mod example_docs;
 

@@ -240,6 +240,33 @@ None
 
     The `#[metadata]` attribute and `Metadata` trait are re-exported as `mingling::macros::metadata` and `mingling::Metadata` respectively.
 
+10. **[`metadata:description`]** Added the `mingling::metadata` module and the `Description` convention metadata type. The `Description` type provides a human-readable description for any `Grouped` type, designed to be attached via the `#[metadata]` attribute macro introduced in item 9 above.
+
+    The `Description` struct wraps a `String` and provides:
+
+    - **`Description::new<S: Into<String>>(desc: S) -> Description`** — Constructs a new `Description` from any value convertible to `String`.
+    - **`From<String>`** / **`From<&str>`** — Constructs a `Description` from an owned `String` or a string slice.
+    - **`From<Description> for String`** / **`From<&Description> for String`** — Extracts the inner `String` (or a clone) from a `Description` value.
+    - **`Deref<Target = str>`** / **`DerefMut`** — Allows `Description` to be used transparently as a `str`, so string methods (`len()`, `contains()`, etc.) work directly on it.
+    - **`Display`** — Formats the description as its inner string, so `Description` can be used directly with `format!`, `print!`, and `String::from`-style operations.
+
+    Usage:
+
+    ```rust,ignore
+    use mingling::metadata::Description;
+
+    #[metadata(EntryGreet)]
+    pub fn greet_desc() -> Description {
+        Description::new("Greets the user by name.")
+    }
+
+    // Later, at runtime:
+    let desc = ThisProgram::get_metadata::<Description>(ThisProgram::EntryGreet);
+    println!("{desc}");  // "Greets the user by name."
+    ```
+
+    The module is gated behind the `core` feature and re-exported as `mingling::metadata`. This type is designed to work hand-in-hand with the compile-time entry metadata system from item 9, providing a first-party convention metadata for describing entries in generated documentation and help output.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.
