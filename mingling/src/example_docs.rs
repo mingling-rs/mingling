@@ -2064,6 +2064,7 @@ pub mod example_lazy_resources {}
 ///     pub desc: String,
 /// }
 ///
+/// // --------- IMPORTANT ---------
 /// /// Attach a `Description` to `EntryGreet`.
 /// ///
 /// /// - `BindType` = `EntryGreet` (the enum variant / entry type)
@@ -2074,6 +2075,7 @@ pub mod example_lazy_resources {}
 ///         desc: "ok".to_string(),
 ///     }
 /// }
+/// // --------- IMPORTANT ---------
 ///
 /// pack!(ResultName = String);
 /// pack!(DescResult = String);
@@ -2094,10 +2096,12 @@ pub mod example_lazy_resources {}
 /// #[chain]
 /// fn handle_desc(_args: EntryDescription) -> Next {
 ///     use mingling::ProgramCollect;
+///     // --------- IMPORTANT ---------
 ///     let msg = match ThisProgram::get_metadata::<Description>(ThisProgram::EntryGreet) {
 ///         Some(d) => format!("EntryGreet desc = {}", d.desc),
 ///         None => "EntryGreet has no description".to_string(),
 ///     };
+///     // --------- IMPORTANT ---------
 ///     DescResult::new(msg).to_render()
 /// }
 ///
@@ -2105,10 +2109,12 @@ pub mod example_lazy_resources {}
 /// #[chain]
 /// fn handle_nodoc(_args: EntryNoDescription) -> Next {
 ///     use mingling::ProgramCollect;
+///     // --------- IMPORTANT ---------
 ///     let msg = match ThisProgram::get_metadata::<Description>(ThisProgram::EntryDescription) {
 ///         Some(d) => format!("EntryDescription desc = {}", d.desc),
 ///         None => "EntryDescription has no description".to_string(),
 ///     };
+///     // --------- IMPORTANT ---------
 ///     DescResult::new(msg).to_render()
 /// }
 ///

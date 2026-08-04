@@ -212,6 +212,11 @@ impl ProgramCollect for ThisProgram {
         todo!()
     }
 
+    fn get_metadata<T: 'static>(member_id: Self::Enum) -> Option<T> {
+        let _ = member_id;
+        todo!()
+    }
+
     #[cfg(feature = "async")]
     fn do_chain(
         _any: mingling_core::AnyOutput<Self::Enum>,
