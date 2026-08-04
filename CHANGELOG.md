@@ -285,6 +285,10 @@ None
 
     The module is gated behind the `core` feature and re-exported as `mingling::metadata`. This type is designed to work hand-in-hand with the compile-time entry metadata system from item 9, providing a first-party convention metadata for describing entries in generated documentation and help output.
 
+11. **[`core:comp`]** Enhanced `default_completion` to attach each suggestion's owning entry's `Description` metadata as a completion description. A new helper `entry_description::<P>(node)` resolves a space-separated command node path to its owning entry's member id (via the dispatch trie under `dispatch_tree`, or `match_user_input` + dispatcher `begin` otherwise), then retrieves the `Description` via `ProgramCollect::get_metadata::<Description>`. If found, suggestions for that node are built as `SuggestItem::new_with_desc(token, desc)` instead of plain `SuggestItem::new(token)`.
+
+    The suggestion collection was also reworked: it now uses a `BTreeSet<SuggestItem>` for natural ordering and deduplication (replacing the previous `Vec<String>` + manual `sort()`/`dedup()`), carries both the suggested token and the fully-qualified owner node path used for the description lookup, and returns `Suggest::Suggest(suggestions)` directly. `entry_description` returns `None` for intermediate trie segments that have no entry of their own or entries without a registered `Description`, in which case suggestions fall back to plain `SuggestItem::new(token)`. The final empty-suggestions fallback to `file_suggest()` is unchanged.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.

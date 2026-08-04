@@ -48,7 +48,7 @@ fn complete_fallback(_ctx: &ShellContext) -> Suggest {
  
 ---
 
-## Why can't I register descriptions for commands?
+## Why can't I register descriptions for commands? (Solved)
 
 (completion) (dispatcher)
 
@@ -108,4 +108,42 @@ fn desc_add(_ctx: &ShellContext) -> Suggest {
 // Generate something like get_dispatcher_desc(id: &ThisProgram) -> String
 // Match the corresponding function using enum values inside ThisProgram
 gen_program!()
+```
+ 
+Final implementation:
+
+`#[metadata]` registers a `Description` for each entry, and `gen_program!()` collects them. During completion, when a subcommand suggestion is generated, its owning entry's `Description` is resolved via the node path and attached as the suggestion's description text.
+
+```rust
+use mingling::{
+    ShellContext, Suggest,
+    macros::{command, completion, gen_program, metadata, suggest},
+    metadata::Description,
+    setup::picker::BasicProgramSetup,
+};
+ 
+fn main() {
+    let mut program = ThisProgram::new();
+    program.with_setup(BasicProgramSetup);
+    program.with_dispatcher(CMDCompletion);
+    program.with_dispatcher(CMDThanks);
+    program.exec_and_exit();
+}
+ 
+#[command]
+pub fn thanks() {
+    println!("thanks!");
+}
+ 
+#[completion(EntryThanks)]
+pub fn complete_thanks(_ctx: &ShellContext) -> Suggest {
+    suggest! { "alice", "bob" }
+}
+ 
+#[metadata(EntryThanks)]
+pub fn desc_thanks() -> Description {
+    Description::new("Thanks someone")
+}
+ 
+gen_program!();
 ```

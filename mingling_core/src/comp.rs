@@ -23,8 +23,10 @@ pub use shell_ctx::*;
 #[doc(hidden)]
 pub use suggest::*;
 
-use crate::{ProgramCollect, debug, only_debug, this, trace};
+use crate::{ProgramCollect, debug, metadata::Description, only_debug, this, trace};
 
+#[cfg(not(feature = "dispatch_tree"))]
+use crate::ChainProcess;
 #[cfg(not(feature = "dispatch_tree"))]
 use crate::exec::match_user_input;
 
@@ -273,6 +275,36 @@ where
     })
 }
 
+/// Resolves the `Description` metadata registered for the entry that owns the
+/// given (space-separated) command node path, if any.
+///
+/// The node path is dispatched to obtain the owning entry's member id, and its
+/// `Description` is then retrieved via [`ProgramCollect::get_metadata`]. Returns
+/// `None` when the path does not resolve to a concrete entry (e.g. an
+/// intermediate trie segment that has no entry of its own) or when the entry
+/// has no `Description` registered.
+fn entry_description<P>(node: &str) -> Option<String>
+where
+    P: ProgramCollect<Enum = P> + Display + 'static,
+{
+    let words: Vec<String> = node.split(' ').map(str::to_string).collect();
+
+    #[cfg(feature = "dispatch_tree")]
+    let lazy_member = P::dispatch_args_trie(&words).ok().map(|any| any.member_id);
+
+    #[cfg(not(feature = "dispatch_tree"))]
+    let lazy_member = match match_user_input(this::<P>(), &words) {
+        Ok((dispatcher, args)) => match dispatcher.begin(args) {
+            ChainProcess::Ok((any, _)) => Some(any.member_id),
+            _ => None,
+        },
+        Err(_) => None,
+    };
+
+    let member_id = lazy_member?;
+    P::get_metadata::<Description>(member_id).map(String::from)
+}
+
 fn default_completion<P>(ctx: &ShellContext) -> Suggest
 where
     P: ProgramCollect<Enum = P> + Display + 'static,
@@ -321,16 +353,27 @@ where
         input_path, ctx.word_index, ctx.all_words
     );
 
-    // Filter command nodes that match the input path
-    let mut suggestions = Vec::new();
+    // Build a suggestion item for `token`, attaching the owning entry's
+    // `Description` metadata (resolved via `node_path`) when one is available.
+    let make_item = |token: &str, node_path: &str| -> SuggestItem {
+        match entry_description::<P>(node_path) {
+            Some(desc) => SuggestItem::new_with_desc(token.to_string(), desc),
+            None => SuggestItem::new(token.to_string()),
+        }
+    };
+
+    // Track both the suggestion text and the node path used to look up its
+    // description, then deduplicate by suggestion text.
+    let mut suggestions: std::collections::BTreeSet<SuggestItem> =
+        std::collections::BTreeSet::new();
 
     // Special case: if input_path is empty, return all first-level commands
     if input_path.is_empty() {
         debug!("input_path empty, returning first-level commands");
         for node in cmd_nodes {
             let node_parts: Vec<&str> = node.split(' ').collect();
-            if !node_parts.is_empty() && !suggestions.contains(&node_parts[0].to_string()) {
-                suggestions.push(node_parts[0].to_string());
+            if let Some(first) = node_parts.first() {
+                suggestions.insert(make_item(first, first));
             }
         }
     } else {
@@ -343,23 +386,21 @@ where
         if input_path.len() == 1 && !ctx.current_word.is_empty() {
             for node in &cmd_nodes {
                 let node_parts: Vec<&str> = node.split(' ').collect();
-                if !node_parts.is_empty()
-                    && node_parts[0].starts_with(current_word)
-                    && !suggestions.contains(&node_parts[0].to_string())
-                {
-                    suggestions.push(node_parts[0].to_string());
+                let Some(first) = node_parts.first() else {
+                    continue;
+                };
+                if first.starts_with(current_word) {
+                    suggestions.insert(make_item(first, first));
                 }
             }
 
             // If suggestions for the current word are found, return directly
             if !suggestions.is_empty() {
-                suggestions.sort();
-                suggestions.dedup();
                 debug!(
                     "default_completion: current word suggestions = {:?}",
                     suggestions
                 );
-                return suggestions.into();
+                return Suggest::Suggest(suggestions);
             }
         }
 
@@ -397,31 +438,37 @@ where
                 let last_idx = input_path.len() - 1;
                 let is_partial = input_path[last_idx] != node_parts[last_idx];
 
+                // The suggested token and the fully qualified node path that
+                // owns it, used to look up its `Description` metadata.
+                let (token, owner_path) = if input_path.len() == node_parts.len() {
+                    // Completing the final token of this node.
+                    (node_parts[last_idx], node_parts.join(" "))
+                } else if is_partial {
+                    // Completing the current (partial) token in place.
+                    (node_parts[last_idx], node_parts[..=last_idx].join(" "))
+                } else {
+                    // Advancing to the next level under the matched prefix.
+                    let idx = input_path.len();
+                    (node_parts[idx], node_parts[..=idx].join(" "))
+                };
+
                 if input_path.len() == node_parts.len() {
                     if !ctx.current_word.is_empty() {
-                        suggestions.push(node_parts[last_idx].to_string());
+                        suggestions.insert(make_item(token, &owner_path));
                     }
                 } else if input_path.len() < node_parts.len() {
-                    if is_partial {
-                        suggestions.push(node_parts[last_idx].to_string());
-                    } else {
-                        suggestions.push(node_parts[input_path.len()].to_string());
-                    }
+                    suggestions.insert(make_item(token, &owner_path));
                 }
             }
         }
     }
-
-    // Remove duplicates and sort
-    suggestions.sort();
-    suggestions.dedup();
 
     debug!("default_completion: suggestions = {:?}", suggestions);
 
     if suggestions.is_empty() {
         file_suggest()
     } else {
-        suggestions.into()
+        Suggest::Suggest(suggestions)
     }
 }
 
