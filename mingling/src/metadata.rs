@@ -1,2 +1,1 @@
-mod description;
-pub use description::*;
+pub use mingling_core::metadata::*;

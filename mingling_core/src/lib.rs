@@ -103,3 +103,6 @@ mod private;
 pub mod __private {
     pub use crate::private::*;
 }
+
+/// Mingling's convention metadatas, which can be bound to types using `#[metadata]`, to provide identification for types
+pub mod metadata;
