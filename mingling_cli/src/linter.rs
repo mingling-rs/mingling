@@ -3,9 +3,9 @@ use mingling::{
     metadata::Description,
 };
 
-use crate::{linter::cmd_mlint::EntryLint, metadata::setup::ResUsingJson};
+use crate::{linter::cmd_lint::EntryLint, metadata::setup::ResUsingJson};
 
-pub mod cmd_mlint;
+pub mod cmd_lint;
 pub mod mlint_attr;
 pub mod mlint_report;
 
