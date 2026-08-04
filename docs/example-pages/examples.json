@@ -95,6 +95,24 @@
     ]
   },
   {
+    "id": "example-combine-pathf-metadata",
+    "name": "Pathfinder + Metadata",
+    "icon": "🧭",
+    "category": "advanced",
+    "desc": "Combines the `pathf` feature with entry metadata. The metadata `DataType` and the entry `BindType` are defined inside a submodule, and `pathf` resolves them for `gen_program!()` at build time.\n",
+    "tags": [
+      "pathf",
+      "metadata",
+      "build.rs"
+    ],
+    "files": [
+      "src/main.rs",
+      "src/sub/mod.rs",
+      "build.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
     "id": "example-command-macro",
     "name": "Command Macro",
     "icon": "🚀",
@@ -247,6 +265,22 @@
     "desc": "Demonstrates how to use `LazyRes<T>` for lazily initialized resources that only allocate when first accessed.\n",
     "tags": [
       "LazyRes<Res>"
+    ],
+    "files": [
+      "src/main.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
+    "id": "example-metadata",
+    "name": "Entry Metadata",
+    "icon": "🏷️",
+    "category": "advanced",
+    "desc": "Demonstrates attaching arbitrary, compile-time-typed metadata to an entry via `#[metadata(Entry)]` and retrieving it at runtime with `ProgramCollect::get_metadata`. No `pathf` needed here — everything lives in a single module.\n",
+    "tags": [
+      "metadata",
+      "get_metadata",
+      "extras"
     ],
     "files": [
       "src/main.rs",

@@ -165,7 +165,7 @@ use attr::completion;
 use attr::dispatcher_clap;
 #[cfg(feature = "extras")]
 use attr::program_setup;
-use attr::{chain, help, renderer};
+use attr::{chain, help, metadata, renderer};
 use derive::{enum_tag, grouped};
 #[cfg(feature = "extras")]
 use func::entry;
@@ -209,6 +209,7 @@ pub(crate) static RENDERERS: Registry = OnceLock::new();
 pub(crate) static CHAINS_EXIST: Registry = OnceLock::new();
 pub(crate) static RENDERERS_EXIST: Registry = OnceLock::new();
 pub(crate) static HELP_REQUESTS: Registry = OnceLock::new();
+pub(crate) static METADATA: Registry = OnceLock::new();
 
 /// Checks if a variant name already exists in a registered set.
 /// Returns a `compile_error` token stream if a duplicate is found.
@@ -1297,6 +1298,26 @@ pub fn register_help(input: TokenStream) -> TokenStream {
     func::register_help::register_help(input)
 }
 
+/// Registers metadata mapping between an enum variant and a metadata type.
+///
+/// This macro is used internally by the `#[metadata]` attribute and is also
+/// available for manual registration if needed.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// register_metadata!(EntryVariant, MetadataType);
+/// ```
+///
+/// This adds an entry to the global `METADATA` registry, mapping the enum
+/// variant for `EntryVariant` to the metadata provider trait
+/// `::mingling::Metadata<MetadataType>`. The entry is consumed by
+/// `gen_program!` to generate the `get_metadata` method of `ProgramCollect`.
+#[proc_macro]
+pub fn register_metadata(input: TokenStream) -> TokenStream {
+    func::register_metadata::register_metadata_impl(input)
+}
+
 /// Registers a dispatcher at compile time for the `dispatch_tree` feature.
 ///
 /// This macro is called internally by `dispatcher!` when the `dispatch_tree`
@@ -1402,6 +1423,45 @@ pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
         return redispatch;
     }
     help::help_attr(item)
+}
+
+/// Declares compile-time metadata for an entry variant.
+///
+/// The `#[metadata]` attribute attaches an arbitrary, compile-time-typed value
+/// to an entry. The annotated function becomes the provider for the metadata:
+/// its return type is the metadata type, and the attribute argument names the
+/// entry enum variant the metadata belongs to.
+///
+/// The macro works by:
+/// 1. Generating `impl ::mingling::Metadata<ReturnType> for EntryVariant` whose
+///    `init_metadata()` calls the annotated function.
+/// 2. Registering the entry via `register_metadata!` in the global `METADATA`
+///    registry so that `gen_program!` emits the `get_metadata` method.
+/// 3. Keeping the original function unchanged for direct calls.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// #[metadata(EntryGreet)]
+/// fn greet_desc() -> Description {
+///     Description { desc: "ok".into() }
+/// }
+/// ```
+///
+/// The metadata is later retrieved with `ProgramCollect::get_metadata`:
+///
+/// ```rust,ignore
+/// let desc = ThisProgram::get_metadata::<Description>(ThisProgram::EntryGreet);
+/// ```
+///
+/// # Requirements
+///
+/// - The attribute argument must be the enum variant to attach metadata to.
+/// - The function must take no parameters and return a concrete type.
+/// - The function cannot be async.
+#[proc_macro_attribute]
+pub fn metadata(attr: TokenStream, item: TokenStream) -> TokenStream {
+    metadata::metadata_attr(attr, item)
 }
 
 /// Marker attribute for the Mingling lint system.

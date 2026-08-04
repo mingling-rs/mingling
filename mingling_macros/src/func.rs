@@ -28,6 +28,7 @@ pub(crate) mod r_println;
 pub(crate) mod register_chain;
 pub(crate) mod register_dispatcher;
 pub(crate) mod register_help;
+pub(crate) mod register_metadata;
 pub(crate) mod register_renderer;
 pub(crate) mod register_type;
 #[cfg(feature = "extras")]

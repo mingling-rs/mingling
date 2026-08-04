@@ -387,3 +387,36 @@ fn test_dispatcher_clap_dispatch_tree() {
     assert!(r2.contains("::sub::__internal_dispatcher_delete"));
     assert!(r2.contains("::sub::__internal_dispatcher_helpcmd"));
 }
+
+#[test]
+fn test_metadata_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_metadata.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        // Root: BindType + DataType pairs
+        "::EntryGreet1",
+        "::Description1",
+        "::EntryGreet2",
+        "::Description2",
+        "::EntryGreet3",
+        "::LocalType3",
+        "::EntryGreet4",
+        "::std::collections::HashMap",
+        "::EntryGreet5",
+        "::Qualified5",
+        // Sub: BindType + DataType pairs
+        "::sub::EntrySub1",
+        "::sub::SubType1",
+        "::sub::EntrySub2",
+        "::sub::SubType2",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {entry}");
+    }
+}

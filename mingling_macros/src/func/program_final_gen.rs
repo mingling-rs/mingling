@@ -8,6 +8,7 @@ use crate::COMPILE_TIME_DISPATCHERS;
 #[cfg(feature = "comp")]
 use crate::COMPLETIONS;
 use crate::HELP_REQUESTS;
+use crate::METADATA;
 use crate::PACKED_TYPES;
 use crate::RENDERERS;
 use crate::RENDERERS_EXIST;
@@ -269,6 +270,38 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
         .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
         .collect();
 
+    let metadata_tokens: Vec<proc_macro2::TokenStream> = get_global_set(&METADATA)
+        .lock()
+        .unwrap()
+        .clone()
+        .iter()
+        .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
+        .collect();
+
+    let get_metadata_fn = if metadata_tokens.is_empty() {
+        quote! {
+            fn get_metadata<T: 'static>(_member_id: Self::Enum) -> Option<T> {
+                None
+            }
+        }
+    } else {
+        let metadata_arms = metadata_tokens.iter().map(|entry| {
+            quote! {
+                #entry
+            }
+        });
+        quote! {
+            fn get_metadata<T: 'static>(member_id: Self::Enum) -> Option<T> {
+                let type_id = ::std::any::TypeId::of::<T>();
+                let any = match member_id {
+                    #(#metadata_arms)*
+                    _ => None,
+                };
+                any.and_then(|b| b.downcast::<T>().ok().map(|b| *b))
+            }
+        }
+    };
+
     let num_variants = packed_types.len();
     let repr_type = if u8::try_from(num_variants).is_ok() {
         quote! { u8 }
@@ -313,6 +346,7 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
             }
             #render_fn
             #do_chain_fn
+            #get_metadata_fn
             fn render_help(any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::RenderResult {
                 match any.member_id() {
                     #(#help_tokens)*
@@ -356,6 +390,7 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
     get_global_set(&RENDERERS).lock().unwrap().clear();
     get_global_set(&RENDERERS_EXIST).lock().unwrap().clear();
     get_global_set(&HELP_REQUESTS).lock().unwrap().clear();
+    get_global_set(&METADATA).lock().unwrap().clear();
     #[cfg(feature = "comp")]
     get_global_set(&COMPLETIONS).lock().unwrap().clear();
     #[cfg(feature = "dispatch_tree")]

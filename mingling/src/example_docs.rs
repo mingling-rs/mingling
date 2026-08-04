@@ -768,6 +768,71 @@ pub mod example_clap_binding {}
 /// gen_program!();
 /// ```
 pub mod example_combine_pathf_dispatch_tree {}
+/// Example: Combining pathf + entry metadata
+///
+///  > Demonstrates combining the `pathf` feature with entry metadata. The metadata
+///  > `DataType` (`Description`) and the dispatchers/entries are defined in the `sub`
+///  > module. Thanks to `pathf`, `gen_program!()` resolves these types across
+///  > modules automatically, so `main` stays minimal.
+///
+///  Run:
+///  ```bash
+///  cargo run --manifest-path examples/example-combine-pathf-metadata/Cargo.toml --quiet -- hello Alice
+///  cargo run --manifest-path examples/example-combine-pathf-metadata/Cargo.toml --quiet -- hello
+///  cargo run --manifest-path examples/example-combine-pathf-metadata/Cargo.toml --quiet -- desc
+///  ```
+///
+///  Output:
+///  ```plaintext
+///  Hello, Alice!
+///  Hello, World!
+///  EntryHello desc = okay
+///  ```
+///
+/// Source code (./Cargo.toml)
+/// ```toml
+/// [package]
+/// name = "example-combine-pathf-metadata"
+/// version = "0.1.0"
+/// edition = "2024"
+///
+/// [dependencies.mingling]
+/// path = "../../mingling"
+/// features = [
+///     # `extras` is required by the implicit `dispatcher!("hello")` form
+///     "extras",
+///     # `pathf` resolves types across modules at build time
+///     "pathf",
+/// ]
+///
+/// [build-dependencies.mingling]
+/// path = "../../mingling"
+/// features = [
+///     # Enable the `build` feature for build-time support
+///     "build",
+///     # `pathf` must also be enabled in build-dependencies
+///     "pathf",
+/// ]
+///
+/// [workspace]
+/// ```
+///
+/// Source code (./src/main.rs)
+/// ```ignore
+/// mod sub;
+///
+/// use mingling::prelude::*;
+///
+/// fn main() {
+///     let mut program = ThisProgram::new();
+///     program.with_dispatcher(sub::CMDHello);
+///     program.with_dispatcher(sub::CMDDescription);
+///     program.exec_and_exit();
+/// }
+///
+/// gen_program!();
+/// ```
+pub mod example_combine_pathf_metadata {}
 /// Example Command Macro
 ///
 ///  > Introduced how to use the `#[command]` macro to generate commands with minimal boilerplate
@@ -1935,6 +2000,137 @@ pub mod example_implicit_dispatcher {}
 /// gen_program!();
 /// ```
 pub mod example_lazy_resources {}
+/// Example: Entry Metadata (no `pathf`)
+///
+///  > Demonstrates attaching arbitrary, compile-time-typed metadata (`Description`)
+///  > to an entry via `#[metadata(Entry)]`, and retrieving it at runtime through
+///  > `ProgramCollect::get_metadata`. The `desc` and `nodoc` subcommands dispatch
+///  > through the normal chain/render pipeline — exactly like `example-basic`.
+///
+///  Run:
+///  ```bash
+///  cargo run --manifest-path examples/example-metadata/Cargo.toml --quiet -- greet Alice
+///  cargo run --manifest-path examples/example-metadata/Cargo.toml --quiet -- greet
+///  cargo run --manifest-path examples/example-metadata/Cargo.toml --quiet -- desc
+///  cargo run --manifest-path examples/example-metadata/Cargo.toml --quiet -- nodoc
+///  ```
+///
+///  Output:
+///  ```plaintext
+///  Hello, Alice!
+///  Hello, World!
+///  EntryGreet desc = ok
+///  EntryDescription has no description
+///  ```
+///
+/// Source code (./Cargo.toml)
+/// ```toml
+/// [package]
+/// name = "example-metadata"
+/// version = "0.1.0"
+/// edition = "2024"
+///
+/// [dependencies]
+/// mingling = { path = "../../mingling" }
+///
+/// [workspace]
+/// ```
+///
+/// Source code (./src/main.rs)
+/// ```ignore
+/// use mingling::{macros::metadata, prelude::*};
+/// use std::io::Write;
+///
+/// // Define the `greet` subcommand
+/// dispatcher!("greet", CMDGreet => EntryGreet);
+///
+/// // Define the `desc` subcommand, which queries metadata bound to EntryGreet
+/// dispatcher!("desc", CMDDescription => EntryDescription);
+///
+/// // Define the `nodoc` subcommand, which queries metadata for an entry that has none
+/// dispatcher!("nodoc", CMDNoDescription => EntryNoDescription);
+///
+/// fn main() {
+///     let mut program = ThisProgram::new();
+///     program.with_dispatcher(CMDGreet);
+///     program.with_dispatcher(CMDDescription);
+///     program.with_dispatcher(CMDNoDescription);
+///     program.exec_and_exit();
+/// }
+///
+/// /// The metadata type attached to an entry.
+/// #[derive(Debug, PartialEq, Eq)]
+/// pub struct Description {
+///     pub desc: String,
+/// }
+///
+/// /// Attach a `Description` to `EntryGreet`.
+/// ///
+/// /// - `BindType` = `EntryGreet` (the enum variant / entry type)
+/// /// - `DataType` = `Description` (the function's return type)
+/// #[metadata(EntryGreet)]
+/// pub fn greet_desc() -> Description {
+///     Description {
+///         desc: "ok".to_string(),
+///     }
+/// }
+///
+/// pack!(ResultName = String);
+/// pack!(DescResult = String);
+///
+/// /// Chain for `greet` — reads the name and produces a `ResultName`.
+/// #[chain]
+/// fn handle_greet(args: EntryGreet) -> Next {
+///     let name: ResultName = args
+///         .inner
+///         .first()
+///         .cloned()
+///         .unwrap_or_else(|| "World".to_string())
+///         .into();
+///     name.into()
+/// }
+///
+/// /// Chain for `desc` — looks up the metadata bound to `EntryGreet`.
+/// #[chain]
+/// fn handle_desc(_args: EntryDescription) -> Next {
+///     use mingling::ProgramCollect;
+///     let msg = match ThisProgram::get_metadata::<Description>(ThisProgram::EntryGreet) {
+///         Some(d) => format!("EntryGreet desc = {}", d.desc),
+///         None => "EntryGreet has no description".to_string(),
+///     };
+///     DescResult::new(msg).to_render()
+/// }
+///
+/// /// Chain for `nodoc` — asks for metadata on an entry that has none.
+/// #[chain]
+/// fn handle_nodoc(_args: EntryNoDescription) -> Next {
+///     use mingling::ProgramCollect;
+///     let msg = match ThisProgram::get_metadata::<Description>(ThisProgram::EntryDescription) {
+///         Some(d) => format!("EntryDescription desc = {}", d.desc),
+///         None => "EntryDescription has no description".to_string(),
+///     };
+///     DescResult::new(msg).to_render()
+/// }
+///
+/// /// Renders the greeting message with the provided name.
+/// #[renderer]
+/// fn render_name(name: ResultName) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "Hello, {}!", *name).ok();
+///     render_result
+/// }
+///
+/// /// Renders the metadata query result.
+/// #[renderer]
+/// fn render_desc(msg: DescResult) -> RenderResult {
+///     let mut render_result = RenderResult::new();
+///     writeln!(render_result, "{}", *msg).ok();
+///     render_result
+/// }
+///
+/// gen_program!();
+/// ```
+pub mod example_metadata {}
 /// Example: Using the `group!()` Macro to Register Outside Types
 ///
 ///  This example demonstrates how to use the `group!()` macro to make outside

@@ -76,6 +76,7 @@ pub mod macros {
     #[cfg(all(feature = "structural_renderer", feature = "extras"))]
     pub use mingling_macros::group_structural;
     pub use mingling_macros::help;
+    pub use mingling_macros::metadata;
     pub use mingling_macros::mlint;
     pub use mingling_macros::node;
     pub use mingling_macros::pack;
@@ -105,6 +106,8 @@ pub mod macros {
     pub use mingling_macros::register_dispatcher;
     #[doc(hidden)]
     pub use mingling_macros::register_help;
+    #[doc(hidden)]
+    pub use mingling_macros::register_metadata;
     #[doc(hidden)]
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]

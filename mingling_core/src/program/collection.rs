@@ -66,6 +66,18 @@ pub trait ProgramCollect {
     /// Render help for Entry
     fn render_help(any: AnyOutput<Self::Enum>) -> RenderResult;
 
+    /// Retrieves compile-time registered metadata of type `T` for the given
+    /// enum member, if any was registered via `#[metadata(Entry)]`.
+    ///
+    /// Returns `None` when no metadata of type `T` has been registered for the
+    /// provided member, or when the requested `T` does not match the registered
+    /// metadata type. The concrete implementation of this method is generated
+    /// by the `gen_program!` macro.
+    fn get_metadata<T: 'static>(member_id: Self::Enum) -> Option<T> {
+        let _ = member_id;
+        None
+    }
+
     /// Find a matching chain to continue execution based on the input [AnyOutput](./struct.AnyOutput.html), returning a new [AnyOutput](./struct.AnyOutput.html)
     #[cfg(feature = "async")]
     fn do_chain(

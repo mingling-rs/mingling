@@ -209,6 +209,37 @@ None
     - `mingling_macros/src/attr/completion.rs` updated to detect the `EntryFallback` identifier in attribute arguments.
     - `CompletionHelper::complete` in `mingling_core/src/comp.rs` now invokes the fallback completion handler via `P::do_comp(&P::build_entry_fallback(vec![]), ctx)` and merges results with `Suggest::combine()`.
 
+9. **[`core`]** **[`macros`]** Added a compile-time **entry metadata** system that allows attaching arbitrary, compile-time-typed metadata to entries and retrieving it at runtime.
+
+    - **`Metadata<B>` trait** — Added to `mingling_core::asset::metadata` and re-exported from `mingling_core` / `mingling`. A type implementing `Metadata<B>` for an entry variant `E` provides `init_metadata() -> B`, defining the metadata value for that entry.
+
+    - **`#[metadata(EntryVariant)]` attribute macro** — Added `mingling_macros::metadata`, which converts a zero-argument function into:
+        - an `impl ::mingling::Metadata<ReturnType> for EntryVariant` whose `init_metadata()` calls the original function,
+        - a `register_metadata!(EntryVariant, ReturnType)` invocation that populates the global `METADATA` registry,
+        - the preserved original function unchanged (including attributes, visibility, and return signature).
+
+        Requirements: the function must take no parameters, must have an explicit return type, and cannot be async.
+
+    - **`register_metadata!(EntryVariant, MetadataType)` macro** — Added `mingling_macros::register_metadata` (doc-hidden) which parses the two type arguments and stores a match-arm-style string entry in the `METADATA` global registry for later consumption by `gen_program!`.
+
+    - **`ProgramCollect::get_metadata<T>(member_id) -> Option<T>`** — Added a default method on `ProgramCollect` that returns `None`. The `gen_program!` macro now overrides it: if the `METADATA` registry is non-empty, it generates a `get_metadata` implementation that matches on the enum member, compares the requested `TypeId::of::<T>()` against each registered metadata type's `TypeId`, and downcasts the boxed `Any` to `T`.
+
+    - **`pathf` integration** — Added `MetadataPattern` to `mingling_pathf` that matches functions annotated `#[metadata(BindType)]`, extracting both the `BindType` (attribute argument, always a local in-crate entry type) and the `DataType` (the function's return type — resolved as local or foreign via `use` imports) so `pathf` emits the appropriate `use` statements for `gen_program!`.
+
+    Usage:
+
+    ```rust,ignore
+    #[metadata(EntryGreet)]
+    pub fn greet_desc() -> Description {
+        Description { desc: "ok".to_string() }
+    }
+
+    // Later, at runtime:
+    let desc = ThisProgram::get_metadata::<Description>(ThisProgram::EntryGreet);
+    ```
+
+    The `#[metadata]` attribute and `Metadata` trait are re-exported as `mingling::macros::metadata` and `mingling::Metadata` respectively.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.
