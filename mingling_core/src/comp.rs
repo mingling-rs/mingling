@@ -168,8 +168,22 @@ impl CompletionHelper {
 
         match suggest {
             Some(suggest) => {
+                // A concrete entry was dispatched. Merge the entry's own
+                // completion with the default subcommand suggestions so that,
+                // e.g. `thanks <tab>`, suggests both the leaf nodes (`bob`,
+                // `alice`) and the `thanks` entry's own completion.
                 trace!("using custom completion: {:?}", suggest);
-                suggest
+                let default = default_completion::<P>(ctx);
+                if suggest == Suggest::FileCompletion {
+                    trace!(
+                        "custom completion is FileCompletion, using default: {:?}",
+                        default
+                    );
+                    default
+                } else {
+                    trace!("combining custom completion with default");
+                    suggest.combine(default)
+                }
             }
             None => {
                 if first_cmd_match.is_some() {

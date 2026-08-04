@@ -87,6 +87,14 @@ None
 
     Behavioral result: the static trie dispatcher now follows the same "longest registered prefix wins" rule as the dynamic dispatcher — a child (longer) path is preferred over an exact endpoint at the same depth, and only when every descendant fails to match is the exact endpoint at the current depth dispatched.
 
+6. **[`core:comp`]** Changed the `CompletionHelper::complete` method so that when a concrete entry is dispatched (i.e., a custom completion handler produces a `Suggest` value), the custom completion is now **merged with the default completion suggestions** rather than replacing them entirely.
+
+    Previously, when an explicit completion handler produced a `Suggest`, that value was returned as-is and the default subcommand suggestions (leaf nodes under the current path) were never consulted. Now:
+
+    - The default completion (`default_completion::<P>(ctx)`) is always computed and merged via `Suggest::combine()` when the custom suggestion is not `Suggest::FileCompletion`.
+    - If the custom completion is `Suggest::FileCompletion`, the default completion is used instead (since `FileCompletion` cannot be meaningfully merged with subcommand suggestions).
+    - Concrete entry completions and default subcommand suggestions coexist — e.g., `thanks <tab>` now suggests both the leaf nodes (`bob`, `alice`) and the `thanks` entry's own completion.
+
 #### Optimizations:
 
 1. **[`pathf`]** Added `is_module` field to `AnalyzeItem` and a new constructor `AnalyzeItem::local_module(module, item_name)` which sets `is_module: true`. The `type_mapping_builder` now tracks whether an item is a module: when generating `type_using.rs`, module items produce `use path::to::module::*;` (glob import) instead of the standard `use path::to::TypeName;` direct import. Non-module items continue to use direct imports as before. The internal data structure changed from `Vec<(String, String)>` to `Vec<(String, String, bool)>` to carry the `is_module` flag through the pipeline.
