@@ -350,7 +350,7 @@ impl RenderResult {
     pub fn eprintln(&mut self, text: impl Into<String>) {
         let text = text.into();
         if self.immediate_output {
-            println!("{}", text)
+            eprintln!("{}", text)
         }
         self.append_line_to_buffer(text, Stderr);
     }
