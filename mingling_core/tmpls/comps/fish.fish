@@ -5,7 +5,6 @@ function __<<<bin_name>>>_fish_complete
     set -l cursor (commandline -C)
     set -l current_token (commandline -ct)
 
-    # Calculate current word and word index
     set -l current_word ""
     set -l previous_word ""
     set -l word_index 0
@@ -45,7 +44,6 @@ function __<<<bin_name>>>_fish_complete
         end
     end
 
-    # Handle cursor after last word
     if test $word_index -eq 0 -a (count $cmdline) -gt 0
         set word_index (count $cmdline)
         if test -n "$current_token" -a "$current_token" != "$cmdline[-1]"
@@ -56,17 +54,14 @@ function __<<<bin_name>>>_fish_complete
         set previous_word $cmdline[-1]
     end
 
-    # Ensure word_index is within bounds
     if test $word_index -gt (count $cmdline)
         set word_index (count $cmdline)
     end
 
-    # Replace hyphens with carets for jvn_comp
     set -l buffer_replaced (string replace -a "-" "^" -- "$buffer")
     set -l current_word_replaced (string replace -a "-" "^" -- "$current_word")
     set -l previous_word_replaced (string replace -a "-" "^" -- "$previous_word")
 
-    # Build args array
     set -l args
     set -a args -f "$buffer_replaced" -C "$cursor" -w "$current_word_replaced" -p "$previous_word_replaced"
 
@@ -78,7 +73,6 @@ function __<<<bin_name>>>_fish_complete
 
     set -a args -i "$word_index"
 
-    # Replace hyphens in all words
     if test (count $cmdline) -gt 0
         set -l all_words_replaced
         for word in $cmdline
@@ -103,10 +97,8 @@ function __<<<bin_name>>>_fish_complete
         set -a args -a ""
     end
 
-    # Add shell type argument
     set -a args -F "fish"
 
-    # Call jvn_comp and handle output
     set -l output
     if not <<<bin_name>>> __comp $args 2>/dev/null | read -z output
         return
