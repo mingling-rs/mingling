@@ -26,7 +26,7 @@ fn cargo_level_to_annotate(
     }
 }
 
-/// 把 1-based char offset 转成 0-based byte offset
+/// Convert 1-based char offset to 0-based byte offset
 fn char_offset_to_byte_offset(s: &str, char_offset: usize) -> usize {
     s.char_indices()
         .nth(char_offset.saturating_sub(1))
