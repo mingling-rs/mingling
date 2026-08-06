@@ -97,10 +97,8 @@ pub fn handle_state_explain_lint(p: StateExplainLint) -> Next {
 pub fn render_explain_lint(r: ResultExplainLint) {
     r_println!("{}", r.title);
     r_println!("");
-    r_println!("  Name:      {}", r.lint_name);
-    r_println!("  Active on: {}", r.active_on);
-    r_println!("  Default:   {}", r.default);
-    r_println!("  Author:    {}", r.author);
+    r_println!("  Name   : #[mlint[{}({})]", r.default, r.lint_name);
+    r_println!("  Author : {}", r.author);
     r_println!("");
     r_println!("{}", r.summary);
 }
