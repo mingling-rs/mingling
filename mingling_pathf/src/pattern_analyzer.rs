@@ -28,7 +28,6 @@ pub fn init() -> PatternAnalyzer {
 /// to inject feature-dependent settings (e.g., `dispatch_tree`).
 pub fn init_with_config(config: PathfinderConfig) -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
-    analyzer.add_pattern(BasicStructPattern);
     analyzer.add_pattern(PackPattern);
     analyzer.add_pattern(GroupPattern);
     analyzer.add_pattern(GroupedDerivePattern);

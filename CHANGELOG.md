@@ -97,6 +97,15 @@ None
 
 7. **[`core:render`]** Fixed the `RenderResult::eprintln` method to actually write to stderr. Previously, this method shamefully used `println!` (which writes to stdout) when `immediate_output` was enabled, rather than `eprintln!` (which writes to stderr). Yes, you read that right — a method literally named `eprintln` was printing to stdout. Talk about a identity crisis. The output has been corrected to use `eprintln!`, ensuring that error-level render output is properly separated from standard output streams. Whoever wrote that deserves a wet noodle slap — the entire point of an `e`-prefixed method is that it goes to standard _error_, not standard _out_. At least the bug is dead now, and we can all sleep a little easier knowing "error" output goes where error output belongs.
 
+8. **[`pathf`]** Removed the `BasicStructPattern` from the pathf pattern analyzer. This pattern previously matched arbitrary structs (in the `BasicStruct` sense) and would attempt to treat plain structs as pathf-analyzable items. However, `BasicStructPattern` produced no meaningful analysis — it matched plain structs that weren't associated with any Mingling macro (like `#[chain]`, `#[group]`, etc.), so removing it eliminates irrelevant `AnalyzeItem` entries and reduces noise in the generated `type_using.rs`.
+
+    Specifically:
+    - Removed `analyzer.add_pattern(BasicStructPattern)` from `init_with_config` in `pattern_analyzer.rs`.
+    - Removed the `basic_struct` module and its re-export (`pub use basic_struct::*;`) from `patterns.rs`.
+    - Updated the pathf integration test (`test_pattern_analyzer_once`) to assert that plain structs nested in submodules are **no longer** collected: `assert!(!result.contains("::directly_sub_mod::DirectlySubModStruct"))`.
+
+    Structs that are analyzed by other patterns (e.g., `GroupedDerivePattern`, `ChainPattern`, etc.) continue to work exactly as before — only the standalone "bare struct with no macro association" detection has been removed.
+
 #### Optimizations:
 
 1. **[`pathf`]** Added `is_module` field to `AnalyzeItem` and a new constructor `AnalyzeItem::local_module(module, item_name)` which sets `is_module: true`. The `type_mapping_builder` now tracks whether an item is a module: when generating `type_using.rs`, module items produce `use path::to::module::*;` (glob import) instead of the standard `use path::to::TypeName;` direct import. Non-module items continue to use direct imports as before. The internal data structure changed from `Vec<(String, String)>` to `Vec<(String, String, bool)>` to carry the `is_module` flag through the pipeline.

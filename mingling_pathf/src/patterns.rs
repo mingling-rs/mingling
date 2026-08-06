@@ -1,6 +1,5 @@
 //! Mingling path matching patterns for command routing and field mapping.
 
-pub use basic_struct::*;
 pub use chain::*;
 pub use command::*;
 pub use completion::*;
@@ -13,7 +12,6 @@ pub use metadata::*;
 pub use pack::*;
 pub use renderer::*;
 
-mod basic_struct;
 mod chain;
 mod command;
 mod completion;

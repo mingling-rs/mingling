@@ -58,7 +58,9 @@ fn test_pattern_analyzer_once() {
     let result = analyzer
         .analyze_file(dir.join("src/has_sub_mod.rs"))
         .unwrap();
-    assert!(result.contains("::directly_sub_mod::DirectlySubModStruct"));
+
+    // NO, basic_struct is disabled.
+    assert!(!result.contains("::directly_sub_mod::DirectlySubModStruct"));
 }
 
 #[test]
