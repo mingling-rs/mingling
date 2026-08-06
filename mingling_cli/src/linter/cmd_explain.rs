@@ -1,4 +1,4 @@
-use crate::{Next, linter::registry::LintRegistry};
+use crate::{Next, linter::registry::ResLintRegistry};
 use mingling::{
     Grouped, LazyRes, Routable, ShellContext, StructuralData, Suggest, SuggestItem,
     macros::{
@@ -44,7 +44,7 @@ pub fn handle_explain(args: EntryExplain) -> Next {
 #[chain]
 pub fn handle_state_explain_lint(
     p: StateExplainLint,
-    registry: &mut LazyRes<LintRegistry>,
+    registry: &mut LazyRes<ResLintRegistry>,
 ) -> Next {
     let registry = registry.get_ref();
     let lint_name = p.inner;
@@ -80,7 +80,7 @@ pub fn render_error_no_explain_lint_provided(_: ErrorNoExplainLintProvided) {
 }
 
 #[renderer(buffer)]
-pub fn render_error_no_such_lint(err: ErrorNoSuchLint, registry: &mut LazyRes<LintRegistry>) {
+pub fn render_error_no_such_lint(err: ErrorNoSuchLint, registry: &mut LazyRes<ResLintRegistry>) {
     let registry = registry.get_ref();
     r_println!("No such lint: \"{}\"", err.info);
     r_println!("");
@@ -91,7 +91,7 @@ pub fn render_error_no_such_lint(err: ErrorNoSuchLint, registry: &mut LazyRes<Li
 }
 
 #[completion(EntryExplain)]
-pub fn complete_explain(ctx: &ShellContext, registry: &mut LazyRes<LintRegistry>) -> Suggest {
+pub fn complete_explain(ctx: &ShellContext, registry: &mut LazyRes<ResLintRegistry>) -> Suggest {
     let registry = registry.get_ref();
     if ctx.previous_word != "explain" {
         return Suggest::FileCompletion;
