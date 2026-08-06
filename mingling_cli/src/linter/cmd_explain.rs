@@ -1,8 +1,8 @@
 use mingling::{
-    Grouped, Routable, StructuralData,
+    Grouped, Routable, ShellContext, StructuralData, Suggest, SuggestItem,
     macros::{
-        arg, buffer, chain, dispatcher, metadata, pack, pack_err_structural, r_println, renderer,
-        routeify,
+        arg, buffer, chain, completion, dispatcher, metadata, pack, pack_err_structural, r_println,
+        renderer, routeify,
     },
     metadata::Description,
     picker::EntryPicker,
@@ -120,4 +120,21 @@ pub fn render_error_no_such_lint(err: ErrorNoSuchLint) {
     for entry in &lint_registry().lints {
         r_println!("  {}", entry.name);
     }
+}
+
+#[completion(EntryExplain)]
+pub fn complete_explain(ctx: &ShellContext) -> Suggest {
+    if ctx.previous_word != "explain" {
+        return Suggest::FileCompletion;
+    }
+    let lints: Vec<String> = lint_registry()
+        .lints
+        .iter()
+        .map(|l| l.name.clone())
+        .collect();
+    let mut suggest = Suggest::new();
+    for lint in lints {
+        suggest.insert(SuggestItem::Simple(lint));
+    }
+    suggest
 }
