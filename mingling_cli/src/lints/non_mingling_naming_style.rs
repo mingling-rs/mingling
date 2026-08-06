@@ -4,14 +4,14 @@
 //!
 //! Checks that Mingling functions follow naming conventions:
 //!
-//! | Prefix | 1st param must be |
-//! |--------|------------------|
-//! | `handle_` | `Entry*` |
-//! | `handle_state_` | `State*` |
-//! | `handle_error_` | `Error*` |
-//! | `help_` | `Entry*` |
-//! | `render_` | `Result*` |
-//! | `render_error_` | `Error*` |
+//! | Prefix          | 1st param must be |
+//! |-----------------|-------------------|
+//! | `handle_`       | `Entry*`          |
+//! | `handle_state_` | `State*`          |
+//! | `handle_error_` | `Error*`          |
+//! | `help_`         | `Entry*`          |
+//! | `render_`       | `Result*`         |
+//! | `render_error_` | `Error*`          |
 //!
 //! The name after prefix (snake_case) must match the type after prefix (PascalCase).
 //!
