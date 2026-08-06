@@ -277,6 +277,7 @@ dependencies = [
  "arg-picker",
  "mingling_core",
  "mingling_macros",
+ "serde",
 ]
 
 [[package]]
@@ -304,6 +305,8 @@ dependencies = [
  "just_template",
  "might_be_async",
  "mingling_pathf",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

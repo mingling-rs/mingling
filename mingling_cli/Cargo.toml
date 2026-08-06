@@ -27,7 +27,8 @@ features = [
     "pathf",
     "dispatch_tree",
     "async",
-    "comp"
+    "comp",
+    "structural_renderer"
 ]
 
 [build-dependencies.mingling]

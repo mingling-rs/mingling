@@ -17,7 +17,7 @@ COMMANDS:
    ra-lint                        Run `mling lint` and output the results
    ra-lint-check                  Run `mling lint` and `cargo check`, and output the combined results
    ra-lint-clippy                 Run `mling lint` and `cargo clippy`, and output the combined results
-   explain <LINT>                 [NOT_IMPL] Explain the meaning of the specified Lint
+   explain <LINT>                 Explain the meaning of the specified Lint
 
   PROJECT MANAGE:
    proj-new <NAME>                [NOT_IMPL] Create a project

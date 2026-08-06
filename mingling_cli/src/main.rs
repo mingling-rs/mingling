@@ -7,9 +7,12 @@ use crate::metadata::{
 };
 use mingling::{
     ShellContext, Suggest,
-    consts::HELP_FLAG,
+    consts::{HELP_FLAG, JSON_FLAG, JSON_PRETTY_FLAG},
     macros::{completion, gen_program, help, suggest},
-    setup::{ExitCodeSetup, picker::HelpFlagSetup},
+    setup::{
+        ExitCodeSetup,
+        picker::{HelpFlagSetup, StructuralRendererSetup},
+    },
 };
 
 pub mod diagnostic;
@@ -26,6 +29,7 @@ async fn main() {
     let mut program = ThisProgram::new();
 
     // Setups
+    program.with_setup(StructuralRendererSetup);
     program.with_setup(HelpFlagSetup::default());
     program.with_setup(ExitCodeSetup::default());
 
@@ -50,6 +54,8 @@ pub fn complete_global(_ctx: &ShellContext) -> Suggest {
         ARG_ALL_FEATURES: "Enable all features",
         ARG_NO_DEFAULT_FEATURES: "Disable default features",
         ARG_NO_DEPS: "Do not include dependencies in metadata",
+        JSON_FLAG: "Render results in JSON format",
+        JSON_PRETTY_FLAG: "Render results in pretty JSON format"
     }
 }
 
