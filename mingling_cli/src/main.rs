@@ -1,8 +1,11 @@
-use crate::metadata::{
-    MinglingMetadataSetup,
-    setup::{
-        ARG_ALL_FEATURES, ARG_FEATURES, ARG_MANIFEST_PATH, ARG_MESSAGE_FORMAT,
-        ARG_NO_DEFAULT_FEATURES, ARG_NO_DEPS,
+use crate::{
+    linter::registry::LintRegistrySetup,
+    metadata::{
+        MinglingMetadataSetup,
+        setup::{
+            ARG_ALL_FEATURES, ARG_FEATURES, ARG_MANIFEST_PATH, ARG_MESSAGE_FORMAT,
+            ARG_NO_DEFAULT_FEATURES, ARG_NO_DEPS,
+        },
     },
 };
 use mingling::{
@@ -34,6 +37,7 @@ async fn main() {
     program.with_setup(ExitCodeSetup::default());
 
     program.with_setup(MinglingMetadataSetup);
+    program.with_setup(LintRegistrySetup);
 
     // Exec
     program.exec_and_exit().await;
