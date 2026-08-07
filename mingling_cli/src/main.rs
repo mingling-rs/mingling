@@ -23,6 +23,7 @@ pub mod message;
 pub mod metadata;
 pub mod pkg_mgr;
 pub mod proj_mgr;
+pub mod utils;
 
 #[tokio::main]
 async fn main() {
