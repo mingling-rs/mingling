@@ -1,4 +1,11 @@
-use crate::{
+use mingling::{
+    ShellContext, Suggest,
+    consts::HELP_FLAG,
+    macros::{completion, help, suggest},
+    setup::{ExitCodeSetup, picker::HelpFlagSetup},
+};
+use mingling_cli::{
+    EntryFallback, ThisProgram,
     linter::registry::LintRegistrySetup,
     metadata::{
         MinglingMetadataSetup,
@@ -7,23 +14,8 @@ use crate::{
             ARG_NO_DEFAULT_FEATURES, ARG_NO_DEPS,
         },
     },
+    utils::display::ColorCode,
 };
-use mingling::{
-    ShellContext, Suggest,
-    consts::HELP_FLAG,
-    macros::{completion, gen_program, help, suggest},
-    setup::{ExitCodeSetup, picker::HelpFlagSetup},
-};
-
-pub mod diagnostic;
-pub mod errors;
-pub mod linter;
-pub mod lints;
-pub mod message;
-pub mod metadata;
-pub mod pkg_mgr;
-pub mod proj_mgr;
-pub mod utils;
 
 #[tokio::main]
 async fn main() {
@@ -42,7 +34,7 @@ async fn main() {
 
 #[help]
 pub fn help_global(_: EntryFallback) -> String {
-    include_str!("../help/help.txt").to_string()
+    include_str!("../../help/help.txt").parse_color_code()
 }
 
 #[completion(EntryFallback)]
@@ -57,5 +49,3 @@ pub fn complete_global(_ctx: &ShellContext) -> Suggest {
         ARG_NO_DEPS: "Do not include dependencies in metadata",
     }
 }
-
-gen_program!();

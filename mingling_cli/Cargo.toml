@@ -17,7 +17,7 @@ path = "src/bin/wrapper.rs"
 
 [[bin]]
 name = "mingling-cli"
-path = "src/main.rs"
+path = "src/bin/cli.rs"
 
 [dependencies.mingling]
 path = "../mingling"
