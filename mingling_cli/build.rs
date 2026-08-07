@@ -7,7 +7,7 @@ fn main() {
     analyze_and_build_type_mapping().ok();
 
     // Generate Mingling CLI Completion Scripts
-    build_comp_scripts("mingling-cli").unwrap();
+    build_comp_scripts("mling").unwrap();
 
     // Generate lint registry
     pre::gen_mod_file().unwrap();
