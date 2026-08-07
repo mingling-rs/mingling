@@ -1,13 +1,16 @@
 use crate::linter::mlint_report::{MlintReport, StateLintReports};
 use cargo_metadata::Metadata;
-use mingling::LazyRes;
 use mingling::consts::REMAINS;
-use mingling::macros::{arg, chain, dispatcher, metadata, pack};
+use mingling::macros::{arg, chain, completion, dispatcher, metadata, pack, suggest};
 use mingling::metadata::Description;
-use mingling::picker::EntryPicker;
+use mingling::picker::parselib::ParserStyle;
+use mingling::picker::{EntryPicker, PickerArg};
+use mingling::{LazyRes, ShellContext, Suggest};
 use tokio::task::JoinSet;
 
 dispatcher!("lint", CMDLint => EntryLint);
+
+const ARG_WITH_CHECKER: PickerArg<Option<String>> = arg![with_checker: Option<String>];
 
 #[metadata(EntryLint)]
 pub fn desc_lint() -> Description {
@@ -79,9 +82,7 @@ pack!(StateBeginLinter = ());
 #[chain]
 pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
     let (with_checker, checker_args) = args
-        .pick_or(&arg![with_checker: Option<String>], || {
-            Some("cargo,check".to_string())
-        })
+        .pick_or(&ARG_WITH_CHECKER, || Some("cargo,check".to_string()))
         .pick(&REMAINS)
         .unwrap();
 
@@ -135,4 +136,23 @@ pub async fn handle_state_begin_linter(
     let metadata = metadata.get_ref().data();
     let reports = linter_main(metadata).await;
     StateLintReports::new(reports)
+}
+
+#[completion(EntryLint)]
+pub fn complete_lint(ctx: &ShellContext) -> Suggest {
+    if mingling::picker::parselib::build_possible_flags(
+        ParserStyle::global_style(),
+        &ARG_WITH_CHECKER.into_info(),
+    )
+    .contains(&ctx.previous_word)
+    {
+        suggest! {
+            "cargo,check": "Also run `cargo check` for checking",
+            "cargo,clippy": "Also run `cargo clippy` for checking",
+        }
+    } else {
+        suggest! {
+            ARG_WITH_CHECKER: "Comma-separated Rust Analyzer-compatible checkers to also run, e.g. `cargo,check`"
+        }
+    }
 }
