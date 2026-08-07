@@ -28,5 +28,5 @@ __  **PACKAGE MANAGE:**
 __   install                        *Install the project to the Mingling package list*
 __   uninstall [PACKAGE]            *Uninstall the project from the Mingling package list*
 __   pkg-show                       **[NOT_IMPL]** *Show locally installed packages*
-__   pkg-enable <NAME>              **[NOT_IMPL]** *Enable the specified package*
-__   pkg-disable <NAME>             **[NOT_IMPL]** *Disable the specified package*
+__   pkg-enable <NAME>              *Enable the specified package*
+__   pkg-disable <NAME>             *Disable the specified package*

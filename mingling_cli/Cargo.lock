@@ -341,6 +341,7 @@ dependencies = [
  "mingling",
  "proc-macro2",
  "quote",
+ "semver",
  "serde",
  "serde_json",
  "syn 3.0.2",

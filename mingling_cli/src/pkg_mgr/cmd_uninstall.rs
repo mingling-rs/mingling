@@ -3,8 +3,7 @@ use std::{fs, io, path::PathBuf};
 use mingling::{
     Grouped, LazyRes, Routable, ShellContext, Suggest, SuggestItem,
     macros::{
-        arg, buffer, chain, command, completion, metadata, pack, pack_err, r_println, renderer,
-        routeify,
+        arg, buffer, chain, command, completion, metadata, pack, r_println, renderer, routeify,
     },
     metadata::Description,
     picker::{EntryPicker, PickerArg},
@@ -13,13 +12,14 @@ use mingling::{
 use crate::{
     Next,
     metadata::setup::ResMetadata,
-    pkg_mgr::{ErrorNoDataDirectory, ErrorRootPackageNotFound, ResPackagesDir},
+    pkg_mgr::{
+        ErrorNoDataDirectory, ErrorPackageSpecInvalid, ErrorRootPackageNotFound, ResPackagesDir,
+    },
 };
 
 /// Optional positional argument: package spec (`name` or `name@version`)
 pub static ARG_PACKAGE: PickerArg<Option<String>> = arg![Option<String>];
 
-pack_err!(ErrorPackageSpecInvalid = String);
 pack!(StateUninstallPackages = Vec<String>);
 
 #[derive(Debug, Default, Grouped)]

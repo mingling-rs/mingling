@@ -1,4 +1,6 @@
 pub mod cmd_install;
+pub mod cmd_pkg_disable;
+pub mod cmd_pkg_enable;
 pub mod cmd_uninstall;
 
 use std::path::PathBuf;
@@ -12,6 +14,8 @@ use crate::ThisProgram;
 
 pack_err!(ErrorRootPackageNotFound);
 pack_err!(ErrorNoDataDirectory);
+pack_err!(ErrorPackageSpecInvalid = String);
+pack_err!(ErrorPackageNameRequired);
 
 /// The `.mingling` packages directory under the user's data directory.
 #[derive(Debug, Default, Clone)]
@@ -37,4 +41,14 @@ pub fn render_error_root_package_not_found(_: ErrorRootPackageNotFound) {
 #[renderer(buffer)]
 pub fn render_error_no_data_directory(_: ErrorNoDataDirectory) {
     r_println!("error: failed to determine the data directory");
+}
+
+#[renderer(buffer)]
+pub fn render_error_package_spec_invalid(err: ErrorPackageSpecInvalid) {
+    r_println!("error: invalid package spec: {}", err.info);
+}
+
+#[renderer(buffer)]
+pub fn render_error_package_name_required(_: ErrorPackageNameRequired) {
+    r_println!("error: a package name is required");
 }
