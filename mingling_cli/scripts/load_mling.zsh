@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/zsh
 
-MLING_SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+MLING_SCRIPT_DIR="${${(%):-%x}:A:h}"
 
 export PATH="$MLING_SCRIPT_DIR/bin:$PATH"
 
