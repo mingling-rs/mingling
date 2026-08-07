@@ -1,14 +1,13 @@
 use crate::{Next, linter::registry::ResLintRegistry};
 use mingling::{
-    Grouped, LazyRes, Routable, ShellContext, StructuralData, Suggest, SuggestItem,
+    Grouped, LazyRes, Routable, ShellContext, Suggest, SuggestItem,
     macros::{
-        arg, buffer, chain, completion, dispatcher, metadata, pack, pack_err_structural, r_println,
-        renderer, routeify,
+        arg, buffer, chain, completion, dispatcher, metadata, pack, pack_err, r_println, renderer,
+        routeify,
     },
     metadata::Description,
     picker::EntryPicker,
 };
-use serde::Serialize;
 
 dispatcher!("explain");
 
@@ -18,10 +17,10 @@ pub fn desc_explain() -> Description {
 }
 
 pack!(StateExplainLint = String);
-pack_err_structural!(ErrorNoExplainLintProvided);
-pack_err_structural!(ErrorNoSuchLint = String);
+pack_err!(ErrorNoExplainLintProvided);
+pack_err!(ErrorNoSuchLint = String);
 
-#[derive(Debug, Default, Grouped, StructuralData, Serialize)]
+#[derive(Debug, Default, Grouped)]
 pub struct ResultExplainLint {
     pub lint_name: String,
     pub title: String,

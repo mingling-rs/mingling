@@ -28,7 +28,6 @@ features = [
     "dispatch_tree",
     "async",
     "comp",
-    "structural_renderer"
 ]
 
 [build-dependencies.mingling]
