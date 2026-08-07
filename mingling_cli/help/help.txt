@@ -11,7 +11,7 @@ __      --no-deps                   *Do not include dependencies in metadata*
 
 **COMMANDS:**
 __  **METADATA:**
-__    metadata                      *Check your workspace metadata using 'cargo metadata'*
+__   metadata                       *Check your workspace metadata using 'cargo metadata'*
 __
 __  **LINTER:**
 __   lint                           *Mingling Linter*
