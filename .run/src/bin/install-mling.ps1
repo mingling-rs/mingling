@@ -1,7 +1,10 @@
-cargo install --path mingling_cli
+$ErrorActionPreference = "Stop"
 
-New-Item -ItemType Directory -Force -Path .temp/comp | Out-Null
-# Copy all files containing _comp from the debug directory
-Get-ChildItem .temp/target/release/*_comp* | ForEach-Object {
-    Copy-Item $_.FullName .temp/comp/
-}
+cargo build --release --manifest-path mingling_cli/Cargo.toml
+
+New-Item -ItemType Directory -Force -Path .temp/mling/bin, .temp/mling/scripts | Out-Null
+
+Copy-Item .temp/target/release/mling.exe .temp/mling/bin/
+Copy-Item .temp/target/release/mingling-cli.exe .temp/mling/bin/
+Copy-Item .temp/target/release/mingling-cli_comp.ps1 .temp/mling/scripts/mling_comp.ps1
+Copy-Item mingling_cli/scripts/load_mling.ps1 .temp/mling/
