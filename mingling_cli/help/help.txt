@@ -26,6 +26,6 @@ __   proj-init                      **[NOT_IMPL]** *Initialize a project*
 
 __  **PACKAGE MANAGE:**
 __   install                        **[NOT_IMPL]** *Install the project to the Mingling package list*
-__   package-show                   **[NOT_IMPL]** *Show locally installed packages*
-__   package-enable <NAME>          **[NOT_IMPL]** *Enable the specified package*
-__   package-disable <NAME>         **[NOT_IMPL]** *Disable the specified package*
+__   pkg-show                       **[NOT_IMPL]** *Show locally installed packages*
+__   pkg-enable <NAME>              **[NOT_IMPL]** *Enable the specified package*
+__   pkg-disable <NAME>             **[NOT_IMPL]** *Disable the specified package*
