@@ -1,30 +1,31 @@
-USAGE: mling [GLOBAL_FLAGS] [COMMAND] [ARGS...]
+**USAGE:** *mling [GLOBAL_FLAGS] [COMMAND] [ARGS...]*
 
-GLOBAL_FLAGS:
-      --all-features              Enable all features
-      --features <FEATURES>       List of features to enable
-  -h, --help                      Show help messages
-      --manifest-path <PATH>      Custom path to Cargo.toml
-      --message-format <FORMAT>   Output message format
-      --no-default-features       Disable default features
-      --no-deps                   Do not include dependencies in metadata
+**GLOBAL_FLAGS:**
+__      --all-features              *Enable all features*
+__      --features <FEATURES>       *List of features to enable*
+__  -h, --help                      *Show help messages*
+__      --manifest-path <PATH>      *Custom path to Cargo.toml*
+__      --message-format <FORMAT>   *Output message format*
+__      --no-default-features       *Disable default features*
+__      --no-deps                   *Do not include dependencies in metadata*
 
-COMMANDS:
-  metadata                        Check your workspace metadata using 'cargo metadata'
+**COMMANDS:**
+__  **METADATA:**
+__    metadata                      *Check your workspace metadata using 'cargo metadata'*
+__
+__  **LINTER:**
+__   lint                           *Mingling Linter*
+__   ra-lint                        *Run* `mling lint` *and output the results*
+__   ra-lint-check                  *Run* `mling lint` *and* `cargo check`*, and output the combined results*
+__   ra-lint-clippy                 *Run* `mling lint` *and* `cargo clippy`*, and output the combined results*
+__   explain <LINT>                 *Explain the meaning of the specified Lint*
 
-  LINTER:
-   lint                           Mingling Linter
-   ra-lint                        Run `mling lint` and output the results
-   ra-lint-check                  Run `mling lint` and `cargo check`, and output the combined results
-   ra-lint-clippy                 Run `mling lint` and `cargo clippy`, and output the combined results
-   explain <LINT>                 Explain the meaning of the specified Lint
+__  **PROJECT MANAGE:**
+__   proj-new <NAME>                **[NOT_IMPL]** *Create a project*
+__   proj-init                      **[NOT_IMPL]** *Initialize a project*
 
-  PROJECT MANAGE:
-   proj-new <NAME>                [NOT_IMPL] Create a project
-   proj-init                      [NOT_IMPL] Initialize a project
-
-  PACKAGE MANAGE:
-   install                        [NOT_IMPL] Install the project to the Mingling package list
-   package-show                   [NOT_IMPL] Show locally installed packages
-   package-enable <NAME>          [NOT_IMPL] Enable the specified package
-   package-disable <NAME>         [NOT_IMPL] Disable the specified package
+__  **PACKAGE MANAGE:**
+__   install                        **[NOT_IMPL]** *Install the project to the Mingling package list*
+__   package-show                   **[NOT_IMPL]** *Show locally installed packages*
+__   package-enable <NAME>          **[NOT_IMPL]** *Enable the specified package*
+__   package-disable <NAME>         **[NOT_IMPL]** *Disable the specified package*
