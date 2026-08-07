@@ -61,8 +61,11 @@ _<<<bin_name>>>_completion() {
     fi
 }
 
-compdef _<<<bin_name>>>_completion <<<bin_name>>>
-
-if [[ $? -ne 0 ]]; then
+if (( $+functions[compdef] )); then
+    compdef _<<<bin_name>>>_completion <<<bin_name>>>
+    if [[ $? -ne 0 ]]; then
+        compctl -K _<<<bin_name>>>_completion <<<bin_name>>>
+    fi
+else
     compctl -K _<<<bin_name>>>_completion <<<bin_name>>>
 fi
