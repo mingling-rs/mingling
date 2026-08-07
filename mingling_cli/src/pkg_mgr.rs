@@ -1,6 +1,8 @@
 pub mod cmd_install;
+pub mod cmd_internal_loadpkgs;
 pub mod cmd_pkg_disable;
 pub mod cmd_pkg_enable;
+pub mod cmd_pkg_show;
 pub mod cmd_uninstall;
 
 use std::path::PathBuf;
