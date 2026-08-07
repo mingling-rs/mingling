@@ -67,14 +67,14 @@ impl ColorCode for String {
 ///
 /// # Examples
 /// ```
-/// # use mingling_cli::display::markdown;
-/// let formatted = markdown("Hello **world**!");
+/// # use mingling_cli::utils::display::parse;
+/// let formatted = parse("Hello **world**!");
 /// println!("{}", formatted);
 ///
-/// let colored = markdown("[[red]]Red text[[/]] and normal text");
+/// let colored = parse("[[red]]Red text[[/]] and normal text");
 /// println!("{}", colored);
 ///
-/// let nested = markdown("[[blue]]Blue [[green]]Green[[/]] Blue[[/]] normal");
+/// let nested = parse("[[blue]]Blue [[green]]Green[[/]] Blue[[/]] normal");
 /// println!("{}", nested);
 /// ```
 pub fn parse(text: impl AsRef<str>) -> String {
