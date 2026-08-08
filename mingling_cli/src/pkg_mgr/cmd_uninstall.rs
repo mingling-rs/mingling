@@ -1,32 +1,35 @@
 use std::{fs, io, path::PathBuf};
 
 use mingling::{
-    Grouped, LazyRes, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{
-        arg, buffer, chain, command, completion, metadata, pack, r_println, renderer, routeify,
-    },
+    LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
+    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
     metadata::Description,
     picker::{EntryPicker, PickerArg},
 };
 
 use crate::{
-    Next,
+    Next, eprintln_cargo,
     metadata::setup::ResMetadata,
     pkg_mgr::{
         ErrorNoDataDirectory, ErrorPackageSpecInvalid, ErrorRootPackageNotFound, ResPackagesDir,
     },
+    println_cargo,
 };
 
 /// Optional positional argument: package spec (`name` or `name@version`)
 pub static ARG_PACKAGE: PickerArg<Option<String>> = arg![Option<String>];
 
+// Directory names to remove, e.g. `["omg@0.1.0", "omg@0.1.1"]`
 pack!(StateUninstallPackages = Vec<String>);
 
-#[derive(Debug, Default, Grouped)]
-pub struct ResultUninstall {
-    pub removed: Vec<PathBuf>,
-    pub not_installed: Vec<PathBuf>,
-}
+// Directories that were successfully removed.
+pack!(ResultPackageUninstalled = Vec<PathBuf>);
+
+// Directories that were not installed.
+pack_err!(ErrorPackageNotInstall = Vec<PathBuf>);
+
+// No installed package matched the given spec.
+pack_err!(ErrorNoMatchingPackages);
 
 /// `{data_dir}/.mingling`
 #[metadata(EntryUninstall)]
@@ -96,6 +99,7 @@ pub fn handle_state_uninstall_packages(
     if packages_dir.as_os_str().is_empty() {
         return ErrorNoDataDirectory::default().to_chain();
     }
+
     let mut removed = Vec::new();
     let mut not_installed = Vec::new();
 
@@ -111,25 +115,38 @@ pub fn handle_state_uninstall_packages(
         removed.push(dir);
     }
 
-    ResultUninstall {
-        removed,
-        not_installed,
+    if removed.is_empty() && not_installed.is_empty() {
+        return ErrorNoMatchingPackages::default().to_chain();
     }
-    .to_chain()
+    if !removed.is_empty() {
+        return ResultPackageUninstalled::new(removed).to_chain();
+    }
+    ErrorPackageNotInstall::new(not_installed).to_chain()
 }
 
-#[renderer(buffer)]
-pub fn render_result_uninstall(r: ResultUninstall) {
-    if r.removed.is_empty() && r.not_installed.is_empty() {
-        r_println!("No matching packages installed");
-    } else {
-        for dir in r.removed {
-            r_println!("Uninstalled: {}", dir.display());
-        }
-        for dir in r.not_installed {
-            r_println!("Not installed: {}", dir.display());
-        }
+#[renderer]
+pub fn render_result_package_uninstalled(r: ResultPackageUninstalled) -> RenderResult {
+    let mut result = RenderResult::new();
+    for dir in r.inner {
+        println_cargo!(result, "Uninstalled: {}", dir.display());
     }
+    result
+}
+
+#[renderer]
+pub fn render_error_package_not_install(err: ErrorPackageNotInstall) -> RenderResult {
+    let mut result = RenderResult::new();
+    for dir in err.info {
+        eprintln_cargo!(result, "not installed: {}", dir.display());
+    }
+    result
+}
+
+#[renderer]
+pub fn render_error_no_matching_packages(_: ErrorNoMatchingPackages) -> RenderResult {
+    let mut result = RenderResult::new();
+    eprintln_cargo!(result, "no matching packages installed");
+    result
 }
 
 #[completion(EntryUninstall)]
