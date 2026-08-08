@@ -12,9 +12,6 @@ members = [
     # Picker2
     "arg_picker",
     "arg_picker_macros",
-
-    # Scaffolding tool
-    # "mling" (deprecated)
 ]
 
 exclude = [
