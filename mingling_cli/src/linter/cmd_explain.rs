@@ -1,6 +1,6 @@
-use crate::{Next, linter::registry::ResLintRegistry};
+use crate::{Next, eprintln_cargo, linter::registry::ResLintRegistry};
 use mingling::{
-    Grouped, LazyRes, Routable, ShellContext, Suggest, SuggestItem,
+    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
     macros::{
         arg, buffer, chain, completion, dispatcher, metadata, pack, pack_err, r_println, renderer,
         routeify,
@@ -71,22 +71,29 @@ pub fn render_explain_lint(r: ResultExplainLint) {
     r_println!("{}", r.summary);
 }
 
-#[renderer(buffer)]
-pub fn render_error_no_explain_lint_provided(_: ErrorNoExplainLintProvided) {
-    r_println!("No lint name provided");
-    r_println!("");
-    r_println!("Usage: mling explain <LINT>");
+#[renderer]
+pub fn render_error_no_explain_lint_provided(_: ErrorNoExplainLintProvided) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "No lint name provided");
+    r_println!(r, "");
+    r_println!(r, "Usage: mling explain <LINT>");
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_no_such_lint(err: ErrorNoSuchLint, registry: &mut LazyRes<ResLintRegistry>) {
+#[renderer]
+pub fn render_error_no_such_lint(
+    err: ErrorNoSuchLint,
+    registry: &mut LazyRes<ResLintRegistry>,
+) -> RenderResult {
+    let mut r = RenderResult::new();
     let registry = registry.get_ref();
-    r_println!("No such lint: \"{}\"", err.info);
-    r_println!("");
-    r_println!("Available lints:");
+    eprintln_cargo!(r, "No such lint: \"{}\"", err.info);
+    r_println!(r, "");
+    r_println!(r, "Available lints:");
     for entry in registry.lints.iter() {
-        r_println!("  {}", entry.name);
+        r_println!(r, "  {}", entry.name);
     }
+    r
 }
 
 #[completion(EntryExplain)]

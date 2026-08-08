@@ -8,11 +8,11 @@ pub mod cmd_uninstall;
 use std::path::PathBuf;
 
 use mingling::{
-    Program,
-    macros::{buffer, pack_err, program_setup, r_println, renderer},
+    Program, RenderResult,
+    macros::{pack_err, program_setup, r_println, renderer},
 };
 
-use crate::ThisProgram;
+use crate::{ThisProgram, eprintln_cargo, hprintln_cargo};
 
 pack_err!(ErrorRootPackageNotFound);
 pack_err!(ErrorNoDataDirectory);
@@ -33,24 +33,35 @@ pub fn package_manager_setup(program: &mut Program<ThisProgram>) {
     program.with_resource(ResPackagesDir { path });
 }
 
-#[renderer(buffer)]
-pub fn render_error_root_package_not_found(_: ErrorRootPackageNotFound) {
-    r_println!("error: failed to determine the root package");
-    r_println!("");
-    r_println!("Run `mling install` / `mling uninstall` inside a Cargo workspace");
+#[renderer]
+pub fn render_error_root_package_not_found(_: ErrorRootPackageNotFound) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "failed to determine the root package");
+    r_println!(r, "");
+    hprintln_cargo!(
+        r,
+        "Run `mling install` / `mling uninstall` inside a Cargo workspace"
+    );
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_no_data_directory(_: ErrorNoDataDirectory) {
-    r_println!("error: failed to determine the data directory");
+#[renderer]
+pub fn render_error_no_data_directory(_: ErrorNoDataDirectory) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "failed to determine the data directory");
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_package_spec_invalid(err: ErrorPackageSpecInvalid) {
-    r_println!("error: invalid package spec: {}", err.info);
+#[renderer]
+pub fn render_error_package_spec_invalid(err: ErrorPackageSpecInvalid) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "invalid package spec: {}", err.info);
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_package_name_required(_: ErrorPackageNameRequired) {
-    r_println!("error: a package name is required");
+#[renderer]
+pub fn render_error_package_name_required(_: ErrorPackageNameRequired) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "a package name is required");
+    r
 }

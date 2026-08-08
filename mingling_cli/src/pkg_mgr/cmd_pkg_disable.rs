@@ -1,20 +1,18 @@
 use std::{fs, io};
 
 use mingling::{
-    Grouped, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{
-        arg, buffer, chain, command, completion, metadata, pack, pack_err, r_println, renderer,
-        routeify,
-    },
+    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
+    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
     metadata::Description,
     picker::{EntryPicker, PickerArg},
 };
 
 use crate::{
-    Next,
+    Next, eprintln_cargo,
     pkg_mgr::{
         ErrorNoDataDirectory, ErrorPackageNameRequired, ErrorPackageSpecInvalid, ResPackagesDir,
     },
+    println_cargo,
 };
 
 /// Positional argument: package name
@@ -78,14 +76,18 @@ pub fn handle_state_pkg_disable(p: StatePkgDisable, packages_dir: &ResPackagesDi
     .to_chain()
 }
 
-#[renderer(buffer)]
-pub fn render_result_pkg_disable(r: ResultPkgDisable) {
-    r_println!("Disabled {}", r.name);
+#[renderer]
+pub fn render_result_pkg_disable(result: ResultPkgDisable) -> RenderResult {
+    let mut r = RenderResult::new();
+    println_cargo!(r, "Disabled: {}", result.name);
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_package_not_enabled(err: ErrorPackageNotEnabled) {
-    r_println!("error: package is not enabled: {}", err.info);
+#[renderer]
+pub fn render_error_package_not_enabled(err: ErrorPackageNotEnabled) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "package is not enabled: {}", err.info);
+    r
 }
 
 #[completion(EntryPkgDisable)]

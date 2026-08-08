@@ -2,15 +2,16 @@ use std::{env, fs, io, path::PathBuf, process::Command};
 
 use cargo_metadata::TargetKind;
 use mingling::{
-    Grouped, LazyRes, Routable,
-    macros::{buffer, chain, command, metadata, pack_err, r_println, renderer, routeify},
+    Grouped, LazyRes, RenderResult, Routable,
+    macros::{chain, command, metadata, pack_err, r_println, renderer, routeify},
     metadata::Description,
 };
 
 use crate::{
-    Next,
+    Next, eprintln_cargo,
     metadata::setup::ResMetadata,
     pkg_mgr::{ErrorNoDataDirectory, ErrorRootPackageNotFound, ResPackagesDir},
+    println_cargo,
 };
 
 pack_err!(ErrorBuildFailed = String);
@@ -159,20 +160,26 @@ pub fn handle_state_install_copy(
     .to_chain()
 }
 
-#[renderer(buffer)]
-pub fn render_result_install(r: ResultInstall) {
-    r_println!("Installed to {}", r.install_dir.display());
-    for file in r.installed {
-        r_println!("  {}", file.display());
+#[renderer]
+pub fn render_result_install(result: ResultInstall) -> RenderResult {
+    let mut r = RenderResult::new();
+    println_cargo!(r, "Installed: {}", result.install_dir.display());
+    for file in result.installed {
+        r_println!(r, "  {}", file.display());
     }
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_build_failed(err: ErrorBuildFailed) {
-    r_println!("error: {}", err.info);
+#[renderer]
+pub fn render_error_build_failed(err: ErrorBuildFailed) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "{}", err.info);
+    r
 }
 
-#[renderer(buffer)]
-pub fn render_error_binary_not_found(err: ErrorBinaryNotFound) {
-    r_println!("error: binary not found: {}", err.info);
+#[renderer]
+pub fn render_error_binary_not_found(err: ErrorBinaryNotFound) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "binary not found: {}", err.info);
+    r
 }

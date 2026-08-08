@@ -1,20 +1,18 @@
 use std::{fs, io};
 
 use mingling::{
-    Grouped, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{
-        arg, buffer, chain, command, completion, metadata, pack, pack_err, r_println, renderer,
-        routeify,
-    },
+    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
+    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
     metadata::Description,
     picker::{EntryPicker, PickerArg},
 };
 
 use crate::{
-    Next,
+    Next, eprintln_cargo,
     pkg_mgr::{
         ErrorNoDataDirectory, ErrorPackageNameRequired, ErrorPackageSpecInvalid, ResPackagesDir,
     },
+    println_cargo,
 };
 
 /// Positional argument: package spec (`foo`, `foo@0`, `foo@0.1`, `foo@0.1.2`)
@@ -102,9 +100,18 @@ pub fn handle_state_pkg_enable(p: StatePkgEnable, packages_dir: &ResPackagesDir)
     ResultPkgEnable { name, version }.to_chain()
 }
 
-#[renderer(buffer)]
-pub fn render_result_pkg_enable(r: ResultPkgEnable) {
-    r_println!("Enabled {}@{}", r.name, r.version);
+#[renderer]
+pub fn render_result_pkg_enable(result: ResultPkgEnable) -> RenderResult {
+    let mut r = RenderResult::new();
+    println_cargo!(r, "Enabled: {}@{}", result.name, result.version);
+    r
+}
+
+#[renderer]
+pub fn render_error_no_matching_version(err: ErrorNoMatchingVersion) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "no matching version for: {}", err.info);
+    r
 }
 
 #[completion(EntryPkgEnable)]
