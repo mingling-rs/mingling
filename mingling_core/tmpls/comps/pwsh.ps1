@@ -18,7 +18,7 @@ Register-ArgumentCompleter -Native -CommandName '<<<bin_name>>>' -ScriptBlock {
     $found = $false
     for ($i = 0; $i -lt $elements.Count; $i++) {
         if ($elements[$i] -eq $currentWord) {
-            $wordIndex = $i
+            $wordIndex = $i + 1
             if ($i -gt 0) {
                 $previousWord = $elements[$i - 1]
             }
@@ -28,25 +28,40 @@ Register-ArgumentCompleter -Native -CommandName '<<<bin_name>>>' -ScriptBlock {
     }
 
     if (-not $found) {
-        $wordIndex = $elements.Count
+        $wordIndex = $elements.Count + 1
         if ($elements.Count -gt 0) {
             $previousWord = $elements[-1]
         }
     }
 
     $args = @(
-        "-f", ($line -replace '-', '^')
         "-C", $cursorPosition.ToString()
-        "-w", ($currentWord -replace '-', '^')
-        "-p", ($previousWord -replace '-', '^')
-        "-c", ($commandName -replace '-', '^')
         "-i", $wordIndex.ToString()
         "-F", "Powershell"
     )
 
+    if ($line) {
+        $args += "-f"
+        $args += ($line -replace '-', '^')
+    }
+    if ($currentWord) {
+        $args += "-w"
+        $args += ($currentWord -replace '-', '^')
+    }
+    if ($previousWord) {
+        $args += "-p"
+        $args += ($previousWord -replace '-', '^')
+    }
+    if ($commandName) {
+        $args += "-c"
+        $args += ($commandName -replace '-', '^')
+    }
+
     foreach ($element in $elements) {
-        $args += "-a"
-        $args += ($element -replace '-', '^')
+        if ($element) {
+            $args += "-a"
+            $args += ($element -replace '-', '^')
+        }
     }
 
     $originalEncoding = [Console]::OutputEncoding

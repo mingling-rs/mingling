@@ -106,6 +106,15 @@ None
 
     Structs that are analyzed by other patterns (e.g., `GroupedDerivePattern`, `ChainPattern`, etc.) continue to work exactly as before — only the standalone "bare struct with no macro association" detection has been removed.
 
+9. **[`comps:pwsh`]** Fixed and refactored the PowerShell completion script template in `mingling_core/tmpls/comps/pwsh.ps1`:
+
+    - **Option value passing** — Changed from the compact `"-f", ($line -replace '-', '^')` array-literal style to conditionally appended `$args += "-f"` / `$args += ($line -replace '-', '^')` pairs for each of `-f`, `-w`, `-p`, and `-c`. This ensures empty values are not passed to the completion engine, preventing spurious argument parsing.
+    - **Word index fix** — `$wordIndex` is now `$i + 1` (when the current word is found in the element list) and `$elements.Count + 1` (when not found), correcting off-by-one indexing. Since the elements array starts at index 0, the actual 1-based word index that the completion engine expects is the array index plus one.
+    - **Empty element filtering** — The `-a` argument loop now skips empty elements (`if ($element)`) so blank entries in the element list are not passed as standalone `-a` arguments with empty values.
+    - **Non-flag optional arguments** — The `-C` (cursor position) and `-i` (word index) parameters remain unconditionally passed, while `-f`, `-w`, `-p`, `-c`, and `-a` are only emitted when their corresponding values are non-empty.
+
+    These changes fix incorrect word-index computation and avoid sending empty option values to the underlying completion engine from PowerShell completions.
+
 #### Optimizations:
 
 1. **[`pathf`]** Added `is_module` field to `AnalyzeItem` and a new constructor `AnalyzeItem::local_module(module, item_name)` which sets `is_module: true`. The `type_mapping_builder` now tracks whether an item is a module: when generating `type_using.rs`, module items produce `use path::to::module::*;` (glob import) instead of the standard `use path::to::TypeName;` direct import. Non-module items continue to use direct imports as before. The internal data structure changed from `Vec<(String, String)>` to `Vec<(String, String, bool)>` to carry the `is_module` flag through the pipeline.
