@@ -3,7 +3,7 @@ use std::{env, fs, io, path::PathBuf, process::Command};
 use cargo_metadata::TargetKind;
 use mingling::{
     Grouped, LazyRes, RenderResult, Routable,
-    macros::{chain, command, metadata, pack_err, r_println, renderer, routeify},
+    macros::{chain, command, metadata, pack_err, renderer, routeify},
     metadata::Description,
 };
 
@@ -165,7 +165,7 @@ pub fn render_result_install(result: ResultInstall) -> RenderResult {
     let mut r = RenderResult::new();
     println_cargo!(r, "Installed: {}", result.install_dir.display());
     for file in result.installed {
-        r_println!(r, "  {}", file.display());
+        println_cargo!(r, "Copy: {}", file.display());
     }
     r
 }
