@@ -2,13 +2,13 @@ use std::{collections::BTreeMap, fs, io};
 
 use colored::Colorize;
 use mingling::{
-    Grouped, Routable,
-    macros::{buffer, command, metadata, r_println, renderer, routeify},
+    Grouped, RenderResult, Routable,
+    macros::{buffer, command, metadata, pack_err, r_println, renderer, routeify},
     metadata::Description,
 };
 
 use crate::{
-    Next,
+    Next, eprintln_cargo,
     pkg_mgr::{ErrorNoDataDirectory, ResPackagesDir},
 };
 
@@ -30,6 +30,8 @@ pub struct ResultPkgShow {
 pub fn desc_pkg_show() -> Description {
     "Show locally installed packages".into()
 }
+
+pack_err!(ErrorNoPackagesInstalled);
 
 #[command(node = "pkg-show", routeify)]
 pub fn package_show(packages_dir: &ResPackagesDir) -> Next {
@@ -79,17 +81,17 @@ pub fn package_show(packages_dir: &ResPackagesDir) -> Next {
         pkg.versions.sort_by(|a, b| compare_versions(b, a));
     }
 
-    ResultPkgShow {
-        packages: entries.into_values().collect(),
+    let packages: Vec<PkgShowEntry> = entries.into_values().collect();
+
+    if packages.is_empty() {
+        return ErrorNoPackagesInstalled::default().into();
     }
-    .to_chain()
+
+    ResultPkgShow { packages }.to_chain()
 }
 
 #[renderer(buffer)]
 pub fn render_result_pkg_show(r: ResultPkgShow) {
-    if r.packages.is_empty() {
-        r_println!("No packages installed");
-    }
     for pkg in r.packages {
         if let Some(enabled) = &pkg.enabled {
             r_println!("{}", format!("{} ({})", pkg.name, enabled).bright_cyan());
@@ -100,6 +102,13 @@ pub fn render_result_pkg_show(r: ResultPkgShow) {
             r_println!("  {version}");
         }
     }
+}
+
+#[renderer]
+pub fn render_error_no_packages_installed(_: ErrorNoPackagesInstalled) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "No packages installed");
+    r
 }
 
 /// Newest first; unparsable versions sort last, compared lexicographically.
