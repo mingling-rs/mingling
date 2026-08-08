@@ -16,7 +16,7 @@ checksum = "6170dccbc3ea15dfb7f2da964097f814aba1dd8f746d4ffc56f33245c38e6d96"
 
 [[package]]
 name = "mingling_pathf"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "just_fmt 0.2.0",
  "proc-macro2",

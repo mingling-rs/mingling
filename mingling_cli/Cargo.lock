@@ -272,7 +272,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "arg-picker",
  "mingling_core",
@@ -281,7 +281,7 @@ dependencies = [
 
 [[package]]
 name = "mingling-cli"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "annotate-snippets",
  "cargo_metadata",
@@ -298,7 +298,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "just_fmt 0.2.0",
  "might_be_async",
@@ -307,7 +307,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "just_fmt 0.2.0",
  "proc-macro2",
@@ -317,7 +317,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_pathf"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "just_fmt 0.2.0",
  "proc-macro2",

@@ -27,7 +27,7 @@
 
 💡 Its name comes from the Chinese pinyin **"Mìng Lìng"**, which means **"command"**.
 
-## WARNING
+## ⚠WARNING
 
 Mingling is currently usable at a basic level, but it is still under active development, so many APIs are not yet mature. Any changes to the public API will be documented in detail in the [Changelog](https://github.com/mingling-rs/mingling/blob/main/CHANGELOG.md).
 
@@ -99,7 +99,7 @@ Add Mingling to your `Cargo.toml`:
 
 ```toml
 [dependencies.mingling]
-version = "0.3.0"
+version = "0.4.0"
 features = []
 ```
 
