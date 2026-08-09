@@ -26,10 +26,6 @@ const CHECKLIST_FILENAME: &str = "checklist.toml";
 const RULE_FILENAME: &str = "rule.toml";
 /// The directory under the project root where the template cache lives.
 const CACHE_DIR_NAME: &str = "tmpl-cache";
-/// The internal `.mling` directory name inside the template archive (with `tmpl_` prefix).
-const TEMPLATE_MLING_DIR: &str = "tmpl_.mling";
-/// Prefix marking directories/files that participate in expansion.
-const TMPL_PREFIX: &str = "tmpl_";
 
 pack!(StateProjectGenerate = ());
 pack!(StateProjectChecklistReady = Vec<String>);
@@ -164,9 +160,9 @@ pub fn handle_state_project_generate(_: StateProjectGenerate, cwd: &ResCurrentDi
         }
     }
 
-    // Expand all tmpl_* entries to the project root
+    // Expand all template entries to the project root
     let mut generated = Vec::new();
-    expand_tree(&tmpl_cache, cwd, &params, &mut generated)
+    expand_tree(&tmpl_cache, cwd, &params, &mut generated, true)
         .map_err(ErrorTemplateExpandFailed::new)?;
 
     // hide-file: delete the corresponding generated file when the rule is true
@@ -217,37 +213,33 @@ fn copy_dir_contents(src: &Path, dst: &Path) -> io::Result<()> {
 
 /// Recursively expand the template cache into the project root.
 ///
-/// Every path component with a `tmpl_` prefix is stripped for the target path
-/// (`tmpl_src/tmpl_main.rs` -> `src/main.rs`). `tmpl_`-prefixed files are
-/// rendered through `just_template` with the resolved params; other files are
-/// skipped. `tmpl_.mling` is copied into `./.mling` without rendering.
+/// Every file is treated as a `just_template` template and rendered with the
+/// resolved params, except the template metadata files `rule.toml` and
+/// `checklist.toml` at the template root (guarded by `exclude_meta`). Files
+/// and directories keep their names as-is.
 fn expand_tree(
     src_root: &Path,
     dst_root: &Path,
     params: &HashMap<String, String>,
     generated: &mut Vec<PathBuf>,
+    exclude_meta: bool,
 ) -> Result<(), String> {
     for entry in fs::read_dir(src_root).map_err(|e| e.to_string())? {
         let entry = entry.map_err(|e| e.to_string())?;
         let name = entry.file_name().to_string_lossy().into_owned();
         let src = entry.path();
 
-        // The template's own .mling tree is copied verbatim (minus `tmpl_` prefixes).
-        if name == TEMPLATE_MLING_DIR && src.is_dir() {
-            copy_tree(&src, &dst_root.join(".mling")).map_err(|e| e.to_string())?;
+        // Template metadata files are not part of the generated project.
+        if exclude_meta && (name == RULE_FILENAME || name == CHECKLIST_FILENAME) {
             continue;
         }
 
-        let target_name = name
-            .strip_prefix(TMPL_PREFIX)
-            .map(str::to_owned)
-            .unwrap_or(name.clone());
-        let dst = dst_root.join(&target_name);
+        let dst = dst_root.join(&name);
 
         if src.is_dir() {
             fs::create_dir_all(&dst).map_err(|e| e.to_string())?;
-            expand_tree(&src, &dst, params, generated)?;
-        } else if src.is_file() && name.starts_with(TMPL_PREFIX) {
+            expand_tree(&src, &dst, params, generated, false)?;
+        } else if src.is_file() {
             let content = fs::read_to_string(&src).map_err(|e| e.to_string())?;
             let mut tmpl = Template::from(content);
             for (key, value) in params {
@@ -261,28 +253,6 @@ fn expand_tree(
             }
             fs::write(&dst, expanded).map_err(|e| e.to_string())?;
             generated.push(dst);
-        }
-    }
-    Ok(())
-}
-
-/// Copy a directory tree into `dst`, stripping the `tmpl_` prefix from every
-/// component name (e.g. `tmpl_command` -> `command`).
-fn copy_tree(src: &Path, dst: &Path) -> io::Result<()> {
-    fs::create_dir_all(dst)?;
-    for entry in fs::read_dir(src)? {
-        let entry = entry?;
-        let name = entry.file_name().to_string_lossy().into_owned();
-        let target_name = name
-            .strip_prefix(TMPL_PREFIX)
-            .map(str::to_owned)
-            .unwrap_or(name);
-        let from = entry.path();
-        let to = dst.join(&target_name);
-        if from.is_dir() {
-            copy_tree(&from, &to)?;
-        } else if from.is_file() {
-            fs::copy(&from, &to)?;
         }
     }
     Ok(())
