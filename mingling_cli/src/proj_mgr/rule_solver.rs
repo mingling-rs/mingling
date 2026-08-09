@@ -44,10 +44,20 @@ pub struct UserRule {
     pub default: Option<String>,
 }
 
+/// A `[[user.toggle-mutex]]` group: at most one of `mutex` may be enabled.
+#[derive(Debug, Clone)]
+pub struct UserMutex {
+    /// Keys that are mutually exclusive.
+    pub mutex: Vec<String>,
+    /// Human-readable reason shown when the constraint is violated.
+    pub reason: String,
+}
+
 /// All rules parsed from `rule.toml`.
 #[derive(Debug, Default, Clone)]
 pub struct TemplateRules {
     pub users: Vec<UserRule>,
+    pub mutexes: Vec<UserMutex>,
     pub display: Vec<DisplayRule>,
     pub hide_files: Vec<HideFileRule>,
 }
@@ -108,6 +118,30 @@ pub fn parse_rules(content: &str) -> Result<TemplateRules, String> {
                             _ => None,
                         });
                 rules.users.push(UserRule { name, default });
+            }
+        }
+
+        // `[[user.toggle-mutex]]` declares mutually exclusive toggle groups.
+        if let Some(tables) = user_table
+            .get("toggle-mutex")
+            .and_then(|item| item.as_array_of_tables())
+        {
+            for table in tables {
+                let mutex = table
+                    .get("mutex")
+                    .and_then(|v| v.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(str::to_owned))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let reason = table
+                    .get("reason")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("these options are mutually exclusive")
+                    .to_string();
+                rules.mutexes.push(UserMutex { mutex, reason });
             }
         }
     }
@@ -171,6 +205,31 @@ pub fn resolve_answers(
         }
     }
     merged
+}
+
+/// Validate mutually exclusive toggle groups against the resolved answers.
+///
+/// Returns an error for the first group where more than one key is enabled.
+pub fn validate_mutexes(
+    answers: &HashMap<String, String>,
+    rules: &TemplateRules,
+) -> Result<(), String> {
+    for group in &rules.mutexes {
+        let enabled: Vec<&str> = group
+            .mutex
+            .iter()
+            .filter(|key| is_truthy(key, answers))
+            .map(String::as_str)
+            .collect();
+        if enabled.len() > 1 {
+            return Err(format!(
+                "{} (enabled: {})",
+                group.reason,
+                enabled.join(", ")
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Evaluate a boolean rule expression against the checklist answers.
@@ -392,6 +451,54 @@ name = "completion"
         answers.insert("pathf".into(), "false".into());
         let merged = resolve_answers(&answers, &rules);
         assert_eq!(merged.get("pathf").unwrap(), "false");
+    }
+
+    #[test]
+    fn rules_parse_toggle_mutex() {
+        let content = r#"
+[[user.toggle-mutex]]
+mutex = [ "tokio", "async_std", "smol" ]
+reason = "You can only select one async runtime"
+"#;
+        let rules = parse_rules(content).unwrap();
+        assert_eq!(rules.mutexes.len(), 1);
+        assert_eq!(rules.mutexes[0].mutex, vec!["tokio", "async_std", "smol"]);
+        assert_eq!(rules.mutexes[0].reason, "You can only select one async runtime");
+    }
+
+    #[test]
+    fn validate_mutexes_allows_zero_or_one() {
+        let content = r#"
+[[user.toggle-mutex]]
+mutex = [ "tokio", "async_std" ]
+reason = "one async runtime only"
+"#;
+        let rules = parse_rules(content).unwrap();
+
+        // None enabled.
+        assert!(validate_mutexes(&HashMap::new(), &rules).is_ok());
+
+        // Exactly one enabled.
+        let mut answers = HashMap::new();
+        answers.insert("tokio".into(), "true".into());
+        assert!(validate_mutexes(&answers, &rules).is_ok());
+    }
+
+    #[test]
+    fn validate_mutexes_rejects_multiple_enabled() {
+        let content = r#"
+[[user.toggle-mutex]]
+mutex = [ "tokio", "async_std" ]
+reason = "one async runtime only"
+"#;
+        let rules = parse_rules(content).unwrap();
+
+        let mut answers = HashMap::new();
+        answers.insert("tokio".into(), "true".into());
+        answers.insert("async_std".into(), "true".into());
+        let err = validate_mutexes(&answers, &rules).unwrap_err();
+        assert!(err.contains("one async runtime only"), "unexpected: {err}");
+        assert!(err.contains("tokio") && err.contains("async_std"));
     }
 
     #[test]

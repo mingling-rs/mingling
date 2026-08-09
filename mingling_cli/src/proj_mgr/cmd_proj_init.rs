@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use just_fmt::snake_case;
 use just_template::Template;
 use mingling::{
     Grouped, LazyRes, RenderResult, Routable,
@@ -15,7 +16,9 @@ use mingling::{
 
 use crate::{Entry, Next, config::ResMlingConfig, eprintln_cargo, hprintln_cargo, println_cargo};
 
-use super::rule_solver::{eval_rule, parse_checklist, parse_rules, resolve_answers};
+use super::rule_solver::{
+    eval_rule, parse_checklist, parse_rules, resolve_answers, validate_mutexes,
+};
 use super::template_source::{
     DEFAULT_TMPL_SOURCE, TemplateSource, cache_dir, normalize_source, resolve_git,
 };
@@ -151,9 +154,14 @@ pub fn handle_state_project_generate(_: StateProjectGenerate, cwd: &ResCurrentDi
     // Compute final answers from checklist values + defaults declared in rule.toml
     let answers = resolve_answers(&answers, &rules);
 
-    // Compute display block toggles based on rules: checklist values + rules whose display condition is true
+    // Mutually exclusive toggle groups must not both be enabled.
+    validate_mutexes(&answers, &rules).map_err(ErrorRuleParseFailed::new)?;
 
+    // Derive the crate name from the program name (e.g. `my-cli` -> `my_cli`).
     let mut params: HashMap<String, String> = answers.clone();
+    if let Some(program_name) = answers.get("program_name") {
+        params.insert("program_crate_name".to_string(), snake_case!(program_name));
+    }
     for display in &rules.display {
         if eval_rule(&display.rule, &answers) {
             params.insert(display.name.clone(), String::new());

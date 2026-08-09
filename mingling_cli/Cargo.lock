@@ -385,6 +385,7 @@ dependencies = [
  "cargo_metadata",
  "colored",
  "dirs",
+ "just_fmt 0.2.0",
  "just_template",
  "mingling",
  "proc-macro2",
