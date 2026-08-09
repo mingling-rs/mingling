@@ -31,6 +31,15 @@ pub struct HideFileRule {
     pub rule: String,
 }
 
+/// A `[[hide-dir]]` rule: hide the whole directory `dir` when `rule` is true.
+#[derive(Debug, Clone)]
+pub struct HideDirRule {
+    /// Directory path relative to the project root, e.g. `./src/completion/`.
+    pub dir: String,
+    /// Boolean expression, e.g. `!completion`.
+    pub rule: String,
+}
+
 /// A `[[user.*]]` entry describing a checklist answer and its default.
 ///
 /// Checklist keys are declared under `[[user.input]]`, `[[user.toggle]]` or
@@ -60,6 +69,7 @@ pub struct TemplateRules {
     pub mutexes: Vec<UserMutex>,
     pub display: Vec<DisplayRule>,
     pub hide_files: Vec<HideFileRule>,
+    pub hide_dirs: Vec<HideDirRule>,
 }
 
 /// Parse `checklist.toml` into a flat map of answers.
@@ -181,6 +191,25 @@ pub fn parse_rules(content: &str) -> Result<TemplateRules, String> {
                 .ok_or("[[hide-file]] entry is missing `rule`")?
                 .to_string();
             rules.hide_files.push(HideFileRule { file, rule });
+        }
+    }
+
+    if let Some(tables) = doc
+        .get("hide-dir")
+        .and_then(|item| item.as_array_of_tables())
+    {
+        for table in tables {
+            let dir = table
+                .get("dir")
+                .and_then(|v| v.as_str())
+                .ok_or("[[hide-dir]] entry is missing `dir`")?
+                .to_string();
+            let rule = table
+                .get("rule")
+                .and_then(|v| v.as_str())
+                .ok_or("[[hide-dir]] entry is missing `rule`")?
+                .to_string();
+            rules.hide_dirs.push(HideDirRule { dir, rule });
         }
     }
 
@@ -466,6 +495,24 @@ name = "completion"
     }
 
     #[test]
+    fn rules_parse_hide_dir() {
+        let content = r#"
+[[hide-dir]]
+dir = "./src/completion/"
+rule = "!completion"
+
+[[hide-dir]]
+dir = "./src/dispatch/"
+rule = "!dispatch_tree"
+"#;
+        let rules = parse_rules(content).unwrap();
+        assert_eq!(rules.hide_dirs.len(), 2);
+        assert_eq!(rules.hide_dirs[0].dir, "./src/completion/");
+        assert_eq!(rules.hide_dirs[0].rule, "!completion");
+        assert_eq!(rules.hide_dirs[1].dir, "./src/dispatch/");
+    }
+
+    #[test]
     fn rules_parse_toggle_mutex() {
         let content = r#"
 [[user.toggle-mutex]]
@@ -475,7 +522,10 @@ reason = "You can only select one async runtime"
         let rules = parse_rules(content).unwrap();
         assert_eq!(rules.mutexes.len(), 1);
         assert_eq!(rules.mutexes[0].mutex, vec!["tokio", "async_std", "smol"]);
-        assert_eq!(rules.mutexes[0].reason, "You can only select one async runtime");
+        assert_eq!(
+            rules.mutexes[0].reason,
+            "You can only select one async runtime"
+        );
     }
 
     #[test]

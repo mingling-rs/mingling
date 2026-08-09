@@ -187,6 +187,18 @@ pub fn handle_state_project_generate(_: StateProjectGenerate, cwd: &ResCurrentDi
         hidden.push(target);
     }
 
+    // hide-dir: delete the generated directory tree when the rule is true
+    for hide in &rules.hide_dirs {
+        if !eval_rule(&hide.rule, &answers) {
+            continue;
+        }
+        let target = cwd.join(hide.dir.trim_start_matches("./"));
+        remove_path(&target).map_err(|e| {
+            ErrorTemplateExpandFailed::new(format!("failed to hide {}: {e}", target.display()))
+        })?;
+        hidden.push(target);
+    }
+
     // Clean up the cache
     fs::remove_dir_all(&tmpl_cache).map_err(|e| {
         ErrorTemplateExpandFailed::new(format!("failed to remove {}: {e}", tmpl_cache.display()))
