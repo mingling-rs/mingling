@@ -31,7 +31,7 @@ pack_err!(ErrorPackageNotInstall = Vec<PathBuf>);
 // No installed package matched the given spec.
 pack_err!(ErrorNoMatchingPackages);
 
-/// `{data_dir}/.mingling`
+/// `{data_dir}/mingling/packages`
 #[metadata(EntryUninstall)]
 pub fn desc_uninstall() -> Description {
     "Uninstall the project from the Mingling package list".into()

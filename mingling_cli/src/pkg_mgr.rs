@@ -19,7 +19,7 @@ pack_err!(ErrorNoDataDirectory);
 pack_err!(ErrorPackageSpecInvalid = String);
 pack_err!(ErrorPackageNameRequired);
 
-/// The `.mingling` packages directory under the user's data directory.
+/// The `mingling/packages` packages directory under the user's data directory.
 #[derive(Debug, Default, Clone)]
 pub struct ResPackagesDir {
     pub path: PathBuf,
@@ -28,7 +28,7 @@ pub struct ResPackagesDir {
 #[program_setup]
 pub fn package_manager_setup(program: &mut Program<ThisProgram>) {
     let path = dirs::data_dir()
-        .map(|data_dir| data_dir.join(".mingling"))
+        .map(|data_dir| data_dir.join("mingling").join("packages"))
         .unwrap_or_default();
     program.with_resource(ResPackagesDir { path });
 }

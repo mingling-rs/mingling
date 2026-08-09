@@ -42,7 +42,7 @@ pub struct ResultInstall {
 }
 
 /// Parse arguments and resolve the install directory:
-/// {data_dir}/.mingling/{PACKAGE_NAME}@{PACKAGE_VERSION}
+/// {data_dir}/mingling/packages/{PACKAGE_NAME}@{PACKAGE_VERSION}
 #[metadata(EntryInstall)]
 pub fn desc_install() -> Description {
     "Install the project to the Mingling package list".into()
