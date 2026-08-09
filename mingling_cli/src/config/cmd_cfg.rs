@@ -1,6 +1,9 @@
 use mingling::{
     LazyRes, Routable, ShellContext, Suggest,
-    macros::{arg, buffer, chain, command, completion, pack, r_println, renderer, suggest},
+    macros::{
+        arg, buffer, chain, command, completion, metadata, pack, r_println, renderer, suggest,
+    },
+    metadata::Description,
     picker::{EntryPicker, PickerArg, value::Flag},
 };
 
@@ -107,4 +110,9 @@ pub fn complete_config(_ctx: &ShellContext, config: &mut LazyRes<ResMlingConfig>
     Suggest::from(keys).combine(suggest! {
         FLAG_PAIR
     })
+}
+
+#[metadata(EntryCfg)]
+pub fn desc_cfg() -> Description {
+    "View and edit Mling's user configuration file".into()
 }
