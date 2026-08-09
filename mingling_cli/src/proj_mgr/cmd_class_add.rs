@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use just_fmt::{camel_case, kebab_case, pascal_case, snake_case};
 use just_template::Template;
@@ -49,14 +52,36 @@ pub fn class_add(args: EntryClassAdd) -> Next {
     StateClassAdd::new((class_name, name)).to_chain()
 }
 
+/// Walk upward from `start` to find the first directory containing `.mling`.
+fn find_project_root(start: &Path) -> Option<PathBuf> {
+    let mut dir = fs::canonicalize(start).ok()?;
+    loop {
+        if dir.join(".mling").is_dir() {
+            return Some(dir);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+
 /// Read `.mling/classes.toml`, find the class template and render it with the
 /// name-derived parameters into `<output-dir>/<snake_case>.rs`.
 #[chain(routeify)]
 pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next {
     let (class_name, name) = state.inner;
 
+    // Resolve the project root: the nearest ancestor directory with `.mling`.
+    let Some(project_root) = find_project_root(cwd) else {
+        return ErrorClassConfigMissing::new(format!(
+            "no `.mling` directory found from {} upward; run this inside a mingling project",
+            cwd.display()
+        ))
+        .to_chain();
+    };
+
     // Read `.mling/classes.toml` (the class registry).
-    let classes_path = cwd.join(".mling").join("classes.toml");
+    let classes_path = project_root.join(".mling").join("classes.toml");
     let content = fs::read_to_string(&classes_path).map_err(|e| {
         ErrorClassConfigMissing::new(format!("failed to read {}: {e}", classes_path.display()))
     })?;
@@ -73,7 +98,7 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     };
 
     // Read the class template (relative to `.mling/`).
-    let template_path = cwd.join(".mling").join(&entry.template);
+    let template_path = project_root.join(".mling").join(&entry.template);
     let template_content = fs::read_to_string(&template_path).map_err(|e| {
         ErrorClassTemplateMissing::new(format!("failed to read {}: {e}", template_path.display()))
     })?;
@@ -99,7 +124,7 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     })?;
 
     // Write to `<output-dir>/<snake_case>.rs`.
-    let output_dir = cwd.join(&entry.output_dir);
+    let output_dir = project_root.join(&entry.output_dir);
     let output = output_dir.join(format!("{snake}.rs"));
     fs::create_dir_all(&output_dir).map_err(|e| {
         ErrorClassWriteFailed::new(format!("failed to create {}: {e}", output_dir.display()))
@@ -199,7 +224,10 @@ pub fn complete_class_add(ctx: &ShellContext, cwd: &ResCurrentDir) -> Suggest {
         return Suggest::file_comp();
     }
     let mut suggest = Suggest::new();
-    let classes_path = cwd.join(".mling").join("classes.toml");
+    let Some(project_root) = find_project_root(cwd) else {
+        return suggest;
+    };
+    let classes_path = project_root.join(".mling").join("classes.toml");
     let Ok(content) = fs::read_to_string(&classes_path) else {
         return suggest;
     };
@@ -224,6 +252,29 @@ pub fn desc_class_add() -> Description {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn find_project_root_walks_upward() {
+        let tmp = std::env::temp_dir().join(format!("mling-class-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&tmp);
+        fs::create_dir_all(tmp.join("project/src/deep/nested")).unwrap();
+        fs::create_dir_all(tmp.join("project/.mling")).unwrap();
+
+        // Found at the project root.
+        let root = tmp.join("project");
+        assert_eq!(find_project_root(&root), Some(root.clone()));
+
+        // Found by walking up from a deep subdirectory.
+        assert_eq!(find_project_root(&root.join("src/deep/nested")), Some(root));
+
+        // No `.mling` anywhere above.
+        assert_eq!(
+            find_project_root(&tmp.join("project/src").join("..").join("..")),
+            None
+        );
+
+        let _ = fs::remove_dir_all(&tmp);
+    }
 
     #[test]
     fn parses_class_entries() {
