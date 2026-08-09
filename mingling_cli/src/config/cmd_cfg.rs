@@ -108,7 +108,7 @@ pub fn complete_config(_ctx: &ShellContext, config: &mut LazyRes<ResMlingConfig>
     let config = config.get_ref();
     let keys = config.get_hash_map().keys().cloned().collect::<Vec<_>>();
     Suggest::from(keys).combine(suggest! {
-        FLAG_PAIR
+        FLAG_PAIR: "Whether to output in the form \"key\" = \"value\""
     })
 }
 
