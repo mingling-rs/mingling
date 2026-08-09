@@ -1,12 +1,18 @@
+use mingling::{LazyInit, Program, macros::program_setup};
 use std::collections::HashMap;
 
-use mingling::{LazyInit, Program, macros::program_setup};
-
 use crate::ThisProgram;
+
+pub mod cmd_cfg;
 
 #[derive(Debug, Default, Clone)]
 pub struct ResMlingConfig {
     kvp: HashMap<String, String>,
+}
+
+/// Get the path to the config file.
+fn config_path() -> Option<std::path::PathBuf> {
+    dirs::data_dir().map(|data_dir| data_dir.join("mingling").join("mling-cfg.json"))
 }
 
 impl ResMlingConfig {
@@ -43,8 +49,10 @@ impl ResMlingConfig {
 
     /// Read the config from disk, defaulting to empty if not present.
     pub fn read() -> Self {
-        let path = std::path::Path::new("");
-        Self::read_from_path(path)
+        match config_path() {
+            Some(path) => Self::read_from_path(&path),
+            None => Self::default(),
+        }
     }
 
     /// Read the config from a file at the given path.
@@ -81,10 +89,14 @@ impl ResMlingConfig {
 
     /// Write the config to the default data directory path.
     pub fn write(&self) {
-        if let Some(data_dir) = dirs::data_dir() {
-            let path = data_dir.join("mingling").join("mling-cfg.json");
+        if let Some(path) = config_path() {
             self.write_to_path(&path);
         }
+    }
+
+    /// Get the underlying hash map as a reference.
+    pub fn get_hash_map(&self) -> &HashMap<String, String> {
+        &self.kvp
     }
 }
 

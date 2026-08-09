@@ -34,4 +34,5 @@ __   pkg-disable <NAME>             *Disable the specified package*
 __  **CONFIG:**
 __   cfg <KEY> <VALUE>              *Edit the value of a configuration item*
 __   cfg <KEY>                      *Print the value of the configuration item; print nothing if it does not exist*
+__   cfg <KEY> --pair               *Output in the form of `"key" = "value"`*
 __   cfg                            *Print all configuration items, can be used with grep for searching*
