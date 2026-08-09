@@ -21,8 +21,8 @@ __   ra-lint-clippy                 *Run* `mling lint` *and* `cargo clippy`*, an
 __   explain <LINT>                 *Explain the meaning of the specified Lint*
 
 __  **PROJECT MANAGE:**
-__   proj-new <NAME>                **[NOT_IMPL]** *Create a project*
-__   proj-init                      **[NOT_IMPL]** *Initialize a project*
+__   proj-init <TEMPLATE>           *Initialize a project*
+__   class-add <CLASS> <PARAMS...>  **[NOT_IMPL]** *Create a Class of the specified type in the project*
 
 __  **PACKAGE MANAGE:**
 __   install                        *Install the project to the Mingling package list*

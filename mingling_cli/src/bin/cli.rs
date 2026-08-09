@@ -1,4 +1,4 @@
-use mingling::setup::{ExitCodeSetup, picker::HelpFlagSetup};
+use mingling::setup::{DirectoryEnvironmentSetup, ExitCodeSetup, picker::HelpFlagSetup};
 use mingling_cli::{
     ThisProgram, linter::registry::LintRegistrySetup, metadata::MinglingMetadataSetup,
     pkg_mgr::PackageManagerSetup,
@@ -11,6 +11,7 @@ async fn main() {
     // Setups
     program.with_setup(HelpFlagSetup::default());
     program.with_setup(ExitCodeSetup::default());
+    program.with_setup(DirectoryEnvironmentSetup::default());
 
     program.with_setup(MinglingMetadataSetup);
     program.with_setup(LintRegistrySetup);
