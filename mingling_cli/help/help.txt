@@ -12,7 +12,7 @@ __      --no-deps                   *Do not include dependencies in metadata*
 **COMMANDS:**
 __  **METADATA:**
 __   metadata                       *Check your workspace metadata using 'cargo metadata'*
-__
+
 __  **LINTER:**
 __   lint                           *Mingling Linter*
 __   ra-lint                        *Run* `mling lint` *and output the results*
@@ -30,3 +30,8 @@ __   uninstall [PACKAGE]            *Uninstall the project from the Mingling pac
 __   pkg-show                       *Show locally installed packages*
 __   pkg-enable <NAME>              *Enable the specified package*
 __   pkg-disable <NAME>             *Disable the specified package*
+
+__  **CONFIG:**
+__   cfg <KEY> <VALUE>              *Edit the value of a configuration item*
+__   cfg <KEY>                      *Print the value of the configuration item; print nothing if it does not exist*
+__   cfg                            *Print all configuration items, can be used with grep for searching*

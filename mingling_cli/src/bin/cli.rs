@@ -1,7 +1,7 @@
 use mingling::setup::{DirectoryEnvironmentSetup, ExitCodeSetup, picker::HelpFlagSetup};
 use mingling_cli::{
-    ThisProgram, linter::registry::LintRegistrySetup, metadata::MinglingMetadataSetup,
-    pkg_mgr::PackageManagerSetup,
+    ThisProgram, config::MlingConfigSetup, linter::registry::LintRegistrySetup,
+    metadata::MinglingMetadataSetup, pkg_mgr::PackageManagerSetup,
 };
 
 #[tokio::main]
@@ -14,6 +14,7 @@ async fn main() {
     program.with_setup(DirectoryEnvironmentSetup::default());
 
     program.with_setup(MinglingMetadataSetup);
+    program.with_setup(MlingConfigSetup);
     program.with_setup(LintRegistrySetup);
     program.with_setup(PackageManagerSetup);
 

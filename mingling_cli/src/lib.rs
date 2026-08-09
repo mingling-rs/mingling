@@ -12,6 +12,7 @@ use crate::{
     utils::display::ColorCode,
 };
 
+pub mod config;
 pub mod diagnostic;
 pub mod errors;
 pub mod linter;
