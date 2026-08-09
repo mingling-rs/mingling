@@ -94,9 +94,6 @@ jobs:
       - name: Run cov-test
         run: cargo run --manifest-path .run/Cargo.toml --bin cov-test
 
-      - name: Package mling templates
-        run: cargo run --manifest-path .run/Cargo.toml --bin package-mling-tmpls
-
       - name: Delete .temp directory before deployment
         run: rm -rf .temp
 

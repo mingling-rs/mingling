@@ -1,7 +1,6 @@
 use std::{
     collections::HashMap,
-    fs::{self, File},
-    io,
+    fs, io,
     path::{Path, PathBuf},
 };
 
@@ -10,7 +9,7 @@ use mingling::{
     Grouped, RenderResult, Routable,
     macros::{arg, chain, command, metadata, pack, pack_err, r_println, renderer, routeify},
     metadata::Description,
-    picker::{EntryPicker, value::FilePath},
+    picker::{EntryPicker, value::DirPath},
     res::ResCurrentDir,
 };
 
@@ -45,8 +44,8 @@ pub struct ResultProjectGenerate {
     pub hidden: Vec<PathBuf>,
 }
 
-pack_err!(ErrorTemplateZipNotProvided = ());
-pack_err!(ErrorUnzipFailed = String);
+pack_err!(ErrorTemplateNotProvided = ());
+pack_err!(ErrorTemplateCopyFailed = String);
 pack_err!(ErrorChecklistMissing = String);
 pack_err!(ErrorRuleParseFailed = String);
 pack_err!(ErrorTemplateExpandFailed = String);
@@ -61,39 +60,41 @@ pub fn proj_init(args: Entry, cwd: &ResCurrentDir) -> Next {
     }
 }
 
-/// Phase 1: extract the user-provided template archive into
+/// Phase 1: copy the user-provided template directory into
 /// `./.mling/tmpl-cache/` and hand the checklist over for editing.
 #[chain(routeify)]
 pub fn handle_state_proj_checklist_ready(
     args: StateProjectChecklistReady,
     cwd: &ResCurrentDir,
 ) -> Next {
-    let tmpl_file: Option<FilePath> = args.pick(&arg![Option<FilePath>]).to_result()?;
+    let tmpl_dir: Option<DirPath> = args.pick(&arg![Option<DirPath>]).to_result()?;
 
     // Validate
-    let Some(tmpl_file) = tmpl_file else {
-        return ErrorTemplateZipNotProvided::new(()).to_chain();
+    let Some(tmpl_dir) = tmpl_dir else {
+        return ErrorTemplateNotProvided::new(()).to_chain();
     };
 
-    // Extract the file into the .mling directory under the current directory; create it if it doesn't exist
+    // Copy the template directory into the .mling directory under the current
+    // directory; create it if it doesn't exist
     let tmpl_cache = cwd.join(".mling").join(CACHE_DIR_NAME);
     fs::create_dir_all(&tmpl_cache).map_err(|e| {
-        ErrorUnzipFailed::new(format!("failed to create {}: {e}", tmpl_cache.display()))
+        ErrorTemplateCopyFailed::new(format!("failed to create {}: {e}", tmpl_cache.display()))
     })?;
-    unzip_to(&tmpl_file, &tmpl_cache).map_err(ErrorUnzipFailed::new)?;
+    copy_dir_contents(&tmpl_dir, &tmpl_cache)
+        .map_err(|e| ErrorTemplateCopyFailed::new(e.to_string()))?;
 
     // Move the internal checklist.toml to ./ for the user to fill in
     let checklist_src = tmpl_cache.join(CHECKLIST_FILENAME);
     if !checklist_src.is_file() {
         return ErrorChecklistMissing::new(format!(
             "no checklist.toml found inside {}",
-            tmpl_file.display()
+            tmpl_dir.display()
         ))
         .to_chain();
     }
     let checklist_dst = cwd.join(CHECKLIST_FILENAME);
     fs::rename(&checklist_src, &checklist_dst).map_err(|e| {
-        ErrorUnzipFailed::new(format!(
+        ErrorTemplateCopyFailed::new(format!(
             "failed to move checklist.toml to {}: {e}",
             checklist_dst.display()
         ))
@@ -112,7 +113,7 @@ pub fn handle_state_project_generate(_: StateProjectGenerate, cwd: &ResCurrentDi
     let tmpl_cache = cwd.join(".mling").join(CACHE_DIR_NAME);
     if !tmpl_cache.is_dir() {
         return ErrorChecklistMissing::new(format!(
-            "template cache not found at {}; run `mling proj-init` with a template archive first",
+            "template cache not found at {}; run `mling proj-init` with a template directory first",
             tmpl_cache.display()
         ))
         .to_chain();
@@ -179,25 +180,17 @@ pub fn handle_state_project_generate(_: StateProjectGenerate, cwd: &ResCurrentDi
     ResultProjectGenerate { generated, hidden }.to_chain()
 }
 
-/// Extract a ZIP archive into `dest`, guarding against path traversal.
-fn unzip_to(zip_path: &Path, dest: &Path) -> Result<(), String> {
-    let file = File::open(zip_path).map_err(|e| e.to_string())?;
-    let mut archive = zip::ZipArchive::new(file).map_err(|e| e.to_string())?;
-
-    for i in 0..archive.len() {
-        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
-        let Some(rel) = entry.enclosed_name() else {
-            return Err(format!("illegal path in archive: {}", entry.name()));
-        };
-        let out_path = dest.join(rel);
-        if entry.is_dir() {
-            fs::create_dir_all(&out_path).map_err(|e| e.to_string())?;
-        } else {
-            if let Some(parent) = out_path.parent() {
-                fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-            }
-            let mut out = File::create(&out_path).map_err(|e| e.to_string())?;
-            io::copy(&mut entry, &mut out).map_err(|e| e.to_string())?;
+/// Recursively copy the contents of `src` into `dst`, preserving names.
+fn copy_dir_contents(src: &Path, dst: &Path) -> io::Result<()> {
+    fs::create_dir_all(dst)?;
+    for entry in fs::read_dir(src)? {
+        let entry = entry?;
+        let from = entry.path();
+        let to = dst.join(entry.file_name());
+        if from.is_dir() {
+            copy_dir_contents(&from, &to)?;
+        } else if from.is_file() {
+            fs::copy(&from, &to)?;
         }
     }
     Ok(())
@@ -290,7 +283,7 @@ fn remove_path(path: &Path) -> io::Result<()> {
 #[renderer]
 pub fn render_result_project_checklist_ready(result: ResultProjectChecklistReady) -> RenderResult {
     let mut r = RenderResult::new();
-    r_println!(r, "Template extracted.");
+    r_println!(r, "Template copied.");
     r_println!(r, "");
     hprintln_cargo!(
         r,
@@ -313,19 +306,19 @@ pub fn render_result_project_generate(result: ResultProjectGenerate) -> RenderRe
 }
 
 #[renderer]
-pub fn render_error_template_zip_not_provided(_err: ErrorTemplateZipNotProvided) -> RenderResult {
+pub fn render_error_template_not_provided(_err: ErrorTemplateNotProvided) -> RenderResult {
     let mut r = RenderResult::new();
     eprintln_cargo!(
         r,
-        "no template archive provided; pass the path to a mingling template zip file"
+        "no template directory provided; pass the path to a mingling template directory"
     );
     r
 }
 
 #[renderer]
-pub fn render_error_unzip_failed(err: ErrorUnzipFailed) -> RenderResult {
+pub fn render_error_template_copy_failed(err: ErrorTemplateCopyFailed) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "failed to extract template: {}", err.info);
+    eprintln_cargo!(r, "failed to copy template: {}", err.info);
     r
 }
 

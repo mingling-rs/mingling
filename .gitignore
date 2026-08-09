@@ -9,9 +9,6 @@ docs/api-docs/
 # Temp file for .run/src/bin/cov-test.rs
 docs/cov-test/
 
-# Mling Template Exports
-/templates/
-
 # Drafts
 __*.md
 __*/
