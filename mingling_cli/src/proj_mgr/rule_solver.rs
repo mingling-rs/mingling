@@ -241,7 +241,15 @@ pub fn validate_mutexes(
 /// - parentheses for grouping
 pub fn eval_rule(rule: &str, answers: &HashMap<String, String>) -> bool {
     let mut parser = RuleParser::new(rule, answers);
-    parser.parse_or().unwrap_or(false)
+    let Some(value) = parser.parse_or() else {
+        return false;
+    };
+    // The whole expression must be consumed; trailing garbage invalidates it.
+    parser.skip_ws();
+    if parser.pos != parser.chars.len() {
+        return false;
+    }
+    value
 }
 
 /// A key is truthy when it is present with a non-empty, non-`"false"` value.
@@ -310,7 +318,7 @@ impl<'a> RuleParser<'a> {
         self.parse_primary()
     }
 
-    /// `primary := '(' or ')' | ident ('==' ident)?`
+    /// `primary := '(' or ')' | ident (('==' | '!=') ident)?`
     fn parse_primary(&mut self) -> Option<bool> {
         if self.eat('(') {
             let value = self.parse_or()?;
@@ -321,6 +329,10 @@ impl<'a> RuleParser<'a> {
         if self.eat('=') && self.eat('=') {
             let other = self.parse_ident()?;
             return Some(self.answers.get(&ident).map(String::as_str) == Some(other.as_str()));
+        }
+        if self.eat('!') && self.eat('=') {
+            let other = self.parse_ident()?;
+            return Some(self.answers.get(&ident).map(String::as_str) != Some(other.as_str()));
         }
         Some(is_truthy(&ident, self.answers))
     }
@@ -584,5 +596,30 @@ name = "tokio"
         assert!(eval_rule("parser == picker", &answers));
         assert!(!eval_rule("parser == clap", &answers));
         assert!(eval_rule("use_parser && parser == picker", &answers));
+    }
+
+    #[test]
+    fn eval_not_equal_comparison() {
+        let mut answers = HashMap::new();
+        answers.insert("parser".into(), "picker".into());
+        answers.insert("use_parser".into(), "true".into());
+
+        assert!(!eval_rule("parser != picker", &answers));
+        assert!(eval_rule("parser != clap", &answers));
+
+        // The template's NOT_PARSER_PICKER rule.
+        assert!(!eval_rule("!use_parser || parser != picker", &answers));
+        answers.remove("use_parser");
+        assert!(eval_rule("!use_parser || parser != picker", &answers));
+    }
+
+    #[test]
+    fn eval_rejects_trailing_garbage() {
+        // Unsupported tokens must invalidate the expression instead of being
+        // silently ignored.
+        let mut answers = HashMap::new();
+        answers.insert("parser".into(), "picker".into());
+        assert!(!eval_rule("parser >>> picker", &answers));
+        assert!(!eval_rule("parser ||", &answers));
     }
 }
