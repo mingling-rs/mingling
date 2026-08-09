@@ -6,18 +6,21 @@ use std::{
 
 use just_template::Template;
 use mingling::{
-    Grouped, RenderResult, Routable,
+    Grouped, LazyRes, RenderResult, Routable,
     macros::{arg, chain, command, metadata, pack, pack_err, r_println, renderer, routeify},
     metadata::Description,
-    picker::{EntryPicker, value::DirPath},
+    picker::EntryPicker,
     res::ResCurrentDir,
 };
 
-use crate::{Entry, Next, eprintln_cargo, hprintln_cargo, println_cargo};
+use crate::{Entry, Next, config::ResMlingConfig, eprintln_cargo, hprintln_cargo, println_cargo};
 
 use super::rule_solver::{eval_rule, parse_checklist, parse_rules, resolve_answers};
+use super::template_source::{
+    DEFAULT_TMPL_SOURCE, TemplateSource, cache_dir, normalize_source, resolve_git,
+};
 
-/// The name of the checklist file the user edits and we re-read on generate.
+/// The checklist filename that the user edits and is re-read during generation.
 const CHECKLIST_FILENAME: &str = "checklist.toml";
 /// The name of the rules file declaring default params, display blocks and hides.
 const RULE_FILENAME: &str = "rule.toml";
@@ -46,6 +49,7 @@ pub struct ResultProjectGenerate {
 
 pack_err!(ErrorTemplateNotProvided = ());
 pack_err!(ErrorTemplateCopyFailed = String);
+pack_err!(ErrorTemplateFetchFailed = String);
 pack_err!(ErrorChecklistMissing = String);
 pack_err!(ErrorRuleParseFailed = String);
 pack_err!(ErrorTemplateExpandFailed = String);
@@ -60,18 +64,33 @@ pub fn proj_init(args: Entry, cwd: &ResCurrentDir) -> Next {
     }
 }
 
-/// Phase 1: copy the user-provided template directory into
+/// Phase 1: resolve the user-provided template source into
 /// `./.mling/tmpl-cache/` and hand the checklist over for editing.
 #[chain(routeify)]
 pub fn handle_state_proj_checklist_ready(
     args: StateProjectChecklistReady,
     cwd: &ResCurrentDir,
+    config: &mut LazyRes<ResMlingConfig>,
 ) -> Next {
-    let tmpl_dir: Option<DirPath> = args.pick(&arg![Option<DirPath>]).to_result()?;
+    let source: TemplateSource = args
+        .pick_or_route(&arg![TemplateSource], || {
+            ErrorTemplateNotProvided::new(()).to_chain()
+        })
+        .to_result()?;
 
-    // Validate
-    let Some(tmpl_dir) = tmpl_dir else {
-        return ErrorTemplateNotProvided::new(()).to_chain();
+    // Resolve the template root directory.
+    let template_root: PathBuf = match source {
+        TemplateSource::FsDir(dir) => dir,
+        TemplateSource::Git { reference, variant } => {
+            let configured = config.get_ref().get("tmpl-source");
+            let source_url = normalize_source(if configured.is_empty() {
+                DEFAULT_TMPL_SOURCE
+            } else {
+                configured
+            });
+            resolve_git(&source_url, &reference, &variant, &cache_dir())
+                .map_err(ErrorTemplateFetchFailed::new)?
+        }
     };
 
     // Copy the template directory into the .mling directory under the current
@@ -80,7 +99,7 @@ pub fn handle_state_proj_checklist_ready(
     fs::create_dir_all(&tmpl_cache).map_err(|e| {
         ErrorTemplateCopyFailed::new(format!("failed to create {}: {e}", tmpl_cache.display()))
     })?;
-    copy_dir_contents(&tmpl_dir, &tmpl_cache)
+    copy_dir_contents(&template_root, &tmpl_cache)
         .map_err(|e| ErrorTemplateCopyFailed::new(e.to_string()))?;
 
     // Move the internal checklist.toml to ./ for the user to fill in
@@ -88,7 +107,7 @@ pub fn handle_state_proj_checklist_ready(
     if !checklist_src.is_file() {
         return ErrorChecklistMissing::new(format!(
             "no checklist.toml found inside {}",
-            tmpl_dir.display()
+            template_root.display()
         ))
         .to_chain();
     }
@@ -319,6 +338,13 @@ pub fn render_error_template_not_provided(_err: ErrorTemplateNotProvided) -> Ren
 pub fn render_error_template_copy_failed(err: ErrorTemplateCopyFailed) -> RenderResult {
     let mut r = RenderResult::new();
     eprintln_cargo!(r, "failed to copy template: {}", err.info);
+    r
+}
+
+#[renderer]
+pub fn render_error_template_fetch_failed(err: ErrorTemplateFetchFailed) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "failed to fetch template: {}", err.info);
     r
 }
 

@@ -64,6 +64,9 @@ semver = "1.0.28"
 # Code gen
 just_template = "0.2.1"
 
+# Template sources
+sha2 = "0.10"
+
 [build-dependencies]
 # Configure & Serialization
 serde = { version = "1.0.229", features = ["derive"] }
