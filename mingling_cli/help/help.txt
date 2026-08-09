@@ -22,7 +22,7 @@ __   explain <LINT>                 *Explain the meaning of the specified Lint*
 
 __  **PROJECT MANAGE:**
 __   proj-init <TEMPLATE>           *Initialize a project*
-__   class-add <CLASS> <PARAMS...>  **[NOT_IMPL]** *Create a Class of the specified type in the project*
+__   class-add <CLASS> <NAME>       *Create a Class of the specified type in the project*
 
 __  **PACKAGE MANAGE:**
 __   install                        *Install the project to the Mingling package list*
