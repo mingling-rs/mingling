@@ -6,22 +6,21 @@ mod rule;
 pub use rule::*;
 
 impl Pickable for Vec<PathBuf> {
-    type Output = Vec<PathBuf>;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let raw: Vec<String> = args.pick_arguments(flag);
-        let paths: Vec<PathBuf> = raw.into_iter().map(PathBuf::from).collect();
+        let paths = raw.into_iter().map(PathBuf::from).collect();
         Some(paths)
     }
 }
 
 impl Pickable for PathBuf {
-    type Output = PathBuf;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let raw: String = args.pick_argument(flag)?;
-        let path: PathBuf = PathBuf::from(raw);
-        Some(path)
+        Some(Self::from(raw))
     }
 }
 
@@ -86,8 +85,8 @@ pub trait PathChecker {
     }
 }
 
-impl<T: Into<Vec<PathBuf>>> PathsChecker for T where T: Into<Vec<PathBuf>> {}
-impl<T: Into<PathBuf>> PathChecker for T where T: Into<PathBuf> {}
+impl<T: Into<Vec<PathBuf>>> PathsChecker for T {}
+impl<T: Into<PathBuf>> PathChecker for T {}
 
 fn check_paths(path: impl Into<Vec<PathBuf>>, rule: &PathCheckRule) -> Result<(), ()> {
     let paths = path.into();
@@ -140,6 +139,6 @@ fn check_type(path: &Path, rule: &PathCheckRule) -> Result<(), ()> {
     Err(())
 }
 
-fn bool_to_result(b: bool) -> Result<(), ()> {
+const fn bool_to_result(b: bool) -> Result<(), ()> {
     if b { Ok(()) } else { Err(()) }
 }

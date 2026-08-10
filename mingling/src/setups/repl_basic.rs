@@ -43,24 +43,21 @@ where
 {
     fn setup(self, program: &mut Program<C>) {
         match self {
-            BasicREPLPromptSetup::Prompt(prompt) => {
+            Self::Prompt(prompt) => {
                 static PROMPT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
-                let _ = PROMPT.set(prompt.clone());
-                fn print_prompt() {
+                let _ = PROMPT.set(prompt);
+                program.with_hook(ProgramHook::empty().on_repl_pre_readline(|_| {
                     print!("{}", PROMPT.get().unwrap());
                     let _ = std::io::stdout().flush();
-                }
-                program.with_hook(ProgramHook::empty().on_repl_pre_readline(|_| print_prompt()));
+                }));
             }
-            BasicREPLPromptSetup::Func(f) => {
+            Self::Func(f) => {
                 static FUNC: std::sync::OnceLock<fn() -> String> = std::sync::OnceLock::new();
                 let _ = FUNC.set(f);
-                fn print_func_prompt() {
+                program.with_hook(ProgramHook::empty().on_repl_pre_readline(|_| {
                     print!("{}", FUNC.get().unwrap()());
                     let _ = std::io::stdout().flush();
-                }
-                program
-                    .with_hook(ProgramHook::empty().on_repl_pre_readline(|_| print_func_prompt()));
+                }));
             }
         }
     }
@@ -75,7 +72,7 @@ where
     fn setup(self, program: &mut Program<C>) {
         program.with_hook(ProgramHook::empty().on_repl_receive_result(|r| {
             if !r.result.is_empty() {
-                println!("{}", r.result)
+                println!("{}", r.result);
             }
         }));
     }

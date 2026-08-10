@@ -3,6 +3,8 @@
     html_favicon_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/favicon_small.png"
 )]
 #![deny(missing_docs)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
 #![doc = include_str!("docs/lib.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 

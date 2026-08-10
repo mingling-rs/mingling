@@ -3,7 +3,7 @@ use size::Size;
 use crate::parser::{Argument, Pickable};
 
 impl Pickable for String {
-    type Output = String;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         args.pick_argument(flag)
@@ -11,7 +11,7 @@ impl Pickable for String {
 }
 
 impl Pickable for Vec<String> {
-    type Output = Vec<String>;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         Some(args.pick_arguments(flag))
@@ -53,7 +53,7 @@ macro_rules! impl_pickable_for_number {
 impl_pickable_for_number!(i8, i16, i32, i64, i128, u8, u16, u32, u64, u128, f32, f64);
 
 impl Pickable for bool {
-    type Output = bool;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         Some(args.pick_flag(flag))
@@ -62,25 +62,22 @@ impl Pickable for bool {
 
 /// Special: parses a size string (e.g. "10MB") into a `usize` representing the number of bytes.
 impl Pickable for usize {
-    type Output = usize;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let picked = args.pick_argument(flag)?;
         let size_parse = Size::from_str(picked.as_str());
-        match size_parse {
-            Ok(size) => usize::try_from(size.bytes()).ok(),
-            Err(_) => None,
-        }
+        size_parse.map_or(None, |size| Self::try_from(size.bytes()).ok())
     }
 }
 
 /// Special: parses a comma-separated list of size strings (e.g. "10MB,20KB") into a `Vec<usize>`.
 impl Pickable for Vec<usize> {
-    type Output = Vec<usize>;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let picked_vec = args.pick_arguments(flag);
-        let mut result = Vec::new();
+        let mut result = Self::new();
         for picked in picked_vec {
             let size_parse = Size::from_str(picked.as_str());
             match size_parse {
@@ -94,7 +91,7 @@ impl Pickable for Vec<usize> {
 
 /// Special: dumps the remaining arguments into an `Argument` struct.
 impl Pickable for Argument {
-    type Output = Argument;
+    type Output = Self;
 
     fn pick(
         args: &mut crate::parser::Argument,
@@ -106,7 +103,7 @@ impl Pickable for Argument {
 
 /// Special: parses a single value of type `T` using the `Pickable` implementation for `T`, and wraps it in an `Option`.
 impl<T: Pickable<Output = T> + Default> Pickable for Option<T> {
-    type Output = Option<T>;
+    type Output = Self;
 
     fn pick(args: &mut Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let r = T::pick(args, flag);

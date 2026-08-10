@@ -10,7 +10,7 @@ pub struct Argument {
 
 impl From<Vec<&str>> for Argument {
     fn from(vec: Vec<&str>) -> Self {
-        Argument {
+        Self {
             vec: vec
                 .into_iter()
                 .map(std::string::ToString::to_string)
@@ -21,7 +21,7 @@ impl From<Vec<&str>> for Argument {
 
 impl From<&'static str> for Argument {
     fn from(s: &'static str) -> Self {
-        Argument {
+        Self {
             vec: vec![s.to_string()],
         }
     }
@@ -29,7 +29,7 @@ impl From<&'static str> for Argument {
 
 impl From<&'static [&'static str]> for Argument {
     fn from(slice: &'static [&'static str]) -> Self {
-        Argument {
+        Self {
             vec: slice.iter().map(|&s| s.to_string()).collect(),
         }
     }
@@ -37,7 +37,7 @@ impl From<&'static [&'static str]> for Argument {
 
 impl<const N: usize> From<[&'static str; N]> for Argument {
     fn from(slice: [&'static str; N]) -> Self {
-        Argument {
+        Self {
             vec: slice.iter().map(|&s| s.to_string()).collect(),
         }
     }
@@ -45,7 +45,7 @@ impl<const N: usize> From<[&'static str; N]> for Argument {
 
 impl<const N: usize> From<&'static [&'static str; N]> for Argument {
     fn from(slice: &'static [&'static str; N]) -> Self {
-        Argument {
+        Self {
             vec: slice.iter().map(|&s| s.to_string()).collect(),
         }
     }
@@ -53,7 +53,7 @@ impl<const N: usize> From<&'static [&'static str; N]> for Argument {
 
 impl From<Vec<String>> for Argument {
     fn from(vec: Vec<String>) -> Self {
-        Argument { vec }
+        Self { vec }
     }
 }
 
@@ -159,7 +159,7 @@ impl Argument {
     }
 
     /// Dump all remaining arguments
-    pub fn dump_remains(&mut self) -> Vec<String> {
+    pub const fn dump_remains(&mut self) -> Vec<String> {
         let new = Vec::new();
         replace(&mut self.vec, new)
     }

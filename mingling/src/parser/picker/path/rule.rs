@@ -26,7 +26,7 @@ pub struct PathTypeCheck {
 impl PathCheckRule {
     /// Creates a new `PathCheckRule` with default values
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
             exist_check: None,
             type_check: None,
@@ -35,7 +35,7 @@ impl PathCheckRule {
 
     /// Allows the path to be a file
     #[must_use]
-    pub fn allow_file(self) -> Self {
+    pub const fn allow_file(self) -> Self {
         match self.type_check {
             Some(type_check) => Self {
                 type_check: Some(PathTypeCheck {
@@ -58,7 +58,7 @@ impl PathCheckRule {
 
     /// Allows the path to be a directory
     #[must_use]
-    pub fn allow_dir(self) -> Self {
+    pub const fn allow_dir(self) -> Self {
         match self.type_check {
             Some(type_check) => Self {
                 type_check: Some(PathTypeCheck {
@@ -81,7 +81,7 @@ impl PathCheckRule {
 
     /// Allows the path to be a symlink
     #[must_use]
-    pub fn allow_symlink(self) -> Self {
+    pub const fn allow_symlink(self) -> Self {
         match self.type_check {
             Some(type_check) => Self {
                 type_check: Some(PathTypeCheck {
@@ -104,7 +104,7 @@ impl PathCheckRule {
 
     /// Denies the path from being a file
     #[must_use]
-    pub fn deny_file(self) -> Self {
+    pub const fn deny_file(self) -> Self {
         match self.type_check {
             Some(type_check) => Self {
                 type_check: Some(PathTypeCheck {
@@ -127,7 +127,7 @@ impl PathCheckRule {
 
     /// Denies the path from being a directory
     #[must_use]
-    pub fn deny_dir(self) -> Self {
+    pub const fn deny_dir(self) -> Self {
         match self.type_check {
             Some(type_check) => Self {
                 type_check: Some(PathTypeCheck {
@@ -150,7 +150,7 @@ impl PathCheckRule {
 
     /// Denies the path from being a symlink
     #[must_use]
-    pub fn deny_symlink(self) -> Self {
+    pub const fn deny_symlink(self) -> Self {
         match self.type_check {
             Some(type_check) => Self {
                 type_check: Some(PathTypeCheck {
@@ -173,7 +173,7 @@ impl PathCheckRule {
 
     /// Requires the path to be a file (overrides type checks)
     #[must_use]
-    pub fn must_file(self) -> Self {
+    pub const fn must_file(self) -> Self {
         Self {
             type_check: Some(PathTypeCheck {
                 allow_file: true,
@@ -186,7 +186,7 @@ impl PathCheckRule {
 
     /// Requires the path to be a directory (overrides type checks)
     #[must_use]
-    pub fn must_dir(self) -> Self {
+    pub const fn must_dir(self) -> Self {
         Self {
             type_check: Some(PathTypeCheck {
                 allow_file: false,
@@ -199,7 +199,7 @@ impl PathCheckRule {
 
     /// Requires the path to be a symlink (overrides type checks)
     #[must_use]
-    pub fn must_symlink(self) -> Self {
+    pub const fn must_symlink(self) -> Self {
         Self {
             type_check: Some(PathTypeCheck {
                 allow_file: false,
@@ -212,7 +212,7 @@ impl PathCheckRule {
 
     /// Requires the path to exist
     #[must_use]
-    pub fn must_exist(self) -> Self {
+    pub const fn must_exist(self) -> Self {
         Self {
             exist_check: Some(PathExistCheck::Exists),
             ..self
@@ -221,7 +221,7 @@ impl PathCheckRule {
 
     /// Requires the path to not exist
     #[must_use]
-    pub fn must_not_exist(self) -> Self {
+    pub const fn must_not_exist(self) -> Self {
         Self {
             exist_check: Some(PathExistCheck::NotExists),
             ..self

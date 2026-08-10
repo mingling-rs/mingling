@@ -22,8 +22,8 @@ pub struct Picker {
 
 impl Picker {
     /// Creates a new `Picker` from a value that can be converted into `Argument`.
-    pub fn new(args: impl Into<Argument>) -> Picker {
-        Picker { args: args.into() }
+    pub fn new(args: impl Into<Argument>) -> Self {
+        Self { args: args.into() }
     }
 
     /// Extracts a value for the given flag and returns a `Pick1` builder (no route).
@@ -50,7 +50,7 @@ impl Picker {
     where
         TNext: Pickable<Output = TNext>,
     {
-        let v = TNext::pick(&mut self.args, val.into()).unwrap_or(or.into());
+        let v = TNext::pick(&mut self.args, val.into()).unwrap_or_else(|| or.into());
         Pick1 {
             args: self.args,
             val_1: v,
@@ -118,7 +118,7 @@ impl Picker {
 
 impl<T: Into<Argument>> From<T> for Picker {
     fn from(value: T) -> Self {
-        Picker::new(value)
+        Self::new(value)
     }
 }
 
@@ -342,7 +342,7 @@ macro_rules! impl_pick_next {
             where
                 TNext: Pickable<Output = TNext>,
             {
-                let v = TNext::pick(&mut self.args, val.into()).unwrap_or(or.into());
+                let v = TNext::pick(&mut self.args, val.into()).unwrap_or_else(|| or.into());
                 $next {
                     args: self.args,
                     $($val: self.$val,)+
@@ -647,7 +647,7 @@ macro_rules! impl_pick_with_route_next {
             where
                 TNext: Pickable<Output = TNext>,
             {
-                let v = TNext::pick(&mut self.args, val.into()).unwrap_or(or.into());
+                let v = TNext::pick(&mut self.args, val.into()).unwrap_or_else(|| or.into());
                 $next {
                     args: self.args,
                     $($val: self.$val,)+

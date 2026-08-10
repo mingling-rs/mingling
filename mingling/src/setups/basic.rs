@@ -51,7 +51,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        program.global_flag(self.flag.clone(), |p| {
+        program.global_flag(self.flag, |p| {
             p.user_context.help = true;
         });
     }
@@ -90,7 +90,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        program.global_flag(self.flag.clone(), |p| {
+        program.global_flag(self.flag, |p| {
             p.stdout_setting.render_output = false;
             p.stdout_setting.error_output = false;
         });
@@ -130,7 +130,7 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        program.global_flag(self.flag.clone(), |p| {
+        program.global_flag(self.flag, |p| {
             p.user_context.confirm = true;
         });
     }

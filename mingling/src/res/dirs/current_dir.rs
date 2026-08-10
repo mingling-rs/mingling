@@ -23,9 +23,12 @@ pub struct ResCurrentDir {
 impl ResCurrentDir {
     /// Creates a new `ResCurrentDir` by querying the OS for the current working directory.
     ///
-    /// Returns `Err` if the current directory cannot be determined (e.g., the directory has been
-    /// deleted or permissions are insufficient). Unlike the `Default` implementation, this
-    /// method does not panic on failure.
+    /// # Errors
+    ///
+    /// Returns an `Err` if the current directory cannot be determined (e.g., the directory has
+    /// been deleted or permissions are insufficient).
+    ///
+    /// Unlike the `Default` implementation, this method does not panic on failure.
     pub fn new() -> Result<Self, std::io::Error> {
         Ok(Self {
             cwd: current_dir()?,

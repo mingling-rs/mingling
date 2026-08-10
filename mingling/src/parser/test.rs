@@ -536,7 +536,7 @@ fn test_picker_pick_or_route_missing() {
 fn test_picker_require_present() {
     let result: Option<String> = Picker::new(vec!["--name", "Alice"])
         .require::<String>("--name")
-        .map(|p| p.unpack());
+        .map(super::picker::Pick1::unpack);
     assert_eq!(result, Some("Alice".to_string()));
 }
 
@@ -705,7 +705,7 @@ fn test_pick_with_route_after_or_route_preserves_existing_route() {
 #[test]
 fn test_picker_operate_args_filter() {
     let result: String = Picker::new(vec!["--name", "Alice", "--verbose"])
-        .operate_args(|args| args.strip_all_flags())
+        .operate_args(Argument::strip_all_flags)
         .pick_or("--name", "fallback_name")
         .unpack();
     // After stripping flags, "--name" and "--verbose" are gone, "Alice" is a positional arg.

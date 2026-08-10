@@ -21,7 +21,9 @@ pub struct ResHomeDir {
 impl ResHomeDir {
     /// Creates a new `ResHomeDir` by querying the environment for the user's home directory.
     ///
-    /// Returns `Err` if the home directory cannot be determined (e.g., the `HOME` or
+    /// # Errors
+    ///
+    /// Returns an error if the home directory cannot be determined (e.g., the `HOME` or
     /// `USERPROFILE` environment variable is not set).
     pub fn new() -> Result<Self, std::io::Error> {
         let home = home_dir_env().ok_or_else(|| {

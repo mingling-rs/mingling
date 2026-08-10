@@ -21,6 +21,7 @@ impl ResTempDir {
     ///
     /// This method is infallible since `std::env::temp_dir()` always succeeds,
     /// returning a platform-specific default when environment variables are unset.
+    #[must_use]
     pub fn new() -> Self {
         Self { tmp: temp_dir() }
     }

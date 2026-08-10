@@ -22,9 +22,11 @@ pub struct ResCurrentExe {
 impl ResCurrentExe {
     /// Creates a new `ResCurrentExe` by querying the OS for the current executable path.
     ///
-    /// Returns `Err` if the executable path cannot be determined (e.g., the `/proc`
-    /// filesystem is not available on Linux, or the process handle is invalid).
-    /// Unlike the `Default` implementation, this method does not panic on failure.
+    /// # Errors
+    ///
+    /// Returns an [`std::io::Error`] if the OS is unable to provide the path of the
+    /// current executable. This can occur, for example, when the `/proc` filesystem
+    /// is not mounted on Linux, or when the process handle is invalid on Windows.
     pub fn new() -> Result<Self, std::io::Error> {
         Ok(Self {
             exe: current_exe()?,

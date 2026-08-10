@@ -1,4 +1,4 @@
-//! Example: Combining pathf + dispatch_tree
+//! Example: Combining `pathf` + `dispatch_tree`
 //!
 //! > This example demonstrates how to use `pathf` and `dispatch_tree` together.
 //! > Types are defined in a submodule (`sub`), and `gen_program!()` resolves

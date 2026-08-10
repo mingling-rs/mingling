@@ -16,7 +16,7 @@ pub enum Yes {
 
 impl From<bool> for Yes {
     fn from(b: bool) -> Self {
-        if b { Yes::Yes } else { Yes::No }
+        if b { Self::Yes } else { Self::No }
     }
 }
 
@@ -36,26 +36,26 @@ impl std::ops::Deref for Yes {
         static TRUE: bool = true;
         static FALSE: bool = false;
         match self {
-            Yes::Yes => &TRUE,
-            Yes::No => &FALSE,
+            Self::Yes => &TRUE,
+            Self::No => &FALSE,
         }
     }
 }
 
 impl Yes {
     #[must_use]
-    pub fn is_yes(&self) -> bool {
-        matches!(self, Yes::Yes)
+    pub const fn is_yes(&self) -> bool {
+        matches!(self, Self::Yes)
     }
 
     #[must_use]
-    pub fn is_no(&self) -> bool {
-        matches!(self, Yes::No)
+    pub const fn is_no(&self) -> bool {
+        matches!(self, Self::No)
     }
 }
 
 impl Pickable for Yes {
-    type Output = Yes;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let value = pick_bool(args, flag, &["y", "yes"]);
@@ -79,7 +79,7 @@ pub enum True {
 
 impl From<bool> for True {
     fn from(b: bool) -> Self {
-        if b { True::True } else { True::False }
+        if b { Self::True } else { Self::False }
     }
 }
 
@@ -99,26 +99,26 @@ impl std::ops::Deref for True {
         static TRUE: bool = true;
         static FALSE: bool = false;
         match self {
-            True::True => &TRUE,
-            True::False => &FALSE,
+            Self::True => &TRUE,
+            Self::False => &FALSE,
         }
     }
 }
 
 impl True {
     #[must_use]
-    pub fn is_true(&self) -> bool {
-        matches!(self, True::True)
+    pub const fn is_true(&self) -> bool {
+        matches!(self, Self::True)
     }
 
     #[must_use]
-    pub fn is_false(&self) -> bool {
-        matches!(self, True::False)
+    pub const fn is_false(&self) -> bool {
+        matches!(self, Self::False)
     }
 }
 
 impl Pickable for True {
-    type Output = True;
+    type Output = Self;
 
     fn pick(args: &mut crate::parser::Argument, flag: mingling_core::Flag) -> Option<Self::Output> {
         let value = pick_bool(args, flag, &["true", "t"]);
@@ -132,11 +132,11 @@ fn pick_bool(
     positive: &[&str],
 ) -> bool {
     let content = args.pick_argument(flag);
-    match content {
-        Some(content) => {
+    content.map_or_else(
+        || false,
+        |content| {
             let s = content.as_str();
             positive.contains(&s)
-        }
-        None => false,
-    }
+        },
+    )
 }
