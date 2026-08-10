@@ -10,6 +10,7 @@ const TMPL_COMP_FISH: &str = include_str!("../../tmpls/comps/fish.fish");
 const TMPL_COMP_PWSH: &str = include_str!("../../tmpls/comps/pwsh.ps1");
 
 /// Generate shell completion scripts for a given binary name.
+///
 /// On Windows, generates `PowerShell` completion.
 /// On Linux, generates Zsh, Bash, and Fish completions.
 /// Scripts are written to the `OUT_DIR` (or `target/` if `OUT_DIR` is not set).
@@ -63,7 +64,7 @@ pub fn build_comp_scripts(name: &str) -> Result<(), std::io::Error> {
 /// ```
 pub fn build_comp_script(shell_flag: &ShellFlag, bin_name: &str) -> Result<(), std::io::Error> {
     let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let target_dir = out_dir.join("../../../").clone();
+    let target_dir = out_dir.join("../../../");
     build_comp_script_to(shell_flag, bin_name, &target_dir.to_string_lossy())
 }
 
@@ -116,13 +117,12 @@ pub fn build_comp_script_to_file(
     std::fs::write(output_path.into(), tmpl.to_string())
 }
 
-fn get_tmpl(shell_flag: &ShellFlag) -> (&'static str, &'static str) {
+const fn get_tmpl(shell_flag: &ShellFlag) -> (&'static str, &'static str) {
     match shell_flag {
-        ShellFlag::Bash => (TMPL_COMP_BASH, ".sh"),
+        ShellFlag::Bash | ShellFlag::Other(_) => (TMPL_COMP_BASH, ".sh"),
         ShellFlag::Zsh => (TMPL_COMP_ZSH, ".zsh"),
         ShellFlag::Fish => (TMPL_COMP_FISH, ".fish"),
         ShellFlag::Powershell => (TMPL_COMP_PWSH, ".ps1"),
-        ShellFlag::Other(_) => (TMPL_COMP_BASH, ".sh"),
     }
 }
 

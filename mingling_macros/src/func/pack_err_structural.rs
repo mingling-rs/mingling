@@ -9,8 +9,9 @@ pub(crate) fn pack_err_structural(input: TokenStream) -> TokenStream {
     let parsed = parse_macro_input!(input as PackErrInput);
 
     let type_name = match &parsed {
-        PackErrInput::Simple { type_name } => type_name.clone(),
-        PackErrInput::Typed { type_name, .. } => type_name.clone(),
+        PackErrInput::Simple { type_name } | PackErrInput::Typed { type_name, .. } => {
+            type_name.clone()
+        }
     };
 
     // Register in STRUCTURED_TYPES
@@ -108,12 +109,12 @@ impl syn::parse::Parse for PackErrInput {
         if input.peek(Token![=]) {
             input.parse::<Token![=]>()?;
             let inner_type: Type = input.parse()?;
-            Ok(PackErrInput::Typed {
+            Ok(Self::Typed {
                 type_name,
                 inner_type: Box::new(inner_type),
             })
         } else {
-            Ok(PackErrInput::Simple { type_name })
+            Ok(Self::Simple { type_name })
         }
     }
 }

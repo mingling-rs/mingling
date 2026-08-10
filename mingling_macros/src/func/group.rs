@@ -33,10 +33,10 @@ impl Parse for GroupInput {
             let alias: Ident = input.parse()?;
             let _eq: syn::Token![=] = input.parse()?;
             let type_path: TypePath = input.parse()?;
-            Ok(GroupInput::Aliased { alias, type_path })
+            Ok(Self::Aliased { alias, type_path })
         } else {
             let type_path: TypePath = input.parse()?;
-            Ok(GroupInput::Plain(type_path))
+            Ok(Self::Plain(type_path))
         }
     }
 }

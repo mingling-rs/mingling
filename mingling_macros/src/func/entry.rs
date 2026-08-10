@@ -18,11 +18,11 @@ impl syn::parse::Parse for EntryInput {
             let content;
             syn::bracketed!(content in input);
             let strings = parse_strings(&content)?;
-            Ok(EntryInput::Typed { ident, strings })
+            Ok(Self::Typed { ident, strings })
         } else {
             // entry!["a", "b", "c"]  — bare bracket content
             let strings = parse_strings(input)?;
-            Ok(EntryInput::Untyped { strings })
+            Ok(Self::Untyped { strings })
         }
     }
 }

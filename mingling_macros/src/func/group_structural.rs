@@ -115,10 +115,10 @@ impl syn::parse::Parse for GroupStructuralInput {
             let alias: Ident = input.parse()?;
             let _eq: syn::Token![=] = input.parse()?;
             let type_path: TypePath = input.parse()?;
-            Ok(GroupStructuralInput::Aliased { alias, type_path })
+            Ok(Self::Aliased { alias, type_path })
         } else {
             let type_path: TypePath = input.parse()?;
-            Ok(GroupStructuralInput::Plain(type_path))
+            Ok(Self::Plain(type_path))
         }
     }
 }

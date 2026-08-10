@@ -438,7 +438,7 @@ pub fn pack_structural(input: TokenStream) -> TokenStream {
 /// This macro provides a concise way to define error types that implement `Grouped`
 /// and are registered for inclusion in the program enum.
 ///
-/// The `name` field is automatically set to the snake_case version of the struct name
+/// The `name` field is automatically set to the `snake_case` version of the struct name
 /// at compile time.
 ///
 /// # Syntax
@@ -1101,7 +1101,7 @@ pub fn completion(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[cfg(feature = "extras")]
 #[proc_macro_attribute]
 pub fn program_setup(attr: TokenStream, item: TokenStream) -> TokenStream {
-    program_setup::setup_attr(attr, item)
+    program_setup::setup_attr(&attr, item)
 }
 
 /// Declares a command from a plain function.

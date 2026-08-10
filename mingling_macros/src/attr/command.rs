@@ -51,8 +51,7 @@ impl Parse for CommandArgs {
                     entry = Some(input.parse()?);
                 } else {
                     return Err(input.error(format!(
-                        "unknown key `{}`; expected `node`, `name`, or `entry`",
-                        key
+                        "unknown key `{key}`; expected `node`, `name`, or `entry`"
                     )));
                 }
             } else {
@@ -67,7 +66,7 @@ impl Parse for CommandArgs {
             }
         }
 
-        Ok(CommandArgs {
+        Ok(Self {
             node,
             name,
             entry,
@@ -142,10 +141,10 @@ struct ResolvedNames {
 fn resolve_names(fn_name: &Ident, args: &CommandArgs) -> ResolvedNames {
     let fn_name_str = fn_name.to_string();
 
-    let node_str = match &args.node {
-        Some(lit) => lit.value(),
-        None => default_node_from_fn(fn_name),
-    };
+    let node_str = args
+        .node
+        .as_ref()
+        .map_or_else(|| default_node_from_fn(fn_name), syn::LitStr::value);
     let node_lit = syn::LitStr::new(&node_str, fn_name.span());
 
     let has_overrides = args.node.is_some() || args.name.is_some() || args.entry.is_some();
@@ -160,7 +159,7 @@ fn resolve_names(fn_name: &Ident, args: &CommandArgs) -> ResolvedNames {
         Ident::new(&format!("Entry{pascal}"), fn_name.span())
     });
 
-    let chain_fn_name = Ident::new(&format!("__command_chain_{}", fn_name_str), fn_name.span());
+    let chain_fn_name = Ident::new(&format!("__command_chain_{fn_name_str}"), fn_name.span());
 
     ResolvedNames {
         node_lit,
@@ -213,7 +212,7 @@ fn build_wrapper_params(
         let mut params = syn::punctuated::Punctuated::new();
         let entry_param: FnArg = syn::parse_quote! { _args: #entry_type };
         params.push(entry_param);
-        for arg in sig.inputs.iter() {
+        for arg in &sig.inputs {
             params.push(arg.clone());
         }
         params
@@ -317,7 +316,7 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
     let wrapper_full = format!("__command_chain_{}", &fn_name_s);
     let snaked_wrapper = just_fmt::snake_case!(wrapper_full);
     let chain_internal = Ident::new(
-        &format!("__internal_chain_{}", snaked_wrapper),
+        &format!("__internal_chain_{snaked_wrapper}"),
         fn_name.span(),
     );
 

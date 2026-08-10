@@ -39,11 +39,11 @@ impl Parse for ClapOptions {
                 error_struct = Some(value);
             } else if key == "help" {
                 let value: LitBool = input.parse()?;
-                if !value.value() {
+                if value.value() {
+                    help_enabled = true;
+                } else {
                     // help = false is allowed but does nothing
                     help_enabled = false;
-                } else {
-                    help_enabled = true;
                 }
             } else {
                 return Err(syn::Error::new(
@@ -53,14 +53,14 @@ impl Parse for ClapOptions {
             }
         }
 
-        Ok(ClapOptions {
+        Ok(Self {
             error_struct,
             help_enabled,
         })
     }
 }
 
-/// Input for the dispatcher_clap attribute
+/// Input for the `dispatcher_clap` attribute
 struct DispatcherClapInput {
     /// `("cmd", Disp, ...)`
     command_name: LitStr,
@@ -84,7 +84,7 @@ impl Parse for DispatcherClapInput {
             input.parse::<ClapOptions>()?
         };
 
-        Ok(DispatcherClapInput {
+        Ok(Self {
             command_name,
             dispatcher_struct,
             options,
@@ -105,28 +105,31 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     let options = &attr_input.options;
 
     // Generate the `begin` method body
-    let begin_body = if let Some(ref error_struct) = options.error_struct {
-        quote! {
-            if ::mingling::this::<#program_path>().user_context.help {
-                return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
+    let begin_body = options.error_struct.as_ref().map_or_else(
+        || {
+            quote! {
+                if ::mingling::this::<#program_path>().user_context.help {
+                    return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
+                }
+                let parsed = <#struct_name as ::clap::Parser>::try_parse_from(clap_args)
+                    .unwrap_or_else(|e| e.exit());
+                ::mingling::Routable::<#program_path>::to_chain(parsed)
             }
-            match <#struct_name as ::clap::Parser>::try_parse_from(clap_args) {
-                Ok(parsed) => ::mingling::Routable::<#program_path>::to_chain(parsed),
-                Err(e) => {
-                    return ::mingling::Routable::<#program_path>::to_render(#error_struct::new(format!("{}", e.render().ansi())))
-                },
+        },
+        |error_struct| {
+            quote! {
+                if ::mingling::this::<#program_path>().user_context.help {
+                    return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
+                }
+                match <#struct_name as ::clap::Parser>::try_parse_from(clap_args) {
+                    Ok(parsed) => ::mingling::Routable::<#program_path>::to_chain(parsed),
+                    Err(e) => {
+                        return ::mingling::Routable::<#program_path>::to_render(#error_struct::new(format!("{}", e.render().ansi())))
+                    },
+                }
             }
-        }
-    } else {
-        quote! {
-            if ::mingling::this::<#program_path>().user_context.help {
-                return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
-            }
-            let parsed = <#struct_name as ::clap::Parser>::try_parse_from(clap_args)
-                .unwrap_or_else(|e| e.exit());
-            ::mingling::Routable::<#program_path>::to_chain(parsed)
-        }
-    };
+        },
+    );
 
     // Generate the error pack type
     let error_pack = options.error_struct.as_ref().map(|error_struct| {

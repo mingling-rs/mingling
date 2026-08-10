@@ -4,9 +4,9 @@ use quote::quote;
 use syn::{Ident, Token, Type, parse_macro_input};
 
 enum PackErrInput {
-    /// pack_err!(ErrorNotFound)
+    /// `pack_err!(ErrorNotFound)`
     Simple { type_name: Ident },
-    /// pack_err!(ErrorNotDir = PathBuf)
+    /// `pack_err!(ErrorNotDir = PathBuf)`
     Typed {
         type_name: Ident,
         inner_type: Box<Type>,
@@ -20,12 +20,12 @@ impl syn::parse::Parse for PackErrInput {
         if input.peek(Token![=]) {
             input.parse::<Token![=]>()?;
             let inner_type: Type = input.parse()?;
-            Ok(PackErrInput::Typed {
+            Ok(Self::Typed {
                 type_name,
                 inner_type: Box::new(inner_type),
             })
         } else {
-            Ok(PackErrInput::Simple { type_name })
+            Ok(Self::Simple { type_name })
         }
     }
 }

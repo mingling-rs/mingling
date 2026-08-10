@@ -32,7 +32,7 @@ impl Parse for DispatcherChainInput {
             if input.is_empty() {
                 #[cfg(feature = "extras")]
                 {
-                    return Ok(DispatcherChainInput::Auto {
+                    return Ok(Self::Auto {
                         cmd_attrs,
                         command_name,
                     });
