@@ -17,7 +17,8 @@ pub struct PathfinderConfig {
 
 impl PathfinderConfig {
     /// Create a config with `use_dispatch_tree` enabled.
-    pub fn with_dispatch_tree() -> Self {
+    #[must_use]
+    pub const fn with_dispatch_tree() -> Self {
         Self {
             use_dispatch_tree: true,
         }

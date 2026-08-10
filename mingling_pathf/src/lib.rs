@@ -1,6 +1,8 @@
 #![allow(clippy::needless_doctest_main)]
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
 
 pub mod config;
 pub mod error;

@@ -32,7 +32,8 @@ impl DispatcherPattern {
     /// * `use_dispatch_tree` — when `true`, the generated dispatcher also produces a
     ///   `__internal_dispatcher_*` static dispatch tree item. Set this based on whether
     ///   your macro invocation includes the `use_dispatch_tree` configuration.
-    pub fn new(use_dispatch_tree: bool) -> Self {
+    #[must_use]
+    pub const fn new(use_dispatch_tree: bool) -> Self {
         Self { use_dispatch_tree }
     }
 }
@@ -102,9 +103,8 @@ fn extract_all_types(
     use_dispatch_tree: bool,
 ) -> Vec<AnalyzeItem> {
     let (cmd_name, cmd_struct, entry_struct) = parse_dispatcher_args(tokens);
-    let cmd_name = match cmd_name {
-        Some(n) => n,
-        None => return Vec::new(),
+    let Some(cmd_name) = cmd_name else {
+        return Vec::new();
     };
 
     let mut items = Vec::new();
@@ -128,7 +128,7 @@ fn extract_all_types(
     items
 }
 
-/// Parses dispatcher arguments and returns (command_name, cmd_struct, entry_struct).
+/// Parses dispatcher arguments and returns (`command_name`, `cmd_struct`, `entry_struct`).
 fn parse_dispatcher_args(
     tokens: &proc_macro2::TokenStream,
 ) -> (Option<String>, Option<String>, Option<String>) {
@@ -166,9 +166,8 @@ fn parse_dispatcher_args(
     }
 
     // Implicit form: "name"
-    let cmd_name = match extract_string_literal(&stream) {
-        Some(n) => n,
-        None => return (None, None, None),
+    let Some(cmd_name) = extract_string_literal(&stream) else {
+        return (None, None, None);
     };
     let pascal = to_pascal_case(&cmd_name);
     (
@@ -192,15 +191,14 @@ fn to_pascal_case(s: &str) -> String {
         .filter(|s| !s.is_empty())
         .map(|s| {
             let mut c = s.chars();
-            match c.next() {
-                None => String::new(),
-                Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
-            }
+            c.next().map_or_else(String::new, |f| {
+                f.to_uppercase().collect::<String>() + c.as_str()
+            })
         })
         .collect()
 }
 
-/// Simple snake_case conversion (replaces `.`, `-` with `_`).
+/// Simple `snake_case` conversion (replaces `.`, `-` with `_`).
 fn snake_case(s: &str) -> String {
     s.replace(['.', '-'], "_").to_lowercase()
 }

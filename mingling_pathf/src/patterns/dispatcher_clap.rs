@@ -39,7 +39,8 @@ impl DispatcherClapPattern {
     /// # Parameters
     /// - `use_dispatch_tree`: When `true`, enables analysis of the `__internal_dispatcher_*`
     ///   static dispatch tree for each matched command.
-    pub fn new(use_dispatch_tree: bool) -> Self {
+    #[must_use]
+    pub const fn new(use_dispatch_tree: bool) -> Self {
         Self { use_dispatch_tree }
     }
 }
@@ -59,52 +60,7 @@ impl AnalyzePattern for DispatcherClapPattern {
         for item in &syntax.items {
             match item {
                 Item::Struct(s) if has_attr(&s.attrs, "dispatcher_clap") => {
-                    // Entry type (struct name) — always
-                    let entry_name = s.ident.to_string();
-                    items.push(AnalyzeItem::local(String::new(), entry_name.clone()));
-
-                    // Parse the attribute to extract CMD, error, and help info
-                    if let Some(attr) = s.attrs.iter().find(|a| {
-                        a.path()
-                            .segments
-                            .last()
-                            .is_some_and(|seg| seg.ident == "dispatcher_clap")
-                    }) {
-                        let args = attr.meta.require_list().ok();
-                        let args_str = args.map(|l| l.tokens.to_string()).unwrap_or_default();
-                        let parsed = parse_dispatcher_clap_args(&args_str);
-
-                        // CMD type — always
-                        if let Some(ref cmd) = parsed.cmd_type {
-                            items.push(AnalyzeItem::local(String::new(), cmd.clone()));
-                        }
-
-                        // Error type — if error = TypeName
-                        if let Some(ref err) = parsed.error_type {
-                            items.push(AnalyzeItem::local(String::new(), err.clone()));
-                        }
-
-                        // Help internal struct — if help = true
-                        if parsed.help_enabled
-                            && let Some(ref cmd) = parsed.cmd_type
-                        {
-                            let help_fn = format!("__{}_help", just_fmt::snake_case!(cmd));
-                            let help_struct =
-                                format!("__internal_help_{}", just_fmt::snake_case!(&help_fn));
-                            items.push(AnalyzeItem::local(String::new(), help_struct));
-                        }
-
-                        // __internal_dispatcher_* — when configured
-                        if self.use_dispatch_tree
-                            && let Some(ref cmd_name) = parsed.cmd_name
-                        {
-                            let internal_name = format!(
-                                "__internal_dispatcher_{}",
-                                just_fmt::snake_case!(cmd_name)
-                            );
-                            items.push(AnalyzeItem::local(String::new(), internal_name));
-                        }
-                    }
+                    items.extend(self.analyze_struct(s, ""));
                 }
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
@@ -112,72 +68,64 @@ impl AnalyzePattern for DispatcherClapPattern {
                             if let Item::Struct(s) = n
                                 && has_attr(&s.attrs, "dispatcher_clap")
                             {
-                                let entry_name = s.ident.to_string();
-                                items.push(AnalyzeItem::local(
-                                    item_mod.ident.to_string(),
-                                    entry_name.clone(),
-                                ));
-
-                                if let Some(attr) = s.attrs.iter().find(|a| {
-                                    a.path()
-                                        .segments
-                                        .last()
-                                        .is_some_and(|seg| seg.ident == "dispatcher_clap")
-                                }) {
-                                    let args = attr.meta.require_list().ok();
-                                    let args_str =
-                                        args.map(|l| l.tokens.to_string()).unwrap_or_default();
-                                    let parsed = parse_dispatcher_clap_args(&args_str);
-
-                                    if let Some(ref cmd) = parsed.cmd_type {
-                                        items.push(AnalyzeItem::local(
-                                            item_mod.ident.to_string(),
-                                            cmd.clone(),
-                                        ));
-                                    }
-
-                                    if let Some(ref err) = parsed.error_type {
-                                        items.push(AnalyzeItem::local(
-                                            item_mod.ident.to_string(),
-                                            err.clone(),
-                                        ));
-                                    }
-
-                                    // Help internal struct — same naming rule as root level
-                                    if parsed.help_enabled
-                                        && let Some(ref cmd) = parsed.cmd_type
-                                    {
-                                        let help_fn =
-                                            format!("__{}_help", just_fmt::snake_case!(cmd));
-                                        let help_struct = format!(
-                                            "__internal_help_{}",
-                                            just_fmt::snake_case!(&help_fn)
-                                        );
-                                        items.push(AnalyzeItem::local(
-                                            item_mod.ident.to_string(),
-                                            help_struct,
-                                        ));
-                                    }
-
-                                    // __internal_dispatcher_* — when configured
-                                    if self.use_dispatch_tree
-                                        && let Some(ref cmd_name) = parsed.cmd_name
-                                    {
-                                        let internal_name = format!(
-                                            "__internal_dispatcher_{}",
-                                            just_fmt::snake_case!(cmd_name)
-                                        );
-                                        items.push(AnalyzeItem::local(
-                                            item_mod.ident.to_string(),
-                                            internal_name,
-                                        ));
-                                    }
-                                }
+                                items.extend(self.analyze_struct(s, &item_mod.ident.to_string()));
                             }
                         }
                     }
                 }
                 _ => {}
+            }
+        }
+
+        items
+    }
+}
+
+impl DispatcherClapPattern {
+    fn analyze_struct(&self, s: &syn::ItemStruct, module: &str) -> Vec<AnalyzeItem> {
+        let mut items = Vec::new();
+
+        // Entry type (struct name) — always
+        let entry_name = s.ident.to_string();
+        items.push(AnalyzeItem::local(module.to_string(), entry_name));
+
+        // Parse the attribute to extract CMD, error, and help info
+        if let Some(attr) = s.attrs.iter().find(|a| {
+            a.path()
+                .segments
+                .last()
+                .is_some_and(|seg| seg.ident == "dispatcher_clap")
+        }) {
+            let args = attr.meta.require_list().ok();
+            let args_str = args.map(|l| l.tokens.to_string()).unwrap_or_default();
+            let parsed = parse_dispatcher_clap_args(&args_str);
+
+            // CMD type — always
+            if let Some(ref cmd) = parsed.cmd_type {
+                items.push(AnalyzeItem::local(module.to_string(), cmd.clone()));
+            }
+
+            // Error type — if error = TypeName
+            if let Some(ref err) = parsed.error_type {
+                items.push(AnalyzeItem::local(module.to_string(), err.clone()));
+            }
+
+            // Help internal struct — if help = true
+            if parsed.help_enabled
+                && let Some(ref cmd) = parsed.cmd_type
+            {
+                let help_fn = format!("__{}_help", just_fmt::snake_case!(cmd));
+                let help_struct = format!("__internal_help_{}", just_fmt::snake_case!(&help_fn));
+                items.push(AnalyzeItem::local(module.to_string(), help_struct));
+            }
+
+            // __internal_dispatcher_* — when configured
+            if self.use_dispatch_tree
+                && let Some(ref cmd_name) = parsed.cmd_name
+            {
+                let internal_name =
+                    format!("__internal_dispatcher_{}", just_fmt::snake_case!(cmd_name));
+                items.push(AnalyzeItem::local(module.to_string(), internal_name));
             }
         }
 
@@ -202,17 +150,13 @@ fn parse_dispatcher_clap_args(args: &str) -> ParsedClapArgs {
     let args = args.trim();
 
     // Extract the first quoted string (the command name)
-    let after_cmd = if let Some(start) = args.find('"') {
+    let after_cmd = args.find('"').map_or(args, |start| {
         let after_open = &args[start + 1..];
-        if let Some(end) = after_open.find('"') {
+        after_open.find('"').map_or(args, |end| {
             cmd_name = Some(after_open[..end].to_string());
             after_open[end + 1..].trim()
-        } else {
-            args
-        }
-    } else {
-        args
-    };
+        })
+    });
 
     // Split by commas and parse each part
     for part in after_cmd.split(',') {

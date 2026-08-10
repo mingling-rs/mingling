@@ -300,7 +300,7 @@ fn test_dispatcher_dispatch_tree() {
     assert!(r1.contains("::sub::CMDGreet"));
 
     // With dispatch_tree: Entry + CMD + __internal_dispatcher
-    let r2 = pattern_analyzer::init_with_config(PathfinderConfig::with_dispatch_tree())
+    let r2 = pattern_analyzer::init_with_config(&PathfinderConfig::with_dispatch_tree())
         .analyze_file(&file)
         .unwrap();
     // 8 (from above) + 2 __internal (root) + 2 __internal (sub) = 12
@@ -377,7 +377,7 @@ fn test_dispatcher_clap_dispatch_tree() {
     assert_eq!(r1.len(), 26);
 
     // With dispatch_tree: 26 + 4 __internal (root) + 3 __internal (sub, no "full") = 33
-    let r2 = pattern_analyzer::init_with_config(PathfinderConfig::with_dispatch_tree())
+    let r2 = pattern_analyzer::init_with_config(&PathfinderConfig::with_dispatch_tree())
         .analyze_file(&file)
         .unwrap();
     assert_eq!(r2.len(), 33);

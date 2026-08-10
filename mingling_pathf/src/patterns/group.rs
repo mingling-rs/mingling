@@ -129,7 +129,8 @@ fn collect_from_use_tree(
         UseTree::Name(name) => {
             let module = prefix.to_string();
             let alias = name.ident.to_string();
-            map.entry(alias).or_insert((module, name.ident.to_string()));
+            map.entry(alias)
+                .or_insert_with(|| (module, name.ident.to_string()));
         }
         UseTree::Path(use_path) => {
             let new_prefix = if prefix.is_empty() {
@@ -143,7 +144,7 @@ fn collect_from_use_tree(
             let module = prefix.to_string();
             let alias = rename.ident.to_string();
             map.entry(alias)
-                .or_insert((module, rename.ident.to_string()));
+                .or_insert_with(|| (module, rename.ident.to_string()));
         }
         UseTree::Glob(_) => {
             // `use path::*;` — skip glob imports
@@ -178,24 +179,21 @@ fn extract_group_name(tokens: &proc_macro2::TokenStream) -> Option<String> {
     let mut iter = stream.into_iter();
 
     loop {
-        match iter.next()? {
-            proc_macro2::TokenTree::Ident(ident) => {
-                let name = ident.to_string();
+        if let proc_macro2::TokenTree::Ident(ident) = iter.next()? {
+            let name = ident.to_string();
 
-                // Check if there is a `=` following
-                let next = iter.next();
-                match next {
-                    Some(proc_macro2::TokenTree::Punct(p)) if p.as_char() == '=' => {
-                        // group!(Alias = path::Type)
-                        return Some(name);
-                    }
-                    _ => {
-                        // group!(TypeName)
-                        return Some(name);
-                    }
+            // Check if there is a `=` following
+            let next = iter.next();
+            match next {
+                Some(proc_macro2::TokenTree::Punct(p)) if p.as_char() == '=' => {
+                    // group!(Alias = path::Type)
+                    return Some(name);
+                }
+                _ => {
+                    // group!(TypeName)
+                    return Some(name);
                 }
             }
-            _ => continue,
         }
     }
 }

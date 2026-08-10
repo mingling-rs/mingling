@@ -3,6 +3,7 @@
 //! type mapping files used by the pathfinder system.
 
 use std::collections::HashSet;
+use std::fmt::Write as FmtWrite;
 use std::path::Path;
 
 use crate::config::PathfinderConfig;
@@ -14,16 +15,21 @@ use crate::pattern_analyzer;
 ///
 /// `crate_dir` — crate root directory (i.e., the directory containing Cargo.toml)
 /// `output_dir` — directory where mapping files will be written
-/// `config` — pathfinder configuration (e.g., dispatch_tree detection)
+/// `config` — pathfinder configuration (e.g., [`dispatch_tree`] detection)
 ///
 /// Mapping file format per line: `TypeName = crate::module::path::TypeName`
+///
+/// # Errors
+///
+/// Returns a [`MinglingPathfinderError`] if the module analysis fails, the output
+/// directory cannot be created, or the mapping files cannot be written.
 pub fn analyze_and_build_type_mapping_for(
     crate_dir: &Path,
     output_dir: &Path,
     config: &PathfinderConfig,
 ) -> Result<(), MinglingPathfinderError> {
     let module_mapping = module_pathf::analyze(crate_dir)?;
-    let analyzer = pattern_analyzer::init_with_config(config.clone());
+    let analyzer = pattern_analyzer::init_with_config(config);
 
     let mut type_mappings: Vec<(String, String, bool)> = Vec::new();
 
@@ -66,16 +72,16 @@ pub fn analyze_and_build_type_mapping_for(
 
     let mut content_mapping = String::new();
     for (name, path, _) in &type_mappings {
-        content_mapping.push_str(&format!("{name} = {path}\n"));
+        let _ = writeln!(content_mapping, "{name} = {path}");
     }
     std::fs::write(&output_path, content_mapping)?;
 
     let mut content_using = String::new();
     for (_, path, is_module) in &type_mappings {
         if *is_module {
-            content_using.push_str(&format!("use {path}::*;\n"));
+            let _ = writeln!(content_using, "use {path}::*;");
         } else {
-            content_using.push_str(&format!("use {path};\n"));
+            let _ = writeln!(content_using, "use {path};");
         }
     }
     std::fs::write(&type_using_path, content_using)?;
@@ -87,6 +93,12 @@ pub fn analyze_and_build_type_mapping_for(
 /// from environment variables.
 ///
 /// Reads `CARGO_PKG_NAME` and `OUT_DIR`, and outputs to `{OUT_DIR}/{CARGO_PKG_NAME}/`.
+///
+/// # Errors
+///
+/// Returns a [`MinglingPathfinderError`] if the required environment variables
+/// (`CARGO_PKG_NAME`, `OUT_DIR`) are not set, the current directory cannot be
+/// determined, or the type mapping generation fails.
 pub fn analyze_and_build_type_mapping() -> Result<(), MinglingPathfinderError> {
     let crate_name = std::env::var("CARGO_PKG_NAME").map_err(|_| {
         MinglingPathfinderError::IoError(std::io::Error::new(

@@ -17,16 +17,21 @@ use std::path::Path;
 
 use crate::config::PathfinderConfig;
 use crate::error::MinglingPathfinderError;
-use crate::patterns::*;
+use crate::patterns::{
+    ChainPattern, CommandPattern, CompletionPattern, DispatcherClapPattern, DispatcherPattern,
+    GroupPattern, GroupedDerivePattern, HelpPattern, MetadataPattern, PackPattern, RendererPattern,
+};
 
 /// Creates a default `PatternAnalyzer` with all built-in patterns pre-registered.
+#[must_use]
 pub fn init() -> PatternAnalyzer {
-    init_with_config(PathfinderConfig::default())
+    init_with_config(&PathfinderConfig::default())
 }
 
 /// Creates a `PatternAnalyzer` with the given config, used by `mingling_core`'s pathf wrapper
 /// to inject feature-dependent settings (e.g., `dispatch_tree`).
-pub fn init_with_config(config: PathfinderConfig) -> PatternAnalyzer {
+#[must_use]
+pub fn init_with_config(config: &PathfinderConfig) -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
     analyzer.add_pattern(PackPattern);
     analyzer.add_pattern(GroupPattern);
@@ -57,7 +62,8 @@ pub struct AnalyzeItem {
 
 impl AnalyzeItem {
     /// Creates a local `AnalyzeItem` (not foreign, will be prefixed with the file's module path).
-    pub fn local(module: String, item_name: String) -> Self {
+    #[must_use]
+    pub const fn local(module: String, item_name: String) -> Self {
         Self {
             module,
             item_name,
@@ -67,7 +73,8 @@ impl AnalyzeItem {
     }
 
     /// Creates a local module item — generates a `use path::item_name::*;` glob import.
-    pub fn local_module(module: String, item_name: String) -> Self {
+    #[must_use]
+    pub const fn local_module(module: String, item_name: String) -> Self {
         Self {
             module,
             item_name,
@@ -77,7 +84,8 @@ impl AnalyzeItem {
     }
 
     /// Creates a foreign `AnalyzeItem` (resolved via `use`, the `module` field is the full import path).
-    pub fn foreign(module: String, item_name: String) -> Self {
+    #[must_use]
+    pub const fn foreign(module: String, item_name: String) -> Self {
         Self {
             module,
             item_name,
@@ -95,11 +103,13 @@ pub struct AnalyzeResult {
 
 impl AnalyzeResult {
     /// Creates an empty `AnalyzeResult` instance
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { items: Vec::new() }
     }
 
     /// Formats all items into a set of strings in the format `"::{module_path}::{item_name}"`
+    #[must_use]
     pub fn into_formatted(self) -> HashSet<String> {
         self.items
             .into_iter()
@@ -125,7 +135,7 @@ pub trait AnalyzePattern {
     /// Quickly determine whether the file content contains an analyzable item
     fn contains(&self, content: &str) -> bool;
 
-    /// Analyze the content and return all found AnalyzeItems
+    /// Analyze the content and return all found `AnalyzeItem`s
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem>;
 }
 
@@ -138,6 +148,7 @@ pub struct PatternAnalyzer {
 
 impl PatternAnalyzer {
     /// Creates a new empty `PatternAnalyzer`.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -148,6 +159,10 @@ impl PatternAnalyzer {
     }
 
     /// Analyzes a single file and returns a formatted set of strings.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MinglingPathfinderError`] if the file cannot be read.
     pub fn analyze_file(
         &self,
         path: impl AsRef<Path>,
@@ -157,6 +172,10 @@ impl PatternAnalyzer {
     }
 
     /// Analyzes a single file and returns the raw `Vec<AnalyzeItem>`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`MinglingPathfinderError`] if the file cannot be read.
     pub fn analyze_file_items(
         &self,
         path: impl AsRef<Path>,

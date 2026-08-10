@@ -25,11 +25,13 @@ pub struct MappingItem {
 
 impl MappingItem {
     /// Returns the path of the source file (relative to the crate root, with `./` prefix).
+    #[must_use]
     pub fn file_path(&self) -> &Path {
         &self.file_path
     }
 
     /// Returns the effective module path corresponding to this file (e.g., `"crate::foo::bar"`).
+    #[must_use]
     pub fn module_path(&self) -> &str {
         &self.module_path
     }
@@ -50,6 +52,12 @@ pub struct ModulePathMapping {
 /// Analyzes the module structure of a crate and returns the effective module path for each source file.
 ///
 /// `crate_dir` is the crate root directory (i.e., the directory containing `Cargo.toml`).
+///
+/// # Errors
+///
+/// Returns an error if the `src/` directory does not exist, no entry point file is found,
+/// a source file cannot be read or parsed, a child module file cannot be resolved, or
+/// an I/O error occurs while traversing the crate directory.
 pub fn analyze(crate_dir: &Path) -> Result<ModulePathMapping, MinglingPathfinderError> {
     let src_dir = crate_dir.join("src");
     if !src_dir.is_dir() {
@@ -121,11 +129,8 @@ impl Context {
     }
 
     fn relative_path(&self, abs: &Path) -> PathBuf {
-        if let Ok(rel) = abs.strip_prefix(&self.crate_dir) {
-            PathBuf::from("./").join(rel)
-        } else {
-            abs.to_path_buf()
-        }
+        abs.strip_prefix(&self.crate_dir)
+            .map_or_else(|_| abs.to_path_buf(), |rel| PathBuf::from("./").join(rel))
     }
 }
 
@@ -276,7 +281,7 @@ fn collect_reexports(tree: &UseTree, results: &mut Vec<String>) {
         UseTree::Rename(rename) => {
             results.push(rename.ident.to_string());
         }
-        _ => {}
+        UseTree::Glob(_) => {}
     }
 }
 

@@ -84,23 +84,20 @@ fn try_extract_pack_name(m: &syn::ItemMacro) -> Option<String> {
 
     // Skip leading attributes/doc comments
     loop {
-        match iter.next()? {
-            proc_macro2::TokenTree::Ident(ident) => {
-                // Found the first ident, this is the type name
-                let type_name = ident.to_string();
+        if let proc_macro2::TokenTree::Ident(ident) = iter.next()? {
+            // Found the first ident, this is the type name
+            let type_name = ident.to_string();
 
-                // Check if `=` follows
-                if let Some(proc_macro2::TokenTree::Punct(p)) = iter.next()
-                    && p.as_char() == '='
-                {
-                    // pack!(TypeName = InnerType)
-                    return Some(type_name);
-                }
-
-                // pack_err!(TypeName) — only a single ident
+            // Check if `=` follows
+            if let Some(proc_macro2::TokenTree::Punct(p)) = iter.next()
+                && p.as_char() == '='
+            {
+                // pack!(TypeName = InnerType)
                 return Some(type_name);
             }
-            _ => continue,
+
+            // pack_err!(TypeName) — only a single ident
+            return Some(type_name);
         }
     }
 }

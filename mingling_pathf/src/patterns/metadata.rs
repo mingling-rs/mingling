@@ -95,7 +95,7 @@ fn extract_bind_type(attrs: &[syn::Attribute]) -> Option<String> {
             continue;
         }
         if let syn::Meta::List(meta_list) = &attr.meta {
-            for token in meta_list.tokens.clone().into_iter() {
+            for token in meta_list.tokens.clone() {
                 if let proc_macro2::TokenTree::Ident(ident) = token {
                     return Some(ident.to_string());
                 }
@@ -139,7 +139,8 @@ fn collect_from_use_tree(
         UseTree::Name(name) => {
             let module = prefix.to_string();
             let alias = name.ident.to_string();
-            map.entry(alias).or_insert((module, name.ident.to_string()));
+            map.entry(alias)
+                .or_insert_with(|| (module, name.ident.to_string()));
         }
         UseTree::Path(use_path) => {
             let new_prefix = if prefix.is_empty() {
@@ -153,7 +154,7 @@ fn collect_from_use_tree(
             let module = prefix.to_string();
             let alias = rename.ident.to_string();
             map.entry(alias)
-                .or_insert((module, rename.ident.to_string()));
+                .or_insert_with(|| (module, rename.ident.to_string()));
         }
         UseTree::Glob(_) => {}
         UseTree::Group(group) => {
