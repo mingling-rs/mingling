@@ -71,7 +71,7 @@ pub(crate) fn program_comp_gen_impl(_input: TokenStream) -> TokenStream {
         pub fn __render_completion(prev: CompletionSuggest) -> ::mingling::RenderResult {
             let result = ::mingling::RenderResult::default();
             let (ctx, suggest) = prev.inner;
-            ::mingling::CompletionHelper::render_suggest::<crate::ThisProgram>(ctx, suggest);
+            ::mingling::CompletionHelper::render_suggest::<crate::ThisProgram>(&ctx, suggest);
             result
         }
     };
