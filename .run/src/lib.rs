@@ -3,6 +3,8 @@ pub mod verify;
 
 use colored::Colorize;
 
+use std::io::IsTerminal as _;
+
 #[macro_export]
 macro_rules! run_cmd {
     ($fmt:literal, $($arg:tt)*) => {
@@ -275,15 +277,30 @@ pub fn run_parallel(phase: &str, tasks: Vec<(String, String, String)>) -> Result
             if first_exit_code == 0 {
                 first_exit_code = code;
             }
-            pb.println(format!(
+            let msg = format!(
                 "{}: {} failed (exit code {})",
                 "error".bright_red().bold(),
                 labels[i],
                 code,
-            ));
+            );
+            let mut lines = Vec::new();
             if !output.is_empty() {
-                for line in output.lines() {
-                    pb.println(format!("  {line}"));
+                lines.extend(output.lines().map(|l| format!("  {l}")));
+            }
+            if std::io::stdout().is_terminal() {
+                // On a TTY, render errors through the progress bar so they
+                // appear above it.
+                pb.println(&msg);
+                for line in &lines {
+                    pb.println(line);
+                }
+            } else {
+                // On a non-TTY (CI, piped output), `ProgressBar::println` can
+                // be swallowed, hiding the failure. Emit to plain stdout so the
+                // failure is always visible.
+                println!("{msg}");
+                for line in &lines {
+                    println!("{line}");
                 }
             }
         }
