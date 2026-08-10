@@ -1,5 +1,8 @@
 use arg_picker::{PickerArg, value::Flag};
-use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
+use mingling_core::{
+    ConfirmationMode, ErrorOutput, InteractionMode, Program, ProgramCollect, RenderOutput,
+    YesAssumption, setup::ProgramSetup,
+};
 
 use crate::{
     consts::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG},
@@ -75,9 +78,10 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let help = program.pick_flag(self.flag);
-        if help {
-            program.stdout_setting.quiet = true;
+        let quiet = program.pick_flag(self.flag);
+        if quiet {
+            program.stdout_setting.render_output = RenderOutput::Hide;
+            program.stdout_setting.error_output = ErrorOutput::Hide;
         }
     }
 }
@@ -107,9 +111,11 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn setup(self, program: &mut Program<C>) {
-        let help = program.pick_flag(self.flag);
-        if help {
-            program.user_context.confirm = true;
+        let confirm = program.pick_flag(self.flag);
+        if confirm {
+            program.user_context.confirmation = ConfirmationMode::Skip;
+            program.user_context.interaction = InteractionMode::NonInteractive;
+            program.user_context.yes_assumption = YesAssumption::AssumeYes;
         }
     }
 }

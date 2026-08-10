@@ -1,6 +1,9 @@
 #![allow(deprecated)]
 
-use mingling_core::{Flag, Program, ProgramCollect, setup::ProgramSetup};
+use mingling_core::{
+    ConfirmationMode, Flag, InteractionMode, Program, ProgramCollect, YesAssumption,
+    setup::ProgramSetup,
+};
 
 /// Performs basic program initialization:
 ///
@@ -91,8 +94,8 @@ where
 {
     fn setup(self, program: &mut Program<C>) {
         program.global_flag(self.flag, |p| {
-            p.stdout_setting.render_output = false;
-            p.stdout_setting.error_output = false;
+            p.stdout_setting.render_output = mingling_core::RenderOutput::Hide;
+            p.stdout_setting.error_output = mingling_core::ErrorOutput::Hide;
         });
     }
 }
@@ -131,7 +134,9 @@ where
 {
     fn setup(self, program: &mut Program<C>) {
         program.global_flag(self.flag, |p| {
-            p.user_context.confirm = true;
+            p.user_context.confirmation = ConfirmationMode::Skip;
+            p.user_context.interaction = InteractionMode::NonInteractive;
+            p.user_context.yes_assumption = YesAssumption::AssumeYes;
         });
     }
 }
