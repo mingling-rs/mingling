@@ -54,7 +54,7 @@ pub fn class_add(args: EntryClassAdd) -> Next {
 
 /// Walk upward from `start` to find the first directory containing `.mling`.
 fn find_project_root(start: &Path) -> Option<PathBuf> {
-    let mut dir = fs::canonicalize(start).ok()?;
+    let mut dir = deverbatim(&fs::canonicalize(start).ok()?);
     loop {
         if dir.join(".mling").is_dir() {
             return Some(dir);
@@ -63,6 +63,28 @@ fn find_project_root(start: &Path) -> Option<PathBuf> {
             return None;
         }
     }
+}
+
+/// Deverbatim a Windows path: strip the `\\?\` prefix that `fs::canonicalize`
+/// may add. On non-Windows platforms this is a no-op.
+///
+/// On Windows, canonical paths sometimes carry a verbatim prefix like
+/// `\\?\C:\...`. This function removes that prefix. For UNC paths such as
+/// `\\?\UNC\server\share`, the prefix is converted back to the conventional
+/// `\\server\share` form.
+fn deverbatim(path: &Path) -> PathBuf {
+    if !cfg!(windows) {
+        return path.to_path_buf();
+    }
+    let as_string = path.to_string_lossy();
+    if let Some(rest) = as_string.strip_prefix(r"\\?\") {
+        // Turns `\\?\UNC\server\share` back into `\\server\share`.
+        if let Some(share) = rest.strip_prefix("UNC\\") {
+            return PathBuf::from(format!(r"\\{share}"));
+        }
+        return PathBuf::from(rest.to_owned());
+    }
+    path.to_path_buf()
 }
 
 /// Read `.mling/classes.toml`, find the class template and render it with the
