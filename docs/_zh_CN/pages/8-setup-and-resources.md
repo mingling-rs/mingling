@@ -11,11 +11,12 @@
 // Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
+@@@use mingling::Verbosity;
 #[program_setup]
 fn my_setup(program: &mut Program<ThisProgram>) {
     // 从参数中提取全局标志
     program.global_flag(["-v", "--verbose"], |program| {
-        program.stdout_setting.verbose = true;
+        program.stdout_setting.verbosity = Verbosity::Verbose;
     });
 }
 @@@
@@ -42,11 +43,12 @@ Setup 里最常用的操作就是提取全局参数。Mingling 提供了几个�
 // Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
+@@@use mingling::Verbosity;
 #[program_setup]
 fn my_setup(program: &mut Program<ThisProgram>) {
     // 布尔标志
     program.global_flag(["-v", "--verbose"], |program| {
-        program.stdout_setting.verbose = true;
+        program.stdout_setting.verbosity = Verbosity::Verbose;
     });
  
     // 带值的参数

@@ -11,11 +11,12 @@ When a program needs to do some init work at startup—like parsing global args 
 // Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
+@@@use mingling::Verbosity;
 #[program_setup]
 fn my_setup(program: &mut Program<ThisProgram>) {
     // Extract global flag from args
     program.global_flag(["-v", "--verbose"], |program| {
-        program.stdout_setting.verbose = true;
+        program.stdout_setting.verbosity = Verbosity::Verbose;
     });
 }
 @@@
@@ -42,11 +43,12 @@ The most common use of Setup is extracting global args. Mingling provides a few 
 // Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
+@@@use mingling::Verbosity;
 #[program_setup]
 fn my_setup(program: &mut Program<ThisProgram>) {
     // Boolean flag
     program.global_flag(["-v", "--verbose"], |program| {
-        program.stdout_setting.verbose = true;
+        program.stdout_setting.verbosity = Verbosity::Verbose;
     });
  
     // Flag with a value

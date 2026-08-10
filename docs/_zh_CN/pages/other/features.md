@@ -195,7 +195,7 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
 
 ```rust
 // Features: ["extras"]
-use mingling::{macros::program_setup, Program};
+use mingling::{ErrorOutput, macros::program_setup, Program};
  
 fn main() {
     let mut program = ThisProgram::new();
@@ -206,7 +206,7 @@ fn main() {
 #[program_setup]
 fn no_error_setup(program: &mut Program<ThisProgram>) {
     program.global_flag(["--no-error"], |program| {
-        program.stdout_setting.error_output = false;
+        program.stdout_setting.error_output = ErrorOutput::Hide;
     });
 }
 ```
