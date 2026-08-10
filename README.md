@@ -131,8 +131,8 @@ features = []
 - [ ] Milestone.2 "More Comfortable Dev and User Experience"
     - [ ] [`mling` / `mingling-cli`]
         - [x] **Mingling** Linter
-        - [ ] **Mingling** Project Generator
-        - [ ] **Mingling** Program Installer & Manager (For development)
+        - [x] **Mingling** Project Generator
+        - [x] **Mingling** Program Installer & Manager (For development)
         - [ ] Helpdoc Editor
     - [x] [`picker`] A more efficient and intelligent argument parser
     - [x] [`macros`] ~~Remove r_print! / r_println! macros~~ (see below)
