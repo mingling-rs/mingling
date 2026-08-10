@@ -203,7 +203,15 @@ pub fn run_cmd_capture_with_dir(
     let exit_code = output.status.code().unwrap_or(1);
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-    let combined = if stderr.is_empty() { stdout } else { stderr };
+    // Keep both streams so a failure is never hidden: when stderr carries
+    // warnings, the real failure details (e.g. the failing test name and
+    // assertion diff) usually live on stdout and must not be dropped.
+    let combined = match (stdout.trim().is_empty(), stderr.trim().is_empty()) {
+        (false, false) => format!("{stdout}\n{stderr}"),
+        (false, true) => stdout,
+        (true, false) => stderr,
+        (true, true) => stdout,
+    };
 
     if exit_code == 0 {
         Ok(combined)
