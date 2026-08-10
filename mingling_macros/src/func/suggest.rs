@@ -16,7 +16,7 @@ enum SuggestItem {
 impl Parse for SuggestInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let items = Punctuated::parse_terminated(input)?;
-        Ok(SuggestInput { items })
+        Ok(Self { items })
     }
 }
 
@@ -27,15 +27,14 @@ impl Parse for SuggestItem {
         if input.peek(Token![:]) {
             let _colon: Token![:] = input.parse()?;
             let value: Expr = input.parse()?;
-            Ok(SuggestItem::WithDesc(Box::new((key, value))))
+            Ok(Self::WithDesc(Box::new((key, value))))
         } else {
-            Ok(SuggestItem::Simple(key))
+            Ok(Self::Simple(key))
         }
     }
 }
 
-/// 判断表达式是否是一个纯字符串字面量（仅由一对引号包裹）
-fn is_pure_lit_str(expr: &Expr) -> bool {
+const fn is_pure_lit_str(expr: &Expr) -> bool {
     matches!(expr, Expr::Lit(lit) if matches!(lit.lit, syn::Lit::Str(_)))
 }
 

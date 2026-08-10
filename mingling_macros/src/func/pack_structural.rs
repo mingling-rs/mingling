@@ -6,6 +6,7 @@ use crate::get_global_set;
 
 /// `pack_structural!` — like `pack!` but also marks the type as supporting
 /// structured output via `StructuralData`.
+#[allow(clippy::too_many_lines)]
 pub(crate) fn pack_structural(input: TokenStream) -> TokenStream {
     // Parse same input format as `pack!`
     let input_parsed = syn::parse_macro_input!(input as PackStructuralInput);
@@ -159,7 +160,7 @@ impl syn::parse::Parse for PackStructuralInput {
         let type_name: Ident = input.parse()?;
         input.parse::<syn::Token![=]>()?;
         let inner_type: syn::Type = input.parse()?;
-        Ok(PackStructuralInput {
+        Ok(Self {
             attrs,
             type_name,
             inner_type,

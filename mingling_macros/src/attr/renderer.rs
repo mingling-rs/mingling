@@ -15,9 +15,7 @@ fn extract_user_return_type(sig: &Signature) -> Option<proc_macro2::TokenStream>
 }
 
 #[allow(clippy::too_many_lines)]
-pub(crate) fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // #[renderer] takes no arguments; always use the default program path
-    let _ = attr;
+pub(crate) fn renderer_attr(item: TokenStream) -> TokenStream {
     let program_path = crate::default_program_path();
     let program_type = &program_path;
 
@@ -121,7 +119,7 @@ pub(crate) fn renderer_attr(attr: TokenStream, item: TokenStream) -> TokenStream
     // The original function preserves the user's exact signature and body.
     // Resource parameters are passed directly by the caller, NOT injected from context.
     let original_inputs = input_fn.sig.inputs.clone();
-    let original_return_type = user_return_type.clone().unwrap_or(quote! { () });
+    let original_return_type = user_return_type.unwrap_or_else(|| quote! { () });
 
     let expanded = quote! {
         #(#fn_attrs)*
@@ -249,14 +247,15 @@ pub(crate) fn register_renderer(input: TokenStream) -> TokenStream {
         }
     } // renderers lock released here
 
-    let mut renderers = get_global_set(&crate::RENDERERS).lock().unwrap();
-    let mut renderer_exist = get_global_set(&crate::RENDERERS_EXIST).lock().unwrap();
-
-    #[cfg(feature = "structural_renderer")]
-    let mut structural_renderers = get_global_set(&crate::STRUCTURAL_RENDERERS).lock().unwrap();
-
-    renderers.insert(renderer_entry_str);
-    renderer_exist.insert(renderer_exist_entry_str);
+    // Insert renderer registration directly without holding a lock variable
+    get_global_set(&crate::RENDERERS)
+        .lock()
+        .unwrap()
+        .insert(renderer_entry_str);
+    get_global_set(&crate::RENDERERS_EXIST)
+        .lock()
+        .unwrap()
+        .insert(renderer_exist_entry_str);
 
     // Only register structural renderer if the type is in STRUCTURED_TYPES
     #[cfg(feature = "structural_renderer")]
@@ -266,7 +265,10 @@ pub(crate) fn register_renderer(input: TokenStream) -> TokenStream {
             .unwrap()
             .contains(&variant_name);
         if is_structured {
-            structural_renderers.insert(structural_renderer_entry_str);
+            get_global_set(&crate::STRUCTURAL_RENDERERS)
+                .lock()
+                .unwrap()
+                .insert(structural_renderer_entry_str);
         }
     }
 

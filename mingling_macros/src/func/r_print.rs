@@ -21,10 +21,10 @@ impl Parse for PrintInput {
             let dst: Ident = input.parse()?;
             let _comma: Token![,] = input.parse()?;
             let args: TokenStream2 = input.parse()?;
-            Ok(PrintInput::Explicit { dst, args })
+            Ok(Self::Explicit { dst, args })
         } else {
             let args: TokenStream2 = input.parse()?;
-            Ok(PrintInput::Implicit { args })
+            Ok(Self::Implicit { args })
         }
     }
 }
@@ -73,13 +73,13 @@ impl Parse for AppendInput {
             let dst: Ident = input.parse()?;
             let _comma: Token![,] = input.parse()?;
             let src: TokenStream2 = input.parse()?;
-            Ok(AppendInput {
+            Ok(Self {
                 dst: Some(dst),
                 src,
             })
         } else {
             let src: TokenStream2 = input.parse()?;
-            Ok(AppendInput { dst: None, src })
+            Ok(Self { dst: None, src })
         }
     }
 }

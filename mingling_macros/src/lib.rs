@@ -142,6 +142,9 @@
 //! ```
 
 #![deny(missing_docs)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
+#![allow(clippy::redundant_pub_crate)]
 
 use proc_macro::TokenStream;
 use std::collections::BTreeSet;
@@ -220,7 +223,7 @@ pub(crate) fn check_duplicate_variant(
     kind: &str,
     error_span: proc_macro2::Span,
 ) -> Result<(), proc_macro2::TokenStream> {
-    for existing in set.iter() {
+    for existing in set {
         if existing == entry_str {
             // Exact same entry - re-registration from RA re-analysis, skip
             continue;
@@ -239,7 +242,7 @@ pub(crate) fn check_duplicate_variant(
 }
 
 /// Checks if a stored entry string contains the given variant name.
-/// Handles both "StructName => Variant," and "Self::Variant => ..." formats.
+/// Handles both "[`StructName`] => Variant," and "[`Self::Variant`] => ..." formats.
 fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
     let variant_match = format!("=> {variant_name}");
 
@@ -998,10 +1001,10 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```
 #[proc_macro_attribute]
 pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
-    if let Some(redispatch) = extensions::try_redispatch_simple(attr.clone(), &item, "renderer") {
+    if let Some(redispatch) = extensions::try_redispatch_simple(attr, &item, "renderer") {
         return redispatch;
     }
-    renderer::renderer_attr(attr, item)
+    renderer::renderer_attr(item)
 }
 
 /// Declares a completion suggestion provider for a command entry type.
@@ -1419,7 +1422,7 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 /// [`BasicProgramSetup`]: https://docs.rs/mingling/latest/mingling/setup/struct.BasicProgramSetup.html
 #[proc_macro_attribute]
 pub fn help(attr: TokenStream, item: TokenStream) -> TokenStream {
-    if let Some(redispatch) = extensions::try_redispatch_simple(attr.clone(), &item, "help") {
+    if let Some(redispatch) = extensions::try_redispatch_simple(attr, &item, "help") {
         return redispatch;
     }
     help::help_attr(item)

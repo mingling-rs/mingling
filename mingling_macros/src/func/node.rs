@@ -12,7 +12,7 @@ struct NodeInput {
 
 impl Parse for NodeInput {
     fn parse(input: ParseStream) -> SynResult<Self> {
-        Ok(NodeInput {
+        Ok(Self {
             path: input.parse()?,
         })
     }
@@ -38,7 +38,7 @@ pub(crate) fn node(input: TokenStream) -> TokenStream {
             if s.starts_with('_') {
                 s.to_string()
             } else {
-                kebab_case!(s).to_string()
+                kebab_case!(s)
             }
         })
         .collect();

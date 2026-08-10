@@ -39,21 +39,28 @@ pub(crate) fn register_help(input: TokenStream) -> TokenStream {
     let entry_str = help_entry.to_string();
 
     // Check if entry was already pre-inserted by `#[help]` attribute
-    let mut helps = get_global_set(&crate::HELP_REQUESTS).lock().unwrap();
-    if helps.contains(&entry_str) {
+    let helps = get_global_set(&crate::HELP_REQUESTS);
+    let help_set = helps.lock().unwrap();
+    if help_set.contains(&entry_str) {
         // Already registered by `#[help]`, no duplicate check needed
         return quote::quote! {}.into();
     }
 
     // Check for duplicate variant (different struct, same type)
     let variant_name = entry_type.path.segments.last().unwrap().ident.to_string();
-    if let Err(err) =
-        crate::check_duplicate_variant(&helps, &entry_str, &variant_name, "help", entry_type.span())
-    {
+    let dup_check = crate::check_duplicate_variant(
+        &help_set,
+        &entry_str,
+        &variant_name,
+        "help",
+        entry_type.span(),
+    );
+    if let Err(err) = dup_check {
         return err.into();
     }
 
-    helps.insert(entry_str);
+    drop(help_set);
+    helps.lock().unwrap().insert(entry_str);
 
     quote::quote! {}.into()
 }

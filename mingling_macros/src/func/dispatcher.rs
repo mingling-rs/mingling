@@ -53,7 +53,7 @@ impl Parse for DispatcherChainInput {
             let entry_attrs = input.call(Attribute::parse_outer)?;
             let pack = input.parse()?;
 
-            Ok(DispatcherChainInput::Default {
+            Ok(Self::Default {
                 cmd_attrs,
                 entry_attrs,
                 command_name,

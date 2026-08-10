@@ -5,9 +5,10 @@ use syn::spanned::Spanned;
 use syn::{FnArg, Ident, ItemFn, Pat, PatType, Type, TypePath, parse_macro_input};
 
 #[cfg(feature = "comp")]
+#[allow(clippy::too_many_lines)]
 pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
-    // Parse the attribute arguments such as HelloEntry or crate::EntryFine from #[completion(crate::EntryFine)]
     use crate::get_global_set;
+
     let previous_type_path: TypePath = if attr.is_empty() {
         return syn::Error::new(
             proc_macro2::Span::call_site(),
@@ -20,22 +21,18 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     };
     let previous_type_ident = &previous_type_path.path.segments.last().unwrap().ident;
 
-    // Parse the function item
     let input_fn = parse_macro_input!(item as ItemFn);
 
-    // Validate the function is not async
     if input_fn.sig.asyncness.is_some() {
         return syn::Error::new(input_fn.sig.span(), "Completion function cannot be async")
             .to_compile_error()
             .into();
     }
 
-    // Get the function signature parts
     let sig = &input_fn.sig;
     let inputs = &sig.inputs;
     let output = &sig.output;
 
-    // Must have at least one parameter ctx
     if inputs.is_empty() {
         return syn::Error::new(
             inputs.span(),
@@ -45,7 +42,6 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         .into();
     }
 
-    // Extract the first param pattern and type for the ctx parameter
     let first_arg = &inputs[0];
     let _ctx_type = match first_arg {
         FnArg::Typed(PatType { ty, .. }) => (**ty).clone(),
@@ -60,26 +56,19 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     };
     let fixed_ctx: Pat = syn::parse_quote!(ctx);
 
-    // Extract resources from params 2 through N, skipping ctx
     let resources = match extract_resources_from_args(sig, 1) {
         Ok(r) => r,
         Err(e) => return e.to_compile_error().into(),
     };
 
-    // Get the function body
     let fn_body = &input_fn.block;
 
-    // Get function attributes excluding the completion attribute
     let mut fn_attrs = input_fn.attrs.clone();
     fn_attrs.retain(|attr| !attr.path().is_ident("completion"));
 
-    // Get function visibility
     let vis = &input_fn.vis;
-
-    // Get function name
     let fn_name = &sig.ident;
 
-    // Generate internal name from function name using snake_case
     let internal_name = format!(
         "__internal_completion_{}",
         just_fmt::snake_case!(fn_name.to_string())
@@ -90,10 +79,8 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     let has_resources = !resources.is_empty();
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
 
-    // Generate immutable resource bindings
     let immut_resource_stmts = generate_immut_resource_bindings(resources.iter(), &program_type);
 
-    // Build the call to the original function with resource arguments injected
     let resource_args: Vec<_> = resources
         .iter()
         .map(|res| {
@@ -108,7 +95,6 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         quote! { #fn_name(#fixed_ctx) }
     };
 
-    // Wrap the function call with modify_res for mutable resources
     let inner_call = if mut_resources.is_empty() {
         fn_call
     } else {
@@ -134,10 +120,7 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         quote! { #inner_call }
     };
 
-    // Generate the struct and implementation
-    // The `comp` trait method only takes `ctx` as the first parameter; resources are injected internally
-
-    let expanded = quote! {
+    let expanded: proc_macro2::TokenStream = quote! {
         #(#fn_attrs)*
         #[doc(hidden)]
         #[allow(non_camel_case_types)]
@@ -162,22 +145,22 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         Self::#previous_type_ident => <#struct_name as ::mingling::Completion>::comp(ctx),
     };
 
-    let mut completions = get_global_set(&crate::COMPLETIONS).lock().unwrap();
     let completion_str = completion_entry.to_string();
-
-    // Check for duplicate variant before inserting
     let variant_name = previous_type_ident.to_string();
+    let span = previous_type_path.span();
+
+    let mut completions = get_global_set(&crate::COMPLETIONS).lock().unwrap();
     if let Err(err) = crate::check_duplicate_variant(
         &completions,
         &completion_str,
         &variant_name,
         "completion",
-        previous_type_path.span(),
+        span,
     ) {
         return err.into();
     }
-
     completions.insert(completion_str);
+    drop(completions);
 
     expanded.into()
 }

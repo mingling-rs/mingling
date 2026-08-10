@@ -16,7 +16,7 @@ impl Parse for PackInput {
         input.parse::<Token![=]>()?;
         let inner_type: Type = input.parse()?;
 
-        Ok(PackInput {
+        Ok(Self {
             attrs,
             type_name,
             inner_type,

@@ -14,6 +14,7 @@ fn extract_user_return_type(sig: &Signature) -> Option<proc_macro2::TokenStream>
     }
 }
 
+#[allow(clippy::too_many_lines)]
 pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
     // Parse the function item
     let input_fn = parse_macro_input!(item as ItemFn);
@@ -50,7 +51,7 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
 
     // Get original inputs to keep the original function
     let original_inputs = input_fn.sig.inputs.clone();
-    let original_return_type = user_return_type.clone().unwrap_or(quote! { () });
+    let original_return_type = user_return_type.unwrap_or_else(|| quote! { () });
 
     // Generate internal name using snake_case
     let internal_name = format!(

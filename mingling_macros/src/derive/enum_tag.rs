@@ -135,13 +135,10 @@ fn process_variant(
 fn extract_description(attrs: &[Attribute]) -> Result<Option<String>> {
     for attr in attrs {
         if attr.path().is_ident("enum_desc") {
-            return match attr.parse_args::<LitStr>() {
-                Ok(lit_str) => Ok(Some(lit_str.value())),
-                Err(_) => Err(Error::new_spanned(
+            return attr.parse_args::<LitStr>().map_or_else(|_| Err(Error::new_spanned(
                     attr,
                     "#[enum_desc] attribute must be in the form `#[enum_desc(\"description\")]`",
-                )),
-            };
+                )), |lit_str| Ok(Some(lit_str.value())));
         }
     }
 
@@ -153,13 +150,10 @@ fn extract_description(attrs: &[Attribute]) -> Result<Option<String>> {
 fn extract_rename(attrs: &[Attribute]) -> Result<Option<String>> {
     for attr in attrs {
         if attr.path().is_ident("enum_rename") {
-            return match attr.parse_args::<LitStr>() {
-                Ok(lit_str) => Ok(Some(lit_str.value())),
-                Err(_) => Err(Error::new_spanned(
+            return attr.parse_args::<LitStr>().map_or_else(|_| Err(Error::new_spanned(
                     attr,
                     "#[enum_rename] attribute must be in the form `#[enum_rename(\"new_name\")]`",
-                )),
-            };
+                )), |lit_str| Ok(Some(lit_str.value())));
         }
     }
 

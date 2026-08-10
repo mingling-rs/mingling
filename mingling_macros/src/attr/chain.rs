@@ -20,22 +20,11 @@ fn is_unit_return_type(sig: &Signature) -> bool {
     }
 }
 
-/// Validates that the return type is acceptable.
-/// Accepts `()`, `Next`, `ChainProcess<...>`, or any type that can
-/// be converted to `ChainProcess` via `.into()` (i.e. any pack type).
-fn validate_return_type(sig: &Signature) -> Result<(), proc_macro2::TokenStream> {
-    // `()` or omitted is always valid
-    if is_unit_return_type(sig) {
-        return Ok(());
-    }
-
-    Ok(())
-}
-
 /// Builds the `proc` function implementation inside the generated `Chain` impl.
 ///
 /// Instead of inlining the user's body, the trait method calls the original
 /// function by name, with resources injected from the application context.
+#[allow(clippy::needless_pass_by_value)]
 fn generate_proc_fn(
     fn_name: &Ident,
     has_resources: bool,
@@ -215,6 +204,9 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let is_async_fn = input_fn.sig.asyncness.is_some();
 
     #[cfg(not(feature = "async"))]
+    let is_async_fn = false;
+
+    #[cfg(not(feature = "async"))]
     {
         if let Err(err) = reject_async(&input_fn.sig) {
             return err.into();
@@ -223,11 +215,6 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // Check if return type is unit
     let is_unit_return = is_unit_return_type(&input_fn.sig);
-
-    // Validate return type
-    if let Err(err) = validate_return_type(&input_fn.sig) {
-        return err.into();
-    }
 
     // Extract the previous type, parameter name, and resource injection params
     let (_, previous_type, resources) = match extract_args_info(&input_fn.sig) {
@@ -259,10 +246,7 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
         &resources,
         &program_type,
         &previous_type,
-        #[cfg(feature = "async")]
         is_async_fn,
-        #[cfg(not(feature = "async"))]
-        false,
         is_unit_return,
     );
 
@@ -343,9 +327,6 @@ pub(crate) fn register_chain(input: TokenStream) -> TokenStream {
     // Record the chain existence check
     let chain_exist_entry = build_chain_exist_arm(&previous_type);
 
-    let mut chains = crate::get_global_set(&crate::CHAINS).lock().unwrap();
-    let mut chain_exist = crate::get_global_set(&crate::CHAINS_EXIST).lock().unwrap();
-
     let chain_entry_str = chain_entry.to_string();
     let chain_exist_entry_str = chain_exist_entry.to_string();
 
@@ -357,18 +338,25 @@ pub(crate) fn register_chain(input: TokenStream) -> TokenStream {
         .unwrap()
         .ident
         .to_string();
-    if let Err(err) = crate::check_duplicate_variant(
-        &chains,
+    let value = crate::check_duplicate_variant(
+        &crate::get_global_set(&crate::CHAINS).lock().unwrap(),
         &chain_entry_str,
         &variant_name,
         "chain",
         previous_type.span(),
-    ) {
+    );
+    if let Err(err) = value {
         return err.into();
     }
 
-    chains.insert(chain_entry_str);
-    chain_exist.insert(chain_exist_entry_str);
+    crate::get_global_set(&crate::CHAINS)
+        .lock()
+        .unwrap()
+        .insert(chain_entry_str);
+    crate::get_global_set(&crate::CHAINS_EXIST)
+        .lock()
+        .unwrap()
+        .insert(chain_exist_entry_str);
 
     quote! {}.into()
 }

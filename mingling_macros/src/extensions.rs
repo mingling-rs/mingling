@@ -35,7 +35,7 @@ impl Parse for Extensions {
                 let _ = input.parse::<Token![,]>();
             }
         }
-        Ok(Extensions { exts })
+        Ok(Self { exts })
     }
 }
 
@@ -59,7 +59,7 @@ impl Parse for CompletionExt {
             let ident: Ident = input.parse()?;
             exts.push(ident);
         }
-        Ok(CompletionExt { entry_type, exts })
+        Ok(Self { entry_type, exts })
     }
 }
 
