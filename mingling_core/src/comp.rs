@@ -183,7 +183,7 @@ impl CompletionHelper {
                     let default = default_completion::<P>(ctx);
                     match fallback {
                         Suggest::FileCompletion => default,
-                        _ => fallback.combine(default),
+                        Suggest::Suggest(_) => fallback.combine(default),
                     }
                 }
             },

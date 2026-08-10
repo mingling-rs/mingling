@@ -110,7 +110,7 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
         self.force_init();
         match &self.inner {
             LazyInner::Init(t, _) => t,
-            _ => unreachable!(),
+            LazyInner::Uninit(..) => unreachable!(),
         }
     }
 
@@ -120,7 +120,7 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
         self.force_init();
         match &mut self.inner {
             LazyInner::Init(t, _) => t,
-            _ => unreachable!(),
+            LazyInner::Uninit(..) => unreachable!(),
         }
     }
 
@@ -178,7 +178,7 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
                 LazyInner::Uninit(Box::new(|| unreachable!()), None),
             ) {
                 LazyInner::Init(t, _) => t,
-                _ => unreachable!(),
+                LazyInner::Uninit(..) => unreachable!(),
             }
         }
     }
