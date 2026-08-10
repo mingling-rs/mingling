@@ -404,6 +404,15 @@ None
 
     _Behavioral semantics are preserved — the same configuration states are expressible in both the old boolean form and the new enum form, but the typed enums eliminate impossible states (e.g., both `verbose` and `quiet` set simultaneously) and make the intent of each setting explicit through named variants._
 
+5. **[`modify_picker`]** Removed the invalid naming style variants from `ParserStyleNamingCase`: `Title`, `Lower`, and `Upper`. These variants originally corresponded to the `just_fmt` macros `title_case!`, `lower_case!`, and `upper_case!`, but in practice these styles are not valid naming conventions. They have therefore been removed from the enum definition and its `to_format_string` / related formatting matches.
+
+    **Changes involved:**
+
+    - **`ParserStyleNamingCase` enum** — Removed the `Title`, `Lower`, and `Upper` variants along with their doc comments.
+    - **Formatting implementation** — Removed the `Self::Title => just_fmt::title_case!(...)`, `Self::Lower => just_fmt::lower_case!(...)`, and `Self::Upper => just_fmt::upper_case!(...)` branches from the enum's `fmt` match.
+
+    _This is a pure deletion change with no behavioral replacement. If downstream code used the `Title`, `Lower`, or `Upper` variants, it needs to switch to other naming styles (such as `Pascal`, `Kebab`, `Snake`, or `Dot`)._
+
 ---
 
 ### Release 0.3.0 (2026-07-27)

@@ -150,18 +150,6 @@ pub enum ParserStyleNamingCase {
     ///
     /// Example: `brew.coffee`
     Dot,
-    /// `Title Case` format: words are separated by spaces, each word capitalized.
-    ///
-    /// Example: `Brew Coffee`
-    Title,
-    /// `lower case` format: words are separated by spaces, all lowercase.
-    ///
-    /// Example: `brew coffee`
-    Lower,
-    /// `UPPER CASE` format: words are separated by spaces, all uppercase.
-    ///
-    /// Example: `BREW COFFEE`
-    Upper,
 }
 
 impl ParserStyleNamingCase {
@@ -192,9 +180,6 @@ impl ParserStyleNamingCase {
             Self::Kebab => just_fmt::kebab_case!(s.into()).into(),
             Self::Snake => just_fmt::snake_case!(s.into()).into(),
             Self::Dot => just_fmt::dot_case!(s.into()).into(),
-            Self::Title => just_fmt::title_case!(s.into()).into(),
-            Self::Lower => just_fmt::lower_case!(s.into()).into(),
-            Self::Upper => just_fmt::upper_case!(s.into()).into(),
         }
     }
 }
