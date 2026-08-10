@@ -54,12 +54,10 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
     /// dropped. If the resource has not yet been initialized, the callback is stored
     /// and will be invoked once initialization happens *and* the `LazyRes` is later
     /// dropped.
+    #[must_use]
     pub fn with_on_drop(mut self, on_drop: impl FnOnce(T) + Send + Sync + 'static) -> Self {
         match &mut self.inner {
-            LazyInner::Uninit(_, existing_opt) => {
-                *existing_opt = Some(Box::new(on_drop));
-            }
-            LazyInner::Init(_, existing_opt) => {
+            LazyInner::Uninit(_, existing_opt) | LazyInner::Init(_, existing_opt) => {
                 *existing_opt = Some(Box::new(on_drop));
             }
         }
@@ -72,17 +70,14 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
     /// upon initialization.
     pub fn set_on_drop(&mut self, on_drop: impl FnOnce(T) + Send + Sync + 'static) {
         match &mut self.inner {
-            LazyInner::Uninit(_, existing_opt) => {
-                *existing_opt = Some(Box::new(on_drop));
-            }
-            LazyInner::Init(_, existing_opt) => {
+            LazyInner::Uninit(_, existing_opt) | LazyInner::Init(_, existing_opt) => {
                 *existing_opt = Some(Box::new(on_drop));
             }
         }
     }
 
     /// Returns `true` if the resource has been initialized.
-    pub fn is_initialized(&self) -> bool {
+    pub const fn is_initialized(&self) -> bool {
         matches!(&self.inner, LazyInner::Init(_, _))
     }
 
@@ -157,6 +152,10 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
     ///
     /// If the resource has not been initialized, the initializer is called first.
     /// This is different from `into_inner()` which returns `None` if uninitialized.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the resource has not been initialized.
     pub fn unwrap(mut self) -> T {
         match std::mem::replace(
             &mut self.inner,
@@ -216,10 +215,7 @@ impl<T: Send + Sync + 'static> Drop for LazyRes<T> {
     }
 }
 
-impl<T: Send + Sync + 'static> Default for LazyRes<T>
-where
-    T: Default,
-{
+impl<T: Send + Sync + Default + 'static> Default for LazyRes<T> {
     /// Creates an uninitialized `LazyRes<T>` whose initializer returns `T::default()`.
     fn default() -> Self {
         Self::new(|| T::default())
@@ -237,6 +233,7 @@ impl<T: Send + Sync + 'static> From<T> for LazyRes<T> {
 
 impl<T: Send + Sync + 'static> LazyRes<T> {
     /// Creates a lazily initialized resource using `T::default()` as the initializer.
+    #[must_use]
     pub fn lazy_default() -> Self
     where
         T: Default,
@@ -256,6 +253,7 @@ impl<T: Send + Sync + 'static> LazyRes<T> {
 /// create a corresponding `LazyRes<T>`.
 pub trait LazyInit: Send + Sync + 'static {
     /// Creates a lazily initialized resource for this type using `Default` as the initializer.
+    #[must_use]
     fn lazy_default() -> LazyRes<Self>
     where
         Self: Default,
@@ -274,10 +272,7 @@ pub trait LazyInit: Send + Sync + 'static {
 
 impl<T: Send + Sync + 'static> LazyInit for T {}
 
-impl<T: Send + Sync + 'static> ResourceMarker for LazyRes<T>
-where
-    T: Default + Clone,
-{
+impl<T: Send + Sync + 'static + Default + Clone> ResourceMarker for LazyRes<T> {
     /// Clones the lazy resource. The cloned resource retains any initialized value,
     /// but the initializer is reset to `T::default()`.
     fn __resource_marker_clone(&self) -> Self {
@@ -290,10 +285,7 @@ where
     }
 
     /// Returns a default lazy resource (uninitialized, using `T::default()` as the initializer).
-    fn __resource_marker_default() -> Self
-    where
-        T: Default,
-    {
+    fn __resource_marker_default() -> Self {
         Self::default()
     }
 

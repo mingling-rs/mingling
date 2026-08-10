@@ -18,15 +18,15 @@ pub enum Suggest {
 }
 
 impl Suggest {
-    /// Creates a new Suggest variant containing a `BTreeSet` of suggestions.
+    /// Creates a new `Suggest` variant containing an empty `BTreeSet` of suggestions.
     #[must_use]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self::Suggest(BTreeSet::new())
     }
 
     /// Creates a `FileCompletion` variant.
     #[must_use]
-    pub fn file_comp() -> Self {
+    pub const fn file_comp() -> Self {
         Self::FileCompletion
     }
 
@@ -47,11 +47,12 @@ impl Suggest {
     /// If both values are `Suggest::Suggest`, their `BTreeSet`s are merged
     /// (all items from `other` are added into `self`). Otherwise, the first
     /// `Suggest::Suggest` (or `FileCompletion`) is returned unchanged.
-    pub fn combine(self, other: impl Into<Suggest>) -> Self {
+    #[must_use]
+    pub fn combine(self, other: impl Into<Self>) -> Self {
         let other = other.into();
         match (self, other) {
-            (Suggest::Suggest(suggest), Suggest::Suggest(other)) => {
-                Suggest::Suggest(suggest.into_iter().chain(other).collect())
+            (Self::Suggest(suggest), Self::Suggest(other)) => {
+                Self::Suggest(suggest.into_iter().chain(other).collect())
             }
             (suggest, _) => suggest,
         }
@@ -109,10 +110,11 @@ impl Suggest {
     /// A new `Suggest` value where each item's suggestion text is prefixed
     /// with the given string. For example, `["foo", "bar"]` with prefix `"--"`
     /// becomes `["--foo", "--bar"]`.
-    pub fn add_prefix(self, prefix: impl Into<String>) -> Suggest {
+    #[must_use]
+    pub fn add_prefix(self, prefix: impl Into<String>) -> Self {
         let suggest = match self {
-            Suggest::Suggest(s) => s,
-            Suggest::FileCompletion => return Suggest::FileCompletion,
+            Self::Suggest(s) => s,
+            Self::FileCompletion => return Self::FileCompletion,
         };
         let prefix = prefix.into();
         let prefixed = suggest
@@ -123,7 +125,7 @@ impl Suggest {
                 new_item
             })
             .collect();
-        Suggest::Suggest(prefixed)
+        Self::Suggest(prefixed)
     }
 
     /// Appends a suffix to every suggestion in the `Suggest` set.
@@ -142,10 +144,11 @@ impl Suggest {
     /// A new `Suggest` value where each item's suggestion text is suffixed
     /// with the given string. For example, `["foo", "bar"]` with suffix `"="`
     /// becomes `["foo=", "bar="]`.
-    pub fn add_suffix(self, suffix: impl Into<String>) -> Suggest {
+    #[must_use]
+    pub fn add_suffix(self, suffix: impl Into<String>) -> Self {
         let suggest = match self {
-            Suggest::Suggest(s) => s,
-            Suggest::FileCompletion => return Suggest::FileCompletion,
+            Self::Suggest(s) => s,
+            Self::FileCompletion => return Self::FileCompletion,
         };
         let suffix = suffix.into();
         let suffixed = suggest
@@ -156,7 +159,7 @@ impl Suggest {
                 new_item
             })
             .collect();
-        Suggest::Suggest(suffixed)
+        Self::Suggest(suffixed)
     }
 }
 
@@ -170,7 +173,7 @@ where
             .into_iter()
             .map(|item| SuggestItem::new(item.into()))
             .collect();
-        Suggest::Suggest(suggests)
+        Self::Suggest(suggests)
     }
 }
 
@@ -213,7 +216,7 @@ pub enum SuggestItem {
 
 impl Default for SuggestItem {
     fn default() -> Self {
-        SuggestItem::Simple(String::new())
+        Self::Simple(String::new())
     }
 }
 
@@ -232,13 +235,13 @@ impl Ord for SuggestItem {
 impl SuggestItem {
     /// Creates a new simple suggestion without description.
     #[must_use]
-    pub fn new(suggest: String) -> Self {
+    pub const fn new(suggest: String) -> Self {
         Self::Simple(suggest)
     }
 
     /// Creates a new suggestion with a description.
     #[must_use]
-    pub fn new_with_desc(suggest: String, description: String) -> Self {
+    pub const fn new_with_desc(suggest: String, description: String) -> Self {
         Self::WithDescription(suggest, description)
     }
 
@@ -254,7 +257,7 @@ impl SuggestItem {
 
     /// Returns the suggestion text.
     #[must_use]
-    pub fn suggest(&self) -> &String {
+    pub const fn suggest(&self) -> &String {
         match self {
             Self::Simple(suggest) | Self::WithDescription(suggest, _) => suggest,
         }
@@ -269,7 +272,7 @@ impl SuggestItem {
 
     /// Returns the description if present.
     #[must_use]
-    pub fn description(&self) -> Option<&String> {
+    pub const fn description(&self) -> Option<&String> {
         match self {
             Self::Simple(_) => None,
             Self::WithDescription(_, description) => Some(description),

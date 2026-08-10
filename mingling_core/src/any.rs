@@ -45,7 +45,7 @@ impl<G> AnyOutput<G> {
         }
     }
 
-    /// Create an `AnyOutput` from a raw value with a manually specified member_id.
+    /// Create an `AnyOutput` from a raw value with a manually specified [`member_id`].
     ///
     /// This function bypasses the [`Grouped`] trait, meaning the `member_id` you provide
     /// does **not** have to match the actual concrete type `T`. The scheduler uses
@@ -75,16 +75,16 @@ impl<G> AnyOutput<G> {
     ///
     /// The `TypeId` is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
     /// and is used for subsequent downcasting and type checking.
-    pub fn type_id(&self) -> std::any::TypeId {
+    pub const fn type_id(&self) -> std::any::TypeId {
         self.type_id
     }
 
-    /// Get the [`member_id`] of the concrete type stored in `inner`.
+    /// Get the `member_id` of the concrete type stored in `inner`.
     ///
-    /// [`member_id`] is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
+    /// `member_id` is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
     /// and identifies which variant of the output enum this value corresponds to.
     /// The scheduler uses this value to dispatch the output to the correct next step.
-    pub fn member_id(&self) -> G
+    pub const fn member_id(&self) -> G
     where
         G: Copy,
     {
@@ -114,12 +114,12 @@ impl<G> AnyOutput<G> {
     }
 
     /// Route the output to the next Chain
-    pub fn route_chain(self) -> ChainProcess<G> {
+    pub const fn route_chain(self) -> ChainProcess<G> {
         ChainProcess::Ok((self, NextProcess::Chain))
     }
 
     /// Route the output to the Renderer, ending execution
-    pub fn route_renderer(self) -> ChainProcess<G> {
+    pub const fn route_renderer(self) -> ChainProcess<G> {
         ChainProcess::Ok((self, NextProcess::Renderer))
     }
 
@@ -132,10 +132,9 @@ impl<G> AnyOutput<G> {
     /// `member_id` before calling `restore`.
     pub fn restore<T: 'static>(self) -> Option<T> {
         if self.type_id == std::any::TypeId::of::<T>() {
-            match self.inner.downcast::<T>() {
-                Ok(boxed) => Some(*boxed),
-                Err(_) => None,
-            }
+            self.inner
+                .downcast::<T>()
+                .map_or_else(|_| None, |boxed| Some(*boxed))
         } else {
             None
         }
@@ -159,9 +158,9 @@ impl<G> std::ops::DerefMut for AnyOutput<G> {
 /// Chain exec result type
 ///
 /// Stores `Ok` and `Err` types of execution results, used to notify the scheduler what to execute next
-/// - Returns `Ok((`[`AnyOutput`](./struct.AnyOutput.html)`, `[`NextProcess::Chain`](./enum.NextProcess.html)`))` to continue execution with this type next
-/// - Returns `Ok((`[`AnyOutput`](./struct.AnyOutput.html)`, `[`NextProcess::Renderer`](./enum.NextProcess.html)`))` to render this type next and output to the terminal
-/// - Returns `Err(`[`ChainProcessError`](./error/enum.ChainProcessError.html)`]` to terminate the program directly
+/// - Returns <code>Ok(([AnyOutput](./struct.AnyOutput.html), [NextProcess::Chain](./enum.NextProcess.html)))</code> to continue execution with this type next
+/// - Returns <code>Ok(([AnyOutput](./struct.AnyOutput.html), [NextProcess::Renderer](./enum.NextProcess.html)))</code> to render this type next and output to the terminal
+/// - Returns <code>Err([ChainProcessError](./error/enum.ChainProcessError.html)]</code> to terminate the program directly
 pub enum ChainProcess<G> {
     /// Indicates success, containing the output value and the next step to execute.
     Ok((AnyOutput<G>, NextProcess)),
@@ -185,15 +184,15 @@ pub enum NextProcess {
 impl std::fmt::Display for NextProcess {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            NextProcess::Chain => write!(f, "Chain"),
-            NextProcess::Renderer => write!(f, "Renderer"),
+            Self::Chain => write!(f, "Chain"),
+            Self::Renderer => write!(f, "Renderer"),
         }
     }
 }
 
 impl<G> From<AnyOutput<G>> for ChainProcess<G> {
     fn from(value: AnyOutput<G>) -> Self {
-        ChainProcess::Ok((value, NextProcess::Chain))
+        Self::Ok((value, NextProcess::Chain))
     }
 }
 
@@ -211,7 +210,7 @@ mod tests {
     use super::*;
     use crate::Grouped;
 
-    /// Mock enum for testing AnyOutput
+    /// Mock enum for testing `AnyOutput`
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     #[allow(dead_code)]
     enum MockGroup {
@@ -223,9 +222,9 @@ mod tests {
     impl std::fmt::Display for MockGroup {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
             match self {
-                MockGroup::Alpha => write!(f, "Alpha"),
-                MockGroup::Beta => write!(f, "Beta"),
-                MockGroup::Gamma => write!(f, "Gamma"),
+                Self::Alpha => write!(f, "Alpha"),
+                Self::Beta => write!(f, "Beta"),
+                Self::Gamma => write!(f, "Gamma"),
             }
         }
     }
@@ -242,7 +241,7 @@ mod tests {
     /// Since this code only constructs `AnyOutput` and calls methods like
     /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
     /// none of which involve `ProgramCollect::do_chain` or
-    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
     /// never exploited in an unsafe way here.
     /// The caller must ensure that the associated `member_id` correctly
     /// corresponds to the type's role in the group.
@@ -264,7 +263,7 @@ mod tests {
     /// Since this code only constructs `AnyOutput` and calls methods like
     /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
     /// none of which involve `ProgramCollect::do_chain` or
-    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
     /// never exploited in an unsafe way here.
     /// The caller must ensure that the associated `member_id` correctly
     /// corresponds to the type's role in the group.
@@ -285,7 +284,7 @@ mod tests {
     /// Since this code only constructs `AnyOutput` and calls methods like
     /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
     /// none of which involve `ProgramCollect::do_chain` or
-    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
     /// never exploited in an unsafe way here.
     /// The caller must ensure that the associated `member_id` correctly
     /// corresponds to the type's role in the group.
@@ -358,7 +357,7 @@ mod tests {
                 assert_eq!(any.member_id, MockGroup::Alpha);
                 assert_eq!(next, NextProcess::Chain);
             }
-            _ => panic!("Expected ChainProcess::Ok"),
+            ChainProcess::Err(_) => panic!("Expected ChainProcess::Ok"),
         }
     }
 
@@ -375,7 +374,7 @@ mod tests {
                 assert_eq!(any.member_id, MockGroup::Alpha);
                 assert_eq!(next, NextProcess::Renderer);
             }
-            _ => panic!("Expected ChainProcess::Ok"),
+            ChainProcess::Err(_) => panic!("Expected ChainProcess::Ok"),
         }
     }
 
@@ -417,7 +416,7 @@ mod tests {
                 assert_eq!(any.member_id, MockGroup::Alpha);
                 assert_eq!(next, NextProcess::Chain);
             }
-            _ => panic!("Expected ChainProcess::Ok"),
+            ChainProcess::Err(_) => panic!("Expected ChainProcess::Ok"),
         }
     }
 
@@ -451,7 +450,7 @@ mod tests {
         /// Since this code only constructs `AnyOutput` and calls methods like
         /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
         /// none of which involve `ProgramCollect::do_chain` or
-        /// `ProgramCollect::render` — the type/member_id correspondence is
+        /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
         /// never exploited in an unsafe way here.
         /// The caller must ensure that the associated `member_id` correctly
         /// corresponds to the type's role in the group.
@@ -488,7 +487,7 @@ mod tests {
         /// Since this code only constructs `AnyOutput` and calls methods like
         /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
         /// none of which involve `ProgramCollect::do_chain` or
-        /// `ProgramCollect::render` — the type/member_id correspondence is
+        /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
         /// never exploited in an unsafe way here.
         /// The caller must ensure that the associated `member_id` correctly
         /// corresponds to the type's role in the group.
@@ -504,7 +503,7 @@ mod tests {
         /// Since this code only constructs `AnyOutput` and calls methods like
         /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
         /// none of which involve `ProgramCollect::do_chain` or
-        /// `ProgramCollect::render` — the type/member_id correspondence is
+        /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
         /// never exploited in an unsafe way here.
         /// The caller must ensure that the associated `member_id` correctly
         /// corresponds to the type's role in the group.

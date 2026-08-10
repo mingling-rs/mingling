@@ -9,8 +9,12 @@
 //!
 //! Recommended to import [mingling](https://crates.io/crates/mingling) to use its features.
 
-// Private Modules
+#![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
+// Using `"".to_string()` is clearer than `String::new()` for expressing "creating an empty value"
+#![allow(clippy::manual_string_new)]
 
+// Private Modules
 mod any;
 mod asset;
 mod program;

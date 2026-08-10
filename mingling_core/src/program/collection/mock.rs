@@ -26,17 +26,17 @@ pub enum MockProgramCollect {
 /// SAFETY: This is a mock type used only for temporary testing.
 /// It will never actually enter the macro system.
 /// The internal `panic!` ensures that `member_id` will never be executed.
-unsafe impl Grouped<MockProgramCollect> for MockProgramCollect {
-    fn member_id() -> MockProgramCollect {
+unsafe impl Grouped<Self> for MockProgramCollect {
+    fn member_id() -> Self {
         panic!("Attempting to read an unsafe enum type");
     }
 }
 
 impl ProgramCollect for MockProgramCollect {
-    type Enum = MockProgramCollect;
-    type EntryFallback = MockProgramCollect;
-    type ErrorRendererNotFound = MockProgramCollect;
-    type ResultEmpty = MockProgramCollect;
+    type Enum = Self;
+    type EntryFallback = Self;
+    type ErrorRendererNotFound = Self;
+    type ResultEmpty = Self;
 
     #[cfg(feature = "dispatch_tree")]
     fn dispatch_args_trie(

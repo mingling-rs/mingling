@@ -23,7 +23,10 @@ pub use shell_ctx::*;
 #[doc(hidden)]
 pub use suggest::*;
 
-use crate::{ProgramCollect, debug, metadata::Description, only_debug, this, trace};
+use crate::{ProgramCollect, debug, metadata::Description, this, trace};
+
+#[cfg(feature = "debug")]
+use crate::debug::init_env_logger;
 
 #[cfg(not(feature = "dispatch_tree"))]
 use crate::ChainProcess;
@@ -104,10 +107,11 @@ impl CompletionHelper {
     where
         P: ProgramCollect<Enum = P> + Display + PartialEq + 'static + std::fmt::Debug,
     {
-        only_debug! {
-            crate::debug::init_env_logger();
+        #[cfg(feature = "debug")]
+        {
+            init_env_logger();
             trace_ctx(ctx);
-        };
+        }
 
         // Everything before the first argument that matches a command node
         // is treated as global parameters (flags and their values), which do
@@ -116,10 +120,7 @@ impl CompletionHelper {
         // style invocations.
         let all_args = ctx.all_words.iter().skip(1).cloned().collect::<Vec<_>>();
         let first_cmd_match = first_command_arg_index::<P>(&all_args);
-        let args = match first_cmd_match {
-            Some(start) => all_args[start..].to_vec(),
-            None => Vec::new(),
-        };
+        let args = first_cmd_match.map_or_else(Vec::new, |start| all_args[start..].to_vec());
         trace!("arguments=\"{}\"", args.join(", "));
 
         #[cfg(not(feature = "dispatch_tree"))]
@@ -168,26 +169,8 @@ impl CompletionHelper {
             None
         };
 
-        match suggest {
-            Some(suggest) => {
-                // A concrete entry was dispatched. Merge the entry's own
-                // completion with the default subcommand suggestions so that,
-                // e.g. `thanks <tab>`, suggests both the leaf nodes (`bob`,
-                // `alice`) and the `thanks` entry's own completion.
-                trace!("using custom completion: {:?}", suggest);
-                let default = default_completion::<P>(ctx);
-                if suggest == Suggest::FileCompletion {
-                    trace!(
-                        "custom completion is FileCompletion, using default: {:?}",
-                        default
-                    );
-                    default
-                } else {
-                    trace!("combining custom completion with default");
-                    suggest.combine(default)
-                }
-            }
-            None => {
+        suggest.map_or_else(
+            || {
                 if first_cmd_match.is_some() {
                     // A command node has been matched: the global
                     // EntryFallback must not run afterwards, only the
@@ -198,14 +181,45 @@ impl CompletionHelper {
                     trace!("using default completion");
                     let fallback = P::do_comp(&P::build_entry_fallback(vec![]), ctx);
                     let default = default_completion::<P>(ctx);
-                    if fallback == Suggest::FileCompletion {
-                        default
-                    } else {
-                        fallback.combine(default)
+                    match fallback {
+                        Suggest::FileCompletion => default,
+                        _ => fallback.combine(default),
                     }
                 }
-            }
-        }
+            },
+            |custom_suggest| {
+                // A concrete entry was dispatched. Merge the entry's own
+                // completion with the default subcommand suggestions so that,
+                // e.g. `thanks <tab>`, suggests both the leaf nodes (`bob`,
+                // `alice`) and the `thanks` entry's own completion.
+                trace!("using custom completion: {:?}", &custom_suggest);
+                let default = default_completion::<P>(ctx);
+                match custom_suggest {
+                    Suggest::FileCompletion => {
+                        trace!(
+                            "custom completion is FileCompletion, using default: {:?}",
+                            default
+                        );
+                        default
+                    }
+                    Suggest::Suggest(a) => {
+                        trace!("combining custom completion with default");
+                        match default {
+                            Suggest::Suggest(b) => {
+                                let mut combined = a;
+                                combined.extend(b);
+                                Suggest::Suggest(combined)
+                            }
+                            Suggest::FileCompletion => {
+                                // If custom completion has items and default is file
+                                // completion, the custom items take priority.
+                                Suggest::Suggest(a)
+                            }
+                        }
+                    }
+                }
+            },
+        )
     }
 
     /// Renders the completion suggestions to standard output.
@@ -219,7 +233,7 @@ impl CompletionHelper {
     /// - If the suggestion is [`Suggest::Suggest`] with a set of candidates, it
     ///   formats and prints them according to the shell type (Zsh/PowerShell, Fish,
     ///   or default).
-    pub fn render_suggest<P>(ctx: ShellContext, suggest: Suggest)
+    pub fn render_suggest<P>(ctx: &ShellContext, suggest: Suggest)
     where
         P: ProgramCollect<Enum = P> + Display + 'static,
     {
@@ -296,7 +310,7 @@ where
     let lazy_member = match match_user_input(this::<P>(), &words) {
         Ok((dispatcher, args)) => match dispatcher.begin(args) {
             ChainProcess::Ok((any, _)) => Some(any.member_id),
-            _ => None,
+            ChainProcess::Err(_) => None,
         },
         Err(_) => None,
     };
@@ -305,7 +319,10 @@ where
     P::get_metadata::<Description>(member_id).map(String::from)
 }
 
-fn default_completion<P>(ctx: &ShellContext) -> Suggest
+/// Builds suggestions from command nodes given an input path.
+///
+/// Extracted from `default_completion` to keep it under the line-count limit.
+fn build_node_suggestions<P>(ctx: &ShellContext, input_path: &[&str]) -> Suggest
 where
     P: ProgramCollect<Enum = P> + Display + 'static,
 {
@@ -315,61 +332,22 @@ where
         .filter(|(s, _)| !s.starts_with('_'))
         .map(|(s, _)| s)
         .collect();
-    debug!("cmd_nodes: {:?}", cmd_nodes);
-
-    // If the current position is less than 1, do not perform completion
-    if ctx.word_index < 1 {
-        debug!("word_index < 1, returning file suggestions");
-        return file_suggest();
-    }
-
-    // Get the current input path
-    let input_end = ctx.word_index.min(ctx.all_words.len());
-
-    debug!(
-        "input_path before filter: {:?}",
-        &ctx.all_words.get(1..input_end).unwrap_or(&[])
-    );
-
-    // Skip global parameters (arguments before the first command node match)
-    // when resolving the command path, so `prog [PARAM]... <subcommand>`
-    // style invocations suggest the subcommand.
-    let input_slice = ctx.all_words.get(1..input_end).unwrap_or(&[]);
-    let input_path: Vec<&str> = match first_command_arg_index::<P>(input_slice) {
-        Some(start) => input_slice[start..]
-            .iter()
-            .map(std::string::String::as_str)
-            .collect(),
-        None => Vec::new(),
-    };
-    debug!(
-        "input_path={:?}, current_word='{}'",
-        input_path, ctx.current_word
-    );
-    debug!("input_path after filter: {:?}", input_path);
-
-    debug!(
-        "default_completion: input_path = {:?}, word_index = {}, all_words = {:?}",
-        input_path, ctx.word_index, ctx.all_words
-    );
 
     // Build a suggestion item for `token`, attaching the owning entry's
     // `Description` metadata (resolved via `node_path`) when one is available.
     let make_item = |token: &str, node_path: &str| -> SuggestItem {
-        match entry_description::<P>(node_path) {
-            Some(desc) => SuggestItem::new_with_desc(token.to_string(), desc),
-            None => SuggestItem::new(token.to_string()),
-        }
+        entry_description::<P>(node_path).map_or_else(
+            || SuggestItem::new(token.to_string()),
+            |desc| SuggestItem::new_with_desc(token.to_string(), desc),
+        )
     };
 
     // Track both the suggestion text and the node path used to look up its
     // description, then deduplicate by suggestion text.
-    let mut suggestions: std::collections::BTreeSet<SuggestItem> =
-        std::collections::BTreeSet::new();
+    let mut suggestions: BTreeSet<SuggestItem> = BTreeSet::new();
 
     // Special case: if input_path is empty, return all first-level commands
     if input_path.is_empty() {
-        debug!("input_path empty, returning first-level commands");
         for node in cmd_nodes {
             let node_parts: Vec<&str> = node.split(' ').collect();
             if let Some(first) = node_parts.first() {
@@ -377,7 +355,6 @@ where
             }
         }
     } else {
-        debug!("input_path NOT empty, doing next-level suggestions");
         // Get the current word
         let current_word = input_path.last().unwrap();
 
@@ -396,10 +373,6 @@ where
 
             // If suggestions for the current word are found, return directly
             if !suggestions.is_empty() {
-                debug!(
-                    "default_completion: current word suggestions = {:?}",
-                    suggestions
-                );
                 return Suggest::Suggest(suggestions);
             }
         }
@@ -407,8 +380,6 @@ where
         // Handle next-level command suggestions
         for node in cmd_nodes {
             let node_parts: Vec<&str> = node.split(' ').collect();
-
-            debug!("Checking node: '{}', parts: {:?}", node, node_parts);
 
             // If input path is longer than node parts, skip
             if input_path.len() > node_parts.len() {
@@ -463,8 +434,6 @@ where
         }
     }
 
-    debug!("default_completion: suggestions = {:?}", suggestions);
-
     if suggestions.is_empty() {
         file_suggest()
     } else {
@@ -472,8 +441,49 @@ where
     }
 }
 
-fn file_suggest() -> Suggest {
-    trace!("file_suggest called");
+fn default_completion<P>(ctx: &ShellContext) -> Suggest
+where
+    P: ProgramCollect<Enum = P> + Display + 'static,
+{
+    debug!("cmd_nodes: {:?}", {
+        let nodes: BTreeSet<String> = this::<P>()
+            .get_nodes()
+            .into_iter()
+            .filter(|(s, _)| !s.starts_with('_'))
+            .map(|(s, _)| s)
+            .collect();
+        nodes
+    });
+
+    // If the current position is less than 1, do not perform completion
+    if ctx.word_index < 1 {
+        debug!("word_index < 1, returning file suggestions");
+        return file_suggest();
+    }
+
+    // Get the current input path
+    let input_end = ctx.word_index.min(ctx.all_words.len());
+
+    // Skip global parameters (arguments before the first command node match)
+    // when resolving the command path, so `prog [PARAM]... <subcommand>`
+    // style invocations suggest the subcommand.
+    let input_slice = ctx.all_words.get(1..input_end).unwrap_or(&[]);
+    let input_path: Vec<&str> =
+        first_command_arg_index::<P>(input_slice).map_or_else(Vec::new, |start| {
+            input_slice[start..]
+                .iter()
+                .map(std::string::String::as_str)
+                .collect()
+        });
+    debug!(
+        "input_path={:?}, current_word='{}'",
+        input_path, ctx.current_word
+    );
+
+    build_node_suggestions::<P>(ctx, &input_path)
+}
+
+const fn file_suggest() -> Suggest {
     Suggest::FileCompletion
 }
 

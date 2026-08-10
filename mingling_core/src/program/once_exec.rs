@@ -21,7 +21,7 @@ where
         C: 'static + Send + Sync,
     {
         // Run hooks
-        self.run_hook_on_begin(crate::hook::HookBeginInfo {});
+        self.run_hook_on_begin(&crate::hook::HookBeginInfo {});
 
         self.args = self.args.iter().skip(1).cloned().collect();
 
@@ -43,11 +43,11 @@ where
                     let program = THIS_PROGRAM
                         .get_raw()
                         .unwrap()
-                        .downcast_ref::<Program<C>>()
+                        .downcast_ref::<Self>()
                         .unwrap();
 
                     #[cfg(not(feature = "async"))]
-                    program.run_hook_exec_panic(crate::hook::HookPanicInfo {
+                    program.run_hook_exec_panic(&crate::hook::HookPanicInfo {
                         panic: &panic_payload,
                     });
 
@@ -98,7 +98,7 @@ where
 
         // Read exit code
         // Render result
-        if stdout_setting.render_output {
+        if stdout_setting.render_output == crate::RenderOutput::Show {
             result.std_print();
         }
 
@@ -152,17 +152,17 @@ where
     pub(crate) fn exec_wrapper<F, R>(self, f: F) -> R
     where
         C: 'static + Send + Sync,
-        F: FnOnce(&'static Program<C>) -> R + Send + Sync,
+        F: FnOnce(&'static Self) -> R + Send + Sync,
     {
         THIS_PROGRAM.set(Box::new(self));
         let program = THIS_PROGRAM
             .get_raw()
             .unwrap()
-            .downcast_ref::<Program<C>>()
+            .downcast_ref::<Self>()
             .unwrap();
 
         #[cfg(not(panic = "abort"))]
-        if program.stdout_setting.silence_panic {
+        if program.stdout_setting.silence_panic == super::PanicSilence::Silence {
             std::panic::set_hook(Box::new(|_| {}));
         }
 

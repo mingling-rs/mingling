@@ -1,14 +1,14 @@
 /// Wraps `split_input` to work with owned `String` inputs.
-pub(crate) fn split_input_string(input: String) -> Vec<String> {
-    split_input(&input)
+pub fn split_input_string(input: &str) -> Vec<String> {
+    split_input(input)
 }
 
 /// Splits a string input into arguments, respecting single quotes, double quotes,
 /// and backslash escaping.
-pub(crate) fn split_input(input: &str) -> Vec<String> {
+pub fn split_input(input: &str) -> Vec<String> {
     let mut result: Vec<String> = Vec::new();
     let mut current = String::new();
-    let mut chars = input.chars().peekable();
+    let mut chars = input.chars();
 
     while let Some(ch) = chars.next() {
         match ch {

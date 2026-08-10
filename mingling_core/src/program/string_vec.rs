@@ -20,7 +20,7 @@ impl From<StringVec> for Vec<String> {
 
 impl<const N: usize> From<[&str; N]> for StringVec {
     fn from(slice: [&str; N]) -> Self {
-        StringVec {
+        Self {
             vec: slice.iter().map(|&s| s.to_string()).collect(),
         }
     }
@@ -28,21 +28,20 @@ impl<const N: usize> From<[&str; N]> for StringVec {
 
 impl From<&[&str]> for StringVec {
     fn from(slice: &[&str]) -> Self {
-        StringVec {
+        Self {
             vec: slice.iter().map(|&s| s.to_string()).collect(),
         }
     }
 }
-
 impl From<Vec<String>> for StringVec {
     fn from(vec: Vec<String>) -> Self {
-        StringVec { vec }
+        Self { vec }
     }
 }
 
 impl From<&[String]> for StringVec {
     fn from(slice: &[String]) -> Self {
-        StringVec {
+        Self {
             vec: slice.to_vec(),
         }
     }
@@ -50,7 +49,7 @@ impl From<&[String]> for StringVec {
 
 impl From<Vec<&str>> for StringVec {
     fn from(vec: Vec<&str>) -> Self {
-        StringVec {
+        Self {
             vec: vec.iter().map(|&s| s.to_string()).collect(),
         }
     }

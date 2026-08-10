@@ -64,7 +64,7 @@ impl TryFrom<Vec<String>> for ShellContext {
             .map(|s| s.replace('^', "-"))
             .collect();
 
-        Ok(ShellContext {
+        Ok(Self {
             command_line: command_line.replace('^', "-"),
             cursor_position,
             current_word: current_word.replace('^', "-"),
@@ -201,7 +201,7 @@ impl ShellContext {
         }
         #[cfg(not(target_os = "windows"))]
         {
-            self.current_word.starts_with("-")
+            self.current_word.starts_with('-')
         }
     }
 

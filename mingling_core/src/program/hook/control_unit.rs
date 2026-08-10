@@ -22,8 +22,8 @@ where
     C: ProgramCollect<Enum = C>,
 {
     /// Returns `true` if the collection is empty.
-    pub fn is_empty(&self) -> bool {
-        matches!(self, ProgramControls::Empty)
+    pub const fn is_empty(&self) -> bool {
+        matches!(self, Self::Empty)
     }
 }
 
@@ -31,7 +31,7 @@ impl<C> From<()> for ProgramControls<C>
 where
     C: ProgramCollect<Enum = C>,
 {
-    fn from(_: ()) -> Self {
+    fn from((): ()) -> Self {
         Self::Empty
     }
 }
@@ -63,13 +63,13 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         match self {
-            ProgramControls::Empty => ProgramControlsIter {
+            Self::Empty => ProgramControlsIter {
                 inner: vec![].into_iter(),
             },
-            ProgramControls::Single(unit) => ProgramControlsIter {
+            Self::Single(unit) => ProgramControlsIter {
                 inner: vec![unit].into_iter(),
             },
-            ProgramControls::Multi(units) => ProgramControlsIter {
+            Self::Multi(units) => ProgramControlsIter {
                 inner: units.into_iter(),
             },
         }
@@ -139,17 +139,19 @@ where
     RouteToHelp(AnyOutput<C>),
 }
 
-impl<C> From<ChainProcess<C>> for ProgramControlUnit<C>
+impl<C> TryFrom<ChainProcess<C>> for ProgramControlUnit<C>
 where
     C: ProgramCollect<Enum = C>,
 {
-    fn from(val: ChainProcess<C>) -> Self {
+    type Error = String;
+
+    fn try_from(val: ChainProcess<C>) -> Result<Self, Self::Error> {
         match val {
             ChainProcess::Ok((any, next)) => match next {
-                NextProcess::Chain => ProgramControlUnit::RouteToChain(any),
-                NextProcess::Renderer => ProgramControlUnit::RouteToRender(any),
+                NextProcess::Chain => Ok(Self::RouteToChain(any)),
+                NextProcess::Renderer => Ok(Self::RouteToRender(any)),
             },
-            ChainProcess::Err(e) => panic!("{}", &e),
+            ChainProcess::Err(e) => Err(e.to_string()),
         }
     }
 }
@@ -159,7 +161,14 @@ where
     C: ProgramCollect<Enum = C>,
 {
     fn from(val: ChainProcess<C>) -> Self {
-        let unit: ProgramControlUnit<C> = val.into();
-        unit.into()
+        match val {
+            ChainProcess::Ok((any, next)) => match next {
+                NextProcess::Chain => Self::Single(ProgramControlUnit::RouteToChain(any)),
+                NextProcess::Renderer => Self::Single(ProgramControlUnit::RouteToRender(any)),
+            },
+            ChainProcess::Err(e) => Self::Single(ProgramControlUnit::OverrideExitCode(
+                e.to_string().parse::<i32>().unwrap_or(1),
+            )),
+        }
     }
 }

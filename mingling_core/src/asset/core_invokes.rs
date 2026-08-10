@@ -48,18 +48,17 @@ where
         C: ProgramCollect<Enum = C> + 'static,
         T: Grouped<C>,
     {
-        if !self.create_by_res_injection {
-            panic!(
-                "The current RendererInvoker was not created by the resource injection system, so it cannot be executed!"
-            );
-        }
+        assert!(
+            self.create_by_res_injection,
+            "The current RendererInvoker was not created by the resource injection system, so it cannot be executed!"
+        );
         C::render(AnyOutput::new(value))
     }
 }
 
 impl<T> ResourceMarker for RendererInvoker<T> {
     fn __resource_marker_clone(&self) -> Self {
-        RendererInvoker {
+        Self {
             phantom: PhantomData,
             create_by_res_injection: self.create_by_res_injection,
         }
@@ -71,7 +70,7 @@ impl<T> ResourceMarker for RendererInvoker<T> {
         // Reason: RendererInvoker is designed to only be created through resource injection.
         // When the resource injection does not find a corresponding value,
         // this method will be used to generate a default value to pass in.
-        RendererInvoker {
+        Self {
             phantom: PhantomData,
             create_by_res_injection: true,
         }
@@ -190,7 +189,7 @@ where
         }
     }
 
-    /// Continuously execute the chain until it is rendered into a RenderResult
+    /// Continuously execute the chain until it is rendered into a `RenderResult`
     ///
     /// This function can only be called when the `ChainInvoker` was created by the resource injection system
     /// (i.e., via `__resource_marker_default`). If the invoker was created manually or cloned outside
@@ -198,7 +197,7 @@ where
     ///
     /// # Special Behavior
     ///
-    /// If an error occurs during rendering, or the result type does not contain a renderer, it will be rendered as an empty RenderResult
+    /// If an error occurs during rendering, or the result type does not contain a renderer, it will be rendered as an empty `RenderResult`
     ///
     /// # Panics
     ///
@@ -229,19 +228,17 @@ where
         }
     }
 
-    #[inline(always)]
     fn pre_check(&self) {
-        if !self.create_by_res_injection {
-            panic!(
-                "The current ChainInvoker was not created by the resource injection system, so it cannot be executed!"
-            );
-        }
+        assert!(
+            self.create_by_res_injection,
+            "The current ChainInvoker was not created by the resource injection system, so it cannot be executed!"
+        );
     }
 }
 
 impl<T> ResourceMarker for ChainInvoker<T> {
     fn __resource_marker_clone(&self) -> Self {
-        ChainInvoker {
+        Self {
             phantom: PhantomData,
             create_by_res_injection: self.create_by_res_injection,
         }
@@ -253,7 +250,7 @@ impl<T> ResourceMarker for ChainInvoker<T> {
         // Reason: ChainInvoker is designed to only be created through resource injection.
         // When the resource injection does not find a corresponding value,
         // this method will be used to generate a default value to pass in.
-        ChainInvoker {
+        Self {
             phantom: PhantomData,
             create_by_res_injection: true,
         }

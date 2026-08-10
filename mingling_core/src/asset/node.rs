@@ -12,24 +12,24 @@ pub struct Node {
 impl Node {
     /// Append a new part to the node path.
     #[must_use]
-    pub fn join(self, node: impl Into<String>) -> Node {
+    pub fn join(self, node: impl Into<String>) -> Self {
         let mut new_node = self.node;
         new_node.push(node.into());
-        Node { node: new_node }
+        Self { node: new_node }
     }
 }
 
 impl From<&str> for Node {
     fn from(s: &str) -> Self {
         let node = s.split('.').map(|part| kebab_case!(part)).collect();
-        Node { node }
+        Self { node }
     }
 }
 
 impl From<String> for Node {
     fn from(s: String) -> Self {
         let node = s.split('.').map(|part| kebab_case!(part)).collect();
-        Node { node }
+        Self { node }
     }
 }
 

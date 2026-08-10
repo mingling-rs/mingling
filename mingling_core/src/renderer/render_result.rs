@@ -50,7 +50,7 @@ pub enum RenderResultMode {
 
 impl<F> From<F> for RenderResult
 where
-    F: FnOnce() -> RenderResult,
+    F: FnOnce() -> Self,
 {
     fn from(value: F) -> Self {
         value()
@@ -79,7 +79,7 @@ impl Display for RenderResult {
 
 impl From<()> for RenderResult {
     fn from(_value: ()) -> Self {
-        RenderResult::new()
+        Self::new()
     }
 }
 
@@ -88,8 +88,8 @@ macro_rules! impl_from_int {
         $(
             impl From<$ty> for RenderResult {
                 fn from(exit_code: $ty) -> Self {
-                    RenderResult {
-                        exit_code: exit_code as i32,
+                    Self {
+                        exit_code: <i32>::try_from(exit_code).unwrap_or_default(),
                         ..Default::default()
                     }
                 }
@@ -102,13 +102,13 @@ impl_from_int!(i32, i16, i8, u32, u16, u8, usize);
 
 impl From<RenderResult> for ExitCode {
     fn from(value: RenderResult) -> Self {
-        ExitCode::from(value.exit_code as u8)
+        Self::from(u8::try_from(value.exit_code).unwrap_or_default())
     }
 }
 
 impl From<&RenderResult> for ExitCode {
     fn from(value: &RenderResult) -> Self {
-        ExitCode::from(value.exit_code as u8)
+        Self::from(u8::try_from(value.exit_code).unwrap_or_default())
     }
 }
 
@@ -156,6 +156,7 @@ impl RenderResult {
     /// assert_eq!(result.exit_code, 0);
     /// assert!(result.is_empty());
     /// ```
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -175,7 +176,7 @@ impl RenderResult {
     /// let mut result = RenderResult::default();
     /// result.immediate_output();
     /// ```
-    pub fn immediate_output(&mut self) -> &mut Self {
+    pub const fn immediate_output(&mut self) -> &mut Self {
         self.immediate_output = true;
         self
     }
@@ -258,7 +259,7 @@ impl RenderResult {
     /// dest.append_other(src);
     /// assert_eq!(dest.to_string(), "Hello Error");
     /// ```
-    pub fn append_other(&mut self, other: impl Into<RenderResult>) {
+    pub fn append_other(&mut self, other: impl Into<Self>) {
         let other = other.into();
 
         // If self has immediate output enabled, but the input does not, the input needs immediate output.
@@ -290,7 +291,7 @@ impl RenderResult {
     pub fn print(&mut self, text: impl Into<String>) {
         let text = text.into();
         if self.immediate_output {
-            print!("{}", text)
+            print!("{text}");
         }
         self.append_to_buffer(text, Stdout);
     }
@@ -310,7 +311,7 @@ impl RenderResult {
     pub fn println(&mut self, text: impl Into<String>) {
         let text = text.into();
         if self.immediate_output {
-            println!("{}", text)
+            println!("{text}");
         }
         self.append_line_to_buffer(text, Stdout);
     }
@@ -330,7 +331,7 @@ impl RenderResult {
     pub fn eprint(&mut self, text: impl Into<String>) {
         let text = text.into();
         if self.immediate_output {
-            eprint!("{}", text)
+            eprint!("{text}");
         }
         self.append_to_buffer(text, Stderr);
     }
@@ -350,7 +351,7 @@ impl RenderResult {
     pub fn eprintln(&mut self, text: impl Into<String>) {
         let text = text.into();
         if self.immediate_output {
-            eprintln!("{}", text)
+            eprintln!("{text}");
         }
         self.append_line_to_buffer(text, Stderr);
     }
@@ -392,10 +393,10 @@ impl RenderResult {
     /// result.std_print(); // prints "Hello" to stdout and "Error" to stderr
     /// ```
     pub fn std_print(&self) {
-        for (content, mode) in self.render_buffer.iter() {
+        for (content, mode) in &self.render_buffer {
             match mode {
-                Stdout => print!("{}", content),
-                Stderr => eprint!("{}", content),
+                Stdout => print!("{content}"),
+                Stderr => eprint!("{content}"),
             }
         }
     }
@@ -415,6 +416,7 @@ impl RenderResult {
     /// result.print(", 世界");
     /// assert_eq!(result.len(), 9); // "Hello, 世界" has 9 chars
     /// ```
+    #[must_use]
     pub fn len(&self) -> usize {
         self.render_buffer
             .iter()
@@ -434,6 +436,7 @@ impl RenderResult {
     /// result.print("Hello");
     /// assert!(!result.is_empty());
     /// ```
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -465,7 +468,8 @@ impl RenderResult {
     /// let trimmed = result.trim_buffer();
     /// assert_eq!(trimmed.to_string().trim(), "Hello, world!");
     /// ```
-    pub fn trim_buffer(self) -> RenderResult {
+    #[must_use]
+    pub fn trim_buffer(self) -> Self {
         if self.render_buffer.is_empty() {
             return self;
         }
@@ -490,7 +494,7 @@ impl RenderResult {
             buffer.push((trimmed_last, last_mode));
         }
 
-        RenderResult {
+        Self {
             render_buffer: buffer,
             immediate_output: self.immediate_output,
             exit_code: self.exit_code,
@@ -516,16 +520,16 @@ impl RenderResult {
     }
 }
 
-#[inline(always)]
+#[inline]
 fn render_result_to_string(result: &RenderResult) -> String {
     let mut buffer = String::new();
-    for item in result.render_buffer.iter() {
+    for item in &result.render_buffer {
         buffer += &item.0;
     }
     buffer
 }
 
-#[inline(always)]
+#[inline]
 fn string_to_render_result(string: impl Into<String>, mode: RenderResultMode) -> RenderResult {
     RenderResult {
         render_buffer: vec![(string.into(), mode)],
@@ -573,7 +577,7 @@ mod tests {
     fn display_trims_trailing_whitespace() {
         let mut result = RenderResult::default();
         result.print("  hello world  \n");
-        let formatted = format!("{}", result);
+        let formatted = format!("{result}");
         assert_eq!(formatted, "hello world");
     }
 

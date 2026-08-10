@@ -29,7 +29,7 @@ where
         // Inject default REPL resource
         self.with_resource(ResREPL::default());
 
-        self.run_hook_repl_on_begin(crate::hook::HookREPLBeginInfo {});
+        self.run_hook_repl_on_begin(&crate::hook::HookREPLBeginInfo {});
 
         might_be_async::select!(
             self.exec_wrapper(async |p| -> () {
@@ -48,43 +48,43 @@ where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,
 {
     loop {
-        p.run_hook_repl_pre_readline(crate::hook::HookREPLPreReadlineInfo {});
+        p.run_hook_repl_pre_readline(&crate::hook::HookREPLPreReadlineInfo {});
         let mut readline = p
-            .run_hook_repl_readline(crate::hook::HookREPLReadlineInfo {})
+            .run_hook_repl_readline(&crate::hook::HookREPLReadlineInfo {})
             .unwrap_or_default();
-        p.run_hook_repl_post_readline(crate::hook::HookREPLPostReadlineInfo {
+        p.run_hook_repl_post_readline(&crate::hook::HookREPLPostReadlineInfo {
             line: &mut readline,
         });
 
-        let args = split_input_string(readline.clone());
+        let args = split_input_string(&readline);
 
-        p.run_hook_repl_pre_exec(crate::hook::HookREPLPreExecInfo { args: &args });
-        match might_be_async::invoke!(exec_once(p, args)) {
+        p.run_hook_repl_pre_exec(&crate::hook::HookREPLPreExecInfo { args: &args });
+        match might_be_async::invoke!(exec_once(p, &args)) {
             Ok(r) => {
-                p.run_hook_repl_on_receive_result(crate::hook::HookREPLOnReceiveResultInfo {
+                p.run_hook_repl_on_receive_result(&crate::hook::HookREPLOnReceiveResultInfo {
                     result: &r,
                 });
             }
             Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
-                p.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo { panic: &panic });
+                p.run_hook_repl_on_panic(&crate::hook::HookREPLOnPanicInfo { panic: &panic });
             }
             _ => {}
         }
-        p.run_hook_repl_post_exec(crate::hook::HookREPLPostExecInfo {});
+        p.run_hook_repl_post_exec(&crate::hook::HookREPLPostExecInfo {});
 
         if this::<C>().res::<ResREPL>().unwrap().exit {
-            p.run_hook_repl_exit(crate::hook::HookREPLExitInfo {});
+            p.run_hook_repl_exit(&crate::hook::HookREPLExitInfo {});
             break;
         }
 
-        p.run_hook_repl_loop_once(crate::hook::HookREPLLoopOnceInfo {});
+        p.run_hook_repl_loop_once(&crate::hook::HookREPLLoopOnceInfo {});
     }
 }
 
 #[cfg(not(feature = "async"))]
 fn exec_once<C>(
     p: &'static Program<C>,
-    args: Vec<String>,
+    args: &[String],
 ) -> Result<RenderResult, ProgramInternalExecuteError>
 where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,
@@ -95,7 +95,7 @@ where
     #[cfg(not(panic = "abort"))]
     let exec_result = {
         let exec_unwind_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            super::exec::exec_with_args(p, &args)
+            super::exec::exec_with_args(p, args)
         }));
 
         match exec_unwind_result {
@@ -108,7 +108,7 @@ where
                     .unwrap()
                     .downcast_ref::<Program<C>>()
                     .unwrap();
-                program.run_hook_repl_on_panic(crate::hook::HookREPLOnPanicInfo {
+                program.run_hook_repl_on_panic(&crate::hook::HookREPLOnPanicInfo {
                     panic: &panic_payload,
                 });
                 Err(ProgramInternalExecuteError::REPLPanic(panic_payload))
@@ -123,7 +123,7 @@ where
 #[cfg(feature = "async")]
 async fn exec_once<C>(
     p: &'static Program<C>,
-    args: Vec<String>,
+    args: &[String],
 ) -> Result<RenderResult, ProgramInternalExecuteError>
 where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,

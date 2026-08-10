@@ -13,7 +13,7 @@ use crate::{Program, ProgramCollect};
 ///   the inner value is immutable once set until `take()`).
 /// - `take()` is called only after execution completes, when no code still
 ///   holds a reference from `get_raw()`.
-pub(crate) struct ProgramCell {
+pub struct ProgramCell {
     initialized: AtomicBool,
     inner: UnsafeCell<Option<Box<dyn std::any::Any + Send + Sync>>>,
 }
@@ -88,6 +88,7 @@ impl ProgramCell {
 }
 
 /// Global static reference to the current program instance
+#[allow(clippy::redundant_pub_crate)]
 pub(crate) static THIS_PROGRAM: ProgramCell = ProgramCell::new();
 
 /// Returns a reference to the current program instance, panics if not set.

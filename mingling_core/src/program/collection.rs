@@ -41,6 +41,10 @@ pub trait ProgramCollect {
 
     #[cfg(not(feature = "dispatch_tree"))]
     /// Use a prefix tree to quickly match arguments and dispatch to an Entry
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the program fails to execute the given arguments.
     fn dispatch_args_trie(
         _raw: &[String],
     ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError> {

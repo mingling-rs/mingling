@@ -44,27 +44,27 @@ pub struct Flag {
     vec: Vec<&'static str>,
 }
 
-impl From<&Flag> for Flag {
-    fn from(value: &Flag) -> Self {
+impl From<&Self> for Flag {
+    fn from(value: &Self) -> Self {
         value.clone()
     }
 }
 
 impl From<()> for Flag {
     fn from((): ()) -> Self {
-        Flag { vec: vec![] }
+        Self { vec: vec![] }
     }
 }
 
 impl From<&'static str> for Flag {
     fn from(s: &'static str) -> Self {
-        Flag { vec: vec![s] }
+        Self { vec: vec![s] }
     }
 }
 
 impl From<&'static [&'static str]> for Flag {
     fn from(slice: &'static [&'static str]) -> Self {
-        Flag {
+        Self {
             vec: slice.to_vec(),
         }
     }
@@ -72,7 +72,7 @@ impl From<&'static [&'static str]> for Flag {
 
 impl<const N: usize> From<[&'static str; N]> for Flag {
     fn from(slice: [&'static str; N]) -> Self {
-        Flag {
+        Self {
             vec: slice.to_vec(),
         }
     }
@@ -80,7 +80,7 @@ impl<const N: usize> From<[&'static str; N]> for Flag {
 
 impl<const N: usize> From<&'static [&'static str; N]> for Flag {
     fn from(slice: &'static [&'static str; N]) -> Self {
-        Flag {
+        Self {
             vec: slice.to_vec(),
         }
     }
@@ -169,7 +169,7 @@ where
     /// Registers a global argument (with value) and its handler.
     pub fn global_argument<F, A>(&mut self, arguments: A, mut do_fn: F)
     where
-        F: FnMut(&mut Program<C>, String),
+        F: FnMut(&mut Self, String),
         A: Into<Flag>,
     {
         let flag = arguments.into();
@@ -185,7 +185,7 @@ where
     /// Registers a global flag (boolean) and its handler.
     pub fn global_flag<F, A>(&mut self, flag: A, mut do_fn: F)
     where
-        F: FnMut(&mut Program<C>),
+        F: FnMut(&mut Self),
         A: Into<Flag>,
     {
         let flag = flag.into();

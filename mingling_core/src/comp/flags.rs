@@ -23,11 +23,11 @@ pub enum ShellFlag {
 impl From<String> for ShellFlag {
     fn from(s: String) -> Self {
         match s.trim().to_lowercase().as_str() {
-            "zsh" => ShellFlag::Zsh,
-            "bash" => ShellFlag::Bash,
-            "fish" => ShellFlag::Fish,
-            "pwsh" | "ps1" | "powershell" => ShellFlag::Powershell,
-            other => ShellFlag::Other(snake_case!(other)),
+            "zsh" => Self::Zsh,
+            "bash" => Self::Bash,
+            "fish" => Self::Fish,
+            "pwsh" | "ps1" | "powershell" => Self::Powershell,
+            other => Self::Other(snake_case!(other)),
         }
     }
 }

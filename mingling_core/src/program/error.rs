@@ -21,7 +21,7 @@ impl fmt::Display for ProgramPanic {
 impl ProgramPanic {
     #[must_use]
     pub fn new(payload: Box<dyn Any + Send>) -> Self {
-        ProgramPanic { payload }
+        Self { payload }
     }
 }
 

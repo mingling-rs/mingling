@@ -6,7 +6,10 @@ use std::{
 
 use crate::{ChainProcess, Program, ProgramCollect, this};
 
-pub(crate) type GlobalResources = Arc<Mutex<HashMap<TypeId, Box<dyn Any + Sync + Send>>>>;
+/// A thread-safe, type-erased container for storing global resources keyed by their type.
+///
+/// Use `Program::with_resource` to insert resources and `Program::res` to retrieve them.
+pub type GlobalResources = Arc<Mutex<HashMap<TypeId, Box<dyn Any + Sync + Send>>>>;
 
 impl<C> Program<C>
 where
@@ -87,17 +90,16 @@ where
         let Ok(mut guard) = self.resources.lock() else {
             return Res::__resource_marker_default();
         };
-        if let Some(arc_res) = guard
+        guard
             .get_mut(&TypeId::of::<Res>())
             .and_then(|a| a.downcast_mut::<Arc<Res>>())
-        {
-            match Arc::try_unwrap(std::mem::take(arc_res)) {
-                Ok(val) => val,
-                Err(arc) => (*arc).__resource_marker_clone(),
-            }
-        } else {
-            Res::__resource_marker_default()
-        }
+            .map_or_else(
+                Res::__resource_marker_default,
+                |arc_res| match Arc::try_unwrap(std::mem::take(arc_res)) {
+                    Ok(val) => val,
+                    Err(arc) => (*arc).__resource_marker_clone(),
+                },
+            )
     }
 
     /// Internal syntax for the `&mut MyResource` syntax of async #[chain], do not use directly.
@@ -116,18 +118,23 @@ where
         let guard = self.resources.lock().ok()?;
         let boxed_any = guard.get(&TypeId::of::<Res>())?;
         let arc_res = boxed_any.as_ref().downcast_ref::<Arc<Res>>()?;
-        Some(GlobalResource::from(Arc::clone(arc_res)))
+        let result = GlobalResource::from(Arc::clone(arc_res));
+        drop(guard);
+        Some(result)
     }
 
-    /// Get a resource by type, returning `GlobalResource<Res>` if present
+    /// Get a resource by type, returning `GlobalResource<Res>` if present.
+    ///
+    /// If the resource is not present, returns the provided [`ChainProcess`] as an `Err`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(route)` when the resource of type `Res` is not present in the store.
     pub fn res_or_route<Res: 'static + Send + Sync>(
         &self,
         route: ChainProcess<C>,
     ) -> Result<GlobalResource<Res>, ChainProcess<C>> {
-        match self.res() {
-            Some(r) => Ok(r),
-            None => Err(route),
-        }
+        self.res().map_or_else(|| Err(route), Ok)
     }
 
     /// Get a resource by type, returning `GlobalResource<Res>` or inserting a default

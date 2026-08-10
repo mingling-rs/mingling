@@ -10,6 +10,7 @@ where
     /// (defined by [`COMPLETION_SUBCOMMAND`]) appears among the parsed arguments.
     /// When `true`, the program should generate shell completions instead of
     /// running its normal execution path.
+    #[must_use]
     pub fn is_completing(&self) -> bool {
         // Check if the first argument (args[1]) is the completion subcommand
         self.args

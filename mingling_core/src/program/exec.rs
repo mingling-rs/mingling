@@ -1,4 +1,5 @@
 #![allow(clippy::borrowed_box)]
+#![allow(clippy::too_many_lines)]
 
 use crate::{
     AnyOutput, ChainProcess, Dispatcher, NextProcess, Program, ProgramCollect, RenderResult,
@@ -49,7 +50,7 @@ where
 
     // Run hooks
     control!(
-        program.run_hook_pre_dispatch(crate::hook::HookPreDispatchInfo { arguments: args }),
+        program.run_hook_pre_dispatch(&crate::hook::HookPreDispatchInfo { arguments: args }),
         current
     );
 
@@ -62,7 +63,7 @@ where
 
     // Run hook
     control!(
-        program.run_hook_post_dispatch(crate::hook::HookPostDispatchInfo {
+        program.run_hook_post_dispatch(&crate::hook::HookPostDispatchInfo {
             entry: &current.member_id,
         }),
         current
@@ -75,7 +76,7 @@ where
         let mut render_result = render_help::<C>(program, current);
 
         // Run hook
-        control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+        control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
         render_result.exit_code = exit_code;
 
         return Ok(render_result);
@@ -89,7 +90,7 @@ where
             if C::has_chain(&current) {
                 // Run hook
                 control!(
-                    program.run_hook_pre_chain(crate::hook::HookPreChainInfo {
+                    program.run_hook_pre_chain(&crate::hook::HookPreChainInfo {
                         input: &current.member_id,
                         raw: current.inner.as_ref(),
                     }),
@@ -102,7 +103,7 @@ where
                             let mut render_result = render::<C>(program, any);
 
                             // Run hook
-                            control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                            control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
                             render_result.exit_code = exit_code;
 
                             return Ok(render_result);
@@ -111,7 +112,7 @@ where
                     ChainProcess::Ok((mut any, NextProcess::Chain)) => {
                         // Run hook
                         control!(
-                            program.run_hook_post_chain(crate::hook::HookPostChainInfo {
+                            program.run_hook_post_chain(&crate::hook::HookPostChainInfo {
                                 output: &any
                             }),
                             any
@@ -121,7 +122,7 @@ where
                     ChainProcess::Err(e) => {
                         // Run hook
                         control!(
-                            program.run_hook_finish(crate::hook::HookFinishInfo {}),
+                            program.run_hook_finish(&crate::hook::HookFinishInfo {}),
                             &mut C::build_empty_result()
                         );
                         return Err(e.into());
@@ -132,7 +133,7 @@ where
             else if C::has_renderer(&current) {
                 // Run hook
                 control!(
-                    program.run_hook_pre_render(crate::hook::HookPreRenderInfo {
+                    program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
                         input: &current.member_id,
                         raw: current.inner.as_ref(),
                     }),
@@ -143,12 +144,12 @@ where
 
                 // Run hooks
                 control!(
-                    program.run_hook_post_render(crate::hook::HookPostRenderInfo {
+                    program.run_hook_post_render(&crate::hook::HookPostRenderInfo {
                         result: &render_result,
                     })
                 );
 
-                control!(program.run_hook_finish(crate::hook::HookFinishInfo {}));
+                control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
 
                 render_result.exit_code = exit_code;
                 return Ok(render_result);
@@ -168,7 +169,7 @@ where
 
     // Run hook
     control!(
-        program.run_hook_finish(crate::hook::HookFinishInfo {}),
+        program.run_hook_finish(&crate::hook::HookFinishInfo {}),
         current
     );
     render_result.exit_code = exit_code;
@@ -252,7 +253,7 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
     mut current: Option<&mut AnyOutput<C>>,
     exit_code: &mut i32,
 ) -> Option<RenderResult> {
-    for unit in controls.into_iter() {
+    for unit in controls {
         match unit {
             super::hook::ProgramControlUnit::OverrideExitCode(c) => *exit_code = c,
             super::hook::ProgramControlUnit::RouteToChain(any_output) => {
@@ -264,7 +265,7 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
                 // Note: Hooks triggered by ProgramControl will not trigger ProgramControl again
 
                 // Pre render
-                let _ = program.run_hook_pre_render(crate::hook::HookPreRenderInfo {
+                let _ = program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
                     input: &any_output.member_id,
                     raw: any_output.inner.as_ref(),
                 });
@@ -273,7 +274,7 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
                 r.exit_code = *exit_code;
 
                 // Post render
-                program.run_hook_post_render(crate::hook::HookPostRenderInfo { result: &r });
+                program.run_hook_post_render(&crate::hook::HookPostRenderInfo { result: &r });
 
                 return Some(r);
             }

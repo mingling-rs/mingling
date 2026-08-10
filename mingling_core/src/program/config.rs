@@ -1,41 +1,95 @@
+/// Output mode for error messages
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ErrorOutput {
+    /// Show error messages
+    Show,
+    /// Hide error messages
+    Hide,
+}
+
+/// Output mode for rendered results
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RenderOutput {
+    /// Render results and output
+    Show,
+    /// Hide rendered results
+    Hide,
+}
+
+/// Panic message handling
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PanicSilence {
+    /// Allow panic messages to be shown
+    Show,
+    /// Silence panic messages
+    Silence,
+}
+
+/// Verbosity level for program output
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Verbosity {
+    /// Normal output
+    Normal,
+    /// Verbose output: provide detailed information
+    Verbose,
+    /// Quiet mode: suppress status messages, show only errors and results
+    Quiet,
+    /// Debug mode: output internal state and detailed diagnostics
+    Debug,
+}
+
+/// Color output mode
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ColorOutput {
+    /// Enable colored output
+    Enabled,
+    /// Disable colored output
+    Disabled,
+}
+
+/// Progress indicator mode
+///
+/// Automatically disabled when stdout is not a tty.
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ProgressOutput {
+    /// Show progress indicators (e.g. progress bars, spinners)
+    Enabled,
+    /// Hide progress indicators
+    Disabled,
+}
+
 /// Program stdout settings
 #[derive(Debug, Clone)]
 pub struct ProgramStdoutSetting {
     /// Output error messages
-    pub error_output: bool,
+    pub error_output: ErrorOutput,
 
     /// Render results and output
-    pub render_output: bool,
+    pub render_output: RenderOutput,
 
     /// Silence panic messages
-    pub silence_panic: bool,
+    pub silence_panic: PanicSilence,
 
-    /// Verbose output: provide detailed information
+    /// Verbosity level for program output
     ///
     /// **NOTE**: Convention only, not a configuration
-    pub verbose: bool,
-
-    /// Quiet mode: suppress status messages, show only errors and results
-    ///
-    /// **NOTE**: Convention only, not a configuration
-    pub quiet: bool,
-
-    /// Debug mode: output internal state and detailed diagnostics
-    ///
-    /// **NOTE**: Convention only, not a configuration
-    pub debug: bool,
+    pub verbosity: Verbosity,
 
     /// Enable colored output
     ///
     /// **NOTE**: Convention only, not a configuration
-    pub color: bool,
+    pub color: ColorOutput,
 
     /// Show progress indicators (e.g. progress bars, spinners)
     ///
-    /// Automatically disabled when stdout is not a tty.
-    ///
     /// **NOTE**: Convention only, not a configuration
-    pub progress: bool,
+    pub progress: ProgressOutput,
 
     #[cfg(feature = "clap")]
     /// Behavior when Clap Dispatcher outputs help information
@@ -63,19 +117,63 @@ pub enum ClapHelpPrintBehaviour {
 
 impl Default for ProgramStdoutSetting {
     fn default() -> Self {
-        ProgramStdoutSetting {
-            error_output: true,
-            render_output: true,
-            silence_panic: false,
-            verbose: false,
-            quiet: false,
-            debug: false,
-            color: true,
-            progress: true,
+        Self {
+            error_output: ErrorOutput::Show,
+            render_output: RenderOutput::Show,
+            silence_panic: PanicSilence::Show,
+            verbosity: Verbosity::Normal,
+            color: ColorOutput::Enabled,
+            progress: ProgressOutput::Enabled,
             #[cfg(feature = "clap")]
             clap_help_print_behaviour: ClapHelpPrintBehaviour::default(),
         }
     }
+}
+
+/// Confirmation mode for user prompts
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConfirmationMode {
+    /// Require confirmation from the user
+    Confirm,
+    /// Skip user confirmation step
+    Skip,
+}
+
+/// Execution mode
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExecutionMode {
+    /// Normal execution
+    Normal,
+    /// Dry-run mode: simulate actions without making changes
+    DryRun,
+    /// Force execution, skipping safety checks
+    Force,
+}
+
+/// Interaction mode
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum InteractionMode {
+    /// Interactive terminal (has a tty)
+    Interactive,
+    /// Non-interactive terminal
+    NonInteractive,
+}
+
+/// Yes assumption mode for prompts
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YesAssumption {
+    /// Do not assume "yes" for any prompt
+    None,
+    /// Assume "yes" for all confirmation prompts
+    AssumeYes,
 }
 
 /// Program user context
@@ -87,30 +185,25 @@ pub struct ProgramUserContext {
     /// Execute hooks during the program lifecycle
     pub run_hook: bool,
 
-    /// Skip user confirmation step
+    /// Confirmation mode for user prompts
     ///
     /// **NOTE**: Convention only, not a configuration
-    pub confirm: bool,
+    pub confirmation: ConfirmationMode,
 
-    /// Dry-run mode: simulate actions without making changes
+    /// Execution mode
     ///
     /// **NOTE**: Convention only, not a configuration
-    pub dry_run: bool,
-
-    /// Force execution, skipping safety checks
-    ///
-    /// **NOTE**: Convention only, not a configuration
-    pub force: bool,
+    pub execution: ExecutionMode,
 
     /// Whether the program is running in an interactive terminal (has a tty)
     ///
     /// **NOTE**: Convention only, not a configuration
-    pub interactive: bool,
+    pub interaction: InteractionMode,
 
-    /// Assume "yes" for all confirmation prompts
+    /// Whether to assume "yes" for all confirmation prompts
     ///
     /// **NOTE**: Convention only, not a configuration
-    pub assume_yes: bool,
+    pub yes_assumption: YesAssumption,
 }
 
 impl Default for ProgramUserContext {
@@ -118,11 +211,10 @@ impl Default for ProgramUserContext {
         Self {
             help: false,
             run_hook: true,
-            confirm: false,
-            dry_run: false,
-            force: false,
-            interactive: false,
-            assume_yes: false,
+            confirmation: ConfirmationMode::Confirm,
+            execution: ExecutionMode::Normal,
+            interaction: InteractionMode::NonInteractive,
+            yes_assumption: YesAssumption::None,
         }
     }
 }
@@ -162,19 +254,19 @@ impl std::str::FromStr for StructuralRendererSetting {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match just_fmt::kebab_case!(s).as_str() {
-            "disable" => Ok(StructuralRendererSetting::Disable),
+            "disable" => Ok(Self::Disable),
             #[cfg(feature = "json_serde_fmt")]
-            "json" => Ok(StructuralRendererSetting::Json),
+            "json" => Ok(Self::Json),
             #[cfg(feature = "json_serde_fmt")]
-            "json-pretty" => Ok(StructuralRendererSetting::JsonPretty),
+            "json-pretty" => Ok(Self::JsonPretty),
             #[cfg(feature = "yaml_serde_fmt")]
-            "yaml" => Ok(StructuralRendererSetting::Yaml),
+            "yaml" => Ok(Self::Yaml),
             #[cfg(feature = "toml_serde_fmt")]
-            "toml" => Ok(StructuralRendererSetting::Toml),
+            "toml" => Ok(Self::Toml),
             #[cfg(feature = "ron_serde_fmt")]
-            "ron" => Ok(StructuralRendererSetting::Ron),
+            "ron" => Ok(Self::Ron),
             #[cfg(feature = "ron_serde_fmt")]
-            "ron-pretty" => Ok(StructuralRendererSetting::RonPretty),
+            "ron-pretty" => Ok(Self::RonPretty),
             _ => Err(format!("Invalid renderer: '{s}'")),
         }
     }
@@ -183,7 +275,7 @@ impl std::str::FromStr for StructuralRendererSetting {
 #[cfg(feature = "structural_renderer")]
 impl From<&str> for StructuralRendererSetting {
     fn from(s: &str) -> Self {
-        s.parse().unwrap_or(StructuralRendererSetting::Disable)
+        s.parse().unwrap_or(Self::Disable)
     }
 }
 
@@ -198,19 +290,19 @@ impl From<String> for StructuralRendererSetting {
 impl std::fmt::Display for StructuralRendererSetting {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            StructuralRendererSetting::Disable => write!(f, "disable"),
+            Self::Disable => write!(f, "disable"),
             #[cfg(feature = "json_serde_fmt")]
-            StructuralRendererSetting::Json => write!(f, "json"),
+            Self::Json => write!(f, "json"),
             #[cfg(feature = "json_serde_fmt")]
-            StructuralRendererSetting::JsonPretty => write!(f, "json-pretty"),
+            Self::JsonPretty => write!(f, "json-pretty"),
             #[cfg(feature = "yaml_serde_fmt")]
-            StructuralRendererSetting::Yaml => write!(f, "yaml"),
+            Self::Yaml => write!(f, "yaml"),
             #[cfg(feature = "toml_serde_fmt")]
-            StructuralRendererSetting::Toml => write!(f, "toml"),
+            Self::Toml => write!(f, "toml"),
             #[cfg(feature = "ron_serde_fmt")]
-            StructuralRendererSetting::Ron => write!(f, "ron"),
+            Self::Ron => write!(f, "ron"),
             #[cfg(feature = "ron_serde_fmt")]
-            StructuralRendererSetting::RonPretty => write!(f, "ron-pretty"),
+            Self::RonPretty => write!(f, "ron-pretty"),
         }
     }
 }
@@ -222,14 +314,12 @@ mod tests {
     #[test]
     fn program_stdout_setting_default() {
         let s = ProgramStdoutSetting::default();
-        assert!(s.error_output);
-        assert!(s.render_output);
-        assert!(!s.silence_panic);
-        assert!(!s.verbose);
-        assert!(!s.quiet);
-        assert!(!s.debug);
-        assert!(s.color);
-        assert!(s.progress);
+        assert_eq!(s.error_output, ErrorOutput::Show);
+        assert_eq!(s.render_output, RenderOutput::Show);
+        assert_eq!(s.silence_panic, PanicSilence::Show);
+        assert_eq!(s.verbosity, Verbosity::Normal);
+        assert_eq!(s.color, ColorOutput::Enabled);
+        assert_eq!(s.progress, ProgressOutput::Enabled);
     }
 
     #[test]
@@ -237,11 +327,10 @@ mod tests {
         let ctx = ProgramUserContext::default();
         assert!(!ctx.help);
         assert!(ctx.run_hook);
-        assert!(!ctx.confirm);
-        assert!(!ctx.dry_run);
-        assert!(!ctx.force);
-        assert!(!ctx.interactive);
-        assert!(!ctx.assume_yes);
+        assert_eq!(ctx.confirmation, ConfirmationMode::Confirm);
+        assert_eq!(ctx.execution, ExecutionMode::Normal);
+        assert_eq!(ctx.interaction, InteractionMode::NonInteractive);
+        assert_eq!(ctx.yes_assumption, YesAssumption::None);
     }
 
     #[cfg(feature = "structural_renderer")]

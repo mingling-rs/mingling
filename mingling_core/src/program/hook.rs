@@ -149,19 +149,19 @@ where
         self
     }
 
-    pub(crate) fn run_hook_on_begin(&self, info: HookBeginInfo) {
+    pub(crate) fn run_hook_on_begin(&self, info: &HookBeginInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref begin) = hook.begin {
-                begin(&info);
+                begin(info);
             }
         }
     }
 
-    pub(crate) fn run_hook_pre_dispatch(&self, info: HookPreDispatchInfo) -> ProgramControls<C> {
+    pub(crate) fn run_hook_pre_dispatch(&self, info: &HookPreDispatchInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -169,7 +169,7 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref pre_dispatch) = hook.pre_dispatch {
-                controls = pre_dispatch(&info);
+                controls = pre_dispatch(info);
             }
         }
         controls
@@ -177,7 +177,7 @@ where
 
     pub(crate) fn run_hook_post_dispatch(
         &self,
-        info: HookPostDispatchInfo<C>,
+        info: &HookPostDispatchInfo<C>,
     ) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
@@ -186,13 +186,13 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref post_dispatch) = hook.post_dispatch {
-                controls = post_dispatch(&info);
+                controls = post_dispatch(info);
             }
         }
         controls
     }
 
-    pub(crate) fn run_hook_pre_chain(&self, info: HookPreChainInfo<C>) -> ProgramControls<C> {
+    pub(crate) fn run_hook_pre_chain(&self, info: &HookPreChainInfo<C>) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -200,13 +200,13 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref pre_chain) = hook.pre_chain {
-                controls = pre_chain(&info);
+                controls = pre_chain(info);
             }
         }
         controls
     }
 
-    pub(crate) fn run_hook_post_chain(&self, info: HookPostChainInfo<C>) -> ProgramControls<C> {
+    pub(crate) fn run_hook_post_chain(&self, info: &HookPostChainInfo<C>) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -214,13 +214,13 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref post_chain) = hook.post_chain {
-                controls = post_chain(&info);
+                controls = post_chain(info);
             }
         }
         controls
     }
 
-    pub(crate) fn run_hook_pre_render(&self, info: HookPreRenderInfo<C>) -> ProgramControls<C> {
+    pub(crate) fn run_hook_pre_render(&self, info: &HookPreRenderInfo<C>) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -228,13 +228,13 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref pre_render) = hook.pre_render {
-                controls = pre_render(&info);
+                controls = pre_render(info);
             }
         }
         controls
     }
 
-    pub(crate) fn run_hook_post_render(&self, info: HookPostRenderInfo) -> ProgramControls<C> {
+    pub(crate) fn run_hook_post_render(&self, info: &HookPostRenderInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -242,7 +242,7 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref post_render) = hook.post_render {
-                controls = post_render(&info);
+                controls = post_render(info);
             }
         }
         controls
@@ -250,19 +250,19 @@ where
 
     #[allow(dead_code)]
     #[cfg(not(feature = "async"))]
-    pub(crate) fn run_hook_exec_panic(&self, info: HookPanicInfo) {
+    pub(crate) fn run_hook_exec_panic(&self, info: &HookPanicInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref exec_panic) = hook.exec_panic {
-                exec_panic(&info);
+                exec_panic(info);
             }
         }
     }
 
-    pub(crate) fn run_hook_finish(&self, info: HookFinishInfo) -> ProgramControls<C> {
+    pub(crate) fn run_hook_finish(&self, info: &HookFinishInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -270,7 +270,7 @@ where
         let mut controls = ProgramControls::Empty;
         for hook in &self.hooks {
             if let Some(ref finish) = hook.finish {
-                controls = finish(&info);
+                controls = finish(info);
             }
         }
         controls
@@ -278,28 +278,28 @@ where
 
     /// Runs the REPL begin hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_on_begin(&self, info: HookREPLBeginInfo) {
+    pub(crate) fn run_hook_repl_on_begin(&self, info: &HookREPLBeginInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_on_begin) = hook.repl_on_begin {
-                repl_on_begin(&info);
+                repl_on_begin(info);
             }
         }
     }
 
     /// Runs the REPL pre-readline hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_pre_readline(&self, info: HookREPLPreReadlineInfo) {
+    pub(crate) fn run_hook_repl_pre_readline(&self, info: &HookREPLPreReadlineInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_pre_readline) = hook.repl_pre_readline {
-                repl_pre_readline(&info);
+                repl_pre_readline(info);
             }
         }
     }
@@ -307,14 +307,14 @@ where
     /// Runs the custom REPL readline hook (only available with `repl` feature)
     /// Returns `Some(line)` if a hook was set and returned Some, otherwise `None`.
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_readline(&self, info: HookREPLReadlineInfo) -> Option<String> {
+    pub(crate) fn run_hook_repl_readline(&self, info: &HookREPLReadlineInfo) -> Option<String> {
         if !self.user_context.run_hook {
             return None;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_readline) = hook.repl_readline {
-                return repl_readline(&info);
+                return repl_readline(info);
             }
         }
         None
@@ -322,98 +322,98 @@ where
 
     /// Runs the REPL post-readline hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_post_readline(&self, info: HookREPLPostReadlineInfo) {
+    pub(crate) fn run_hook_repl_post_readline(&self, info: &HookREPLPostReadlineInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_post_readline) = hook.repl_post_readline {
-                repl_post_readline(&info);
+                repl_post_readline(info);
             }
         }
     }
 
     /// Runs the REPL pre-exec hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_pre_exec(&self, info: HookREPLPreExecInfo) {
+    pub(crate) fn run_hook_repl_pre_exec(&self, info: &HookREPLPreExecInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_pre_exec) = hook.repl_pre_exec {
-                repl_pre_exec(&info);
+                repl_pre_exec(info);
             }
         }
     }
 
     /// Runs the REPL post-exec hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_post_exec(&self, info: HookREPLPostExecInfo) {
+    pub(crate) fn run_hook_repl_post_exec(&self, info: &HookREPLPostExecInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_post_exec) = hook.repl_post_exec {
-                repl_post_exec(&info);
+                repl_post_exec(info);
             }
         }
     }
 
     /// Runs the REPL receive result hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_on_receive_result(&self, info: HookREPLOnReceiveResultInfo) {
+    pub(crate) fn run_hook_repl_on_receive_result(&self, info: &HookREPLOnReceiveResultInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_on_receive_result) = hook.repl_on_receive_result {
-                repl_on_receive_result(&info);
+                repl_on_receive_result(info);
             }
         }
     }
 
     /// Runs the REPL panic hooks (only available with `repl` feature)
     #[cfg(all(feature = "repl", not(feature = "async")))]
-    pub(crate) fn run_hook_repl_on_panic(&self, info: HookREPLOnPanicInfo) {
+    pub(crate) fn run_hook_repl_on_panic(&self, info: &HookREPLOnPanicInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_on_panic) = hook.repl_on_panic {
-                repl_on_panic(&info);
+                repl_on_panic(info);
             }
         }
     }
 
     /// Runs the REPL exit hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_exit(&self, info: HookREPLExitInfo) {
+    pub(crate) fn run_hook_repl_exit(&self, info: &HookREPLExitInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_exit) = hook.repl_exit {
-                repl_exit(&info);
+                repl_exit(info);
             }
         }
     }
 
-    /// Runs the REPL loop_once hooks (only available with `repl` feature)
+    /// Runs the REPL [`loop_once`] hooks (only available with `repl` feature)
     #[cfg(feature = "repl")]
-    pub(crate) fn run_hook_repl_loop_once(&self, info: HookREPLLoopOnceInfo) {
+    pub(crate) fn run_hook_repl_loop_once(&self, info: &HookREPLLoopOnceInfo) {
         if !self.user_context.run_hook {
             return;
         }
 
         for hook in &self.hooks {
             if let Some(ref repl_loop_once) = hook.repl_loop_once {
-                repl_loop_once(&info);
+                repl_loop_once(info);
             }
         }
     }
@@ -663,7 +663,7 @@ where
         self
     }
 
-    /// Sets the handler for the REPL loop_once event (only available with `repl` feature).
+    /// Sets the handler for the REPL [`loop_once`] event (only available with `repl` feature).
     /// This hook runs after each REPL loop iteration.
     #[cfg(feature = "repl")]
     #[must_use]
@@ -691,7 +691,7 @@ mod tests {
 
     impl std::fmt::Display for MockHookEnum {
         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            write!(f, "{:?}", self)
+            write!(f, "{self:?}")
         }
     }
 
@@ -701,65 +701,62 @@ mod tests {
     /// Since this code only constructs `AnyOutput` and calls methods like
     /// `downcast`, `is`, `restore`, `route_chain`, and `route_renderer` —
     /// none of which involve `ProgramCollect::do_chain` or
-    /// `ProgramCollect::render` — the type/member_id correspondence is
+    /// `ProgramCollect::render` — the `type`/`member_id` correspondence is
     /// never exploited in an unsafe way here.
     /// The caller must ensure that the associated `member_id` correctly
     /// corresponds to the type's role in the group.
-    unsafe impl Grouped<MockHookEnum> for MockHookEnum {
-        fn member_id() -> MockHookEnum {
-            MockHookEnum::A
+    unsafe impl Grouped<Self> for MockHookEnum {
+        fn member_id() -> Self {
+            Self::A
         }
     }
 
     impl ProgramCollect for MockHookEnum {
-        type Enum = MockHookEnum;
-        type EntryFallback = MockHookEnum;
-        type ErrorRendererNotFound = MockHookEnum;
-        type ResultEmpty = MockHookEnum;
+        type Enum = Self;
+        type EntryFallback = Self;
+        type ErrorRendererNotFound = Self;
+        type ResultEmpty = Self;
 
-        fn build_renderer_not_found(_member_id: MockHookEnum) -> crate::AnyOutput<MockHookEnum> {
+        fn build_renderer_not_found(_member_id: Self) -> crate::AnyOutput<Self> {
             unreachable!()
         }
 
-        fn build_entry_fallback(_args: Vec<String>) -> crate::AnyOutput<MockHookEnum> {
+        fn build_entry_fallback(_args: Vec<String>) -> crate::AnyOutput<Self> {
             unreachable!()
         }
 
-        fn build_empty_result() -> crate::AnyOutput<MockHookEnum> {
+        fn build_empty_result() -> crate::AnyOutput<Self> {
             unreachable!()
         }
 
-        fn render(_any: crate::AnyOutput<MockHookEnum>) -> crate::RenderResult {
+        fn render(_any: crate::AnyOutput<Self>) -> crate::RenderResult {
             unreachable!()
         }
 
-        fn render_help(_any: crate::AnyOutput<MockHookEnum>) -> crate::RenderResult {
+        fn render_help(_any: crate::AnyOutput<Self>) -> crate::RenderResult {
             unreachable!()
         }
 
-        fn do_chain(_any: crate::AnyOutput<MockHookEnum>) -> crate::ChainProcess<MockHookEnum> {
+        fn do_chain(_any: crate::AnyOutput<Self>) -> crate::ChainProcess<Self> {
             unreachable!()
         }
 
-        fn has_renderer(_any: &crate::AnyOutput<MockHookEnum>) -> bool {
+        fn has_renderer(_any: &crate::AnyOutput<Self>) -> bool {
             unreachable!()
         }
 
-        fn has_chain(_any: &crate::AnyOutput<MockHookEnum>) -> bool {
+        fn has_chain(_any: &crate::AnyOutput<Self>) -> bool {
             unreachable!()
         }
 
         #[cfg(feature = "comp")]
-        fn do_comp(
-            _any: &crate::AnyOutput<MockHookEnum>,
-            _ctx: &crate::ShellContext,
-        ) -> crate::Suggest {
+        fn do_comp(_any: &crate::AnyOutput<Self>, _ctx: &crate::ShellContext) -> crate::Suggest {
             unreachable!()
         }
 
         #[cfg(feature = "structural_renderer")]
         fn structural_render(
-            _any: crate::AnyOutput<MockHookEnum>,
+            _any: crate::AnyOutput<Self>,
             _setting: &crate::StructuralRendererSetting,
         ) -> Result<crate::RenderResult, crate::error::StructuralRendererSerializeError> {
             unreachable!()

@@ -109,7 +109,7 @@ where
 
     /// Creates a new Program instance with the provided command-line arguments.
     pub fn new_with_args(args: impl Into<StringVec>) -> Self {
-        Program {
+        Self {
             collect: std::marker::PhantomData,
             args: args.into().into(),
 
@@ -133,14 +133,14 @@ where
     /// # Panics
     ///
     /// Panics if the program has not been initialized yet.
-    pub fn this_program() -> &'static Program<C>
+    pub fn this_program() -> &'static Self
     where
         C: 'static,
     {
         THIS_PROGRAM
             .get_raw()
             .unwrap()
-            .downcast_ref::<Program<C>>()
+            .downcast_ref::<Self>()
             .unwrap()
     }
 
@@ -173,7 +173,7 @@ where
     /// # Returns
     ///
     /// The previous command-line arguments.
-    pub fn replace_args(&mut self, args: Vec<String>) -> Vec<String> {
+    pub const fn replace_args(&mut self, args: Vec<String>) -> Vec<String> {
         std::mem::replace(&mut self.args, args)
     }
 
