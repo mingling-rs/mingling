@@ -15,6 +15,7 @@
 //! OhMyGod
 //! ```
 
+use mingling::PanicSilence;
 use mingling::{hook::ProgramHook, prelude::*};
 use std::io::Write;
 
@@ -27,7 +28,7 @@ fn main() {
 
     // --------- IMPORTANT ---------
     // Enable silence_panic to suppress automatic Panic output
-    program.stdout_setting.silence_panic = true;
+    program.stdout_setting.silence_panic = PanicSilence::Silence;
 
     // Define a hook to output &ProgramPanic when a Panic occurs
     program.with_hook(
@@ -51,7 +52,6 @@ fn handle_panic(prev: EntryPanic) -> Next {
     }
 }
 
-/// Renders the message when no panic occurs.
 /// Renders the message when no panic occurs.
 #[renderer]
 pub fn render(_: NotPanic) -> RenderResult {
