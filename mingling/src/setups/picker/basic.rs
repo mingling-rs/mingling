@@ -36,12 +36,13 @@ pub struct HelpFlagSetup<'a> {
 
 impl<'a> HelpFlagSetup<'a> {
     /// Creates a new `HelpFlagSetup` with the given flag aliases.
-    pub fn new(flag: &'a PickerArg<Flag>) -> Self {
+    #[must_use]
+    pub const fn new(flag: &'a PickerArg<Flag>) -> Self {
         Self { flag }
     }
 }
 
-impl<'a, C> ProgramSetup<C> for HelpFlagSetup<'a>
+impl<C> ProgramSetup<C> for HelpFlagSetup<'_>
 where
     C: ProgramCollect<Enum = C>,
 {
@@ -53,7 +54,7 @@ where
     }
 }
 
-impl<'a> Default for HelpFlagSetup<'a> {
+impl Default for HelpFlagSetup<'_> {
     fn default() -> Self {
         Self { flag: &HELP_FLAG }
     }
@@ -68,12 +69,13 @@ pub struct QuietFlagSetup<'a> {
 
 impl<'a> QuietFlagSetup<'a> {
     /// Creates a new `QuietFlagSetup` with the given flag aliases.
-    pub fn new(flag: &'a PickerArg<Flag>) -> Self {
+    #[must_use]
+    pub const fn new(flag: &'a PickerArg<Flag>) -> Self {
         Self { flag }
     }
 }
 
-impl<'a, C> ProgramSetup<C> for QuietFlagSetup<'a>
+impl<C> ProgramSetup<C> for QuietFlagSetup<'_>
 where
     C: ProgramCollect<Enum = C>,
 {
@@ -86,7 +88,7 @@ where
     }
 }
 
-impl<'a> Default for QuietFlagSetup<'a> {
+impl Default for QuietFlagSetup<'_> {
     fn default() -> Self {
         Self { flag: &QUIET_FLAG }
     }
@@ -101,12 +103,13 @@ pub struct ConfirmFlagSetup<'a> {
 
 impl<'a> ConfirmFlagSetup<'a> {
     /// Creates a new `ConfirmFlagSetup` with the given flag aliases.
-    pub fn new(flag: &'a PickerArg<Flag>) -> Self {
+    #[must_use]
+    pub const fn new(flag: &'a PickerArg<Flag>) -> Self {
         Self { flag }
     }
 }
 
-impl<'a, C> ProgramSetup<C> for ConfirmFlagSetup<'a>
+impl<C> ProgramSetup<C> for ConfirmFlagSetup<'_>
 where
     C: ProgramCollect<Enum = C>,
 {
@@ -120,7 +123,7 @@ where
     }
 }
 
-impl<'a> Default for ConfirmFlagSetup<'a> {
+impl Default for ConfirmFlagSetup<'_> {
     fn default() -> Self {
         Self {
             flag: &CONFIRM_FLAG,

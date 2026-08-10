@@ -184,7 +184,7 @@ unsafe impl Grouped<ThisProgram> for CompletionSuggest {
 }
 
 impl ProgramCollect for ThisProgram {
-    type Enum = ThisProgram;
+    type Enum = Self;
 
     type EntryFallback = EntryFallback;
 
@@ -260,13 +260,15 @@ impl ProgramCollect for ThisProgram {
 }
 
 impl ThisProgram {
-    /// Create a program through this ProgramCollect.
-    pub fn new() -> Program<ThisProgram> {
+    /// Create a program through this `ProgramCollect`.
+    #[must_use]
+    pub fn new() -> Program<Self> {
         todo!()
     }
 
     /// Get the global singleton of the current program.
-    pub fn this() -> &'static Program<ThisProgram> {
+    #[must_use]
+    pub fn this() -> &'static Program<Self> {
         todo!()
     }
 }
