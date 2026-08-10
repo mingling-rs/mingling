@@ -18,7 +18,7 @@ impl Matcher for FlagMatcher {
         arg_info: &PickerArgInfo,
     ) -> Option<usize> {
         let possible_flags = build_possible_flags(style, arg_info);
-        let flag_refs: Vec<&str> = possible_flags.iter().map(|s| s.as_str()).collect();
+        let flag_refs: Vec<&str> = possible_flags.iter().map(String::as_str).collect();
         let end_of_options = seek_end_of_options(args, style);
 
         let result = get_seeked_first(multi_seek_eq(args, &flag_refs, style.case_sensitive));
@@ -45,7 +45,7 @@ fn single_pass_match_all(
     style: &ParserStyle,
     possible_flags: &[String],
 ) -> Vec<usize> {
-    let flag_refs: Vec<&str> = possible_flags.iter().map(|s| s.as_str()).collect();
+    let flag_refs: Vec<&str> = possible_flags.iter().map(String::as_str).collect();
     let eoo = style.end_of_options;
     let case_sensitive = style.case_sensitive;
 
@@ -67,12 +67,12 @@ fn single_pass_match_all(
 
         // Only match flags before the end-of-options marker.
         if end_pos.is_none() {
-            let matched = if case_sensitive {
+            let is_matched = if case_sensitive {
                 flag_refs.contains(&arg.raw)
             } else {
                 flag_refs.iter().any(|s| arg.raw.eq_ignore_ascii_case(s))
             };
-            if matched {
+            if is_matched {
                 matches.push(arg.raw_idx);
             }
         }

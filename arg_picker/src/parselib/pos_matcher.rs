@@ -14,7 +14,7 @@ pub struct PositionalMatcher;
 
 impl PositionalMatcher {
     /// Check whether `raw` looks like a named flag (starts with a prefix).
-    #[inline(always)]
+    #[inline]
     fn is_flag_like(raw: &str, style: &ParserStyle) -> bool {
         raw.starts_with(style.long_prefix) || raw.starts_with(style.short_prefix)
     }

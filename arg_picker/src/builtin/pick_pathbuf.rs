@@ -7,12 +7,8 @@ use crate::{
 
 impl SinglePickable for PathBuf {
     fn pick_single(str: Option<&str>) -> crate::PickerArgResult<Self> {
-        match str {
-            Some(str) => match just_fmt::fmt_path_str(str) {
-                Ok(formated) => Parsed(PathBuf::from(formated)),
-                Err(_) => NotFound,
-            },
-            None => NotFound,
-        }
+        str.map_or(NotFound, |str| {
+            just_fmt::fmt_path_str(str).map_or(NotFound, |formated| Parsed(Self::from(formated)))
+        })
     }
 }

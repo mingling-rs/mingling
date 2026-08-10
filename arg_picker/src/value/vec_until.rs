@@ -22,6 +22,7 @@ pub struct VecUntil<T> {
 
 impl<T> VecUntil<T> {
     /// Consumes `self` and returns the underlying [`Vec<T>`].
+    #[must_use]
     pub fn into_inner(self) -> Vec<T> {
         self.inner
     }
@@ -29,7 +30,7 @@ impl<T> VecUntil<T> {
 
 impl<T> From<Vec<T>> for VecUntil<T> {
     fn from(v: Vec<T>) -> Self {
-        VecUntil {
+        Self {
             inner: v,
             _marker: PhantomData,
         }
@@ -72,7 +73,7 @@ where
                 PickerArgResult::Unparsed => {}
             }
         }
-        PickerArgResult::Parsed(VecUntil {
+        PickerArgResult::Parsed(Self {
             inner,
             _marker: PhantomData,
         })
@@ -97,7 +98,7 @@ where
             return positions;
         }
 
-        let start = if is_positional { 0 } else { 1 };
+        let start = usize::from(!is_positional);
         if start >= positions.len() {
             return positions;
         }
@@ -118,7 +119,7 @@ where
     fn pick(raw_strs: &[&str]) -> PickerArgResult<Self> {
         let strs = strip_flag(raw_strs);
         let owned: Vec<String> = strs.iter().map(|&s| s.to_string()).collect();
-        <VecUntil<T> as MultiPickableWithBoundary>::pick_multi(owned)
+        <Self as MultiPickableWithBoundary>::pick_multi(owned)
     }
 }
 

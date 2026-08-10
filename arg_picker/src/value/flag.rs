@@ -80,9 +80,9 @@ impl Flag {
     /// [`Active`]: Flag::Active
     /// [`Inactive`]: Flag::Inactive
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn bool(&self) -> bool {
-        *self == Flag::Active
+        *self == Self::Active
     }
 }
 
@@ -101,7 +101,7 @@ impl PartialEq<Flag> for bool {
 
 impl From<bool> for Flag {
     fn from(value: bool) -> Self {
-        if value { Flag::Active } else { Flag::Inactive }
+        if value { Self::Active } else { Self::Inactive }
     }
 }
 
@@ -127,19 +127,19 @@ impl Deref for Flag {
 
     fn deref(&self) -> &bool {
         match self {
-            Flag::Active => &true,
-            Flag::Inactive => &false,
+            Self::Active => &true,
+            Self::Inactive => &false,
         }
     }
 }
 
 impl Not for Flag {
-    type Output = Flag;
+    type Output = Self;
 
-    fn not(self) -> Flag {
+    fn not(self) -> Self {
         match self {
-            Flag::Active => Flag::Inactive,
-            Flag::Inactive => Flag::Active,
+            Self::Active => Self::Inactive,
+            Self::Inactive => Self::Active,
         }
     }
 }

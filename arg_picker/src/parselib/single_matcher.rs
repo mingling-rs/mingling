@@ -18,12 +18,11 @@ impl SingleMatcher {
     /// For named args, only complete pairs (flag + value) are kept.
     /// Flag occurrences without a following value or inline separator
     /// are dropped so they remain available for other matchers.
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub fn tag(ctx: TagPhaseContext) -> Vec<usize> {
         if ctx.arg_info.positional {
-            PositionalMatcher::match_one(ctx.into())
-                .map(|i| vec![i])
-                .unwrap_or_default()
+            PositionalMatcher::match_one(ctx.into()).map_or_else(Vec::new, |i| vec![i])
         } else {
             let args = ctx.args;
             let positions = ArgMatcher::match_all(ctx.into());

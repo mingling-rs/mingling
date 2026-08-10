@@ -21,10 +21,7 @@ fn is_int_like(raw: &str) -> bool {
     if bytes.is_empty() {
         return false;
     }
-    let mut i = 0;
-    if bytes[0] == b'-' || bytes[0] == b'+' {
-        i = 1;
-    }
+    let i = usize::from(bytes[0] == b'-' || bytes[0] == b'+');
     if i >= bytes.len() {
         return false;
     }
@@ -69,12 +66,12 @@ impl_boundary_check_int! {
 // Integer-like strings trigger a boundary.
 impl BoundaryCheck for f32 {
     fn check_boundary(raw: &str) -> bool {
-        !is_float_like(raw) || raw.parse::<f32>().is_err()
+        !is_float_like(raw) || raw.parse::<Self>().is_err()
     }
 }
 
 impl BoundaryCheck for f64 {
     fn check_boundary(raw: &str) -> bool {
-        !is_float_like(raw) || raw.parse::<f64>().is_err()
+        !is_float_like(raw) || raw.parse::<Self>().is_err()
     }
 }

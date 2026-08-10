@@ -29,7 +29,7 @@ pub struct ArgMatcher;
 impl ArgMatcher {
     /// Check whether `raw` matches `flag_str`, optionally with an inline value
     /// separated by the style's value separator (`=` for Unix, `:` for PowerShell).
-    #[inline(always)]
+    #[inline]
     fn matches(raw: &str, flag_str: &str, case_sensitive: bool, sep: char) -> bool {
         let eq_match =
             |r: &str, f: &str| r.len() > f.len() && r.as_bytes().get(f.len()) == Some(&(sep as u8));
@@ -46,7 +46,7 @@ impl ArgMatcher {
 
     /// Check whether the argument contains its value inline via the style's
     /// value separator (eq mode), so no extra mask slot is needed.
-    #[inline(always)]
+    #[inline]
     fn is_inline_value(raw: &str, flag_str: &str, sep: char) -> bool {
         raw.len() > flag_str.len() && raw.as_bytes().get(flag_str.len()) == Some(&(sep as u8))
     }

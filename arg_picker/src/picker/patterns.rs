@@ -33,8 +33,7 @@ internal_repeat!(1..=32 => {
         #[allow(clippy::type_complexity)]
         pub fn or<F>(mut self, func: F) -> Self
         where
-            F: FnMut() -> T$,
-            F: 'static,
+            F: 'static + FnMut() -> T$,
         {
             self.default_$ = Some(Box::new(func));
             self
@@ -65,8 +64,7 @@ internal_repeat!(1..=32 => {
         ///
         pub fn or_route<F>(mut self, func: F) -> Self
         where
-            F: FnMut() -> Route,
-            F: 'static,
+            F: 'static + FnMut() -> Route,
         {
             self.route_$ = Some(Box::new(func));
             self
@@ -110,8 +108,7 @@ internal_repeat!(1..=32 => {
         #[allow(clippy::type_complexity)]
         pub fn post<F>(mut self, func: F) -> Self
         where
-            F: FnMut(T$) -> T$,
-            F: 'static,
+            F: 'static + FnMut(T$) -> T$,
         {
             self.post_$ = Some(Box::new(func));
             self
@@ -167,7 +164,6 @@ internal_repeat!(1..32 => {
        where
            N: Pickable<'a>,
            F: FnMut() -> N + 'static,
-           F: 'static,
        {
            self.pick(arg).or(func)
        }
@@ -197,7 +193,6 @@ internal_repeat!(1..32 => {
        where
            N: Pickable<'a>,
            F: FnMut() -> Route + 'static,
-           F: 'static,
        {
            self.pick(arg).or_route(func)
        }

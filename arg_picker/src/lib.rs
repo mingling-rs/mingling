@@ -1,5 +1,9 @@
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]
+#![deny(clippy::pedantic)]
+#![deny(clippy::nursery)]
+// Some code requires wildcard imports to reduce boilerplate code
+#![allow(clippy::wildcard_imports)]
 
 mod builtin;
 

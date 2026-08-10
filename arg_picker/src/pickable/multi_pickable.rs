@@ -35,7 +35,7 @@ pub trait MultiPickableWithBoundary: Sized {
 pub struct NoBoundary;
 
 impl BoundaryCheck for NoBoundary {
-    #[inline(always)]
+    #[inline]
     fn check_boundary(_raw: &str) -> bool {
         false
     }
@@ -46,7 +46,7 @@ impl<T: SinglePickable> MultiPickableWithBoundary for Vec<T> {
     type Checker = NoBoundary;
 
     fn pick_multi(raw: Vec<String>) -> PickerArgResult<Self> {
-        let mut result = Vec::with_capacity(raw.len());
+        let mut result = Self::with_capacity(raw.len());
         for s in &raw {
             match T::pick_single(Some(s)) {
                 PickerArgResult::Parsed(v) => result.push(v),
@@ -87,6 +87,6 @@ where
     fn pick(raw_strs: &[&str]) -> PickerArgResult<Self> {
         let strs = strip_flag(raw_strs);
         let owned: Vec<String> = strs.iter().map(|&s| s.to_string()).collect();
-        <Vec<T> as MultiPickableWithBoundary>::pick_multi(owned)
+        <Self as MultiPickableWithBoundary>::pick_multi(owned)
     }
 }

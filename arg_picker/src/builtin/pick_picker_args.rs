@@ -15,7 +15,7 @@ impl<'a> Pickable<'a> for PickerArgs<'a> {
     }
 
     fn pick(raw_strs: &[&str]) -> PickerArgResult<Self> {
-        let remains: Vec<String> = raw_strs.iter().map(|s| s.to_string()).collect();
+        let remains: Vec<String> = raw_strs.iter().map(ToString::to_string).collect();
         Parsed(PickerArgs::Owned(remains))
     }
 }

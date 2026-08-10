@@ -56,7 +56,7 @@ impl<'a> ParserStyle<'a> {
     ///
     /// A `String` with the prefix and the flag name combined.
     #[must_use]
-    #[inline(always)]
+    #[inline]
     pub fn flag_string<F>(&self, flag: F) -> String
     where
         F: Into<FlagStr<'a>>,
@@ -88,7 +88,7 @@ pub enum FlagStr<'a> {
     Long(&'a str),
 }
 
-impl<'a> From<char> for FlagStr<'a> {
+impl From<char> for FlagStr<'_> {
     /// Converts a single character into a `FlagStr::Short`.
     fn from(c: char) -> Self {
         FlagStr::Short(c)
@@ -129,36 +129,36 @@ impl<'a> From<&'a String> for FlagStr<'a> {
 #[repr(u8)]
 #[derive(Default, Clone, Copy, PartialEq, Eq)]
 pub enum ParserStyleNamingCase {
-    /// snake_case format: words are separated by underscores, all lowercase.
+    /// `snake_case` format: words are separated by underscores, all lowercase.
     ///
     /// Example: `brew_coffee`
     #[default]
     Snake,
-    /// camelCase format: first word is lowercase, subsequent words are capitalized.
+    /// `camelCase` format: first word is lowercase, subsequent words are capitalized.
     ///
     /// Example: `brewCoffee`
     Camel,
-    /// PascalCase format: every word starts with an uppercase letter.
+    /// `PascalCase` format: every word starts with an uppercase letter.
     ///
     /// Example: `BrewCoffee`
     Pascal,
-    /// kebab-case format: words are separated by hyphens, all lowercase.
+    /// `kebab-case` format: words are separated by hyphens, all lowercase.
     ///
     /// Example: `brew-coffee`
     Kebab,
-    /// dot.case format: words are separated by dots, all lowercase.
+    /// `dot.case` format: words are separated by dots, all lowercase.
     ///
     /// Example: `brew.coffee`
     Dot,
-    /// Title Case format: words are separated by spaces, each word capitalized.
+    /// `Title Case` format: words are separated by spaces, each word capitalized.
     ///
     /// Example: `Brew Coffee`
     Title,
-    /// lower case format: words are separated by spaces, all lowercase.
+    /// `lower case` format: words are separated by spaces, all lowercase.
     ///
     /// Example: `brew coffee`
     Lower,
-    /// UPPER CASE format: words are separated by spaces, all uppercase.
+    /// `UPPER CASE` format: words are separated by spaces, all uppercase.
     ///
     /// Example: `BREW COFFEE`
     Upper,
@@ -187,14 +187,14 @@ impl ParserStyleNamingCase {
         S: Into<String> + From<String>,
     {
         match self {
-            ParserStyleNamingCase::Camel => just_fmt::camel_case!(s.into()).into(),
-            ParserStyleNamingCase::Pascal => just_fmt::pascal_case!(s.into()).into(),
-            ParserStyleNamingCase::Kebab => just_fmt::kebab_case!(s.into()).into(),
-            ParserStyleNamingCase::Snake => just_fmt::snake_case!(s.into()).into(),
-            ParserStyleNamingCase::Dot => just_fmt::dot_case!(s.into()).into(),
-            ParserStyleNamingCase::Title => just_fmt::title_case!(s.into()).into(),
-            ParserStyleNamingCase::Lower => just_fmt::lower_case!(s.into()).into(),
-            ParserStyleNamingCase::Upper => just_fmt::upper_case!(s.into()).into(),
+            Self::Camel => just_fmt::camel_case!(s.into()).into(),
+            Self::Pascal => just_fmt::pascal_case!(s.into()).into(),
+            Self::Kebab => just_fmt::kebab_case!(s.into()).into(),
+            Self::Snake => just_fmt::snake_case!(s.into()).into(),
+            Self::Dot => just_fmt::dot_case!(s.into()).into(),
+            Self::Title => just_fmt::title_case!(s.into()).into(),
+            Self::Lower => just_fmt::lower_case!(s.into()).into(),
+            Self::Upper => just_fmt::upper_case!(s.into()).into(),
         }
     }
 }
@@ -238,7 +238,7 @@ pub const WINDOWS_STYLE: ParserStyle = ParserStyle {
 static GLOBAL_STYLE: OnceLock<ParserStyle<'static>> = OnceLock::new();
 static GLOBAL_STYLE_SET: AtomicBool = AtomicBool::new(false);
 
-impl<'a> ParserStyle<'a> {
+impl ParserStyle<'_> {
     /// Sets the global parser style.
     ///
     /// This function can only be called once. Subsequent calls will have no effect.

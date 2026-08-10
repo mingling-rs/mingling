@@ -4,36 +4,33 @@ use crate::SinglePickable;
 
 impl SinglePickable for SocketAddr {
     fn pick_single(str: Option<&str>) -> crate::PickerArgResult<Self> {
-        match str {
-            Some(s) => match s.parse::<SocketAddr>() {
-                Ok(addr) => crate::PickerArgResult::Parsed(addr),
-                Err(_) => crate::PickerArgResult::NotFound,
-            },
-            None => crate::PickerArgResult::NotFound,
-        }
+        str.map_or(crate::PickerArgResult::NotFound, |s| {
+            s.parse::<Self>()
+                .map_or(crate::PickerArgResult::NotFound, |addr| {
+                    crate::PickerArgResult::Parsed(addr)
+                })
+        })
     }
 }
 
 impl SinglePickable for SocketAddrV4 {
     fn pick_single(str: Option<&str>) -> crate::PickerArgResult<Self> {
-        match str {
-            Some(s) => match s.parse::<SocketAddrV4>() {
-                Ok(addr) => crate::PickerArgResult::Parsed(addr),
-                Err(_) => crate::PickerArgResult::NotFound,
-            },
-            None => crate::PickerArgResult::NotFound,
-        }
+        str.map_or(crate::PickerArgResult::NotFound, |s| {
+            s.parse::<Self>()
+                .map_or(crate::PickerArgResult::NotFound, |addr| {
+                    crate::PickerArgResult::Parsed(addr)
+                })
+        })
     }
 }
 
 impl SinglePickable for SocketAddrV6 {
     fn pick_single(str: Option<&str>) -> crate::PickerArgResult<Self> {
-        match str {
-            Some(s) => match s.parse::<SocketAddrV6>() {
-                Ok(addr) => crate::PickerArgResult::Parsed(addr),
-                Err(_) => crate::PickerArgResult::NotFound,
-            },
-            None => crate::PickerArgResult::NotFound,
-        }
+        str.map_or(crate::PickerArgResult::NotFound, |s| {
+            s.parse::<Self>()
+                .map_or(crate::PickerArgResult::NotFound, |addr| {
+                    crate::PickerArgResult::Parsed(addr)
+                })
+        })
     }
 }

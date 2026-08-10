@@ -117,7 +117,7 @@ pub struct NoPath {
     path: PathBuf,
 }
 
-/// Implements common trait impls (From, AsRef, Deref, DerefMut) for a path wrapper type.
+/// Implements common trait impls (`From`, `AsRef`, `Deref`, `DerefMut`) for a path wrapper type.
 macro_rules! impl_path_traits {
     ($type:ident) => {
         impl From<PathBuf> for $type {
@@ -227,12 +227,14 @@ impl DerefMut for RecursiveFiles {
 
 impl RecursiveFiles {
     /// Returns the number of file paths.
-    pub fn len(&self) -> usize {
+    #[must_use]
+    pub const fn len(&self) -> usize {
         self.paths.len()
     }
 
     /// Returns `true` if there are no file paths.
-    pub fn is_empty(&self) -> bool {
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
         self.paths.is_empty()
     }
 
@@ -242,8 +244,17 @@ impl RecursiveFiles {
     }
 }
 
-impl From<Vec<RecursiveFiles>> for RecursiveFiles {
-    fn from(value: Vec<RecursiveFiles>) -> Self {
+impl<'a> IntoIterator for &'a RecursiveFiles {
+    type Item = &'a PathBuf;
+    type IntoIter = std::slice::Iter<'a, PathBuf>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+impl From<Vec<Self>> for RecursiveFiles {
+    fn from(value: Vec<Self>) -> Self {
         Self {
             paths: value.into_iter().flat_map(|r| r.paths).collect(),
         }

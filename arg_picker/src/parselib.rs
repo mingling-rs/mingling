@@ -58,14 +58,16 @@ pub trait Matcher {
 
     /// Convenience method that builds masked arguments from `PickerArgs` and a mask,
     /// then calls `on_match_one`.
-    fn match_one<'a>(ctx: MatcherContext<'a>) -> Option<usize> {
+    #[must_use]
+    fn match_one(ctx: MatcherContext<'_>) -> Option<usize> {
         let masked_args = build_masked_args(ctx.args, ctx.mask);
         Self::on_match_one(masked_args.as_slice(), ctx.style, ctx.arg_info)
     }
 
     /// Convenience method that builds masked arguments from `PickerArgs` and a mask,
     /// then calls `on_match_all`.
-    fn match_all<'a>(ctx: MatcherContext<'a>) -> Vec<usize> {
+    #[must_use]
+    fn match_all(ctx: MatcherContext<'_>) -> Vec<usize> {
         let masked_args = build_masked_args(ctx.args, ctx.mask);
         Self::on_match_all(masked_args.as_slice(), ctx.style, ctx.arg_info)
     }
@@ -90,7 +92,7 @@ pub struct MatcherContext<'a> {
     /// Metadata about the command-line argument/flag being processed.
     ///
     /// Contains information such as short form (`-n`), long form (`--name`),
-    /// aliases, and parsing flags (positional, optional, multi, is_flag).
+    /// aliases, and parsing flags (positional, optional, multi, `is_flag`).
     /// Used by matchers to make decisions based on argument characteristics.
     pub arg_info: &'a PickerArgInfo<'a>,
 }
@@ -126,7 +128,8 @@ impl<'a> From<crate::TagPhaseContext<'a>> for MatcherContext<'a> {
 ///
 /// * `mask` - A byte slice where non-zero values indicate claimed arguments.
 /// * `idx` - The index to check in the mask.
-#[inline(always)]
+#[inline]
+#[must_use]
 pub fn is_masked(mask: &[u8], idx: usize) -> bool {
     idx < mask.len() && mask[idx] != 0
 }
@@ -141,7 +144,8 @@ pub fn is_masked(mask: &[u8], idx: usize) -> bool {
 ///
 /// * `args` - The full set of parsed arguments.
 /// * `mask` - A byte slice where `0` means available and non-zero means already claimed.
-#[inline(always)]
+#[inline]
+#[must_use]
 pub fn build_masked_args<'a>(args: &'a PickerArgs, mask: &'a [u8]) -> Vec<MaskedArg<'a>> {
     let mut cidx = 0;
     args.iter()
@@ -150,13 +154,13 @@ pub fn build_masked_args<'a>(args: &'a PickerArgs, mask: &'a [u8]) -> Vec<Masked
             cidx += 1;
             // Include args where mask is 0 (available/not yet claimed).
             // mask[i] = 0 means available; mask[i] != 0 means already claimed.
-            if !is_masked(mask, idx) {
+            if is_masked(mask, idx) {
+                None
+            } else {
                 Some(MaskedArg {
                     raw: r,
                     raw_idx: idx,
                 })
-            } else {
-                None
             }
         })
         .collect()

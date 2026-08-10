@@ -13,9 +13,9 @@ impl<'a> Pickable<'a> for Flag {
 
     fn pick(raw_strs: &[&str]) -> PickerArgResult<Self> {
         if raw_strs.is_empty() {
-            PickerArgResult::Parsed(Flag::Inactive)
+            PickerArgResult::Parsed(Self::Inactive)
         } else {
-            PickerArgResult::Parsed(Flag::Active)
+            PickerArgResult::Parsed(Self::Active)
         }
     }
 }

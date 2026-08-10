@@ -20,7 +20,7 @@ use std::marker::PhantomData;
 ///     than by a `--name` or `-n` flag.
 ///   - `false`: The parameter is a named (flag-based) parameter.
 ///
-/// - `_type`: PhantomData to hold the type parameter.
+/// - `_type`: [`PhantomData`] to hold the type parameter.
 #[derive(Default, Clone, Copy)]
 pub struct PickerArg<'a, Type>
 where
@@ -35,16 +35,16 @@ where
     /// Whether the parameter is positional (no flag, matched by position).
     pub positional: bool,
 
-    /// PhantomData to hold the type parameter.
+    /// [`PhantomData`] to hold the type parameter.
     pub internal_type: PhantomData<Type>,
 }
 
-impl<'a, Type> From<&'a PickerArg<'a, Type>> for PickerArg<'a, Type>
+impl<'a, Type> From<&'a Self> for PickerArg<'a, Type>
 where
     Type: Pickable<'a>,
 {
-    fn from(value: &'a PickerArg<'a, Type>) -> Self {
-        PickerArg {
+    fn from(value: &'a Self) -> Self {
+        Self {
             full: value.full,
             short: value.short,
             positional: value.positional,
@@ -58,7 +58,8 @@ where
     Type: Pickable<'a>,
 {
     /// Creates a new `PickerArg` with the provided parameters.
-    pub fn new(full: &'a [&'a str], short: Option<char>, positional: bool) -> Self {
+    #[must_use]
+    pub const fn new(full: &'a [&'a str], short: Option<char>, positional: bool) -> Self {
         Self {
             full,
             short,
@@ -68,12 +69,14 @@ where
     }
 
     /// Returns the full name list (including aliases).
-    pub fn full(&self) -> &'a [&'a str] {
+    #[must_use]
+    pub const fn full(&self) -> &'a [&'a str] {
         self.full
     }
 
     /// Returns the short name, if any.
-    pub fn short(&self) -> Option<char> {
+    #[must_use]
+    pub const fn short(&self) -> Option<char> {
         self.short
     }
 
@@ -81,7 +84,8 @@ where
     ///
     /// If `full` is empty or `short` is `None`, the parameter is considered positional
     /// regardless of the stored value.
-    pub fn is_positional(&self) -> bool {
+    #[must_use]
+    pub const fn is_positional(&self) -> bool {
         if self.full.is_empty() && self.short.is_none() {
             true
         } else {
@@ -90,46 +94,51 @@ where
     }
 
     /// Sets the full name list.
-    pub fn set_full(&mut self, full: &'a [&'a str]) {
+    pub const fn set_full(&mut self, full: &'a [&'a str]) {
         self.full = full;
     }
 
     /// Sets the short name.
-    pub fn set_short(&mut self, short: Option<char>) {
+    pub const fn set_short(&mut self, short: Option<char>) {
         self.short = short;
     }
 
     /// Sets whether the parameter is positional.
-    pub fn set_positional(&mut self, positional: bool) {
+    pub const fn set_positional(&mut self, positional: bool) {
         self.positional = positional;
     }
 
     /// Sets the full name list and returns self.
-    pub fn with_full(mut self, full: &'a [&'a str]) -> Self {
+    #[must_use]
+    pub const fn with_full(mut self, full: &'a [&'a str]) -> Self {
         self.full = full;
         self
     }
 
     /// Clears the full name list (sets it to an empty slice) and returns self.
-    pub fn without_full(mut self) -> Self {
+    #[must_use]
+    pub const fn without_full(mut self) -> Self {
         self.full = &[];
         self
     }
 
     /// Sets the short name to the given character and returns self.
-    pub fn with_short(mut self, short: char) -> Self {
+    #[must_use]
+    pub const fn with_short(mut self, short: char) -> Self {
         self.short = Some(short);
         self
     }
 
     /// Clears the short name (sets it to None) and returns self.
-    pub fn without_short(mut self) -> Self {
+    #[must_use]
+    pub const fn without_short(mut self) -> Self {
         self.short = None;
         self
     }
 
     /// Sets whether the parameter is positional and returns self.
-    pub fn with_positional(mut self, positional: bool) -> Self {
+    #[must_use]
+    pub const fn with_positional(mut self, positional: bool) -> Self {
         self.positional = positional;
         self
     }
@@ -137,19 +146,19 @@ where
     /// Converts this `PickerArg` into a `PickerArgInfo` value.
     ///
     /// This is a convenience method equivalent to calling `PickerArgInfo::from(self)`.
+    #[must_use]
     pub fn into_info(self) -> PickerArgInfo<'a> {
         let value = self;
-        let (long, alias) = match value.full.len() {
-            0 => (None, None),
-            _ => {
-                let long = Some(value.full[0]);
-                let alias = if value.full.len() > 1 {
-                    Some(value.full[1..].to_vec())
-                } else {
-                    None
-                };
-                (long, alias)
-            }
+        let (long, alias) = if value.full.is_empty() {
+            (None, None)
+        } else {
+            let long = Some(value.full[0]);
+            let alias = if value.full.len() > 1 {
+                Some(value.full[1..].to_vec())
+            } else {
+                None
+            };
+            (long, alias)
         };
 
         PickerArgInfo {
@@ -169,7 +178,7 @@ where
     Type: Pickable<'a>,
 {
     fn from(value: PickerArg<'a, Type>) -> Self {
-        let mut result = Vec::new();
+        let mut result = Self::new();
         let info = PickerArgInfo::from(value);
         let possible_flags =
             crate::parselib::build_possible_flags(ParserStyle::global_style(), &info);
@@ -231,81 +240,81 @@ impl PickerArgAttr {
     /// Determines if the given `PickerArg` represents a positional parameter.
     ///
     /// If the flag is positional (determined by `flag.is_positional()`), returns
-    /// `PickerArgAttr::Positional`. Otherwise, invokes the `other` closure to
-    /// produce and return a `PickerArgAttr`.
+    /// `Self::Positional`. Otherwise, invokes the `other` closure to
+    /// produce and return a `Self`.
     ///
     /// # Parameters
     ///
     /// - `flag`: A reference to the [`PickerArg`] to evaluate.
     /// - `other`: A closure that returns a [`PickerArgAttr`] when the flag is
     ///   **not** positional.
-    #[inline(always)]
-    pub fn positional_or_else<'a, T>(
-        flag: &PickerArg<'a, T>,
-        other: fn() -> PickerArgAttr,
-    ) -> PickerArgAttr
+    #[inline]
+    pub fn positional_or_else<'a, T>(flag: &PickerArg<'a, T>, other: fn() -> Self) -> Self
     where
         T: Pickable<'a>,
     {
         if flag.is_positional() {
-            PickerArgAttr::Positional
+            Self::Positional
         } else {
             other()
         }
     }
 
     /// Determines if the given `PickerArg` represents a positional parameter and returns
-    /// `PickerArgAttr::Positional` if so. Otherwise, returns the provided `default` attribute.
+    /// `Self::Positional` if so. Otherwise, returns the provided `default` attribute.
     ///
     /// # Parameters
     ///
     /// - `flag`: A reference to the [`PickerArg`] to evaluate.
     /// - `default`: The [`PickerArgAttr`] to return if the flag is not positional.
-    #[inline(always)]
-    pub fn positional_or<'a, T>(flag: &PickerArg<'a, T>, default: PickerArgAttr) -> PickerArgAttr
+    #[must_use]
+    #[inline]
+    pub const fn positional_or<'a, T>(flag: &PickerArg<'a, T>, default: Self) -> Self
     where
         T: Pickable<'a>,
     {
         if flag.is_positional() {
-            PickerArgAttr::Positional
+            Self::Positional
         } else {
             default
         }
     }
 
     /// Determines if the given `PickerArg` represents a positional parameter and returns
-    /// `PickerArgAttr::Positional` if so. Otherwise, returns `PickerArgAttr::Single`.
+    /// `Self::Positional` if so. Otherwise, returns `Self::Single`.
     ///
     /// # Parameters
     ///
     /// - `flag`: A reference to the [`PickerArg`] to evaluate.
-    #[inline(always)]
-    pub fn positional_or_single<'a, T>(flag: &PickerArg<'a, T>) -> PickerArgAttr
+    #[must_use]
+    #[inline]
+    pub const fn positional_or_single<'a, T>(flag: &PickerArg<'a, T>) -> Self
     where
         T: Pickable<'a>,
     {
         if flag.is_positional() {
-            PickerArgAttr::Positional
+            Self::Positional
         } else {
-            PickerArgAttr::Single
+            Self::Single
         }
     }
 
     /// Determines if the given `PickerArg` represents a positional parameter and returns
-    /// `PickerArgAttr::PositionalMulti` if so. Otherwise, returns `PickerArgAttr::Multi`.
+    /// `Self::PositionalMulti` if so. Otherwise, returns `Self::Multi`.
     ///
     /// # Parameters
     ///
     /// - `flag`: A reference to the [`PickerArg`] to evaluate.
-    #[inline(always)]
-    pub fn positional_or_multi<'a, T>(flag: &PickerArg<'a, T>) -> PickerArgAttr
+    #[must_use]
+    #[inline]
+    pub const fn positional_or_multi<'a, T>(flag: &PickerArg<'a, T>) -> Self
     where
         T: Pickable<'a>,
     {
         if flag.is_positional() {
-            PickerArgAttr::PositionalMulti
+            Self::PositionalMulti
         } else {
-            PickerArgAttr::Multi
+            Self::Multi
         }
     }
 }

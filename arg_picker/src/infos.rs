@@ -3,9 +3,9 @@ use crate::{Pickable, PickerArg, parselib::ParserStyle};
 /// Represents the result of parsing or looking up a value.
 ///
 /// This enum is generic over the type being parsed. It models three possible outcomes:
-/// - [`Unparsed`](PickerArgResult::Unparsed): The value has not yet been parsed (default).
-/// - [`Parsed`](PickerArgResult::Parsed): The value was successfully parsed into `Type`.
-/// - [`NotFound`](PickerArgResult::NotFound): The requested value could not be found.
+/// - [`Unparsed`](Self::Unparsed): The value has not yet been parsed (default).
+/// - [`Parsed`](Self::Parsed): The value was successfully parsed into `Type`.
+/// - [`NotFound`](Self::NotFound): The requested value could not be found.
 #[derive(Default)]
 pub enum PickerArgResult<Type> {
     /// The value has not yet been parsed (default).
@@ -22,31 +22,25 @@ pub enum PickerArgResult<Type> {
 impl<Type, E> From<Result<Type, E>> for PickerArgResult<Type> {
     /// Converts a `Result<Type, E>` into a `PickerArgResult<Type>`.
     ///
-    /// - `Ok(value)` maps to [`Parsed(value)`](PickerArgResult::Parsed).
-    /// - `Err(_)` maps to [`NotFound`](PickerArgResult::NotFound).
+    /// - `Ok(value)` maps to [`Parsed(value)`](Self::Parsed).
+    /// - `Err(_)` maps to [`NotFound`](Self::NotFound).
     fn from(result: Result<Type, E>) -> Self {
-        match result {
-            Ok(value) => PickerArgResult::Parsed(value),
-            Err(_) => PickerArgResult::NotFound,
-        }
+        result.map_or_else(|_| Self::NotFound, |value| Self::Parsed(value))
     }
 }
 
 impl<Type> From<Option<Type>> for PickerArgResult<Type> {
     /// Converts an `Option<Type>` into a `PickerArgResult<Type>`.
     ///
-    /// - `Some(value)` maps to [`Parsed(value)`](PickerArgResult::Parsed).
-    /// - `None` maps to [`NotFound`](PickerArgResult::NotFound).
+    /// - `Some(value)` maps to [`Parsed(value)`](Self::Parsed).
+    /// - `None` maps to [`NotFound`](Self::NotFound).
     fn from(option: Option<Type>) -> Self {
-        match option {
-            Some(value) => PickerArgResult::Parsed(value),
-            None => PickerArgResult::NotFound,
-        }
+        option.map_or_else(|| Self::NotFound, |value| Self::Parsed(value))
     }
 }
 
 impl<Type> PickerArgResult<Type> {
-    /// Returns `true` if the result is [`Parsed`](PickerArgResult::Parsed).
+    /// Returns `true` if the result is [`Parsed`](Self::Parsed).
     ///
     /// # Examples
     ///
@@ -59,11 +53,11 @@ impl<Type> PickerArgResult<Type> {
     /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert!(!result.is_parsed());
     /// ```
-    pub fn is_parsed(&self) -> bool {
-        matches!(self, PickerArgResult::Parsed(_))
+    pub const fn is_parsed(&self) -> bool {
+        matches!(self, Self::Parsed(_))
     }
 
-    /// Returns `true` if the result is [`Parsed`](PickerArgResult::Parsed) or [`NotFound`](PickerArgResult::NotFound).
+    /// Returns `true` if the result is [`Parsed`](Self::Parsed) or [`NotFound`](Self::NotFound).
     /// i.e., the value exists (was either found or not yet parsed).
     /// Typically indicates the value was "found" in some sense.
     ///
@@ -78,11 +72,11 @@ impl<Type> PickerArgResult<Type> {
     /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert!(result.is_found());
     /// ```
-    pub fn is_found(&self) -> bool {
-        matches!(self, PickerArgResult::Parsed(_) | PickerArgResult::NotFound)
+    pub const fn is_found(&self) -> bool {
+        matches!(self, Self::Parsed(_) | Self::NotFound)
     }
 
-    /// Returns `true` if the result is [`Unparsed`](PickerArgResult::Unparsed) or [`NotFound`](PickerArgResult::NotFound).
+    /// Returns `true` if the result is [`Unparsed`](Self::Unparsed) or [`NotFound`](Self::NotFound).
     ///
     /// # Examples
     ///
@@ -95,11 +89,11 @@ impl<Type> PickerArgResult<Type> {
     /// let result: PickerArgResult<i32> = PickerArgResult::Parsed(10);
     /// assert!(!result.is_err());
     /// ```
-    pub fn is_err(&self) -> bool {
-        !matches!(self, PickerArgResult::Parsed(_))
+    pub const fn is_err(&self) -> bool {
+        !matches!(self, Self::Parsed(_))
     }
 
-    /// Returns `Some(&Type)` if [`Parsed`](PickerArgResult::Parsed), otherwise `None`.
+    /// Returns `Some(&Type)` if [`Parsed`](Self::Parsed), otherwise `None`.
     ///
     /// # Examples
     ///
@@ -112,18 +106,18 @@ impl<Type> PickerArgResult<Type> {
     /// let result: PickerArgResult<i32> = PickerArgResult::NotFound;
     /// assert_eq!(result.parsed(), None);
     /// ```
-    pub fn parsed(&self) -> Option<&Type> {
-        if let PickerArgResult::Parsed(value) = self {
+    pub const fn parsed(&self) -> Option<&Type> {
+        if let Self::Parsed(value) = self {
             Some(value)
         } else {
             None
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or panics with a given message.
+    /// Returns the contained [`Parsed`](Self::Parsed) value or panics with a given message.
     ///
     /// # Panics
-    /// Panics if the value is not [`Parsed`](PickerArgResult::Parsed), with a message including the provided `msg`.
+    /// Panics if the value is not [`Parsed`](Self::Parsed), with a message including the provided `msg`.
     ///
     /// # Examples
     ///
@@ -135,15 +129,15 @@ impl<Type> PickerArgResult<Type> {
     /// ```
     pub fn expect(self, msg: &str) -> Type {
         match self {
-            PickerArgResult::Parsed(value) => value,
+            Self::Parsed(value) => value,
             _ => panic!("{}", msg),
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or panics.
+    /// Returns the contained [`Parsed`](Self::Parsed) value or panics.
     ///
     /// # Panics
-    /// Panics if the value is not [`Parsed`](PickerArgResult::Parsed).
+    /// Panics if the value is not [`Parsed`](Self::Parsed).
     ///
     /// # Examples
     ///
@@ -162,17 +156,17 @@ impl<Type> PickerArgResult<Type> {
     /// ```
     pub fn unwrap(self) -> Type {
         match self {
-            PickerArgResult::Parsed(value) => value,
-            PickerArgResult::Unparsed => {
+            Self::Parsed(value) => value,
+            Self::Unparsed => {
                 panic!("called `PickerArgResult::unwrap()` on an `Unparsed` value")
             }
-            PickerArgResult::NotFound => {
+            Self::NotFound => {
                 panic!("called `PickerArgResult::unwrap()` on a `NotFound` value")
             }
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or a provided `default`.
+    /// Returns the contained [`Parsed`](Self::Parsed) value or a provided `default`.
     ///
     /// # Examples
     ///
@@ -187,12 +181,12 @@ impl<Type> PickerArgResult<Type> {
     /// ```
     pub fn unwrap_or(self, default: Type) -> Type {
         match self {
-            PickerArgResult::Parsed(value) => value,
+            Self::Parsed(value) => value,
             _ => default,
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or computes it from a closure.
+    /// Returns the contained [`Parsed`](Self::Parsed) value or computes it from a closure.
     ///
     /// # Examples
     ///
@@ -207,12 +201,12 @@ impl<Type> PickerArgResult<Type> {
     /// ```
     pub fn unwrap_or_else<F: FnOnce() -> Type>(self, f: F) -> Type {
         match self {
-            PickerArgResult::Parsed(value) => value,
+            Self::Parsed(value) => value,
             _ => f(),
         }
     }
 
-    /// Returns the contained [`Parsed`](PickerArgResult::Parsed) value or the default value of `Type`.
+    /// Returns the contained [`Parsed`](Self::Parsed) value or the default value of `Type`.
     ///
     /// # Examples
     ///
@@ -230,14 +224,14 @@ impl<Type> PickerArgResult<Type> {
         Type: Default,
     {
         match self {
-            PickerArgResult::Parsed(value) => value,
+            Self::Parsed(value) => value,
             _ => Type::default(),
         }
     }
 
     /// Converts `PickerArgResult<Type>` into `Option<Type>`.
     ///
-    /// Returns `Some(Type)` if [`Parsed`](PickerArgResult::Parsed), otherwise `None`.
+    /// Returns `Some(Type)` if [`Parsed`](Self::Parsed), otherwise `None`.
     ///
     /// # Examples
     ///
@@ -255,12 +249,14 @@ impl<Type> PickerArgResult<Type> {
     /// ```
     pub fn to_option(self) -> Option<Type> {
         match self {
-            PickerArgResult::Parsed(value) => Some(value),
+            Self::Parsed(value) => Some(value),
             _ => None,
         }
     }
 }
 
+// In PickerArgInfo, positional, optional, multi, and is_flag may coexist.
+#[allow(clippy::struct_excessive_bools)]
 /// Represents metadata about a command-line argument or flag.
 ///
 /// This struct stores all relevant information about a tag/argument that can be used
@@ -294,17 +290,16 @@ where
 
 impl<'a, T: Pickable<'a>> From<&'a PickerArg<'a, T>> for PickerArgInfo<'a> {
     fn from(value: &'a PickerArg<'a, T>) -> Self {
-        let (long, alias) = match value.full.len() {
-            0 => (None, None),
-            _ => {
-                let long = Some(value.full[0]);
-                let alias = if value.full.len() > 1 {
-                    Some(value.full[1..].to_vec())
-                } else {
-                    None
-                };
-                (long, alias)
-            }
+        let (long, alias) = if value.full.is_empty() {
+            (None, None)
+        } else {
+            let long = Some(value.full[0]);
+            let alias = if value.full.len() > 1 {
+                Some(value.full[1..].to_vec())
+            } else {
+                None
+            };
+            (long, alias)
         };
 
         Self {
@@ -321,7 +316,8 @@ impl<'a, T: Pickable<'a>> From<&'a PickerArg<'a, T>> for PickerArgInfo<'a> {
 
 impl<'a> PickerArgInfo<'a> {
     /// Create a new `PickerTag` with default values.
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             short: None,
             long: None,
@@ -334,55 +330,62 @@ impl<'a> PickerArgInfo<'a> {
     }
 
     /// Set the short flag (e.g., `'n'` for `-n`).
-    pub fn with_short(mut self, short: char) -> Self {
+    #[must_use]
+    pub const fn with_short(mut self, short: char) -> Self {
         self.short = Some(short);
         self
     }
 
     /// Set the long flag (e.g., `"name"` for `--name`).
-    pub fn with_long(mut self, long: &'a str) -> Self {
+    #[must_use]
+    pub const fn with_long(mut self, long: &'a str) -> Self {
         self.long = Some(long);
         self
     }
 
     /// Set aliases for the tag.
+    #[must_use]
     pub fn with_alias(mut self, alias: Vec<&'a str>) -> Self {
         self.alias = Some(alias);
         self
     }
 
     /// Mark the tag as positional.
-    pub fn with_positional(mut self, positional: bool) -> Self {
+    #[must_use]
+    pub const fn with_positional(mut self, positional: bool) -> Self {
         self.positional = positional;
         self
     }
 
     /// Mark the tag as optional.
-    pub fn with_optional(mut self, optional: bool) -> Self {
+    #[must_use]
+    pub const fn with_optional(mut self, optional: bool) -> Self {
         self.optional = optional;
         self
     }
 
     /// Mark the tag as multi-value.
-    pub fn with_multi(mut self, multi: bool) -> Self {
+    #[must_use]
+    pub const fn with_multi(mut self, multi: bool) -> Self {
         self.multi = multi;
         self
     }
 
     /// Mark the tag as a flag that participates in parsing after `--`.
-    pub fn with_is_flag(mut self, is_flag: bool) -> Self {
+    #[must_use]
+    pub const fn with_is_flag(mut self, is_flag: bool) -> Self {
         self.is_flag = is_flag;
         self
     }
 
     /// Set the short flag (e.g., `'n'` for `-n`).
-    pub fn set_short(&mut self, short: char) -> &mut Self {
+    pub const fn set_short(&mut self, short: char) -> &mut Self {
         self.short = Some(short);
         self
     }
 
     /// Set the long flag (e.g., `"name"` for `--name`).
-    pub fn set_long(&mut self, long: &'a str) -> &mut Self {
+    pub const fn set_long(&mut self, long: &'a str) -> &mut Self {
         self.long = Some(long);
         self
     }
@@ -394,25 +397,25 @@ impl<'a> PickerArgInfo<'a> {
     }
 
     /// Set whether this tag is positional.
-    pub fn set_positional(&mut self, positional: bool) -> &mut Self {
+    pub const fn set_positional(&mut self, positional: bool) -> &mut Self {
         self.positional = positional;
         self
     }
 
     /// Set whether this tag is optional.
-    pub fn set_optional(&mut self, optional: bool) -> &mut Self {
+    pub const fn set_optional(&mut self, optional: bool) -> &mut Self {
         self.optional = optional;
         self
     }
 
     /// Set whether this tag accepts multiple values.
-    pub fn set_multi(&mut self, multi: bool) -> &mut Self {
+    pub const fn set_multi(&mut self, multi: bool) -> &mut Self {
         self.multi = multi;
         self
     }
 
     /// Set whether this tag participates in parsing after a `--` separator.
-    pub fn set_is_flag(&mut self, is_flag: bool) -> &mut Self {
+    pub const fn set_is_flag(&mut self, is_flag: bool) -> &mut Self {
         self.is_flag = is_flag;
         self
     }
@@ -437,6 +440,7 @@ impl<'a> PickerArgInfo<'a> {
     /// let info = PickerArgInfo::new();
     /// assert_eq!(info.short_flag(), None);
     /// ```
+    #[must_use]
     pub fn short_flag(&self) -> Option<String> {
         let short = self.short?;
         Some(ParserStyle::global_style().flag_string(short))
@@ -462,13 +466,14 @@ impl<'a> PickerArgInfo<'a> {
     /// let info = PickerArgInfo::new();
     /// assert_eq!(info.long_flag(), None);
     /// ```
+    #[must_use]
     pub fn long_flag(&self) -> Option<String> {
         let long = self.long?;
         Some(ParserStyle::global_style().flag_string(long))
     }
 }
 
-impl<'a> Default for PickerArgInfo<'a> {
+impl Default for PickerArgInfo<'_> {
     fn default() -> Self {
         Self::new()
     }

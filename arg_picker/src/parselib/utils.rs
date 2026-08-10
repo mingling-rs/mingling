@@ -8,7 +8,7 @@ use crate::{
 /// This function generates formatted flag strings (e.g., `-h`, `--help`) from the short flag,
 /// long flag, and any aliases defined in the argument info. The long flag and alias names
 /// are converted according to the style's naming case convention before being formatted.
-#[inline(always)]
+#[must_use]
 pub fn build_possible_flags(style: &ParserStyle, arg_info: &PickerArgInfo) -> Vec<String> {
     let mut possible_flags = vec![];
 
@@ -46,11 +46,7 @@ pub fn seek_single<'a>(raw_strs: &'a [&'a str]) -> Option<&'a str> {
         1 => {
             let s = raw_strs[0];
             let sep = ParserStyle::global_style().value_separator;
-            if let Some(pos) = s.rfind(sep) {
-                Some(&s[pos + 1..])
-            } else {
-                Some(s)
-            }
+            s.rfind(sep).map_or(Some(s), |pos| Some(&s[pos + 1..]))
         }
         _ => Some(raw_strs[1]),
     }
@@ -79,7 +75,7 @@ pub fn seek_end_of_options(args: &[MaskedArg], style: &ParserStyle) -> Option<us
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn seek_eq(args: &[MaskedArg], string: &str, case_sensitive: bool) -> Vec<usize> {
     args.iter()
         .filter(|arg| {
@@ -97,7 +93,7 @@ pub fn seek_eq(args: &[MaskedArg], string: &str, case_sensitive: bool) -> Vec<us
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn seek_contains(args: &[MaskedArg], string: &str, case_sensitive: bool) -> Vec<usize> {
     args.iter()
         .filter(|arg| {
@@ -115,7 +111,7 @@ pub fn seek_contains(args: &[MaskedArg], string: &str, case_sensitive: bool) -> 
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn seek_start_with(args: &[MaskedArg], string: &str, case_sensitive: bool) -> Vec<usize> {
     args.iter()
         .filter(|arg| {
@@ -133,7 +129,7 @@ pub fn seek_start_with(args: &[MaskedArg], string: &str, case_sensitive: bool) -
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn seek_end_with(args: &[MaskedArg], string: &str, case_sensitive: bool) -> Vec<usize> {
     args.iter()
         .filter(|arg| {
@@ -151,7 +147,7 @@ pub fn seek_end_with(args: &[MaskedArg], string: &str, case_sensitive: bool) -> 
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn multi_seek_eq(args: &[MaskedArg], strings: &[&str], case_sensitive: bool) -> Vec<usize> {
     args.iter()
         .filter(|arg| {
@@ -169,7 +165,7 @@ pub fn multi_seek_eq(args: &[MaskedArg], strings: &[&str], case_sensitive: bool)
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn multi_seek_contains(
     args: &[MaskedArg],
     strings: &[&str],
@@ -194,7 +190,7 @@ pub fn multi_seek_contains(
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn multi_seek_start_with(
     args: &[MaskedArg],
     strings: &[&str],
@@ -219,7 +215,7 @@ pub fn multi_seek_start_with(
 ///
 /// Returns the indices of matching arguments.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn multi_seek_end_with(
     args: &[MaskedArg],
     strings: &[&str],
@@ -245,10 +241,10 @@ pub fn multi_seek_end_with(
 /// This is useful for converting owned `String` vectors into borrowed `&str` slices
 /// for functions that take `&[&str]` or similar parameters.
 #[must_use]
-#[inline(always)]
+#[inline]
 #[doc(hidden)]
 pub fn vec_string_to_vec_str(input: &[String]) -> Vec<&str> {
-    input.iter().map(|s| s.as_str()).collect()
+    input.iter().map(String::as_str).collect()
 }
 
 /// Converts a `&Vec<String>` into a `Vec<&str>` by borrowing each string's slice.
@@ -270,7 +266,7 @@ macro_rules! vec_string_slice {
 ///
 /// Returns `Some(index)` if the vector is non-empty, otherwise `None`.
 #[must_use]
-#[inline(always)]
+#[inline]
 pub fn get_seeked_first(seeked: Vec<usize>) -> Option<usize> {
     seeked.into_iter().next()
 }

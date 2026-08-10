@@ -17,7 +17,7 @@ impl SinglePickable for FilePath {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
                 if path.exists() && path.is_file() {
-                    Parsed(FilePath::from(path))
+                    Parsed(Self::from(path))
                 } else {
                     NotFound
                 }
@@ -33,7 +33,7 @@ impl SinglePickable for NoFilePath {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
                 if !path.exists() || !path.is_file() {
-                    Parsed(NoFilePath::from(path))
+                    Parsed(Self::from(path))
                 } else {
                     NotFound
                 }
@@ -49,7 +49,7 @@ impl SinglePickable for DirPath {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
                 if path.exists() && path.is_dir() {
-                    Parsed(DirPath::from(path))
+                    Parsed(Self::from(path))
                 } else {
                     NotFound
                 }
@@ -65,7 +65,7 @@ impl SinglePickable for NoDirPath {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
                 if !path.exists() || !path.is_dir() {
-                    Parsed(NoDirPath::from(path))
+                    Parsed(Self::from(path))
                 } else {
                     NotFound
                 }
@@ -81,7 +81,7 @@ impl SinglePickable for SymlinkPath {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
                 if path.exists() && path.is_symlink() {
-                    Parsed(SymlinkPath::from(path))
+                    Parsed(Self::from(path))
                 } else {
                     NotFound
                 }
@@ -97,7 +97,7 @@ impl SinglePickable for NoSymlinkPath {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
                 if !path.exists() || !path.is_symlink() {
-                    Parsed(NoSymlinkPath::from(path))
+                    Parsed(Self::from(path))
                 } else {
                     NotFound
                 }
@@ -112,10 +112,10 @@ impl SinglePickable for NoPath {
     fn pick_single(str: Option<&str>) -> PickerArgResult<Self> {
         match <PathBuf as SinglePickable>::pick_single(str) {
             Parsed(path) => {
-                if !path.exists() {
-                    Parsed(NoPath::from(path))
-                } else {
+                if path.exists() {
                     NotFound
+                } else {
+                    Parsed(Self::from(path))
                 }
             }
             Unparsed => Unparsed,
@@ -132,7 +132,7 @@ impl SinglePickable for RecursiveFiles {
                     return NotFound;
                 }
                 if path.is_file() || path.is_symlink() {
-                    return Parsed(RecursiveFiles::from(vec![path]));
+                    return Parsed(Self::from(vec![path]));
                 }
                 let mut entries = Vec::new();
                 if let Ok(dir_entries) = fs::read_dir(&path) {
@@ -145,7 +145,7 @@ impl SinglePickable for RecursiveFiles {
                         }
                     }
                 }
-                Parsed(RecursiveFiles::from(entries))
+                Parsed(Self::from(entries))
             }
             Unparsed => Unparsed,
             NotFound => NotFound,

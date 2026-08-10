@@ -115,7 +115,7 @@ impl Matcher for MultiArgMatcher {
 }
 
 impl MultiArgMatcher {
-    #[inline(always)]
+    #[inline]
     fn flag_match(raw: &str, flag_str: &str, case_sensitive: bool, sep: char) -> bool {
         let eq =
             |r: &str, f: &str| r.len() > f.len() && r.as_bytes().get(f.len()) == Some(&(sep as u8));
@@ -130,7 +130,7 @@ impl MultiArgMatcher {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn is_eq_match(raw: &str, flags: &[String], case_sensitive: bool, sep: char) -> bool {
         flags.iter().any(|f| {
             Self::flag_match(raw, f, case_sensitive, sep)
