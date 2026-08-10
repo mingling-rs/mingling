@@ -2472,6 +2472,7 @@ pub mod example_pack_err {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
+/// use mingling::PanicSilence;
 /// use mingling::{hook::ProgramHook, prelude::*};
 /// use std::io::Write;
 ///
@@ -2484,7 +2485,7 @@ pub mod example_pack_err {}
 ///
 ///     // --------- IMPORTANT ---------
 ///     // Enable silence_panic to suppress automatic Panic output
-///     program.stdout_setting.silence_panic = true;
+///     program.stdout_setting.silence_panic = PanicSilence::Silence;
 ///
 ///     // Define a hook to output &ProgramPanic when a Panic occurs
 ///     program.with_hook(
@@ -2508,7 +2509,6 @@ pub mod example_pack_err {}
 ///     }
 /// }
 ///
-/// /// Renders the message when no panic occurs.
 /// /// Renders the message when no panic occurs.
 /// #[renderer]
 /// pub fn render(_: NotPanic) -> RenderResult {
