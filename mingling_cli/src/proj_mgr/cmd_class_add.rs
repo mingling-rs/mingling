@@ -283,7 +283,11 @@ mod tests {
         fs::create_dir_all(tmp.join("project/.mling")).unwrap();
 
         // Found at the project root.
-        let root = tmp.join("project");
+        // Normalize the expected path the way `find_project_root` does
+        // (canonicalize + strip the Windows verbatim prefix) so the
+        // comparison is immune to Windows 8.3 short-name / long-name
+        // differences and the `\\?\` prefix.
+        let root = deverbatim(&fs::canonicalize(tmp.join("project")).unwrap());
         assert_eq!(find_project_root(&root), Some(root.clone()));
 
         // Found by walking up from a deep subdirectory.
