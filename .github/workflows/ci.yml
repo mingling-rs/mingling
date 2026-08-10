@@ -26,7 +26,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mingling-temp-codes-
 
-      - run: cargo ci --test-codes 2>&1
+      - run: cargo ci --test-codes
 
   Check-Docs:
     strategy:
@@ -46,7 +46,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-mingling-temp-docs-
 
-      - run: cargo ci --test-docs 2>&1
+      - run: cargo ci --test-docs
 
       - name: Upload docs test result on failure
         if: failure()
