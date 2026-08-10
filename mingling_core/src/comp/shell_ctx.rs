@@ -194,6 +194,8 @@ impl ShellContext {
             note = "When using the `picker` feature, this method does not work under all ParserStyle settings"
         )
     )]
+    // On different platforms, it might not be possible to be a const fn, so we should allow it
+    #[allow(clippy::missing_const_for_fn)]
     pub fn typing_argument(&self) -> bool {
         #[cfg(target_os = "windows")]
         {
