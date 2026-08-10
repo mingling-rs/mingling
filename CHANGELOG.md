@@ -361,6 +361,49 @@ None
     - `pick_global_argument(program, arg)` → `program.pick_argument(arg)`
     - Import `mingling::picker::PickerHelper` instead of `mingling::picker::{pick_global_flag, pick_global_argument}`
 
+4. **[`core:program`]** **[BREAKING]** Refactored the program configuration settings into typed enums. The previously boolean-based fields in `ProgramStdoutSetting` and `ProgramUserContext` have been replaced with new semantic enum types, improving type safety and self-documentation.
+
+    **`ProgramStdoutSetting` changes:**
+
+    - `error_output: bool` → `error_output: ErrorOutput` — enum with `Show`/`Hide` variants
+    - `render_output: bool` → `render_output: RenderOutput` — enum with `Show`/`Hide` variants
+    - `silence_panic: bool` → `silence_panic: PanicSilence` — enum with `Show`/`Silence` variants
+    - `verbose: bool`, `quiet: bool`, `debug: bool` → `verbosity: Verbosity` — single enum with `Normal`/`Verbose`/`Quiet`/`Debug` variants
+    - `color: bool` → `color: ColorOutput` — enum with `Enabled`/`Disabled` variants
+    - `progress: bool` → `progress: ProgressOutput` — enum with `Enabled`/`Disabled` variants
+
+    **`ProgramUserContext` changes:**
+
+    - `confirm: bool` → `confirmation: ConfirmationMode` — enum with `Confirm`/`Skip` variants
+    - `dry_run: bool`, `force: bool` → `execution: ExecutionMode` — single enum with `Normal`/`DryRun`/`Force` variants
+    - `interactive: bool` → `interaction: InteractionMode` — enum with `Interactive`/`NonInteractive` variants
+    - `assume_yes: bool` → `yes_assumption: YesAssumption` — enum with `None`/`AssumeYes` variants
+
+    **Default values:**
+
+    - `ProgramStdoutSetting::default()`: `ErrorOutput::Show`, `RenderOutput::Show`, `PanicSilence::Show`, `Verbosity::Normal`, `ColorOutput::Enabled`, `ProgressOutput::Enabled`
+    - `ProgramUserContext::default()`: `confirmation: ConfirmationMode::Confirm`, `execution: ExecutionMode::Normal`, `interaction: InteractionMode::NonInteractive`, `yes_assumption: YesAssumption::None`
+
+    All new enum types are defined in `mingling_core::program::config` and re-exported from the `mingling_core` crate root.
+
+    **Migration guide:**
+
+    - `s.error_output = true` → `s.error_output = ErrorOutput::Show` (and `false` → `ErrorOutput::Hide`)
+    - `s.render_output = true` → `s.render_output = RenderOutput::Show`
+    - `s.silence_panic = true` → `s.silence_panic = PanicSilence::Silence`
+    - `s.verbose = true` → `s.verbosity = Verbosity::Verbose`
+    - `s.quiet = true` → `s.verbosity = Verbosity::Quiet`
+    - `s.debug = true` → `s.verbosity = Verbosity::Debug`
+    - `s.color = true` → `s.color = ColorOutput::Enabled`
+    - `s.progress = true` → `s.progress = ProgressOutput::Enabled`
+    - `ctx.confirm = true` → `ctx.confirmation = ConfirmationMode::Skip`
+    - `ctx.dry_run = true` → `ctx.execution = ExecutionMode::DryRun`
+    - `ctx.force = true` → `ctx.execution = ExecutionMode::Force`
+    - `ctx.interactive = true` → `ctx.interaction = InteractionMode::Interactive`
+    - `ctx.assume_yes = true` → `ctx.yes_assumption = YesAssumption::AssumeYes`
+
+    _Behavioral semantics are preserved — the same configuration states are expressible in both the old boolean form and the new enum form, but the typed enums eliminate impossible states (e.g., both `verbose` and `quiet` set simultaneously) and make the intent of each setting explicit through named variants._
+
 ---
 
 ### Release 0.3.0 (2026-07-27)
