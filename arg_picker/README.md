@@ -14,7 +14,7 @@ Of course, you can also use it as a standalone crate by replacing `mingling::pic
 
 ```toml
 [dependencies]
-arg-picker = "0.1.1"
+arg-picker = "0.2.0"
 ```
 
 ## Chained Argument Parser
