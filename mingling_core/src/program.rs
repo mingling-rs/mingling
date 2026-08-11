@@ -2,12 +2,8 @@
 use std::env;
 
 use crate::{
-    AnyOutput, GlobalResources, asset::dispatcher::Dispatcher, error::ChainProcessError,
+    AnyOutput, GlobalResContainer, asset::dispatcher::Dispatcher, error::ChainProcessError,
     hook::ProgramHook,
-};
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
 };
 
 #[doc(hidden)]
@@ -81,7 +77,7 @@ where
 
     pub(crate) hooks: Vec<ProgramHook<C>>,
 
-    pub(crate) resources: GlobalResources,
+    pub(crate) resources: GlobalResContainer,
 }
 
 impl<C> Program<C>
@@ -124,7 +120,7 @@ where
 
             hooks: Vec::new(),
 
-            resources: Arc::new(Mutex::new(HashMap::new())),
+            resources: GlobalResContainer::new(),
         }
     }
 
