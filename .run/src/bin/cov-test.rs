@@ -1,35 +1,146 @@
+//! Coverage test generator for mingling.
+//!
+//! This script requires the **fork** of cargo-llvm-cov:
+//! <https://github.com/Weicao-CatilGrass/cargo-llvm-cov>
+//!
+//! The upstream `report` command cannot include binaries of non-workspace
+//! crates (examples and test crates) and unconditionally filters
+//! `tests`/`examples` source files. The fork adds two flags to fix this:
+//!
+//! - `--object <PATH>`: include arbitrary binaries in the report
+//!   (upstream issue taiki-e/cargo-llvm-cov#367)
+//! - `--include-tests-examples-benches`: stop filtering those source dirs
+//!   (upstream issue taiki-e/cargo-llvm-cov#503)
+//!
+//! Install it with:
+//!
+//! ```bash
+//! cargo install --git https://github.com/Weicao-CatilGrass/cargo-llvm-cov cargo-llvm-cov
+//! ```
+
+use std::collections::HashMap;
 use std::fs;
-use tools::{println_cargo_style, run_cmd};
+use std::path::{Path, PathBuf};
+
+use serde::Deserialize;
+use tools::{eprintln_cargo_style, println_cargo_style, run_cmd};
 
 const OUTPUT_DIR: &str = "docs/cov-test";
+
+/// Shared target directory for all `cargo llvm-cov` runs.
+///
+/// Pointing every run at the same target dir makes all of them share the
+/// instrumented build cache and, more importantly, accumulate profraw files
+/// in one place so the final `report` can merge everything.
+const COV_TARGET_DIR: &str = ".temp/cov-llvm";
+
+/// Parsed `examples/test-examples.toml` (`test.<example> = [ { command, expect } ]`).
+#[derive(Deserialize)]
+struct TestConfig {
+    test: HashMap<String, Vec<TestCase>>,
+}
+
+#[derive(Deserialize)]
+struct TestCase {
+    command: String,
+}
 
 fn main() {
     let repo_root = find_git_repo().expect("Failed to find git repository root");
     let output_path = repo_root.join(OUTPUT_DIR);
+    let cov_target = repo_root.join(COV_TARGET_DIR);
 
     // Read features from [package.metadata.docs.rs]
     let features = tools::read_features().unwrap_or_else(|e| {
         eprintln!("Error: {}", e);
         std::process::exit(1);
     });
-
     let features_arg = features.join(",");
 
     // Ensure output directory exists
     std::fs::create_dir_all(&output_path).expect("Failed to create output directory");
+    std::fs::create_dir_all(&cov_target).expect("Failed to create cov target directory");
 
-    let cmd = format!(
-        "cargo llvm-cov --html --output-dir \"{}\" --workspace --features \"{}\" --color always",
-        output_path.to_string_lossy(),
-        features_arg,
-    );
+    // All `cargo llvm-cov` invocations below share one target dir, so profraw
+    // files accumulate and are merged by the final `report` command.
+    // SAFETY: set before any thread is spawned; this process only shells out
+    // to subcommands via std::process.
+    unsafe {
+        std::env::set_var("CARGO_LLVM_COV_TARGET_DIR", &cov_target);
+    }
+
+    // Drop stale profraw from previous runs (keep the instrumented build cache).
+    clean_old_profraw(&cov_target);
 
     println_cargo_style!("Features: {}", features_arg);
-    println_cargo_style!("Coverage: {}", output_path.display());
+    println_cargo_style!("Target: {}", cov_target.display());
 
-    println_cargo_style!("Running: cargo llvm-cov --html");
-    run_cmd!(&cmd).unwrap_or_else(|code| {
-        eprintln!("Error: cargo llvm-cov failed with exit code {}", code);
+    // 1. Workspace tests
+    println_cargo_style!("Running: cargo llvm-cov test --workspace");
+    run_cmd!(format!(
+        "cargo llvm-cov test --no-report --workspace --features \"{}\" --color always",
+        features_arg
+    ))
+    .unwrap_or_else(|code| {
+        eprintln_cargo_style!("workspace tests failed with exit code {}", code);
+        std::process::exit(code);
+    });
+
+    // 2. Integration test crates under mingling_core/tests (excluded from the
+    //    workspace, so they need their own `--manifest-path` runs)
+    for manifest in find_test_crate_manifests(&repo_root) {
+        println_cargo_style!(
+            "Running: cargo llvm-cov test {}",
+            manifest.file_name().unwrap_or_default().to_string_lossy()
+        );
+        run_cmd!(format!(
+            "cargo llvm-cov test --no-report --manifest-path \"{}\" --color always",
+            manifest.display()
+        ))
+        .unwrap_or_else(|code| {
+            eprintln_cargo_style!("test crate {} failed with exit code {}", manifest.display(), code);
+            std::process::exit(code);
+        });
+    }
+
+    // 3. Examples: execute every command from test-examples.toml so their
+    //    code paths are recorded. Non-zero exit codes are expected for some
+    //    examples (e.g. `--help` exits with 2); profraw is still written.
+    let examples = load_example_commands(&repo_root);
+    for (example, command) in &examples {
+        if let Err(code) = run_cmd!(format!(
+            "cargo llvm-cov run --no-report --manifest-path examples/{}/Cargo.toml --color always -- {}",
+            example, command
+        )) {
+            println_cargo_style!(
+                "Warning: example {} exited with {}, profraw still recorded",
+                example,
+                code
+            );
+        }
+    }
+
+    // 4. Collect the binaries of non-workspace crates (examples + test crates).
+    //    The automatic object-file detection only knows workspace members, so
+    //    these must be passed explicitly via --object.
+    let member_names = workspace_member_names(&repo_root);
+    let object_args = collect_object_args(&cov_target, &member_names);
+
+    // 5. Generate the merged HTML report.
+    //
+    //    --no-default-ignore-filename-regex: the default regex unconditionally
+    //    excludes `examples`/`tests` directories, which is exactly what we want
+    //    to include here, so we take over the filter ourselves.
+    let ignore_re = build_ignore_regex(&cov_target);
+    println_cargo_style!("Running: cargo llvm-cov report --html");
+    run_cmd!(format!(
+        "cargo llvm-cov report --html --output-dir \"{}\" --no-default-ignore-filename-regex --ignore-filename-regex \"{}\" {} --color always",
+        output_path.to_string_lossy(),
+        ignore_re,
+        object_args
+    ))
+    .unwrap_or_else(|code| {
+        eprintln_cargo_style!("cargo llvm-cov report failed with exit code {}", code);
         std::process::exit(code);
     });
 
@@ -38,7 +149,6 @@ fn main() {
     if html_dir.exists() && html_dir.is_dir() {
         println_cargo_style!("Moving files from {}/html/ to {}/", OUTPUT_DIR, OUTPUT_DIR);
 
-        // Move each entry in html_dir up one level
         for entry in fs::read_dir(&html_dir).expect("Failed to read html directory") {
             let entry = entry.expect("Failed to read entry");
             let entry_path = entry.path();
@@ -49,7 +159,6 @@ fn main() {
                 .to_owned();
 
             let dest_path = output_path.join(&file_name);
-            // Remove existing file/directory at destination if any
             if dest_path.exists() {
                 if dest_path.is_dir() {
                     fs::remove_dir_all(&dest_path).unwrap_or_else(|e| {
@@ -74,7 +183,6 @@ fn main() {
             });
         }
 
-        // Remove the now-empty html directory
         fs::remove_dir(&html_dir).unwrap_or_else(|e| {
             eprintln!("Warning: could not remove html directory: {}", e);
         });
@@ -86,6 +194,205 @@ fn main() {
         "Done: coverage report generated at {}/index.html",
         OUTPUT_DIR
     );
+}
+
+/// Remove `*.profraw` from the shared target dir so stale data from previous
+/// runs does not pollute the merged report. The instrumented build cache
+/// (everything else) is kept.
+fn clean_old_profraw(cov_target: &Path) {
+    if let Ok(entries) = fs::read_dir(cov_target) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().is_some_and(|e| e == "profraw") {
+                let _ = fs::remove_file(&path);
+            }
+        }
+    }
+}
+
+/// All `mingling_core/tests/<crate>/Cargo.toml` manifests.
+fn find_test_crate_manifests(repo_root: &Path) -> Vec<PathBuf> {
+    let tests_dir = repo_root.join("mingling_core/tests");
+    let mut manifests = Vec::new();
+    if let Ok(entries) = fs::read_dir(&tests_dir) {
+        for entry in entries.flatten() {
+            let manifest = entry.path().join("Cargo.toml");
+            if manifest.is_file() {
+                manifests.push(manifest);
+            }
+        }
+    }
+    manifests.sort();
+    manifests
+}
+
+/// Parse `examples/test-examples.toml` into `(example_name, command)` pairs.
+fn load_example_commands(repo_root: &Path) -> Vec<(String, String)> {
+    let content =
+        fs::read_to_string(repo_root.join("examples/test-examples.toml")).unwrap_or_else(|e| {
+            eprintln_cargo_style!("Failed to read examples/test-examples.toml: {}", e);
+            std::process::exit(1);
+        });
+    let config: TestConfig = toml::from_str(&content).unwrap_or_else(|e| {
+        eprintln_cargo_style!("Failed to parse examples/test-examples.toml: {}", e);
+        std::process::exit(1);
+    });
+
+    let mut pairs = Vec::new();
+    for (example, cases) in &config.test {
+        for case in cases {
+            pairs.push((example.clone(), case.command.clone()));
+        }
+    }
+    pairs
+}
+
+/// Names of all workspace members, from `cargo metadata --no-deps`.
+fn workspace_member_names(repo_root: &Path) -> Vec<String> {
+    let Ok(output) = tools::run_cmd_capture_with_dir(
+        "cargo metadata --no-deps --format-version 1".to_string(),
+        repo_root,
+    ) else {
+        return Vec::new();
+    };
+    let Ok(json) = serde_json::from_str::<serde_json::Value>(&output) else {
+        return Vec::new();
+    };
+    json["packages"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|p| p["name"].as_str().map(str::to_owned))
+        .collect()
+}
+
+/// Collect the binaries of non-workspace crates (examples and test crates)
+/// from the shared target dir, as `--object <path>` arguments.
+///
+/// - `debug/` root: example binaries (built via `cargo llvm-cov run`).
+/// - `debug/deps/`: test crate binaries (e.g. `integration-<hash>`); their
+///   names do not follow a single pattern, so anything that is not a
+///   workspace-member binary and not a proc-macro `.so` is collected.
+///
+/// Workspace member binaries are detected automatically by `report` and must
+/// NOT be passed again (duplicate `-object` entries produce duplicated
+/// output). Hard links to the same file are deduplicated by inode.
+fn collect_object_args(cov_target: &Path, member_names: &[String]) -> String {
+    let debug_dir = cov_target.join("debug");
+    let mut objects = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+
+    for dir in [debug_dir.clone(), debug_dir.join("deps")] {
+        let Ok(entries) = fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_file() || !is_executable(&path) {
+                continue;
+            }
+            if !seen.insert(file_id(&path)) {
+                continue;
+            }
+            let Some(name) = path.file_name().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            // Proc-macro shared objects are either workspace members (picked
+            // up automatically) or external deps (excluded from the report
+            // by the ignore regex), so never pass them explicitly.
+            if name.starts_with("lib") && name.ends_with(".so") {
+                continue;
+            }
+            if is_workspace_member_binary(name, member_names) {
+                continue;
+            }
+            objects.push(path);
+        }
+    }
+
+    objects.sort();
+    objects
+        .iter()
+        .map(|p| format!("--object \"{}\"", p.to_string_lossy()))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+/// True if the binary name (e.g. `mingling_core-fea14a01b88afcaa`) belongs to
+/// a workspace member.
+fn is_workspace_member_binary(name: &str, member_names: &[String]) -> bool {
+    let stem = strip_cargo_hash(name);
+    member_names.iter().any(|m| stem == m)
+}
+
+/// Strip the cargo-generated hash suffix: `mingling_core-fea14a01b88afcaa` ->
+/// `mingling_core`. Returns the input unchanged if there is no such suffix.
+fn strip_cargo_hash(name: &str) -> &str {
+    let Some(idx) = name.rfind('-') else {
+        return name;
+    };
+    let (head, tail) = name.split_at(idx);
+    let hash = &tail[1..];
+    if hash.len() == 16 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
+        head
+    } else {
+        name
+    }
+}
+
+/// A stable identity for deduplicating hard links: device+inode on Unix,
+/// canonicalized path elsewhere.
+fn file_id(path: &Path) -> String {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt as _;
+        if let Ok(metadata) = fs::metadata(path) {
+            return format!("{}:{}", metadata.dev(), metadata.ino());
+        }
+    }
+    fs::canonicalize(path)
+        .unwrap_or_else(|_| path.to_path_buf())
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// True if the file is executable: mode bits on Unix, `.exe` on Windows.
+fn is_executable(path: &Path) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt as _;
+        let Ok(metadata) = std::fs::metadata(path) else {
+            return false;
+        };
+        metadata.permissions().mode() & 0o111 != 0
+    }
+    #[cfg(not(unix))]
+    {
+        path.extension().is_some_and(|e| e.eq_ignore_ascii_case("exe"))
+    }
+}
+
+/// Regex that keeps only the project's own sources in the report:
+/// excludes the shared llvm-cov target dir, the standard library, and
+/// external dependencies.
+fn build_ignore_regex(cov_target: &Path) -> String {
+    let target = regex_escape_path(cov_target);
+    format!(
+        "^{target}($|/)|/rustc/([0-9a-f]+|[0-9]+\\.[0-9]+\\.[0-9]+)/|/\\.cargo/(registry|git)/|/\\.rustup/toolchains($|/)"
+    )
+}
+
+/// Escape a path for use inside a regular expression (as a literal prefix).
+fn regex_escape_path(path: &Path) -> String {
+    let s = path.to_string_lossy().replace('\\', "/");
+    let mut escaped = String::with_capacity(s.len());
+    for ch in s.chars() {
+        if ch == '.' || ch == '-' {
+            escaped.push('\\');
+        }
+        escaped.push(ch);
+    }
+    escaped
 }
 
 fn find_git_repo() -> Option<std::path::PathBuf> {
