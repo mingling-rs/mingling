@@ -82,7 +82,7 @@ pub trait ProgramCollect {
         None
     }
 
-    /// Find a matching chain to continue execution based on the input [AnyOutput](./struct.AnyOutput.html), returning a new [AnyOutput](./struct.AnyOutput.html)
+    /// Find a matching chain to continue execution based on the input [`AnyOutput`](./struct.AnyOutput.html), returning a new [`AnyOutput`](./struct.AnyOutput.html)
     #[cfg(feature = "async")]
     fn do_chain(
         any: AnyOutput<Self::Enum>,

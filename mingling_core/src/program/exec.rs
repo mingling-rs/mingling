@@ -12,7 +12,7 @@ pub mod error;
 #[might_be_async::func]
 pub fn exec<C>(program: &'static Program<C>) -> Result<RenderResult, ProgramInternalExecuteError>
 where
-    C: ProgramCollect<Enum = C>,
+    C: ProgramCollect<Enum = C> + Send + Sync,
 {
     might_be_async::invoke!(exec_with_args(program, &program.args))
 }
@@ -23,7 +23,7 @@ pub fn exec_with_args<C>(
     args: &[String],
 ) -> Result<RenderResult, ProgramInternalExecuteError>
 where
-    C: ProgramCollect<Enum = C>,
+    C: ProgramCollect<Enum = C> + Send + Sync,
 {
     // Exit code
     let mut exit_code: i32 = 0;

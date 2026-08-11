@@ -135,6 +135,9 @@ where
     ///
     /// It will not execute any program hooks, because this type is used for **bypassing** or **reusing**, not for flow control.
     #[might_be_async::func]
+    #[allow(clippy::future_not_send)]
+    // The generated future is only awaited within the single-threaded chain
+    // execution, so it does not need to be `Send`.
     pub fn invoke_once<C>(&self, value: T) -> ChainProcess<C>
     where
         C: ProgramCollect<Enum = C> + 'static,
@@ -165,6 +168,9 @@ where
     ///
     /// It will not execute any program hooks, because this type is used for **bypassing** or **reusing**, not for flow control.
     #[might_be_async::func]
+    // The generated future is only awaited within the single-threaded chain
+    // execution, so it does not need to be `Send`.
+    #[allow(clippy::future_not_send)]
     pub fn invoke_to_last<C>(&self, value: T) -> ChainProcess<C>
     where
         C: ProgramCollect<Enum = C> + 'static,
@@ -207,6 +213,9 @@ where
     ///
     /// It will not execute any program hooks, because this type is used for **bypassing** or **reusing**, not for flow control.
     #[might_be_async::func]
+    #[allow(clippy::future_not_send)]
+    // The generated future is only awaited within the single-threaded chain
+    // execution, so it does not need to be `Send`.
     pub fn invoke_to_result<C>(&self, value: T) -> RenderResult
     where
         C: ProgramCollect<Enum = C> + 'static,

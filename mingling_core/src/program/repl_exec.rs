@@ -35,6 +35,7 @@ where
             self.exec_wrapper(async |p| -> () {
                     repl_loop(p).await;
                 })
+            .await
             else
             self.exec_wrapper(|p| -> () { repl_loop(p); }
             )
@@ -65,8 +66,13 @@ where
                     result: &r,
                 });
             }
+            #[allow(unused_variables)]
             Err(ProgramInternalExecuteError::REPLPanic(panic)) => {
-                p.run_hook_repl_on_panic(&crate::hook::HookREPLOnPanicInfo { panic: &panic });
+                might_be_async::select![
+                    {} else {
+                        p.run_hook_repl_on_panic(&crate::hook::HookREPLOnPanicInfo { panic: &panic });
+                    }
+                ];
             }
             _ => {}
         }
@@ -128,5 +134,5 @@ async fn exec_once<C>(
 where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,
 {
-    super::exec::exec_with_args(p, &args).await
+    super::exec::exec_with_args(p, args).await
 }

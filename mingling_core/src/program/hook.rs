@@ -737,6 +737,16 @@ mod tests {
             unreachable!()
         }
 
+        #[cfg(feature = "async")]
+        fn do_chain(
+            _any: crate::AnyOutput<Self>,
+        ) -> std::pin::Pin<
+            Box<dyn std::future::Future<Output = crate::ChainProcess<Self>> + Send + 'static>,
+        > {
+            Box::pin(async { unreachable!() })
+        }
+
+        #[cfg(not(feature = "async"))]
         fn do_chain(_any: crate::AnyOutput<Self>) -> crate::ChainProcess<Self> {
             unreachable!()
         }

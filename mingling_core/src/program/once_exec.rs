@@ -59,7 +59,7 @@ where
         #[cfg(feature = "async")]
         {
             return self
-                .exec_wrapper(|p| async { crate::exec::exec(p).await.map_err(|e| e.into()) })
+                .exec_wrapper(|p| async { crate::exec::exec(p).await.map_err(Into::into) })
                 .await;
         }
     }
@@ -129,14 +129,14 @@ where
     pub(crate) async fn exec_wrapper<F, Fut>(self, f: F) -> Fut::Output
     where
         C: 'static + Send + Sync,
-        F: FnOnce(&'static Program<C>) -> Fut + Send + Sync,
+        F: FnOnce(&'static Self) -> Fut + Send + Sync,
         Fut: Future + Send,
     {
         THIS_PROGRAM.set(Box::new(self));
         let program = THIS_PROGRAM
             .get_raw()
             .unwrap()
-            .downcast_ref::<Program<C>>()
+            .downcast_ref::<Self>()
             .unwrap();
 
         f(program).await
