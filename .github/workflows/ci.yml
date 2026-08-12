@@ -8,48 +8,21 @@ permissions:
   contents: write
 
 jobs:
-  Check-Codes:
+  Check:
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        item: [build, clippy, test, arg-picker, markdown-code, examples, docs-refresh, api-docs]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Restore .temp cache
-        id: cache-temp
-        uses: actions/cache@v4
-        with:
-          path: .temp
-          key: ${{ runner.os }}-mingling-temp-codes-${{ hashFiles('.run/Cargo.toml', '.run/src/**/*.rs', 'Cargo.lock', 'verified-docs.toml', 'examples/test-examples.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-mingling-temp-codes-
-
-      - run: cargo ci --test-codes
-
-  Check-Docs:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Restore .temp cache
-        id: cache-temp
-        uses: actions/cache@v4
-        with:
-          path: .temp
-          key: ${{ runner.os }}-mingling-temp-docs-${{ hashFiles('.run/Cargo.toml', '.run/src/**/*.rs', 'Cargo.lock', 'verified-docs.toml', 'examples/test-examples.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-mingling-temp-docs-
-
-      - run: cargo ci --test-docs
+      - run: cargo ci --check-${{ matrix.item }}
 
       - name: Upload docs test result on failure
-        if: failure()
+        if: failure() && matrix.item == 'markdown-code'
         uses: actions/upload-artifact@v4
         with:
           name: docs-test-result-${{ matrix.os }}.md
@@ -57,7 +30,7 @@ jobs:
 
   Move-Unreleased-Tag:
     if: github.ref == 'refs/heads/main'
-    needs: [Check-Codes, Check-Docs]
+    needs: [Check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -98,7 +98,11 @@ fn main() {
             manifest.display()
         ))
         .unwrap_or_else(|code| {
-            eprintln_cargo_style!("test crate {} failed with exit code {}", manifest.display(), code);
+            eprintln_cargo_style!(
+                "test crate {} failed with exit code {}",
+                manifest.display(),
+                code
+            );
             std::process::exit(code);
         });
     }
@@ -131,7 +135,11 @@ fn main() {
                 example
             ))
             .unwrap_or_else(|code| {
-                eprintln_cargo_style!("build of example {} failed with exit code {}", example, code);
+                eprintln_cargo_style!(
+                    "build of example {} failed with exit code {}",
+                    example,
+                    code
+                );
                 std::process::exit(code);
             });
         }
@@ -232,11 +240,7 @@ fn main() {
     //    is generated, so the summary table is rewritten here.
     let index_path = output_path.join("index.html");
     if let Err(e) = recolor_report_index(&index_path) {
-        eprintln_cargo_style!(
-            "Warning: failed to recolor {}: {}",
-            index_path.display(),
-            e
-        );
+        eprintln_cargo_style!("Warning: failed to recolor {}: {}", index_path.display(), e);
     }
 
     println_cargo_style!(
@@ -472,7 +476,8 @@ fn is_executable(path: &Path) -> bool {
     }
     #[cfg(not(unix))]
     {
-        path.extension().is_some_and(|e| e.eq_ignore_ascii_case("exe"))
+        path.extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("exe"))
     }
 }
 

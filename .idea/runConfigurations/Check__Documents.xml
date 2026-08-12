@@ -8,7 +8,7 @@
     >
     <option
             name="command"
-            value="run --manifest-path .run/Cargo.toml --bin ci --quiet -- --test-docs -y"
+            value="run --manifest-path .run/Cargo.toml --bin ci --quiet -- --check-markdown-code --check-examples --check-docs-refresh --check-api-docs -y"
         />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <envs />

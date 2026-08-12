@@ -67,10 +67,9 @@ fn find_content_dir(site_root: &Path) -> Option<PathBuf> {
         entries.sort_by_key(|e| e.path());
         for entry in entries {
             let path = entry.path();
-            if path.is_dir()
-                && has_markdown_files(&path) {
-                    return Some(path);
-                }
+            if path.is_dir() && has_markdown_files(&path) {
+                return Some(path);
+            }
         }
     }
 
@@ -255,8 +254,9 @@ fn natural_cmp(a: &str, b: &str) -> std::cmp::Ordering {
 fn extract_leading_number(link: &str) -> usize {
     if let Some(file_stem) = link.rsplit('/').next()
         && let Some(num_end) = file_stem.find('-')
-            && let Ok(num) = file_stem[..num_end].parse::<usize>() {
-                return num;
-            }
+        && let Ok(num) = file_stem[..num_end].parse::<usize>()
+    {
+        return num;
+    }
     usize::MAX
 }

@@ -22,31 +22,40 @@ Simply execute:
 cargo ci
 ```
  
-## CI Execution Flow
+## CI Steps
 
-`cargo ci` runs the following stages in order:
+Every CI step is an independent switch (`--check-*`). Running `cargo ci` with no options executes **all** steps in the order below; pass one or more `--check-*` flags to run only the selected steps.
 
-### 1. Code Checking Stage (run by default, or individually via `--test-codes`)
+| Step            | Flag                    | What it does                                                                                                                                       |
+| --------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build           | `--check-build`         | Recursively finds all `Cargo.toml` files and runs `cargo build` for each crate in parallel (workspace members build with all documented features). |
+| Clippy          | `--check-clippy`        | Runs `cargo clippy ... -- -D warnings` for every crate in parallel; any warning fails the check.                                                   |
+| Test            | `--check-test`          | Runs `cargo test` for every crate in parallel (workspace tests run with all documented features; `arg-picker` is excluded).                        |
+| Arg picker      | `--check-arg-picker`    | Runs `cargo test -p arg-picker` with its default features.                                                                                         |
+| Markdown code   | `--check-markdown-code` | Runs the `test-all-markdown-code` tool to verify code blocks in all `*.md` files compile. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md).     |
+| Examples        | `--check-examples`      | Runs the `test-examples` tool to verify all examples behave as expected.                                                                           |
+| Docs up to date | `--check-docs-refresh`  | Runs the documentation refresh tools and `cargo fmt`, then fails if the working tree is no longer clean (i.e. the docs were stale).                |
+| API docs        | `--check-api-docs`      | Builds API docs with the `[package.metadata.docs.rs]` features and fails if `docs/api-docs/` is out of date.                                       |
 
-- **Scan and build all crates**: Recursively finds all `Cargo.toml` files in the project and runs `cargo build` for each crate in parallel.
-- **Run Clippy on all crates**: Executes `cargo clippy ... -- -D warnings` in parallel; any warning will cause a failure.
-- **Run unit tests for all crates**: Executes `cargo test` in parallel.
+### Docs up to date in detail
 
-### 2. Documentation and Example Checking Stage (run by default, or individually via `--test-docs`)
+`--check-docs-refresh` runs the following documentation refresh tools in sequence:
 
-- **Test all examples**: Runs the `test-examples` tool.
-- **Verify Markdown code blocks compile**: Runs the `test-all-markdown-code` tool to check code blocks in all `*.md` files. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md) for details.
-- **Check if documentation is up to date**: Runs the following documentation refresh tools in sequence:
-    - `docs-code-box-fix`
-    - `docsify-sidebar-gen`
-    - `refresh-docs`
-    - `refresh-feature-mod`
-    - `sync-examples`
-- Finally, runs `cargo fmt` to unify code formatting.
+- `docs-code-box-fix`
+- `docsify-sidebar-gen`
+- `refresh-docs`
+- `refresh-feature-mod`
+- `sync-examples`
 
-### 3. File Normalization
+Finally, it runs `cargo fmt` to unify code formatting. Because the refresh tools regenerate derived files, running this check against stale documentation modifies the working tree — and `ci.rs` fails the run in that case. (Using `--dirty` skips the cleanliness check, which makes this flag behave like a plain "refresh docs" command.)
 
-Runs `git add --renormalize .` to ensure file attributes such as line endings conform to the repository configuration.
+### Combining steps
+
+When several `--check-*` flags are combined, the steps run in the order listed above. In "run all" mode (no flags given), the documentation steps all execute even if one of them fails, so every problem is reported in a single run.
+
+## File Normalization
+
+Regardless of which steps run, `cargo ci` finishes with `git add --renormalize .` to ensure file attributes such as line endings conform to the repository configuration.
 
 ## Workspace Cleanliness and Temporary Commits
 
@@ -67,10 +76,12 @@ To ensure reproducible CI results, `ci.rs` imposes strict requirements on the wo
 `.github/workflows/ci.yml` defines the project's CI:
 
 - Triggered on `push` to the `main` branch.
-- Runs `cargo ci` in parallel on `ubuntu-latest` and `windows-latest`.
+- A single `Check` job runs every `--check-*` step in a **step × platform** matrix (`ubuntu-latest` and `windows-latest`), i.e. `cargo ci --check-<item>` for each combination. The `.temp` build cache is no longer used; every matrix job starts from a clean workspace.
 - After CI passes, the `unreleased` tag is automatically moved to the latest commit on `main`.
 
-### 4. API Documentation Deployment
+For non-`main` branches and pull requests, `.github/workflows/ci-check-only.yml` runs the same matrix without moving the tag or deploying.
+
+### API Documentation Deployment
 
 After all checks pass, the `Deploy-Github-Pages` job:
 

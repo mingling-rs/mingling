@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use just_fmt::snake_case;
-use just_template::{tmpl, Template};
+use just_template::{Template, tmpl};
 use tools::println_cargo_style;
 
 const CARGO_TOML_PATH: &str = "./mingling/Cargo.toml";

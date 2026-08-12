@@ -8,7 +8,7 @@
     >
     <option
             name="command"
-            value="run --manifest-path .run/Cargo.toml --bin ci --quiet -- --test-codes -y"
+            value="run --manifest-path .run/Cargo.toml --bin ci --quiet -- --check-build --check-clippy --check-test --check-arg-picker -y"
         />
     <option name="workingDirectory" value="file://$PROJECT_DIR$" />
     <envs />
