@@ -226,6 +226,19 @@ fn main() {
         println_cargo_style!("Files moved successfully.");
     }
 
+    // 6. Recolor the per-file coverage summary with project-specific
+    //    thresholds: 0-50% red, 51-80% yellow, 81-100% green. llvm-cov's
+    //    built-in thresholds differ, and the color is assigned when the HTML
+    //    is generated, so the summary table is rewritten here.
+    let index_path = output_path.join("index.html");
+    if let Err(e) = recolor_report_index(&index_path) {
+        eprintln_cargo_style!(
+            "Warning: failed to recolor {}: {}",
+            index_path.display(),
+            e
+        );
+    }
+
     println_cargo_style!(
         "Done: coverage report generated at {}/index.html",
         OUTPUT_DIR
@@ -405,6 +418,48 @@ fn get_binary_name(example_name: &str) -> String {
     }
 }
 
+/// Rewrite the per-file coverage colors in `index.html` with project-specific
+/// thresholds: 0-50% red, 51-80% yellow, 81-100% green.
+fn recolor_report_index(index_path: &Path) -> std::io::Result<()> {
+    let content = fs::read_to_string(index_path)?;
+    fs::write(index_path, recolor_coverage_table(&content))
+}
+
+/// Recolor every `<td class='column-entry-...'><pre>XX% ...</pre></td>` cell
+/// in the coverage summary table according to the new thresholds. Cells with
+/// no data (e.g. branch coverage `- (0/0)`, class `gray`) are left as-is.
+fn recolor_coverage_table(input: &str) -> String {
+    const TD: &str = "<td class='column-entry-";
+    let mut out = String::with_capacity(input.len());
+    let mut rest = input;
+    while let Some(pos) = rest.find(TD) {
+        out.push_str(&rest[..pos + TD.len()]);
+        rest = &rest[pos + TD.len()..];
+        let Some(pre_end) = rest.find("'><pre>") else {
+            out.push_str(rest);
+            return out;
+        };
+        let color = &rest[..pre_end];
+        let tail = &rest[pre_end + "'><pre>".len()..];
+        let pct: String = tail
+            .trim_start()
+            .chars()
+            .take_while(|c| c.is_ascii_digit() || *c == '.')
+            .collect();
+        let new_color = match pct.parse::<f64>() {
+            Ok(v) if v <= 50.0 => "red",
+            Ok(v) if v <= 80.0 => "yellow",
+            Ok(_) => "green",
+            Err(_) => color, // no data (e.g. gray branch column)
+        };
+        out.push_str(new_color);
+        out.push_str("'><pre>");
+        rest = tail;
+    }
+    out.push_str(rest);
+    out
+}
+
 /// True if the file is executable: mode bits on Unix, `.exe` on Windows.
 fn is_executable(path: &Path) -> bool {
     #[cfg(unix)]
@@ -459,4 +514,28 @@ fn find_git_repo() -> Option<std::path::PathBuf> {
     }
 
     None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::recolor_coverage_table;
+
+    #[test]
+    fn recolor_thresholds() {
+        let input = concat!(
+            "<td class='column-entry-red'><pre>  50.00% (2/4)</pre></td>",
+            "<td class='column-entry-yellow'><pre>  51.23% (32/52)</pre></td>",
+            "<td class='column-entry-red'><pre>  80.00% (48/89)</pre></td>",
+            "<td class='column-entry-green'><pre>  81.00% (1/1)</pre></td>",
+            "<td class='column-entry-yellow'><pre>  90.00% (6/7)</pre></td>",
+            "<td class='column-entry-gray'><pre>- (0/0)</pre></td>",
+        );
+        let out = recolor_coverage_table(input);
+        assert!(out.contains("class='column-entry-red'><pre>  50.00%"));
+        assert!(out.contains("class='column-entry-yellow'><pre>  51.23%"));
+        assert!(out.contains("class='column-entry-yellow'><pre>  80.00%"));
+        assert!(out.contains("class='column-entry-green'><pre>  81.00%"));
+        assert!(out.contains("class='column-entry-green'><pre>  90.00%"));
+        assert!(out.contains("class='column-entry-gray'><pre>- (0/0)"));
+    }
 }
