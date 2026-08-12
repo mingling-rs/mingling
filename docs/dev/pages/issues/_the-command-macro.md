@@ -1,4 +1,4 @@
-<h1 align="center">The Command Macro</h1>
+<h1 align="center">[Solved] The Command Macro</h1>
 <p align="center">
     A macro for quickly building commands
 </p>
