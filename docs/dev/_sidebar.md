@@ -1,9 +1,10 @@
 - [Welcome!](README)
 * ❓ Issues
+  * [The Mingling 0.5.0 Roadmap](pages/issues/0.5.0-roadmap)
   * [[Solved] The Picker2 Arguments Parser](pages/issues/_add-picker2)
   * [[Solved] Remove r_print! and r_println! Macros](pages/issues/_remove-r-print-macro)
+  * [[Solved] The Command Macro](pages/issues/_the-command-macro)
   * [[Solved] The Mod Pathfinder](pages/issues/_the-mod-pathfinder)
-  * [The Command Macro](pages/issues/the-command-macro)
   * [The Next-Gen Mingling Pipeline](pages/issues/the-next-pipeline)
   * [Some Situations Where You'd Be Like "Shit!"](pages/issues/the-shit-time)
 * 💡 Abouts
