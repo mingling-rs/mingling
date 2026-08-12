@@ -12,8 +12,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        item: [build, clippy, test, arg-picker, markdown-code, examples, docs-refresh, api-docs]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        item:
+          [
+            build,
+            clippy,
+            test,
+            arg-picker,
+            markdown-code,
+            examples,
+            docs-refresh,
+            api-docs,
+          ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
