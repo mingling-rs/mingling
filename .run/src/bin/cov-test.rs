@@ -103,20 +103,56 @@ fn main() {
         });
     }
 
-    // 3. Examples: execute every command from test-examples.toml so their
-    //    code paths are recorded. Non-zero exit codes are expected for some
-    //    examples (e.g. `--help` exits with 2); profraw is still written.
+    // 3. Examples: build each example with explicit RUSTFLAGS, then execute
+    //    every command from test-examples.toml directly.
+    //
+    //    NOTE: `cargo llvm-cov run` cannot be used here. Its rustc wrapper
+    //    only instruments the crates of the *current* cargo project (with
+    //    `--manifest-path` that is the example itself), so the mingling
+    //    libraries — being dependencies — would not be instrumented and their
+    //    coverage would silently be lost (once_exec.rs showed 0%). Building
+    //    with plain RUSTFLAGS instruments the whole dependency graph.
+    //
+    //    RUSTFLAGS/CARGO_TARGET_DIR are set process-wide here because only the
+    //    `report` step (which does not compile) follows. Non-zero exit codes
+    //    are expected for some examples (e.g. `--help` exits with 2); profraw
+    //    is still written.
+    unsafe {
+        std::env::set_var("RUSTFLAGS", "-Cinstrument-coverage");
+        std::env::set_var("CARGO_TARGET_DIR", &cov_target);
+    }
     let examples = load_example_commands(&repo_root);
+    let mut built = std::collections::HashSet::new();
     for (example, command) in &examples {
-        if let Err(code) = run_cmd!(format!(
-            "cargo llvm-cov run --no-report --manifest-path examples/{}/Cargo.toml --color always -- {}",
-            example, command
-        )) {
-            println_cargo_style!(
-                "Warning: example {} exited with {}, profraw still recorded",
+        if built.insert(example.clone()) {
+            println_cargo_style!("Building: {}", example);
+            run_cmd!(format!(
+                "cargo build --manifest-path examples/{}/Cargo.toml --color always",
+                example
+            ))
+            .unwrap_or_else(|code| {
+                eprintln_cargo_style!("build of example {} failed with exit code {}", example, code);
+                std::process::exit(code);
+            });
+        }
+        let binary = cov_target.join("debug").join(get_binary_name(example));
+        let profraw = format!(
+            "{}/example-{}.%p.profraw",
+            cov_target.to_string_lossy(),
+            example
+        );
+        match std::process::Command::new(&binary)
+            .args(command.split_whitespace())
+            .env("LLVM_PROFILE_FILE", &profraw)
+            .status()
+        {
+            Ok(status) if status.success() => {}
+            Ok(status) => println_cargo_style!(
+                "Warning: example {} exited with {:?}, profraw still recorded",
                 example,
-                code
-            );
+                status.code()
+            ),
+            Err(e) => eprintln_cargo_style!("Failed to run example {}: {}", example, e),
         }
     }
 
@@ -354,6 +390,19 @@ fn file_id(path: &Path) -> String {
         .unwrap_or_else(|_| path.to_path_buf())
         .to_string_lossy()
         .into_owned()
+}
+
+/// Resolve binary filename for the given example.
+///
+/// The binary name matches the package name. On Windows, the `.exe` suffix is
+/// required.
+fn get_binary_name(example_name: &str) -> String {
+    let base = example_name;
+    if cfg!(target_os = "windows") {
+        format!("{base}.exe")
+    } else {
+        base.to_string()
+    }
 }
 
 /// True if the file is executable: mode bits on Unix, `.exe` on Windows.
