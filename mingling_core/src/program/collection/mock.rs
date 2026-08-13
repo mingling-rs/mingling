@@ -24,6 +24,15 @@ pub enum MockProgramCollect {
     Bar,
 }
 
+impl std::fmt::Debug for MockProgramCollect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Foo => write!(f, "Foo"),
+            Self::Bar => write!(f, "Bar"),
+        }
+    }
+}
+
 impl std::fmt::Display for MockProgramCollect {
     fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
