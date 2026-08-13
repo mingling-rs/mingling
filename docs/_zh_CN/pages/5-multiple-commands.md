@@ -42,7 +42,8 @@ fn render_sum(result: ResultSum) {
  
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatchers((CMDGreet, CMDAdd));
+    program.with_dispatcher(CMDGreet);
+    program.with_dispatcher(CMDAdd);
     program.exec_and_exit();
 }
  
@@ -58,31 +59,6 @@ Hello, Alice!
 Sum: 6
 ```
  
-## 注册多个分发器
-
-注意到 `with_dispatchers` 了吗？当你需要注册多个分发器时，一次传一个元组就行：
-
-```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
-@@@dispatcher!("add", CMDAdd => EntryAdd);
-@@@pack!(ResultGreeting = String);
-@@@pack!(ResultSum = i32);
-@@@#[chain] fn handle_greet(_args: EntryGreet) -> Next { ResultGreeting::new("ok".into()).into() }
-@@@#[renderer] fn render_greet(_greeting: ResultGreeting) -> RenderResult { RenderResult::new() }
-@@@#[chain] fn handle_add(_args: EntryAdd) -> Next { ResultSum::new(0).into() }
-@@@#[renderer] fn render_sum(_sum: ResultSum) -> RenderResult { RenderResult::new() }
-fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatchers((CMDGreet, CMDAdd));
-    program.exec_and_exit();
-}
-```
- 
-等价于一个个注册，效果一样。
-
-> [!TIP]
-> 元组最多支持 7 个分发器。超过 7 个时链式调用 `with_dispatcher` 就行。
-
 ## 子命令
 
 多层级的命令也是同理——每个点号分隔的层级都只是名字的一部分：

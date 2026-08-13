@@ -42,7 +42,8 @@ fn render_sum(result: ResultSum) {
  
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatchers((CMDGreet, CMDAdd));
+    program.with_dispatcher(CMDGreet);
+    program.with_dispatcher(CMDAdd);
     program.exec_and_exit();
 }
  
@@ -58,31 +59,6 @@ Hello, Alice!
 Sum: 6
 ```
  
-## Registering Multiple Dispatchers
-
-Notice `with_dispatchers`? When you need to register multiple dispatchers, just pass them as a tuple:
-
-```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
-@@@dispatcher!("add", CMDAdd => EntryAdd);
-@@@pack!(ResultGreeting = String);
-@@@pack!(ResultSum = i32);
-@@@#[chain] fn handle_greet(_args: EntryGreet) -> Next { ResultGreeting::new("ok".into()).into() }
-@@@#[renderer] fn render_greet(_greeting: ResultGreeting) -> RenderResult { RenderResult::new() }
-@@@#[chain] fn handle_add(_args: EntryAdd) -> Next { ResultSum::new(0).into() }
-@@@#[renderer] fn render_sum(_sum: ResultSum) -> RenderResult { RenderResult::new() }
-fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatchers((CMDGreet, CMDAdd));
-    program.exec_and_exit();
-}
-```
- 
-This is equivalent to registering them one by one, same effect.
-
-> [!TIP]
-> The tuple supports up to 7 dispatchers. For more than 7, chain `with_dispatcher` calls instead.
-
 ## Subcommands
 
 Multi-level commands work the same way—each dot-separated level is just part of the name:
