@@ -2,7 +2,7 @@
 //!
 //! > This example demonstrates how to build a custom Setup for modular management of project components
 
-use mingling::{macros::program_setup, prelude::*, Program};
+use mingling::{Program, macros::program_setup, prelude::*};
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -20,7 +20,11 @@ fn main() {
 // Package part of the program construction logic into this type for modular management
 #[program_setup]
 fn custom_setup(program: &mut Program<ThisProgram>) {
-    program.with_dispatchers((CMD1, CMD2, CMD3, CMD4, CMD5));
+    program.with_dispatcher(CMD1);
+    program.with_dispatcher(CMD2);
+    program.with_dispatcher(CMD3);
+    program.with_dispatcher(CMD4);
+    program.with_dispatcher(CMD5);
 }
 // --------- IMPORTANT ---------
 

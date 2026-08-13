@@ -64,7 +64,7 @@ fn main() {
     program.with_resource(ResLargeData::lazy_init(init_res_large_data));
     // --------- IMPORTANT ---------
 
-    program.with_dispatchers((CMDShow, CMDNone));
+    program.with_dispatcher(CMDShow).with_dispatcher(CMDNone);
     program.exec_and_exit();
 }
 

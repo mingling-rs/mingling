@@ -1,4 +1,3 @@
-// Doc Not Optimize
 // Auto generated
 
 /// Example Argument Parse
@@ -1967,7 +1966,7 @@ pub mod example_implicit_dispatcher {}
 ///     program.with_resource(ResLargeData::lazy_init(init_res_large_data));
 ///     // --------- IMPORTANT ---------
 ///
-///     program.with_dispatchers((CMDShow, CMDNone));
+///     program.with_dispatcher(CMDShow).with_dispatcher(CMDNone);
 ///     program.exec_and_exit();
 /// }
 ///
@@ -2847,7 +2846,9 @@ pub mod example_repl_basic {}
 ///     });
 ///     // --------- IMPORTANT ---------
 ///
-///     program.with_dispatchers((CMDCurrent, CMDModifyCurrent));
+///     program
+///         .with_dispatcher(CMDCurrent)
+///         .with_dispatcher(CMDModifyCurrent);
 ///     program.exec_and_exit();
 /// }
 ///
@@ -2901,7 +2902,7 @@ pub mod example_resources {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::{macros::program_setup, prelude::*, Program};
+/// use mingling::{Program, macros::program_setup, prelude::*};
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -2919,7 +2920,11 @@ pub mod example_resources {}
 /// // Package part of the program construction logic into this type for modular management
 /// #[program_setup]
 /// fn custom_setup(program: &mut Program<ThisProgram>) {
-///     program.with_dispatchers((CMD1, CMD2, CMD3, CMD4, CMD5));
+///     program.with_dispatcher(CMD1);
+///     program.with_dispatcher(CMD2);
+///     program.with_dispatcher(CMD3);
+///     program.with_dispatcher(CMD4);
+///     program.with_dispatcher(CMD5);
 /// }
 /// // --------- IMPORTANT ---------
 ///
