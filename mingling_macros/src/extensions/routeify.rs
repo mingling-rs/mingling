@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `#[routeify]` extension — transforms `expr?` into `route!(expr)`.
 //!
 //! Designed as an extension for the Mingling attribute macro system, intended

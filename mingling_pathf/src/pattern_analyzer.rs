@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! This module defines the core pattern analysis system used to parse and extract
 //! importable/referenceable items (like structs, enums, functions, etc.) from Rust source files.
 //!

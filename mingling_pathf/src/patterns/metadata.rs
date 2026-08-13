@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `MetadataPattern` matches functions annotated with `#[metadata(BindType)]`
 //! and extracts two types referenced by the metadata system:
 //! - `BindType` — the entry enum variant the metadata is bound to (attribute argument)

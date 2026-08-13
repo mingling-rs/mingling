@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use proc_macro::TokenStream;
 
 /// Marker attribute for the Mingling lint system.

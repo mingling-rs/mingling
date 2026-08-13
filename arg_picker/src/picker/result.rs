@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #![allow(clippy::type_complexity)] // Aha, Type Gymnastics!
 
 use arg_picker_macros::internal_repeat;

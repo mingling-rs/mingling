@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use std::path::PathBuf;
 
 use just_template::tmpl;

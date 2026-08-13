@@ -1,3 +1,4 @@
+// Doc Not Optimize
 /// Provides a description for any Grouped type.
 pub struct Description {
     desc: String,

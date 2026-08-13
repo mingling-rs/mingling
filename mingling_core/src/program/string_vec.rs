@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #[derive(Debug, Clone)]
 #[doc(hidden)]
 pub struct StringVec {

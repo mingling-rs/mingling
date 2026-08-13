@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `GroupedDerivePattern` matches structs, enums, and unions annotated with
 //! `#[derive(Grouped)]` or `#[derive(GroupedSerialize)]` (or any combination
 //! with other derives). It also recurses into `mod` items to find nested types.

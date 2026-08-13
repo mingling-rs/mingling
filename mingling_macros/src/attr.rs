@@ -1,3 +1,4 @@
+// Doc Not Optimize
 pub(crate) mod chain;
 #[cfg(feature = "extras")]
 pub(crate) mod command;

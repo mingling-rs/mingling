@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use mingling_core::{ProgramCollect, this};
 
 /// Represents a program exit code.

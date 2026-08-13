@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::parser::Argument;
 use mingling_core::{EnumTag, Flag};
 

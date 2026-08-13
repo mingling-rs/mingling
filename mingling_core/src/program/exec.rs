@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #![allow(clippy::borrowed_box)]
 #![allow(clippy::too_many_lines)]
 

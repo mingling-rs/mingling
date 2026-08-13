@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `CommandPattern` matches functions annotated with `#[command]` and
 //! extracts the generated hidden module name (`__command_<fn>_module`).
 //!

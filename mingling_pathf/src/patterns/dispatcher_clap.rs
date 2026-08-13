@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `DispatcherClapPattern` matches structs annotated with `#[dispatcher_clap(...)]` and
 //! extracts key items for code generation or analysis:
 //! - The entry struct name (always)

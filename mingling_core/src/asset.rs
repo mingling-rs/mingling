@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #![allow(clippy::redundant_pub_crate)]
 pub(crate) mod chain;
 pub(crate) mod core_invokes;

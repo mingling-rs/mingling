@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `HelpPattern` matches functions annotated with `#[help]` and
 //! extracts the generated internal struct name (e.g., `__internal_help_<fn_name>`).
 //! This is used to track help functions for code generation or analysis.

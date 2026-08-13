@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `CompletionPattern` matches functions annotated with `#[completion(T)]` and
 //! extracts the generated internal struct name (e.g., `__internal_completion_<fn_name>`).
 //! This is used to track completion handler functions for code generation or analysis.

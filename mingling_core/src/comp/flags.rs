@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use just_fmt::snake_case;
 
 /// Represents the shell environment for which the output format is intended.

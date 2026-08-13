@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::parser::picker::bools::{True, Yes};
 use crate::parser::{Argument, Pick1, Picker};
 

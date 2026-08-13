@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #![allow(deprecated)]
 
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};

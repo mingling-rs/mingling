@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! Configuration for the module pathfinder analysis.
 //!
 //! This module defines [`PathfinderConfig`], which controls behavior such as

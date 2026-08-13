@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `RendererPattern` matches functions annotated with `#[renderer]` and
 //! extracts the generated internal struct name (e.g., `__internal_renderer_<fn_name>`).
 //! This is used to track rendering functions for code generation or analysis.

@@ -1,3 +1,4 @@
+// Doc Not Optimize
 mod args;
 pub use crate::parser::args::*;
 

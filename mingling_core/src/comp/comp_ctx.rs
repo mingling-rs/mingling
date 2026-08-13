@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::{COMPLETION_SUBCOMMAND, Program, ProgramCollect};
 
 impl<C> Program<C>

@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #![allow(clippy::needless_doctest_main)]
 #![doc = include_str!("../README.md")]
 #![deny(missing_docs)]

@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use std::{
     env::current_exe,
     path::{Path, PathBuf},

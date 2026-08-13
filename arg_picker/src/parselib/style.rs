@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
 

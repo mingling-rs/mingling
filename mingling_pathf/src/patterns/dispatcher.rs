@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `DispatcherPattern` matches invocations of the `dispatcher!` macro and
 //! extracts the generated type names from its arguments. It supports:
 //! - `Entry*` — the entry type (always generated)

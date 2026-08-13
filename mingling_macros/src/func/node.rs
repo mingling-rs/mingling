@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use just_fmt::kebab_case;
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;

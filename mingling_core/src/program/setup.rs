@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::{ProgramCollect, program::Program};
 
 /// Trait for defining initialization/setup logic for a `Program`.

@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::res_injection::{ResourceInjection, generate_immut_resource_bindings};
 use proc_macro::TokenStream;
 use quote::quote;

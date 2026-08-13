@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `#[renderify]` extension — transforms `expr?` into `render_route!(expr)`.
 //!
 //! Designed as an extension for the Mingling attribute macro system, intended

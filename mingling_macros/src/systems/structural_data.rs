@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! Legacy structural data module.
 //!
 //! Functions have been moved to:

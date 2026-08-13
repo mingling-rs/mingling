@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::parser::Pickable;
 
 /// Represents a boolean-like value with `Yes` and `No` variants.

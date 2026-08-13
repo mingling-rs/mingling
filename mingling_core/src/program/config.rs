@@ -1,3 +1,4 @@
+// Doc Not Optimize
 /// Output mode for error messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorOutput {

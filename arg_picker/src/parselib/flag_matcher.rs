@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::{
     matcher_needed::*,
     parselib::{build_possible_flags, get_seeked_first, multi_seek_eq, seek_end_of_options},

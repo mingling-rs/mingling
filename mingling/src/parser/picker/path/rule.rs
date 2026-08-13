@@ -1,3 +1,4 @@
+// Doc Not Optimize
 /// Path check rule
 #[derive(Default)]
 pub struct PathCheckRule {

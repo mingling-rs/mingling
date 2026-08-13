@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `BasicStructPattern` matches `struct` definitions in Rust source code.
 //! It identifies root-level structs and structs nested inside inline modules,
 //! returning their names and optional module path for analysis.

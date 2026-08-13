@@ -1,3 +1,4 @@
+// Doc Not Optimize
 mod current_dir;
 pub use current_dir::*;
 

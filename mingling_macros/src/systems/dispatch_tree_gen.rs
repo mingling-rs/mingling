@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use std::collections::BTreeMap;
 
 use just_fmt::snake_case;

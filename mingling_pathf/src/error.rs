@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! Errors that can occur during the pathfinding process for Rust module resolution.
 //!
 //! This module defines all possible failure modes when traversing the module graph

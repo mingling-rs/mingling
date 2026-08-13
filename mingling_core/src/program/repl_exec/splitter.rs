@@ -1,3 +1,4 @@
+// Doc Not Optimize
 /// Wraps `split_input` to work with owned `String` inputs.
 pub fn split_input_string(input: &str) -> Vec<String> {
     split_input(input)

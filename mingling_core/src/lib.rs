@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #![deny(missing_docs)]
 //! Mingling Core
 //!

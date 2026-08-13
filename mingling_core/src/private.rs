@@ -1,3 +1,4 @@
+// Doc Not Optimize
 /// Sealed trait for `StructuralData` — only implementable via derive macro.
 #[cfg(feature = "structural_renderer")]
 pub trait StructuralDataSealed<C>

@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::{Pickable, PickerArg, PickerArgAttr, PickerArgResult, TagPhaseContext};
 
 /// `SinglePickable` trait defines how to parse a type from a single command-line argument.

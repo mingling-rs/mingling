@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use crate::{matcher_needed::*, parselib::seek_end_of_options};
 
 /// `PositionalMatcher` matches positional arguments — values not associated

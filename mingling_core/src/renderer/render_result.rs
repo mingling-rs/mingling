@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use std::{
     fmt::{Display, Formatter},
     io::Write,

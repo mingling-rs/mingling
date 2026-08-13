@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! A module for mapping Rust module paths to source files.
 //!
 //! This module provides functionality to analyze the module structure of a Rust crate

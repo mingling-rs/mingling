@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use proc_macro::{Delimiter, Group, Ident, Literal, TokenStream, TokenTree};
 
 pub(crate) fn internal_repeat(input: TokenStream) -> TokenStream {

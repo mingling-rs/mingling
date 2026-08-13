@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #[cfg(feature = "dispatch_tree")]
 use just_fmt::snake_case;
 use proc_macro::TokenStream;

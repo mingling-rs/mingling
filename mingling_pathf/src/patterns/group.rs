@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! The `GroupPattern` matches the `group!` and `group_structural!` macros and
 //! extracts the type name or alias defined within them.
 //! This is used to track type groups for code generation or analysis.

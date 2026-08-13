@@ -1,3 +1,4 @@
+// Doc Not Optimize
 use std::cell::UnsafeCell;
 use std::sync::atomic::{AtomicBool, Ordering};
 

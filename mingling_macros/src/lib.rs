@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! Proc-macro engine of the Mingling CLI framework.
 //!
 //! This crate is the **macro layer** of Mingling. Each `#[attribute]` or `!`-callable

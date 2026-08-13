@@ -1,3 +1,4 @@
+// Doc Not Optimize
 #[doc(hidden)]
 #[cfg(feature = "comp")]
 mod comp;

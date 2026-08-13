@@ -1,3 +1,4 @@
+// Doc Not Optimize
 //! This module contains the matching patterns for `mingling_pathf`.
 //! It provides the core logic for analyzing crate types and generating
 //! type mapping files used by the pathfinder system.
