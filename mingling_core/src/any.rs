@@ -1,44 +1,110 @@
-// Doc Not Optimize
 use crate::ProgramCollect;
 use crate::error::ChainProcessError;
 
 mod group;
 pub use group::*;
 
-/// Any type output
+/// A wrapper for any type within a program group.
 ///
-/// Accepts any type that implements `Send + Grouped<G>`
-/// After being passed into `AnyOutput`, it will be converted to `Box<dyn Any + Send + 'static>`
+/// `AnyOutput` wraps any concrete type value produced during program execution so it can
+/// be uniformly passed between the chain (Chain) and the renderer (Renderer). Its `inner`
+/// field stores the original value with type erasure, while the `type_id` and `member_id`
+/// fields are used for type checking and dispatch routing, respectively.
 ///
-/// Note:
-/// - If an enum value that does not belong to this type is incorrectly specified, it will be **unsafely** unwrapped by the scheduler
-/// - Structured output via `--json`/`--yaml` is only available for types that implement
-///   \[`StructuralData`\], which implies `serde::Serialize`.
-/// - It is recommended to use the `pack!` macro from [mingling_macros](https://crates.io/crates/mingling_macros) to create types that can be converted to `AnyOutput`, which guarantees runtime safety
+/// # Field Descriptions
+///
+/// - `inner`: Stores the concrete type value, erased to `dyn Any + Send + 'static`.
+/// - `type_id`: Stores the concrete type's [`TypeId`](std::any::TypeId), used for
+///   type checking in methods such as `downcast`, `is`, and `restore`.
+/// - `member_id`: Stores the variant identifier returned by [`Grouped::member_id`], used by
+///   the dispatcher to determine the corresponding enum variant when routing output.
+///
+/// # Examples
+///
+/// ```
+/// # use mingling_core::MockProgramCollect as ThisProgram;
+/// use mingling_core::AnyOutput;
+/// use mingling_core::Grouped;
+///
+/// // Define a concrete type and implement Grouped for it
+/// struct Foo(i32);
+///
+/// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+/// unsafe impl Grouped<ThisProgram> for Foo {
+///     fn member_id() -> ThisProgram {
+///         ThisProgram::Foo
+///     }
+/// }
+///
+/// // Construct an AnyOutput using AnyOutput::new
+/// let output = AnyOutput::new(Foo(42));
+///
+/// // Check type and downcast back to the concrete type
+/// assert!(output.is::<Foo>());
+/// let restored: Foo = output.downcast::<Foo>().unwrap();
+/// assert_eq!(restored.0, 42);
+/// ```
+///
+/// Alternatively, you can construct `AnyOutput` directly via [`AnyOutput::new_bare`]
+/// for types that don't implement [`Grouped`], though this requires manually
+/// providing the `member_id`.
 #[derive(Debug)]
 pub struct AnyOutput<G> {
+    /// The concrete type value after type erasure.
+    ///
+    /// Set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`]),
+    /// used for subsequent type checking and downcasting.
     pub(crate) inner: Box<dyn std::any::Any + Send + 'static>,
 
     /// The [`TypeId`](std::any::TypeId) of the concrete type stored in `inner`.
     ///
-    /// This is set during construction and used for type-checking
-    /// in downcast, restore, and is methods.
+    /// Set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`]),
+    /// used for type checking in the `downcast`, `restore`, and `is` methods.
     pub(crate) type_id: std::any::TypeId,
 
-    /// The variant identifier returned by [`Grouped::member_id`] for the
-    /// concrete type stored in `inner`.
+    /// The [`Grouped::member_id`] variant identifier corresponding to the concrete type stored in `inner`.
     ///
-    /// This is used by the scheduler to dispatch on the correct enum
-    /// variant when routing the output.
+    /// Set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`]),
+    /// used by the dispatcher to determine the corresponding enum variant when routing output.
     pub(crate) member_id: G,
 }
 
 impl<G> AnyOutput<G> {
-    /// Create an `AnyOutput` from a `Send + Grouped<G>` type
+    /// Create an `AnyOutput` from a `Send + Grouped<G>` type.
     ///
-    /// # Panics
+    /// # Arguments
     ///
-    /// This function does not panic.
+    /// - `value`: A value of a concrete type `T` that implements both `Send` and
+    ///   [`Grouped<G>`](`Grouped`), where `G` is the program group enum type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    /// use mingling_core::Grouped;
+    ///
+    /// // Define a concrete type and implement Grouped for it
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// // Create an AnyOutput wrapping a concrete value
+    /// let output = AnyOutput::new(Foo(42));
+    ///
+    /// // Verify the stored type id and member_id
+    /// assert_eq!(output.type_id(), std::any::TypeId::of::<Foo>());
+    /// assert!(output.is::<Foo>());
+    ///
+    /// // Downcast back to the concrete type
+    /// let restored: Foo = output.downcast::<Foo>().unwrap();
+    /// assert_eq!(restored.0, 42);
+    /// ```
     pub fn new<T>(value: T) -> Self
     where
         T: Send + Grouped<G> + 'static,
@@ -65,6 +131,30 @@ impl<G> AnyOutput<G> {
     ///   type associated with `member_id` will cause **undefined behavior**.
     /// - This safety contract is the caller's responsibility; the compiler cannot
     ///   enforce the correspondence between `member_id` and the stored type.
+    ///
+    /// # Arguments
+    ///
+    /// - `value`: The raw value to wrap in the `AnyOutput`.
+    /// - `member_id`: The variant identifier used by the scheduler for dispatch routing.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    ///
+    /// // Create an AnyOutput for a type that doesn't implement Grouped,
+    /// // manually specifying the member_id.
+    /// let value = String::from("hello");
+    ///
+    /// // SAFETY: The caller guarantees that ThisProgram::Foo corresponds
+    /// // to the String type in the scheduling logic.
+    /// let output = unsafe { AnyOutput::new_bare(value, ThisProgram::Foo) };
+    ///
+    /// // The member_id is stored as provided.
+    /// assert_eq!(output.member_id(), ThisProgram::Foo);
+    /// assert!(output.is::<String>());
+    /// ```
     pub unsafe fn new_bare<T>(value: T, member_id: G) -> Self
     where
         T: Send + 'static,
@@ -80,6 +170,31 @@ impl<G> AnyOutput<G> {
     ///
     /// The [`TypeId`](std::any::TypeId) is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
     /// and is used for subsequent downcasting and type checking.
+    ///
+    /// # Returns
+    ///
+    /// Returns the [`TypeId`](std::any::TypeId) of the concrete type stored in `inner`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    /// use mingling_core::Grouped;
+    ///
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// let output = AnyOutput::new(Foo(42));
+    ///
+    /// assert_eq!(output.type_id(), std::any::TypeId::of::<Foo>());
+    /// ```
     pub const fn type_id(&self) -> std::any::TypeId {
         self.type_id
     }
@@ -89,6 +204,46 @@ impl<G> AnyOutput<G> {
     /// `member_id` is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
     /// and identifies which variant of the output enum this value corresponds to.
     /// The scheduler uses this value to dispatch the output to the correct next step.
+    ///
+    /// # Returns
+    ///
+    /// Returns the `member_id` of the concrete type stored in `inner`, which is
+    /// a variant of the program group enum `G`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    /// use mingling_core::Grouped;
+    ///
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// let output = AnyOutput::new(Foo(42));
+    ///
+    /// assert_eq!(output.member_id(), ThisProgram::Foo);
+    /// ```
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    ///
+    /// // Using new_bare to construct from a type that doesn't implement Grouped.
+    /// let value = String::from("hello");
+    ///
+    /// // SAFETY: The caller guarantees that ThisProgram::Bar corresponds
+    /// // to the String type in the scheduling logic.
+    /// let output = unsafe { AnyOutput::new_bare(value, ThisProgram::Bar) };
+    ///
+    /// assert_eq!(output.member_id(), ThisProgram::Bar);
+    /// ```
     pub const fn member_id(&self) -> G
     where
         G: Copy,
@@ -98,13 +253,68 @@ impl<G> AnyOutput<G> {
 
     /// Attempt to downcast the `AnyOutput` to a concrete type.
     ///
+    /// This method consumes the `AnyOutput` and attempts to recover the
+    /// inner value as the concrete type `T`. The downcast is performed based
+    /// on the stored [`TypeId`](std::any::TypeId): if the stored
+    /// type matches `T`, the value is extracted and returned; otherwise,
+    /// the original `AnyOutput` is returned unchanged inside `Err`.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: The `AnyOutput` value to attempt downcasting from.
+    ///
+    /// # Returns
+    ///
+    /// - `Ok(T)`: The inner value successfully downcast to the concrete type `T`.
+    /// - `Err(Self)`: The original `AnyOutput` returned when the stored type
+    ///   does not match `T`.
+    ///
     /// # Errors
     ///
-    /// Returns `Err(self)` if the downcast fails.
+    /// Returns `Err(Self)` with the original `AnyOutput` when the stored
+    /// [`TypeId`](std::any::TypeId) does not match
+    /// [`TypeId::of::<T>()`](std::any::TypeId).
     ///
     /// # Panics
     ///
-    /// Panics if the inner value is not of type `T`.
+    /// Panics if the stored [`TypeId`](std::any::TypeId) is equal to
+    /// [`TypeId::of::<T>()`](std::any::TypeId) but the internal downcast
+    /// unexpectedly fails. This should never happen in practice since the
+    /// type check guarantees type compatibility.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    /// use mingling_core::Grouped;
+    ///
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// // Successful downcast to the matching type.
+    /// let output = AnyOutput::new(Foo(42));
+    /// let restored: Foo = output.downcast::<Foo>().unwrap();
+    /// assert_eq!(restored.0, 42);
+    ///
+    /// // Failed downcast to a non-matching type returns Err(self).
+    /// let output = AnyOutput::new(Foo(7));
+    /// let result: Result<String, _> = output.downcast::<String>();
+    /// assert!(result.is_err());
+    ///
+    /// // Recover the original value from the Err result.
+    /// let output = AnyOutput::new(Foo(99));
+    /// let result: Result<String, _> = output.downcast::<String>();
+    /// let original = result.unwrap_err();
+    /// let restored: Foo = original.downcast::<Foo>().unwrap();
+    /// assert_eq!(restored.0, 99);
+    /// ```
     pub fn downcast<T: 'static>(self) -> Result<T, Self> {
         if self.type_id == std::any::TypeId::of::<T>() {
             Ok(*self.inner.downcast::<T>().unwrap())
@@ -114,27 +324,186 @@ impl<G> AnyOutput<G> {
     }
 
     /// Check if the inner value is of type T
+    ///
+    /// # Arguments
+    ///
+    /// - `T`: The type to check against the stored inner value's type.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the stored inner value is of type `T`, `false` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    /// use mingling_core::Grouped;
+    ///
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// let output = AnyOutput::new(Foo(42));
+    ///
+    /// // Check a matching type.
+    /// assert!(output.is::<Foo>());
+    ///
+    /// // Check a non-matching type.
+    /// assert!(!output.is::<String>());
+    /// ```
     pub fn is<T: 'static>(&self) -> bool {
         self.type_id == std::any::TypeId::of::<T>()
     }
 
     /// Route the output to the next Chain
+    ///
+    /// This method consumes the `AnyOutput` and routes it to the next chain
+    /// for continued processing.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: The `AnyOutput` value to route to the chain.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`ChainProcess::Ok`] containing the `AnyOutput` paired with
+    /// [`NextProcess::Chain`], indicating the scheduler should continue
+    /// execution to the next chain step.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::{AnyOutput, ChainProcess, NextProcess};
+    /// use mingling_core::Grouped;
+    ///
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// let output = AnyOutput::new(Foo(42));
+    ///
+    /// let result = output.route_chain();
+    /// match result {
+    ///     ChainProcess::Ok((any, next)) => {
+    ///         assert!(any.is::<Foo>());
+    ///         assert_eq!(next, NextProcess::Chain);
+    ///     }
+    ///     ChainProcess::Err(_) => panic!("Expected ChainProcess::Ok"),
+    /// }
+    /// ```
     pub const fn route_chain(self) -> ChainProcess<G> {
         ChainProcess::Ok((self, NextProcess::Chain))
     }
 
     /// Route the output to the Renderer, ending execution
+    ///
+    /// This method consumes the `AnyOutput` and routes it to the renderer
+    /// for final output to the terminal, ending execution.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: The `AnyOutput` value to route to the renderer.
+    ///
+    /// # Returns
+    ///
+    /// Returns a [`ChainProcess::Ok`] containing the `AnyOutput` paired with
+    /// [`NextProcess::Renderer`], indicating the scheduler should send the
+    /// value to the renderer and terminate execution.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::{AnyOutput, ChainProcess, NextProcess};
+    /// use mingling_core::Grouped;
+    ///
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// let output = AnyOutput::new(Foo(42));
+    ///
+    /// let result = output.route_renderer();
+    /// match result {
+    ///     ChainProcess::Ok((any, next)) => {
+    ///         assert!(any.is::<Foo>());
+    ///         assert_eq!(next, NextProcess::Renderer);
+    ///     }
+    ///     ChainProcess::Err(_) => panic!("Expected ChainProcess::Ok"),
+    /// }
+    /// ```
     pub const fn route_renderer(self) -> ChainProcess<G> {
         ChainProcess::Ok((self, NextProcess::Renderer))
     }
 
     /// Restore `AnyOutput` back to the original concrete type.
     ///
+    /// This method consumes the `AnyOutput` and attempts to recover the
+    /// inner value as the concrete type `T`. The type check is performed
+    /// based on the stored [`TypeId`](std::any::TypeId): if the stored type
+    /// matches `T`, the value is extracted and returned inside `Some`;
+    /// otherwise, [`None`] is returned.
+    ///
     /// # Safety
     ///
     /// This is only safe when `T` matches the [`TypeId`](std::any::TypeId) stored in the `AnyOutput`.
     /// Generated code (via `gen_program!()`) guarantees this by dispatching on
     /// `member_id` before calling `restore`.
+    ///
+    /// # Arguments
+    ///
+    /// - `self`: The `AnyOutput` value to attempt restoration from.
+    ///
+    /// # Returns
+    ///
+    /// - `Some(T)`: The inner value successfully restored to the concrete type `T`.
+    /// - `None`: The stored [`TypeId`](std::any::TypeId) does not match
+    ///   [`TypeId::of::<T>()`](std::any::TypeId).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// use mingling_core::AnyOutput;
+    /// use mingling_core::Grouped;
+    ///
+    /// #[derive(Debug, PartialEq)]
+    /// struct Foo(i32);
+    ///
+    /// // SAFETY: The member_id corresponds to the correct ThisProgram variant.
+    /// unsafe impl Grouped<ThisProgram> for Foo {
+    ///     fn member_id() -> ThisProgram {
+    ///         ThisProgram::Foo
+    ///     }
+    /// }
+    ///
+    /// // Successful restore to the matching type.
+    /// let output = AnyOutput::new(Foo(42));
+    /// let restored: Option<Foo> = output.restore::<Foo>();
+    /// assert_eq!(restored, Some(Foo(42)));
+    ///
+    /// // Failed restore to a non-matching type returns None.
+    /// let output = AnyOutput::new(Foo(7));
+    /// let restored: Option<String> = output.restore::<String>();
+    /// assert_eq!(restored, None);
+    /// ```
     pub fn restore<T: 'static>(self) -> Option<T> {
         if self.type_id == std::any::TypeId::of::<T>() {
             self.inner
@@ -160,29 +529,105 @@ impl<G> std::ops::DerefMut for AnyOutput<G> {
     }
 }
 
-/// Chain exec result type
+/// Chain execution result type
 ///
-/// Stores `Ok` and `Err` types of execution results, used to notify the scheduler what to execute next
-/// - Returns <code>Ok(([AnyOutput](./struct.AnyOutput.html), [NextProcess::Chain](./enum.NextProcess.html)))</code> to continue execution with this type next
-/// - Returns <code>Ok(([AnyOutput](./struct.AnyOutput.html), [NextProcess::Renderer](./enum.NextProcess.html)))</code> to render this type next and output to the terminal
-/// - Returns <code>Err([ChainProcessError](./error/enum.ChainProcessError.html)]</code> to terminate the program directly
+/// Stores the `Ok` and `Err` types of an execution result, indicating to the dispatcher
+/// what action to perform next:
+/// - Returns <code>Ok(([AnyOutput](./struct.AnyOutput.html), [NextProcess::Chain](./enum.NextProcess.html)))</code>, indicating that this type should be used to continue to the next step
+/// - Returns <code>Ok(([AnyOutput](./struct.AnyOutput.html), [NextProcess::Renderer](./enum.NextProcess.html)))</code>, indicating that this type should be sent to the renderer and output to the terminal
+/// - Returns <code>Err([ChainProcessError](./error/enum.ChainProcessError.html))</code>, indicating that the program should be terminated immediately
+///
+/// # Type Parameters
+///
+/// - `G`: The program group enum type, used to identify the concrete type of the output,
+///   whose value comes from [`Grouped::member_id`].
+///
+/// # Examples
+///
+/// ```
+/// # use mingling_core::MockProgramCollect as ThisProgram;
+/// # use mingling_core::{ChainProcess, Grouped, NextProcess, AnyOutput, error::ChainProcessError};
+/// # struct Foo;
+/// # unsafe impl Grouped<ThisProgram> for Foo {
+/// #   fn member_id() -> ThisProgram {
+/// #       ThisProgram::Foo
+/// #   }
+/// # }
+/// # let output = AnyOutput::new(Foo);
+///
+/// // Successfully executed in the chain, continue to the next step
+/// let result: ChainProcess<ThisProgram> = ChainProcess::Ok((output, NextProcess::Chain));
+///
+/// // An error occurred during chain processing, terminating the program
+/// let error: ChainProcess<ThisProgram> = ChainProcess::Err(ChainProcessError::Other("error".into()));
+/// ```
 pub enum ChainProcess<G> {
-    /// Indicates success, containing the output value and the next step to execute.
+    /// Indicates processing was successful, containing the output value and the next action to perform.
+    ///
+    /// The first element of the tuple is an `AnyOutput` (the type-erased output value),
+    /// and the second element is a `NextProcess`, used to instruct the dispatcher to
+    /// route the output to the next step of chain processing (`Chain`) or send it
+    /// to the renderer (`Renderer`).
     Ok((AnyOutput<G>, NextProcess)),
-    /// Indicates a processing failure, containing the error that occurred.
+    /// Indicates processing failed, containing information about the error that occurred.
+    ///
+    /// This variant is returned when an error occurs during chain processing,
+    /// and the dispatcher will terminate program execution.
     Err(ChainProcessError),
 }
 
-/// Indicates the next step after processing
+/// Indicates the next action to take after processing.
 ///
-/// - `Chain`: Continue execution to the next chain
-/// - `Renderer`: Send output to renderer and end execution
+/// - `Chain`：Continue to the next chain step
+/// - `Renderer`：Send the output to the renderer and end execution
+///
+/// This enum is used as the second element in the [`ChainProcess::Ok`] variant's tuple,
+/// indicating to the dispatcher what action to take after obtaining the output:
+/// - When it is [`NextProcess::Chain`], the dispatcher will pass the output to the next
+///   chain step to continue processing;
+/// - When it is [`NextProcess::Renderer`], the dispatcher will send the output to the
+///   renderer for terminal display and terminate program execution.
+///
+/// # Examples
+///
+/// ```
+/// # use mingling_core::MockProgramCollect as ThisProgram;
+/// # use mingling_core::{AnyOutput, ChainProcess, NextProcess};
+/// # use mingling_core::Grouped;
+/// #
+/// # struct Foo(i32);
+/// # unsafe impl Grouped<ThisProgram> for Foo {
+/// #     fn member_id() -> ThisProgram {
+/// #         ThisProgram::Foo
+/// #     }
+/// # }
+/// #
+/// let output = AnyOutput::new(Foo(42));
+///
+/// // Route to the next chain step
+/// let cp = output.route_chain();
+/// match cp {
+///     ChainProcess::Ok((any, next)) => {
+///         // Confirm the next action is Chain
+///         assert_eq!(next, NextProcess::Chain);
+///     }
+///     ChainProcess::Err(_) => panic!("Expected Ok"),
+/// }
+/// ```
 #[derive(Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum NextProcess {
-    /// Continue execution to the next chain
+    /// Continue to the next chain step
+    ///
+    /// This value indicates that the output should be passed to the next chain step
+    /// to continue program processing, rather than being sent directly to the renderer.
+    /// This is the most commonly used routing method during chained processing.
     Chain,
-    /// Send output to renderer and end execution
+    /// Send the output to the renderer and end execution
+    ///
+    /// This value indicates that the output should be sent directly to the renderer
+    /// for terminal display, and program execution will terminate after this output.
+    /// This is typically used for the final output of program processing.
     Renderer,
 }
 
