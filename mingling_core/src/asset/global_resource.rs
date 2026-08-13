@@ -32,6 +32,13 @@ pub struct GlobalResContainer {
 
 impl GlobalResContainer {
     /// Creates an empty resource container.
+    ///
+    /// Usage:
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let container = GlobalResContainer::new();
+    /// ```
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -54,7 +61,32 @@ impl GlobalResContainer {
         entry
     }
 
-    /// Insert a resource of the given type, cloning the provided value into the store
+    /// Inserts (or overwrites) a resource into the [`GlobalResContainer`].
+    ///
+    /// # Behavior
+    ///
+    /// - The resource is stored bound to the `TypeId` of its type. That is, **the same type**
+    ///   can only have one resource instance — a later inserted resource of the same type will
+    ///   **overwrite** the previously inserted old value.
+    /// - Different `Res` types are **completely independent** of each other in the container.
+    /// - Resources are stored as `Arc<Mutex<Arc<Res>>>`: the outer `Mutex` guarantees that
+    ///   only one caller can modify the resource at a time (but holding that lock does not
+    ///   block the container's global lock); the inner `Arc<Res>` is used to provide immutable
+    ///   shared snapshots for read-only APIs such as `res()` / `res_or_default()`.
+    /// - `Res` must satisfy `'static + Send + Sync` (for thread-safe sharing) as well as the
+    ///   [`ResourceMarker`] trait (providing default values, cloning, etc.).
+    ///
+    /// # Return Value
+    ///
+    /// Returns `&mut self` for chained calls, for example:
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let mut container = GlobalResContainer::new();
+    /// container
+    ///     .with_resource(42i32)
+    ///     .with_resource(String::from("hello"));
+    /// ```
     pub fn with_resource<Res: 'static + Send + Sync + ResourceMarker>(
         &mut self,
         res: Res,
@@ -68,7 +100,58 @@ impl GlobalResContainer {
         self
     }
 
-    /// Modify a resource by type, applying a closure to the resource if present
+    /// Performs a **read-modify-write** operation on an existing resource in the container
+    /// and returns the closure's return value.
+    ///
+    /// # Behavior
+    ///
+    /// 1. First, looks up the resource entry corresponding to the `Res` type in the container.
+    /// 2. If the entry **does not exist** (has not been inserted via [`with_resource`] or
+    ///    [`__store_res`]), returns `Return::default()` directly, **without** calling `f`,
+    ///    and without inserting any new resource.
+    /// 3. If the entry exists, locks the resource's own mutex (note: this lock is **separate**
+    ///    from the container's global lock, so nested calls will not deadlock).
+    /// 4. Takes the resource **out** of the container (attempting to take ownership directly
+    ///    via `Arc::try_unwrap`):
+    ///    - If the `Arc` has no other holders (i.e., no `GlobalResource` snapshot references it),
+    ///      the original value is taken directly, without cloning.
+    ///    - If the `Arc` has other holders (e.g., `res()` was called elsewhere and holds a
+    ///      shared snapshot), a **clone** is made via `__resource_marker_clone()` for
+    ///      modification; the original snapshot is unaffected.
+    /// 5. Passes the cloned/taken value to the closure `f(&mut new_res)` for modification and
+    ///    collects the closure's return value `r`.
+    /// 6. Writes the modified new value **back** into the resource slot, then releases the
+    ///    resource lock.
+    /// 7. Returns the closure's result `r`.
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Default + ResourceMarker + Send + Sync`.
+    ///   `ResourceMarker` guarantees the resource can be cloned (when a shared snapshot exists)
+    ///   and can be default-instantiated.
+    /// - `Return` must implement `Default`, because when the resource does not exist or the
+    ///   lock is poisoned, this method returns `Return::default()` as a fallback value.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let mut container = GlobalResContainer::new();
+    /// container.with_resource(10i32);
+    ///
+    /// // Resource exists: modify and return the value
+    /// let double = container.modify_res(|v: &mut i32| { *v *= 2; *v });
+    /// assert_eq!(double, 20);
+    /// assert_eq!(*container.res::<i32>().unwrap(), 20);
+    ///
+    /// // Resource does not exist: returns Default, closure is not called
+    /// let missing = container.modify_res::<String, i32>(|_| 42);
+    /// assert_eq!(missing, 0);
+    /// ```
+    ///
+    /// [`with_resource`]: Self::with_resource
+    /// [`__store_res`]: Self::__store_res
+    /// [`res()`]: Self::res
     pub fn modify_res<Res, Return>(&self, f: impl FnOnce(&mut Res) -> Return) -> Return
     where
         Res: 'static + Default + ResourceMarker + Send + Sync,
@@ -89,7 +172,102 @@ impl GlobalResContainer {
         r
     }
 
-    /// Internal syntax for the `&mut MyResource` syntax of #[chain], do not use directly
+    /// Performs a **read-modify-write** operation on an existing resource in the container
+    /// and directly passes the closure's [`ChainProcess<C>`] routing result to the caller.
+    ///
+    /// # Purpose
+    ///
+    /// This is an internal method used by `#[chain]`, `#[resource]`, and similar macros;
+    /// it typically does not appear directly in user business code.
+    ///
+    /// This method behaves very similarly to [`modify_res`](Self::modify_res), with the
+    /// only differences being:
+    ///
+    /// - The closure `f`'s return type is [`ChainProcess<C>`], rather than an arbitrary generic
+    ///   `Return`. This means it is designed for **chained program routing/jumping**
+    ///   scenarios — the closure can return `ChainProcess::Ok(...)` /
+    ///   `ChainProcess::Err(...)` / jump targets, etc., to route program execution to the
+    ///   next stage.
+    /// - When the resource does not exist or the container/resource lock is poisoned,
+    ///   `modify_res` returns `Return::default()`, whereas this method constructs a
+    ///   **default resource** (via `ResourceMarker::__resource_marker_default()`),
+    ///   still calls `f`, and returns the `ChainProcess<C>` produced by `f` directly.
+    ///   That is, this method **always** calls the closure `f` and returns its routing result.
+    ///
+    /// # Execution Steps
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the container.
+    ///    - If the entry **does not exist**, constructs a **temporary default resource**
+    ///      via `ResourceMarker::__resource_marker_default()`, directly calls
+    ///      `f(&mut default_res)`, and returns its result.
+    ///    - If the entry exists, continues to step 2.
+    /// 2. Locks the resource's **own** `Mutex` (independent of the container's global lock;
+    ///    nested calls will not deadlock).
+    ///    - If the lock is poisoned, also goes down the "default resource" branch:
+    ///      constructs a default instance and calls `f`.
+    /// 3. Attempts to take the resource's **ownership** via `Arc::try_unwrap`:
+    ///    - If the `Arc` has no other holders (no shared snapshots), takes the original value;
+    ///    - If there are other holders (e.g., a [`GlobalResource`] snapshot exists elsewhere),
+    ///      calls `ResourceMarker::__resource_marker_clone()` to **clone** a copy for
+    ///      modification; the original snapshot is unaffected.
+    /// 4. Passes the taken value to the closure `f(&mut new_res)` to execute the modification
+    ///    logic, obtaining the routing result `r`.
+    /// 5. Writes the modified new value **back** into the resource slot, releases the
+    ///    resource lock.
+    /// 6. Returns `r` to the caller.
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Default + ResourceMarker + Send + Sync`.
+    ///   `ResourceMarker` provides cloning and default instantiation capabilities;
+    ///   `Default` is used to construct fallback values.
+    /// - `C` must implement `ProgramCollect<Enum = C>`, i.e., the current program's
+    ///   collector type.
+    /// - `ChainProcess<C>` represents an intermediate/terminal state of chained program
+    ///   execution, decoded by macro-expanded code to determine the next step.
+    ///
+    /// # Role as a Macro-Expansion Internal Method
+    ///
+    /// In code generated by `#[chain]` and similar macros, when a resource needs to be
+    /// injected as a **mutable reference** (`&mut Res`) into a procedure/step, while also
+    /// ensuring that the procedure can return a `ChainProcess<C>` to drive program-flow
+    /// routing, the macro expansion generates a call to `__modify_res_and_return_route`.
+    /// This ensures:
+    ///
+    /// - The resource modification and the `ChainProcess` routing result are completed in
+    ///   **one atomic operation**;
+    /// - Regardless of whether the resource exists, macro-expanded code can obtain a
+    ///   `ChainProcess<C>` to continue program execution flow;
+    /// - Macro-generated code does not need to worry about internal locking, `Arc`
+    ///   ownership, or cloning details, all encapsulated by this method.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::{GlobalResContainer, ChainProcess, error::ChainProcessError};
+    /// # use mingling_core::MockProgramCollect;
+    /// let mut container = GlobalResContainer::new();
+    /// container.with_resource(1i32);
+    ///
+    /// // After macro expansion, this is equivalent to: take out the i32 resource,
+    /// // modify it, and return the routing result
+    /// let route: ChainProcess<MockProgramCollect> =
+    ///     container.__modify_res_and_return_route(|v: &mut i32| {
+    ///         *v += 1;
+    ///         ChainProcess::Err(ChainProcessError::Other("done".into()))
+    ///     });
+    /// assert!(matches!(route, ChainProcess::Err(_)));
+    /// assert_eq!(*container.res::<i32>().unwrap(), 2);
+    /// ```
+    ///
+    /// [`ChainProcess<C>`]: crate::ChainProcess
+    /// [`Program::__modify_res_and_return_route`]: crate::Program::__modify_res_and_return_route
+    ///
+    /// # Note
+    ///
+    /// This method is **`#[doc(hidden)]`**, and the API will not be publicly exposed in
+    /// stable documentation. Do not call it directly in business code; use public macros or
+    /// the public [`Program`] methods to operate on resources.
     #[doc(hidden)]
     pub fn __modify_res_and_return_route<Res, C>(
         &self,
@@ -116,10 +294,81 @@ impl GlobalResContainer {
         r
     }
 
-    /// Internal syntax for the `&mut MyResource` syntax of async #[chain], do not use directly.
+    /// **Takes** a `Res`-typed resource value **out** of the container and returns its
+    /// ownership.
     ///
-    /// Extracts a mutable resource from the store (clone-out), returning an
-    /// owned value. The caller must call [`__store_res`] to write back modifications.
+    /// # Purpose
+    ///
+    /// This is an internal method used by `#[chain]`, `#[resource]`, and similar macros;
+    /// it typically does not appear directly in user business code.
+    ///
+    /// This method differs from the public [`modify_res`](Self::modify_res):
+    ///
+    /// - `modify_res` is a **modify-and-write-back** operation, where the value modified by
+    ///   the closure is **written back** into the container's resource slot;
+    /// - This method performs a **take-and-return** operation — it requires no closure and
+    ///   does not write the modified value back into the container. It **moves** the resource
+    ///   **out of** the container into the caller's hands, granting the caller full ownership
+    ///   (or an independent copy) of the resource, so it can be used independently of the
+    ///   container.
+    ///
+    /// # Execution Steps
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the container:
+    ///    - If the entry **does not exist**, constructs and returns a default instance via
+    ///      `ResourceMarker::__resource_marker_default()`.
+    ///    - If the entry exists, continues to step 2.
+    /// 2. Locks the resource's **own** `Mutex`. If the lock is poisoned, also returns a
+    ///    default instance.
+    /// 3. Attempts to take the resource's **ownership** via `Arc::try_unwrap`:
+    ///    - If the `Arc` has no other holders (no shared snapshots), returns the original
+    ///      value directly;
+    ///    - If there are other holders (e.g., a [`GlobalResource`] shared snapshot exists),
+    ///      calls `ResourceMarker::__resource_marker_clone()` to **clone** a copy and returns
+    ///      it; the original value in the container is unaffected (not written back).
+    /// 4. Returns the taken `Res` value.
+    ///
+    /// # Resource Slot State
+    ///
+    /// This method does **not** write a new value back into the container, so the resource
+    /// slot is **cleared** after being taken (since it internally uses `mem::take`, the
+    /// slot is emptied). Subsequent calls to [`res()`](Self::res) /
+    /// [`modify_res`](Self::modify_res) for the same resource will find that the entry
+    /// **still exists** (the `TypeId` key is still present), but the `Arc` inside the slot
+    /// has been emptied and replaced with a `Default::default()`-typed empty value — the
+    /// exact behavior depends on internal implementation details, and macro-expanded code
+    /// should not rely on the precise state of the slot after extraction.
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Default + ResourceMarker + Send + Sync`.
+    ///
+    /// # Role as a Macro-Expansion Internal Method
+    ///
+    /// In macro-generated code, when a resource needs to be **taken out at once** from the
+    /// container and handed to an operation that requires ownership (rather than borrowing)
+    /// — e.g., moving the resource to another container, passing it to an
+    /// `impl FnOnce(Res)`-style closure, or participating in special `Arc::try_unwrap`
+    /// semantics — the macro expansion calls this method. It avoids borrow-lifetime
+    /// entanglement and delivers ownership of the value directly.
+    ///
+    /// # Example (simulating macro-expansion internal calls)
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let mut container = GlobalResContainer::new();
+    /// container.with_resource(3i32);
+    ///
+    /// let extracted: i32 = container.__extract_res_mut();
+    /// assert_eq!(extracted, 3);
+    /// ```
+    ///
+    /// [`Program::__extract_res_mut`]: crate::Program::__extract_res_mut
+    ///
+    /// # Note
+    ///
+    /// This method is **`#[doc(hidden)]`**, and the API will not be publicly exposed in
+    /// stable documentation. Do not call it directly in business code.
     #[doc(hidden)]
     #[must_use]
     pub fn __extract_res_mut<Res: 'static + Default + ResourceMarker + Send + Sync>(&self) -> Res {
@@ -135,9 +384,87 @@ impl GlobalResContainer {
         }
     }
 
-    /// Internal syntax for the `&mut MyResource` syntax of async #[chain], do not use directly.
+    /// **Overwrites** a resource value into the container.
     ///
-    /// Stores a modified resource value back into the store.
+    /// # Purpose
+    ///
+    /// This is an internal method used by `#[chain]`, `#[resource]`, and similar macros;
+    /// it typically does not appear directly in user business code.
+    ///
+    /// This method behaves **almost identically** to the public
+    /// [`with_resource`](Self::with_resource) (both store/overwrite a resource by type), but
+    /// the two differ in their method signatures:
+    ///
+    /// - [`with_resource`](Self::with_resource) takes `&mut self` and returns `&mut Self`,
+    ///   suitable for chained **initialization** scenarios (e.g., registering multiple
+    ///   resources at once during `Program` construction);
+    /// - `__store_res` takes `&self` and returns no value, suitable for **runtime**
+    ///   dynamic overwrite/update of a resource's value (e.g., macro-expanded code already
+    ///   holding an immutable reference).
+    ///
+    /// # Execution Steps
+    ///
+    /// 1. Acquires the container's global lock. If the lock is poisoned, returns directly
+    ///    without doing anything.
+    /// 2. Looks up the existing entry by `Res` type in the container:
+    ///    - If the entry **does not exist**, creates a new `Arc<Mutex<Arc<Res>>>` wrapper
+    ///      under the `TypeId::of::<Res>()` key and inserts it into the container.
+    ///    - If the entry **already exists**, attempts to downcast `boxed_any` to
+    ///      `Arc<Mutex<Arc<Res>>>` and attempts to lock the resource's own `Mutex`:
+    ///      * If downcasting succeeds and locking succeeds, writes the new `Arc::new(val)`
+    ///        directly into that slot, completing the overwrite update;
+    ///      * If downcasting fails (which should not happen in theory, since the type is
+    ///        guaranteed by `TypeId`) or the lock is poisoned, **replaces the entire entry**
+    ///        (constructs a new `Arc<Mutex<Arc<Res>>>` and inserts it).
+    /// 3. Releases the container's global lock; the operation is complete.
+    ///
+    /// # Concurrency Semantics
+    ///
+    /// - The container's global lock and the resource's own lock are **two independent
+    ///   locks**. This method briefly holds the container's global lock to locate the
+    ///   entry, then writes the new value **only** under the protection of the resource's
+    ///   own lock — other threads calling `res()` / `modify_res()` for the same resource
+    ///   will not see intermediate states.
+    /// - If the container's global lock is poisoned, this method silently returns; if the
+    ///   resource's own lock is poisoned, this method **replaces the entire entry** (discard
+    ///   the old lock state), ensuring the new value can still be written successfully.
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Send + Sync + ResourceMarker`.
+    ///
+    /// # Role as a Macro-Expansion Internal Method
+    ///
+    /// In macro-generated code, when a resource of a certain type needs to be **overwritten
+    /// at runtime** (e.g., writing a `&mut Res` parameter back into the container after a
+    /// procedure ends, or committing a newly computed resource snapshot back to the
+    /// container), the macro expansion calls this method. It allows updating a resource's
+    /// value in an environment where only `&self` (an immutable reference) is available,
+    /// decoupling the resource's lifetime from the caller's borrow of the container.
+    ///
+    /// # Example (simulating macro-expansion internal calls)
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let container = GlobalResContainer::new();
+    ///
+    /// // Runtime write
+    /// container.__store_res(8i32);
+    /// assert_eq!(*container.res::<i32>().unwrap(), 8);
+    ///
+    /// // Overwrite
+    /// container.__store_res(9i32);
+    /// assert_eq!(*container.res::<i32>().unwrap(), 9);
+    /// ```
+    ///
+    /// [`Program::__store_res`]: crate::Program::__store_res
+    ///
+    /// # Note
+    ///
+    /// This method is **`#[doc(hidden)]`**, and the API will not be publicly exposed in
+    /// stable documentation. Do not call it directly in business code; use the public
+    /// [`with_resource`](Self::with_resource) or [`modify_res`](Self::modify_res) public
+    /// methods instead.
     #[doc(hidden)]
     pub fn __store_res<Res: 'static + Send + Sync + ResourceMarker>(&self, val: Res) {
         let Ok(mut guard) = self.map.lock() else {
@@ -164,7 +491,63 @@ impl GlobalResContainer {
         );
     }
 
-    /// Get an resources by type, returning `Res` if present
+    /// Retrieves an **immutable shared snapshot** of a `Res`-typed resource from the container.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the container:
+    ///    - If the entry **does not exist** (has not been inserted via
+    ///      [`with_resource`](Self::with_resource) or [`__store_res`](Self::__store_res)),
+    ///      returns `None`.
+    ///    - If the entry exists, continues to step 2.
+    /// 2. Locks the resource's **own** `Mutex` (independent of the container's global lock;
+    ///    nested calls will not deadlock).
+    /// 3. If locking succeeds, clones the resource's internal `Arc<Res>` and wraps it as a
+    ///    [`GlobalResource<Res>`] to return.
+    ///
+    /// The returned [`GlobalResource<Res>`] can be dereferenced like `&Res` via `Deref`.
+    /// When multiple callers each hold their own returned [`GlobalResource<Res>`], they share
+    /// the same underlying `Arc<Res>` data, maintaining **read-only consistency** with each
+    /// other.
+    ///
+    /// # Relationship with Modification Operations
+    ///
+    /// - This method returns an **immutable snapshot** (`Arc<Res>`) of the resource and does
+    ///   not block or wait for other threads to modify the resource (modification operations
+    ///   lock the resource's own `Mutex`).
+    /// - When a [`GlobalResource<Res>`] snapshot is held externally (`Arc` strong reference
+    ///   count > 1), subsequent [`modify_res`](Self::modify_res) operations on the same
+    ///   resource will **clone** a copy for modification, without affecting the snapshot
+    ///   obtained here.
+    ///
+    /// # Return Value
+    ///
+    /// Returns `Option<GlobalResource<Res>>`:
+    /// - If the resource exists and the lock can be acquired normally, returns
+    ///   `Some(GlobalResource<Res>)`;
+    /// - If the resource does not exist or the resource lock is poisoned, returns `None`.
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Send + Sync`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let mut container = GlobalResContainer::new();
+    /// container.with_resource(10i32);
+    ///
+    /// let res = container.res::<i32>();
+    /// assert_eq!(*res.unwrap(), 10);
+    ///
+    /// // Resource does not exist: returns None
+    /// assert!(container.res::<String>().is_none());
+    /// ```
+    ///
+    /// If you want a default value when the entry does not exist, use
+    /// [`res_or_default`](Self::res_or_default); if you need to route to a specific path
+    /// when the resource is missing, use [`res_or_route`](Self::res_or_route).
     #[must_use]
     pub fn res<Res: 'static + Send + Sync>(&self) -> Option<GlobalResource<Res>> {
         let entry = self.res_entry::<Res>()?;
@@ -172,13 +555,75 @@ impl GlobalResContainer {
         Some(GlobalResource::from(Arc::clone(&*guard)))
     }
 
-    /// Get a resource by type, returning `GlobalResource<Res>` if present.
+    /// Retrieves an **immutable shared snapshot** of a `Res`-typed resource from the container;
+    /// returns the provided routing result if the resource does not exist.
     ///
-    /// If the resource is not present, returns the provided [`ChainProcess`] as an `Err`.
+    /// # Behavior
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the container:
+    ///    - If the entry **exists** and the resource lock can be acquired normally, clones
+    ///      the resource's internal `Arc<Res>` (wrapped via [`GlobalResource`]) and returns
+    ///      it as `Ok(...)`.
+    ///    - If the entry **does not exist** (has not been inserted via
+    ///      [`with_resource`](Self::with_resource) or [`__store_res`](Self::__store_res)),
+    ///      returns `Err(route)` directly — the caller-provided `ChainProcess<C>` is
+    ///      returned as-is, without calling any closure.
+    /// 2. A poisoned lock is treated the same as a missing resource: returns `Err(route)`.
+    ///
+    /// # Return Value
+    ///
+    /// Returns `Result<GlobalResource<Res>, ChainProcess<C>>`:
+    /// - When the resource exists, returns `Ok(GlobalResource<Res>)` (a shared immutable
+    ///   snapshot);
+    /// - When the resource does not exist or the resource lock is poisoned, returns
+    ///   `Err(route)` (the provided routing result is returned as-is).
+    ///
+    /// # Purpose
+    ///
+    /// In chained program-routing (`#[chain]` and similar macros) scenarios, when a resource
+    /// is missing, it is usually desirable to route the program flow to some error-handling
+    /// branch or default path. This method allows the caller to pre-construct a
+    /// [`ChainProcess<C>`] route: when the resource exists, processing continues normally;
+    /// when the resource is missing, routing jumps to that path in place, avoiding
+    /// additional nested checks.
     ///
     /// # Errors
     ///
-    /// Returns `Err(route)` when the resource of type `Res` is not present in the store.
+    /// Returns `Err(route)` (the provided `ChainProcess<C>` is returned as-is) when:
+    /// - The resource entry does not exist in the container;
+    /// - The resource's own lock is poisoned.
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Send + Sync`.
+    /// - `C` must implement `ProgramCollect<Enum = C>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::{GlobalResContainer, ChainProcess, error::ChainProcessError};
+    /// # use mingling_core::MockProgramCollect;
+    /// let container = GlobalResContainer::new();
+    /// let route: ChainProcess<MockProgramCollect> =
+    ///     ChainProcess::Err(ChainProcessError::Other("missing".into()));
+    ///
+    /// // Resource missing: returns Err(route)
+    /// // Note: ChainProcess is not Clone, so pass each route by value.
+    /// assert!(container.res_or_route::<i32, MockProgramCollect>(route).is_err());
+    ///
+    /// let mut container = GlobalResContainer::new();
+    /// container.with_resource(42i32);
+    /// // Resource exists: returns Ok(GlobalResource)
+    /// let route: ChainProcess<MockProgramCollect> =
+    ///     ChainProcess::Err(ChainProcessError::Other("missing".into()));
+    /// match container.res_or_route::<i32, MockProgramCollect>(route) {
+    ///     Ok(res) => assert_eq!(*res, 42),
+    ///     Err(_) => panic!("expected Ok"),
+    /// }
+    /// ```
+    ///
+    /// [`ChainProcess<C>`]: crate::ChainProcess
+    /// [`GlobalResource`]: crate::GlobalResource
     pub fn res_or_route<Res, C>(
         &self,
         route: ChainProcess<C>,
@@ -190,7 +635,61 @@ impl GlobalResContainer {
         self.res().map_or_else(|| Err(route), Ok)
     }
 
-    /// Get a resource by type, returning `GlobalResource<Res>` or inserting a default
+    /// Retrieves an **immutable shared snapshot** of a `Res`-typed resource from the container;
+    /// returns a default instance if the resource does not exist.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the container:
+    ///    - If the entry **exists** and the resource lock can be acquired normally, clones
+    ///      the resource's internal `Arc<Res>`, wraps it as a [`GlobalResource<Res>`], and
+    ///      returns it.
+    ///    - If the entry **does not exist** (has not been inserted via
+    ///      [`with_resource`](Self::with_resource) or [`__store_res`](Self::__store_res)),
+    ///      constructs a **default instance** via
+    ///      `ResourceMarker::__resource_marker_default()`, wraps it as a
+    ///      [`GlobalResource<Res>`], and returns it.
+    /// 2. A poisoned lock is treated the same as a missing resource: it also returns a
+    ///    default instance.
+    ///
+    /// The returned [`GlobalResource<Res>`] can be dereferenced like `&Res` via `Deref`.
+    /// When multiple callers each hold their own returned [`GlobalResource<Res>`], they share
+    /// the same underlying `Arc<Res>` data, maintaining **read-only consistency** with each
+    /// other.
+    ///
+    /// # Difference from [`res()`](Self::res)
+    ///
+    /// - [`res()`](Self::res) returns `None` when the resource is missing or the lock is
+    ///   poisoned, requiring the caller to handle the `Option` themselves;
+    /// - This method returns a default value constructed by
+    ///   `ResourceMarker::__resource_marker_default()` in the same scenario, so the caller
+    ///   does not need to handle the missing branch and can use the return value directly.
+    ///
+    /// If you need to route to a specific path (rather than return a default value) when the
+    /// resource is missing, use [`res_or_route`](Self::res_or_route).
+    ///
+    /// # Constraints
+    ///
+    /// - `Res` must satisfy `'static + Send + Sync + ResourceMarker` (`ResourceMarker`
+    ///   provides default instantiation capability).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResContainer;
+    /// let mut container = GlobalResContainer::new();
+    /// container.with_resource(10i32);
+    ///
+    /// // Resource exists: returns the actual value
+    /// assert_eq!(*container.res_or_default::<i32>(), 10);
+    ///
+    /// // Resource does not exist: returns the default value (i32::default() == 0)
+    /// assert_eq!(*container.res_or_default::<String>(), "");
+    /// ```
+    ///
+    /// [`GlobalResource<Res>`]: crate::GlobalResource
+    /// [`with_resource`]: Self::with_resource
+    /// [`__store_res`]: Self::__store_res
     #[must_use]
     pub fn res_or_default<Res: 'static + Send + Sync + ResourceMarker>(
         &self,
@@ -210,7 +709,39 @@ impl<C> Program<C>
 where
     C: ProgramCollect<Enum = C>,
 {
-    /// Insert a resource of the given type, cloning the provided value into the store
+    /// Inserts (or overwrites) a resource into the program's global resource container.
+    ///
+    /// This is a convenience wrapper around [`GlobalResContainer::with_resource`] that
+    /// delegates to the `Program`'s internal `resources` container. The resource is stored
+    /// keyed by its type with the same semantics as [`GlobalResContainer::with_resource`]:
+    /// the same `Res` type can only hold one instance, and inserting the same type twice
+    /// overwrites the previous value.
+    ///
+    /// # Parameters
+    ///
+    /// - `res`: The resource value to store. It must satisfy:
+    ///   - `'static` — the value cannot contain borrowed data tied to a temporary lifetime.
+    ///   - `Send + Sync` — it must be safe to share across threads.
+    ///   - [`ResourceMarker`] — providing default value, clone, and modify capabilities.
+    ///
+    /// # Return Value
+    ///
+    /// Returns `&mut self` to allow method chaining, e.g.:
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program
+    ///     .with_resource(42i32)
+    ///     .with_resource(String::from("hello"));
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// - [`Self::res`] — read a shared immutable snapshot of a resource.
+    /// - [`Self::modify_res`] — read-modify-write a resource in place.
+    /// - [`GlobalResContainer::with_resource`] — the underlying implementation.
     pub fn with_resource<Res: 'static + Send + Sync + ResourceMarker>(
         &mut self,
         res: Res,
@@ -219,7 +750,51 @@ where
         self
     }
 
-    /// Modify a resource by type, applying a closure to the resource if present
+    /// Performs a **read-modify-write** operation on a resource stored in the program's
+    /// resource container and returns the closure's return value.
+    ///
+    /// This method delegates to [`GlobalResContainer::modify_res`], which provides the
+    /// full semantics of the read-modify-write operation. In summary:
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the program's resource container.
+    /// 2. If the entry does **not** exist (has not been inserted via [`with_resource`] or
+    ///    [`__store_res`]), returns `Return::default()` immediately **without** calling `f`.
+    /// 3. If the entry exists, locks the resource's **own** mutex (distinct from the
+    ///    container's global lock, so nested `modify_res` calls do not deadlock).
+    /// 4. Attempts to take ownership of the value via `Arc::try_unwrap`:
+    ///    - If no other shared snapshot exists, the original value is taken directly.
+    ///    - If another `GlobalResource` holds a snapshot, a **clone** is made via
+    ///      `ResourceMarker::__resource_marker_clone()` for modification.
+    /// 5. Calls the closure `f(&mut res)` with the available (`&mut`) reference.
+    /// 6. Writes the modified value back into the resource slot and releases the lock.
+    /// 7. Returns the closure's return value `r`.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type to modify. Must satisfy
+    ///   `'static + Default + ResourceMarker + Send + Sync`.
+    /// - `Return`: The closure's return type. Must implement [`Default`] since a fallback
+    ///   value is returned when the resource does not exist.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program.with_resource(10i32);
+    ///
+    /// let doubled = program.modify_res(|v: &mut i32| { *v *= 2; *v });
+    /// assert_eq!(doubled, 20);
+    /// assert_eq!(*program.res::<i32>().unwrap(), 20);
+    ///
+    /// // Resource does not exist: returns Default without invoking the closure.
+    /// let missing = program.modify_res::<String, i32>(|_| 42);
+    /// assert_eq!(missing, 0);
+    /// ```
+    ///
+    /// [`with_resource`]: Self::with_resource
+    /// [`__store_res`]: Self::__store_res
     pub fn modify_res<Res, Return>(&self, f: impl FnOnce(&mut Res) -> Return) -> Return
     where
         Res: 'static + Default + ResourceMarker + Send + Sync,
@@ -228,7 +803,63 @@ where
         self.resources.modify_res(f)
     }
 
-    /// Internal syntax for the `&mut MyResource` syntax of #[chain], do not use directly
+    /// Performs a **read-modify-write** operation on a resource and returns a
+    /// [`ChainProcess<C>`] routing result.
+    ///
+    /// # Purpose
+    ///
+    /// This is an internal method primarily used by `#[chain]` and related macros. It
+    /// behaves similarly to [`modify_res`](Self::modify_res) but is designed for
+    /// **chained program-routing** scenarios: the closure returns a [`ChainProcess<C>`]
+    /// that drives program execution to the next stage. Unlike `modify_res`, this method
+    /// **always** invokes the closure `f`, even when the resource does not exist or the
+    /// lock is poisoned (in those cases it constructs a temporary default resource via
+    /// `ResourceMarker::__resource_marker_default()`).
+    ///
+    /// # Execution Steps
+    ///
+    /// 1. Looks up the resource entry by `Res` type in the program's resource container.
+    ///    - If missing, constructs a **default resource**, calls `f(&mut def)`, and returns
+    ///      its [`ChainProcess<C>`] result.
+    ///    - If present, continues to step 2.
+    /// 2. Locks the resource's **own** mutex (independent of the container's global lock,
+    ///    so nested calls do not deadlock). If the lock is poisoned, also goes down the
+    ///    default-resource branch above.
+    /// 3. Attempts to take ownership via `Arc::try_unwrap`; otherwise clones a copy for
+    ///    modification using `ResourceMarker::__resource_marker_clone()`.
+    /// 4. Calls `f(&mut new_res)`, obtains the routing result `r`, and writes the modified
+    ///    value back into the resource slot.
+    /// 5. Returns `r`.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type. Must satisfy
+    ///   `'static + Default + ResourceMarker + Send + Sync`.
+    /// - `C`: The program collector type, constrained by the outer `impl` block to
+    ///   `ProgramCollect<Enum = C>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::{Program, ChainProcess, error::ChainProcessError};
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program.with_resource(1i32);
+    ///
+    /// let route: ChainProcess<ThisProgram> =
+    ///     program.__modify_res_and_return_route(|v: &mut i32| {
+    ///         *v += 1;
+    ///         ChainProcess::Err(ChainProcessError::Other("done".into()))
+    ///     });
+    /// assert!(matches!(route, ChainProcess::Err(_)));
+    /// assert_eq!(*program.res::<i32>().unwrap(), 2);
+    /// ```
+    ///
+    /// # Note
+    ///
+    /// This method is **`#[doc(hidden)]`** and is not intended for direct use in
+    /// business code. Use public macro-generated code or public APIs (e.g.
+    /// [`modify_res`](Self::modify_res)) instead.
     #[doc(hidden)]
     pub fn __modify_res_and_return_route<Res>(
         &self,
@@ -240,37 +871,214 @@ where
         self.resources.__modify_res_and_return_route(f)
     }
 
-    /// Internal syntax for the `&mut MyResource` syntax of async #[chain], do not use directly.
+    /// **Takes** a `Res`-typed resource value **out** of the program's resource container
+    /// and returns its ownership.
     ///
-    /// Extracts a mutable resource from the global store (clone-out), returning an
-    /// owned value. The caller must call [`__store_res`] to write back modifications.
+    /// # Purpose
+    ///
+    /// This is an internal method used by `#[chain]`, `#[resource]`, and similar macros.
+    /// Unlike [`modify_res`](Self::modify_res), which modifies a resource in place and
+    /// writes it back, this method **moves** the resource out of the container (or clones
+    /// an independent copy when shared snapshots exist) and returns it to the caller.
+    ///
+    /// # Execution Steps
+    ///
+    /// 1. Looks up the resource entry by `Res` type.
+    ///    - If missing, constructs and returns a **default instance** via
+    ///      `ResourceMarker::__resource_marker_default()`.
+    /// 2. Locks the resource's own mutex. If poisoned, also returns a default instance.
+    /// 3. Tries `Arc::try_unwrap` to move the original value out; otherwise clones a copy
+    ///    via `ResourceMarker::__resource_marker_clone()`.
+    /// 4. Returns the taken `Res` value. Note that the resource slot is **cleared** by
+    ///    this operation; subsequent calls to [`res`](Self::res) for the same resource may
+    ///    observe an emptied/default-valued slot.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type to extract. Must satisfy
+    ///   `'static + Default + ResourceMarker + Send + Sync`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program.with_resource(3i32);
+    /// let extracted: i32 = program.__extract_res_mut();
+    /// assert_eq!(extracted, 3);
+    /// ```
+    ///
+    /// # Note
+    ///
+    /// This method is **`#[doc(hidden)]`** and is not intended for direct use in
+    /// business code.
     #[doc(hidden)]
     #[must_use]
     pub fn __extract_res_mut<Res: 'static + Default + ResourceMarker + Send + Sync>(&self) -> Res {
         self.resources.__extract_res_mut()
     }
 
-    /// Internal syntax for the `&mut MyResource` syntax of async #[chain], do not use directly.
+    /// **Overwrites** a resource value into the program's resource container.
     ///
-    /// Stores a modified resource value back into the global store.
+    /// # Purpose
+    ///
+    /// This is an internal method used by `#[chain]`, `#[resource]`, and similar macros.
+    /// It behaves almost identically to [`with_resource`](Self::with_resource) (both
+    /// store/overwrite a resource by type), but differs in signature:
+    ///
+    /// - [`with_resource`](Self::with_resource) takes `&mut self` and returns `&mut Self`,
+    ///   suitable for chained initialization.
+    /// - `__store_res` takes `&self` and returns no value, suitable for **runtime**
+    ///   dynamic overwrite/update when only an immutable reference is available.
+    ///
+    /// # Execution Steps
+    ///
+    /// 1. Acquires the container's global lock (silently returns if poisoned).
+    /// 2. Looks up the existing entry by `Res` type:
+    ///    - If the entry does **not** exist, creates a new `Arc<Mutex<Arc<Res>>>` wrapper
+    ///      under `TypeId::of::<Res>()` and inserts it.
+    ///    - If it already exists, attempts to update it in place under the resource's own
+    ///      lock. If that fails (type mismatch or poisoned lock), replaces the entire entry.
+    /// 3. Releases the container's global lock.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type. Must satisfy
+    ///   `'static + Send + Sync + ResourceMarker`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    ///
+    /// // Runtime write
+    /// program.__store_res(8i32);
+    /// assert_eq!(*program.res::<i32>().unwrap(), 8);
+    ///
+    /// // Overwrite
+    /// program.__store_res(9i32);
+    /// assert_eq!(*program.res::<i32>().unwrap(), 9);
+    /// ```
+    ///
+    /// # Note
+    ///
+    /// This method is **`#[doc(hidden)]`** and is not intended for direct use in
+    /// business code. Use [`with_resource`](Self::with_resource) or
+    /// [`modify_res`](Self::modify_res) instead.
     #[doc(hidden)]
     pub fn __store_res<Res: 'static + Send + Sync + ResourceMarker>(&self, val: Res) {
         self.resources.__store_res(val);
     }
 
-    /// Get an resources by type, returning `Res` if present
+    /// Retrieves an **immutable shared snapshot** of a `Res`-typed resource from the
+    /// program's resource container.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Looks up the resource entry by `Res` type:
+    ///    - If the entry **does not exist** (has not been inserted via
+    ///      [`with_resource`](Self::with_resource) or [`__store_res`](Self::__store_res)),
+    ///      returns `None`.
+    ///    - If the entry exists, continues to step 2.
+    /// 2. Locks the resource's **own** mutex (independent of the container's global lock,
+    ///    so nested calls do not deadlock).
+    /// 3. On success, clones the internal `Arc<Res>` and wraps it as a
+    ///    [`GlobalResource<Res>`] to return.
+    ///
+    /// The returned [`GlobalResource<Res>`] can be dereferenced like `&Res` via `Deref`.
+    /// Multiple callers holding their own [`GlobalResource<Res>`] share the same underlying
+    /// `Arc<Res>` data, providing **read-only consistency**.
+    ///
+    /// # Return Value
+    ///
+    /// Returns `Option<GlobalResource<Res>>`:
+    /// - `Some(GlobalResource<Res>)` when the resource exists and the lock can be acquired;
+    /// - `None` when the resource does not exist or its lock is poisoned.
+    ///
+    /// If you want a default value in the missing case, use [`res_or_default`](Self::res_or_default);
+    /// if you need to route to a specific path, use [`res_or_route`](Self::res_or_route).
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type to read. Must satisfy `'static + Send + Sync`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program.with_resource(10i32);
+    ///
+    /// let res = program.res::<i32>();
+    /// assert_eq!(*res.unwrap(), 10);
+    ///
+    /// // Resource does not exist: returns None
+    /// assert!(program.res::<String>().is_none());
+    /// ```
     #[must_use]
     pub fn res<Res: 'static + Send + Sync>(&self) -> Option<GlobalResource<Res>> {
         self.resources.res()
     }
 
-    /// Get a resource by type, returning `GlobalResource<Res>` if present.
+    /// Retrieves an **immutable shared snapshot** of a `Res`-typed resource from the
+    /// program's resource container; returns the provided routing result if the resource
+    /// does not exist.
     ///
-    /// If the resource is not present, returns the provided [`ChainProcess`] as an `Err`.
+    /// # Behavior
+    ///
+    /// 1. Looks up the resource entry by `Res` type:
+    ///    - If the entry **exists** and the resource lock can be acquired, clones the
+    ///      internal `Arc<Res>` and returns it as `Ok(GlobalResource<Res>)`.
+    ///    - If the entry **does not exist** (or its lock is poisoned), returns
+    ///      `Err(route)` — the caller-provided [`ChainProcess<C>`] is returned as-is,
+    ///      without calling any closure.
+    ///
+    /// # Purpose
+    ///
+    /// In chained program-routing scenarios (e.g. `#[chain]`), when a resource is missing
+    /// it is desirable to route program flow to an error-handling branch or default path.
+    /// This method allows the caller to pre-construct a [`ChainProcess<C>`] route so that
+    /// missing-resource handling is encapsulated in a single call.
     ///
     /// # Errors
     ///
-    /// Returns `Err(route)` when the resource of type `Res` is not present in the store.
+    /// Returns `Err(route)` (the provided [`ChainProcess<C>`] as-is) when:
+    /// - The resource entry does not exist in the container.
+    /// - The resource's own lock is poisoned.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type to read. Must satisfy `'static + Send + Sync`.
+    /// - `C`: The program collector type, constrained by the outer `impl` block to
+    ///   `ProgramCollect<Enum = C>`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::{Program, ChainProcess, error::ChainProcessError};
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// let route: ChainProcess<ThisProgram> =
+    ///     ChainProcess::Err(ChainProcessError::Other("missing".into()));
+    ///
+    /// // Resource missing: returns Err(route)
+    /// // Note: ChainProcess is not Clone, so pass the route by value.
+    /// assert!(program.res_or_route::<i32>(route).is_err());
+    ///
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program.with_resource(42i32);
+    /// // Resource exists: returns Ok(GlobalResource)
+    /// let route: ChainProcess<ThisProgram> =
+    ///     ChainProcess::Err(ChainProcessError::Other("missing".into()));
+    /// match program.res_or_route::<i32>(route) {
+    ///     Ok(res) => assert_eq!(*res, 42),
+    ///     Err(_) => panic!("expected Ok"),
+    /// }
+    /// ```
     pub fn res_or_route<Res: 'static + Send + Sync>(
         &self,
         route: ChainProcess<C>,
@@ -278,7 +1086,49 @@ where
         self.resources.res_or_route(route)
     }
 
-    /// Get a resource by type, returning `GlobalResource<Res>` or inserting a default
+    /// Retrieves an **immutable shared snapshot** of a `Res`-typed resource from the
+    /// program's resource container; returns a default instance if the resource does not
+    /// exist.
+    ///
+    /// # Behavior
+    ///
+    /// 1. Looks up the resource entry by `Res` type:
+    ///    - If the entry **exists** and the resource lock can be acquired, clones the
+    ///      internal `Arc<Res>`, wraps it as a [`GlobalResource<Res>`], and returns it.
+    ///    - If the entry **does not exist** (or its lock is poisoned), constructs a
+    ///      default instance via `ResourceMarker::__resource_marker_default()`, wraps it
+    ///      as a [`GlobalResource<Res>`], and returns it.
+    ///
+    /// # Difference from [`res`](Self::res)
+    ///
+    /// - [`res`](Self::res) returns `None` when the resource is missing or the lock is
+    ///   poisoned, requiring the caller to handle the `Option` themselves.
+    /// - This method returns a default value in the same scenario, so the caller does not
+    ///   need to handle the missing branch.
+    ///
+    /// If you need to route to a specific path (rather than return a default value) when
+    /// the resource is missing, use [`res_or_route`](Self::res_or_route).
+    ///
+    /// # Type Parameters
+    ///
+    /// - `Res`: The resource type to read. Must satisfy
+    ///   `'static + Send + Sync + ResourceMarker` (the latter provides default
+    ///   instantiation capability).
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// use mingling_core::MockProgramCollect as ThisProgram;
+    /// let mut program = Program::<ThisProgram>::new_with_args(Vec::<String>::new());
+    /// program.with_resource(10i32);
+    ///
+    /// // Resource exists: returns the actual value
+    /// assert_eq!(*program.res_or_default::<i32>(), 10);
+    ///
+    /// // Resource does not exist: returns the default value (i32::default() == 0)
+    /// assert_eq!(*program.res_or_default::<String>(), "");
+    /// ```
     #[must_use]
     pub fn res_or_default<Res: 'static + Send + Sync + ResourceMarker>(
         &self,
@@ -287,13 +1137,109 @@ where
     }
 }
 
-/// Global assets for storing Program global state information
+/// Global type wrapper.
+///
+/// `GlobalResource` is a **thread-safe shared immutable snapshot** wrapper around a resource value.
+/// It internally holds an `Arc<ResType>`, allowing multiple callers to simultaneously hold read-only
+/// access to the same underlying data without worrying about ownership transfer or lifetime entanglement.
+///
+/// # Why `GlobalResource` is Needed
+///
+/// In the [`GlobalResContainer`] (global resource container), resources are stored in a three-layer
+/// `Arc<Mutex<Arc<Res>>>` structure:
+///
+/// - The outer `Mutex` ensures that only one modifier can exclusively access the resource at a time;
+/// - The innermost `Arc<Res>` provides an **immutable shared snapshot**;
+/// - `GlobalResource` is the safe exposure wrapper around that innermost `Arc<Res>`.
+///
+/// When multiple callers each obtain a `GlobalResource` via [`GlobalResContainer::res`], they share
+/// the same underlying `Arc<Res>`, thus guaranteeing consistency of data between them (all being the
+/// same snapshot).
+///
+/// # Usage
+///
+/// `GlobalResource<ResType>` implements [`Deref`] (with target type `ResType`), so it can be
+/// dereferenced directly like `&ResType` to access the underlying value:
+///
+/// ```
+/// # use mingling_core::GlobalResource;
+/// let res = GlobalResource::new(42i32);
+/// assert_eq!(*res, 42);
+/// ```
+///
+/// It can also be used with [`AsRef`] to obtain a `&ResType` reference:
+///
+/// ```
+/// # use mingling_core::GlobalResource;
+/// let res = GlobalResource::new(String::from("hello"));
+/// assert_eq!(res.as_ref(), "hello");
+/// ```
+///
+/// # Relationship with Modification Operations
+///
+/// - `GlobalResource` provides **read-only** access only; the underlying data is immutable.
+/// - When an external caller holds a `GlobalResource` (causing the `Arc` strong reference count
+///   to be > 1), subsequent [`modify_res`](GlobalResContainer::modify_res) operations on the same
+///   resource will **clone** a copy for modification and **will not affect** the snapshot held here.
+/// - This means that `GlobalResource` can serve as a stable view of the resource, retaining the
+///   data content as of the initial read even after modification operations occur.
+///
+/// # Type Constraints
+///
+/// - `ResType` must satisfy `'static + Send + Sync` to ensure safe sharing across threads.
+/// - The resource itself typically also needs to implement [`ResourceMarker`] (providing default
+///   values, cloning, etc.) so that the container can perform default instantiation and
+///   clone-based modification.
+///
+/// # See Also
+///
+/// - [`GlobalResContainer::res`] — obtain a `GlobalResource` snapshot from the container.
+/// - [`GlobalResContainer::res_or_default`] — obtain a snapshot, or return a default value when missing.
+/// - [`GlobalResContainer::res_or_route`] — obtain a snapshot, or route to a specified path when missing.
+///
+/// [`GlobalResContainer`]: crate::GlobalResContainer
+/// [`GlobalResContainer::res`]: crate::GlobalResContainer::res
+/// [`GlobalResContainer::res_or_default`]: crate::GlobalResContainer::res_or_default
+/// [`GlobalResContainer::res_or_route`]: crate::GlobalResContainer::res_or_route
+/// [`ResourceMarker`]: crate::ResourceMarker
 pub struct GlobalResource<ResType: 'static + Send + Sync> {
     res_arc: Arc<ResType>,
 }
 
 impl<ResType: 'static + Send + Sync> GlobalResource<ResType> {
-    /// Create a new `GlobalAsset` from an `AssetType` value.
+    /// Creates a new [`GlobalResource`], wrapping the given value directly.
+    ///
+    /// # Parameters
+    ///
+    /// - `res`: The resource value to wrap. The value must be of a `'static + Send + Sync` type
+    ///   to ensure it can be safely shared across threads.
+    ///
+    /// # Return Value
+    ///
+    /// Returns a [`GlobalResource<ResType>`] holding `Arc::new(res)`, which can be dereferenced
+    /// via [`Deref`] or [`AsRef`] to access the underlying value.
+    ///
+    /// # Difference from `From<Arc<ResType>>`
+    ///
+    /// - `new` accepts an **owned value** `ResType`, automatically wrapping it into `Arc<ResType>`;
+    /// - `From<Arc<ResType>>` accepts an **already-wrapped `Arc`**, reusing it directly without an
+    ///   additional heap allocation.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use mingling_core::GlobalResource;
+    /// let res = GlobalResource::new(42i32);
+    /// assert_eq!(*res, 42);
+    /// ```
+    ///
+    /// # See Also
+    ///
+    /// - [`GlobalResource::from`] (`From<Arc<ResType>>`) — construct from an existing `Arc`.
+    /// - [`Deref`] — dereference to access the underlying value.
+    ///
+    /// [`Deref`]: std::ops::Deref
+    /// [`AsRef`]: std::convert::AsRef
     pub fn new(res: ResType) -> Self {
         Self {
             res_arc: Arc::new(res),
@@ -321,21 +1267,143 @@ impl<ResType: 'static + Send + Sync> AsRef<ResType> for GlobalResource<ResType> 
     }
 }
 
-/// Resource marker trait, types that implement the Clone and Default traits can be considered as resources
+/// Marks a type as a **program global resource** (`Res`) that can be stored in the
+/// [`GlobalResContainer`].
+///
+/// # Purpose
+///
+/// `ResourceMarker` is a marker trait that resource types must implement, providing three fundamental
+/// capabilities:
+///
+/// 1. **Cloning** (`__resource_marker_clone`) — when a resource in the container is held by an external
+///    shared snapshot (such as a [`GlobalResource`]), modification operations need to clone an independent
+///    copy for modification, to avoid affecting the external snapshot.
+/// 2. **Default instantiation** (`__resource_marker_default`) — when a resource entry is missing, or the
+///    lock is poisoned, the container needs a default instance as a fallback value.
+/// 3. **Modification through the global program container** (`__resource_marker_modify`) — locates the
+///    currently active [`Program<C>`] via the type parameter `C` and performs a read-modify-write
+///    operation on the `&mut Self` resource within it.
+///
+/// # Relationship with `Default + Clone`
+///
+/// This trait provides an **automatic blanket implementation** for all types satisfying
+/// `T: Default + Clone + Send + Sync + 'static`, so ordinary user-defined data types do not need to
+/// manually implement `ResourceMarker`. If a type has custom "default value" or "cloning" semantics
+/// (for example, if the resource internally contains `Arc`, `Rc`, singleton references, etc.), users may
+/// also **manually implement** this trait to override the default behavior.
+///
+/// # Comparison of the Three Methods' Uses
+///
+/// | Method | Invocation Scenario | Corresponding Blanket Implementation |
+/// |--------|-------------------|--------------------------------------|
+/// | `__resource_marker_clone` | When the resource is held by a shared snapshot, clone a copy before modification | `Clone::clone` |
+/// | `__resource_marker_default` | Fallback value when the resource is missing or the lock is poisoned | `Default::default` |
+/// | `__resource_marker_modify` | Perform a read-modify-write on `&mut Self` in the global program container | Calls `this::<C>().modify_res(f)` |
+///
+/// # Role in Macro Expansion
+///
+/// In code expanded from `#[chain]`, `#[resource]`, and similar macros, wherever a type needs to be
+/// treated as a resource for injection, modification, extraction, or storage, this trait's constraint
+/// (`Res: ResourceMarker`) is implicitly relied upon. The macro code itself does not care about the
+/// specific type of the resource; it only requires that the type implements the three capabilities
+/// of this trait.
+///
+/// # Constraints
+///
+/// Types implementing this trait must simultaneously satisfy `'static + Send + Sync`, to ensure
+/// that the resource can be safely shared across threads and does not carry a non-static lifetime.
+///
+/// # Note
+///
+/// All methods of this trait are **`#[doc(hidden)]`** internal methods and should not be called directly
+/// in business code. The public APIs exposed are [`GlobalResContainer::with_resource`],
+/// [`GlobalResContainer::modify_res`], [`GlobalResContainer::res`], etc.
+///
+/// [`GlobalResContainer`]: crate::GlobalResContainer
+/// [`GlobalResource`]: crate::GlobalResource
+/// [`Program<C>`]: crate::Program
+/// [`this`]: crate::this
+/// [`GlobalResContainer::with_resource`]: crate::GlobalResContainer::with_resource
+/// [`GlobalResContainer::modify_res`]: crate::GlobalResContainer::modify_res
+/// [`GlobalResContainer::res`]: crate::GlobalResContainer::res
 pub trait ResourceMarker {
-    /// Clone the resource. This is an internal method used by the resource injection system
-    /// and should not be called directly by user code.
+    /// Clones the current resource value and returns an independent new instance.
+    ///
+    /// # Invocation Scenario
+    ///
+    /// When an external caller holds a shared snapshot of the resource (with an `Arc` strong reference
+    /// count > 1), the container's modification operation (such as [`modify_res`](GlobalResContainer::modify_res))
+    /// cannot directly take ownership of the resource, so this method is called to **clone a copy**
+    /// for modification, ensuring the external snapshot is not affected.
+    ///
+    /// # Implementation Conventions
+    ///
+    /// - Must return an independent instance that is logically equivalent (with the same value) to
+    ///   `self`; modifying the return value must not affect the original value.
+    /// - The blanket implementation directly delegates to `Clone::clone(self)`.
+    /// - For types containing reference-counted structures such as `Arc` or `Rc`, the underlying data
+    ///   should be deep-cloned rather than merely copying the reference, unless sharing is explicitly
+    ///   the intended semantics.
     #[must_use]
     #[doc(hidden)]
     fn __resource_marker_clone(&self) -> Self;
 
-    /// Create a default instance of the resource. This is an internal method used by the
-    /// resource injection system and should not be called directly by user code.
+    /// Constructs a default instance of the type, used as a fallback value when the resource is missing
+    /// or the lock is poisoned.
+    ///
+    /// # Invocation Scenario
+    ///
+    /// This method is called in the following scenarios:
+    /// - When obtaining a resource snapshot via [`res_or_default`](GlobalResContainer::res_or_default),
+    ///   but the resource entry does not exist in the container or the lock is poisoned;
+    /// - When performing a read-modify-write via
+    ///   [`__modify_res_and_return_route`](GlobalResContainer::__modify_res_and_return_route),
+    ///   if the resource entry does not exist or the lock is poisoned, a temporary default instance
+    ///   needs to be constructed for use by the closure;
+    /// - When extracting a resource via [`__extract_res_mut`](GlobalResContainer::__extract_res_mut),
+    ///   if the resource entry does not exist or the lock is poisoned.
+    ///
+    /// # Implementation Conventions
+    ///
+    /// - Each call should return a **brand new** default instance and accept no parameters.
+    /// - The blanket implementation directly delegates to `Default::default()`.
+    /// - If the type's default value has special semantics (for example, default configuration,
+    ///   empty collection, zero value, etc.), this should be reflected here.
     #[doc(hidden)]
     fn __resource_marker_default() -> Self;
 
-    /// Modify the resource using a closure. This is an internal method used by the resource
-    /// injection system and should not be called directly by user code.
+    /// Performs a **read-modify-write** operation on a resource of type `Self` in the currently active
+    /// global program container.
+    ///
+    /// # Generic Parameters
+    ///
+    /// - `C`: The program collector type. Must satisfy `ProgramCollect<Enum = C> + 'static`,
+    ///   used to locate the currently active [`Program<C>`](crate::Program).
+    ///
+    /// # Parameters
+    ///
+    /// - `f`: A closure receiving `&mut Self`, within which the resource value is modified. The closure's
+    ///   return value is not used (returns `()`).
+    ///
+    /// # Behavior
+    ///
+    /// This method is internally equivalent to calling:
+    ///
+    /// ```text
+    /// this::<C>().modify_res(f)
+    /// ```
+    ///
+    /// where `this::<C>()` obtains the thread-bound global [`Program<C>`](crate::Program) instance,
+    /// and then calls its [`modify_res`](crate::Program::modify_res) method to complete the
+    /// read-modify-write. If the resource does not exist, `modify_res` returns `()` (the `Default`
+    /// value of `Return`) without calling `f`.
+    ///
+    /// # Role in Macro Expansion
+    ///
+    /// In code expanded from `#[chain]` and similar macros, when a resource needs to be modified via
+    /// the global program container without explicitly obtaining a container reference, this method is
+    /// called. It automatically locates the correct program instance via the type parameter `C`,
+    /// simplifying code generation logic.
     #[doc(hidden)]
     fn __resource_marker_modify<C>(f: impl FnOnce(&mut Self))
     where

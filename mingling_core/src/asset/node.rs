@@ -1,16 +1,39 @@
 use just_fmt::kebab_case;
 
-/// Represents a command node, used to match user-input command paths.
+/// Represents a command node used for matching user-input command paths.
 ///
-/// The node consists of multiple parts, each separated by a dot (`.`), and automatically converted to kebab-case.
-/// For example, the input string `"node.subnode"` will be converted to a node representation of `["node", "subnode"]`.
+/// The node consists of multiple segments, separated by dots (`.`), which are automatically
+/// converted to kebab-case. For example, the input string `"node.subnode"` would be converted
+/// to the node representation `["node", "subnode"]`.
+///
+/// # Examples
+///
+/// ```
+/// use mingling_core::Node;
+///
+/// // Create a node and append child segments
+/// let node = Node::from("base").join("sub").join("leaf");
+/// assert_eq!(node.to_string(), "base.sub.leaf");
+/// ```
 #[derive(Debug, Default)]
 pub struct Node {
     node: Vec<String>,
 }
 
 impl Node {
-    /// Append a new part to the node path.
+    /// Appends a new segment to the node path.
+    ///
+    /// This method consumes the current node and returns a new node with the new
+    /// segment appended to the end of the path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::Node;
+    ///
+    /// let node = Node::from("base").join("sub");
+    /// assert_eq!(node.to_string(), "base.sub");
+    /// ```
     #[must_use]
     pub fn join(self, node: impl Into<String>) -> Self {
         let mut new_node = self.node;

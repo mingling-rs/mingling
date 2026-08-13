@@ -2,19 +2,140 @@ use std::fmt::Display;
 
 use crate::{ChainProcess, Program, ProgramCollect, asset::node::Node};
 
-/// Dispatches user input commands to specific [`ChainProcess`](./enum.ChainProcess.html)
+/// The entry logic of the Mingling program
 ///
-/// Note: If you are using [mingling_macros](https://crates.io/crates/mingling_macros),
-/// you can use the `dispatcher!("node.subnode", CommandType => Entry)` macro to declare a `Dispatcher`
+/// Dispatcher is the first stop for args after they enter the program:
+/// it is used to wrap the user's raw args into an initial [`ChainProcess`] and feed them into the program loop
+///
+/// # Manual impl
+///
+/// ```
+/// # use mingling_core::ChainProcess;
+/// # use mingling_core::Dispatcher;
+/// # use mingling_core::Grouped;
+/// # use mingling_core::Routable;
+/// # use mingling_core::Node;
+/// # use mingling_core::MockProgramCollect as ThisProgram;
+/// # unsafe impl Grouped<ThisProgram> for Foo {
+/// # fn member_id() -> ThisProgram { ThisProgram::Foo }
+/// # }
+/// struct CMDGreet;
+/// struct Foo {
+///     args: Vec<String>
+/// }
+///
+/// impl Dispatcher<ThisProgram> for CMDGreet {
+///     fn node(&self) -> Node {
+///         Node::default().join("greet")
+///     }
+///
+///     fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+///         Routable::to_chain(Foo { args })
+///     }
+///
+///     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
+///         Box::new(CMDGreet)
+///     }
+/// }
+/// ```
 pub trait Dispatcher<C> {
-    /// Returns a command node for matching user input
+    /// Get the node of this Dispatcher, used to tell the program loop which arguments should be handled by this Dispatcher
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// # use mingling_core::ChainProcess;
+    /// # use mingling_core::Dispatcher;
+    /// # use mingling_core::Grouped;
+    /// # use mingling_core::Routable;
+    /// # use mingling_core::Node;
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// # unsafe impl Grouped<ThisProgram> for Foo {
+    /// # fn member_id() -> ThisProgram { ThisProgram::Foo }
+    /// # }
+    /// # struct CMDGreet;
+    /// # struct Foo {
+    /// #     args: Vec<String>
+    /// # }
+    /// # impl Dispatcher<ThisProgram> for CMDGreet {
+    /// fn node(&self) -> Node {
+    ///     // Construct the node
+    ///     Node::default().join("greet")
+    /// }
+    /// #     fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+    /// #         Routable::to_chain(Foo { args })
+    /// #     }
+    /// #     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
+    /// #         Box::new(CMDGreet)
+    /// #     }
+    /// # }
+    /// ```
     fn node(&self) -> Node;
 
-    /// Returns a [`ChainProcess`](./enum.ChainProcess.html) based on user input arguments,
-    /// to be sent to the specific invocation
+    /// Begin logic, receives the remaining arguments after the prefix has been stripped
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// # use mingling_core::ChainProcess;
+    /// # use mingling_core::Dispatcher;
+    /// # use mingling_core::Grouped;
+    /// # use mingling_core::Routable;
+    /// # use mingling_core::Node;
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// # unsafe impl Grouped<ThisProgram> for Foo {
+    /// # fn member_id() -> ThisProgram { ThisProgram::Foo }
+    /// # }
+    /// # struct CMDGreet;
+    /// # struct Foo {
+    /// #     args: Vec<String>
+    /// # }
+    /// # impl Dispatcher<ThisProgram> for CMDGreet {
+    /// #     fn node(&self) -> Node {
+    /// #         Node::default().join("greet")
+    /// #     }
+    /// fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+    ///     // Create Foo from args and route it to the next chain
+    ///     Routable::to_chain(Foo { args })
+    /// }
+    /// #     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
+    /// #         Box::new(CMDGreet)
+    /// #     }
+    /// # }
+    /// ```
     fn begin(&self, args: Vec<String>) -> ChainProcess<C>;
 
-    /// Clones the current dispatcher for implementing the `Clone` trait
+    /// Clone the dispatcher's Box for dynamic dispatch
+    ///
+    /// Example:
+    ///
+    /// ```
+    /// # use mingling_core::ChainProcess;
+    /// # use mingling_core::Dispatcher;
+    /// # use mingling_core::Grouped;
+    /// # use mingling_core::Routable;
+    /// # use mingling_core::Node;
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// # unsafe impl Grouped<ThisProgram> for Foo {
+    /// # fn member_id() -> ThisProgram { ThisProgram::Foo }
+    /// # }
+    /// # struct CMDGreet;
+    /// # struct Foo {
+    /// #     args: Vec<String>
+    /// # }
+    /// # impl Dispatcher<ThisProgram> for CMDGreet {
+    /// #     fn node(&self) -> Node {
+    /// #         Node::default().join("greet")
+    /// #     }
+    /// #     fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+    /// #         Routable::to_chain(Foo { args })
+    /// #     }
+    /// fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
+    ///     // Create a new Box
+    ///     Box::new(CMDGreet)
+    /// }
+    /// # }
+    /// ```
     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<C>>;
 }
 
@@ -31,7 +152,39 @@ impl<C> Program<C>
 where
     C: ProgramCollect<Enum = C>,
 {
-    /// Adds a dispatcher to the program.
+    /// Add a Dispatcher to the program
+    ///
+    /// This dynamically registers a Dispatcher into the program, used for command matching at program startup
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// # use mingling_core::ChainProcess;
+    /// # use mingling_core::Dispatcher;
+    /// # use mingling_core::Grouped;
+    /// # use mingling_core::Routable;
+    /// # use mingling_core::Node;
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// # unsafe impl Grouped<ThisProgram> for Foo {
+    /// # fn member_id() -> ThisProgram { ThisProgram::Foo }
+    /// # }
+    /// # struct CMDGreet;
+    /// # struct Foo {
+    /// #     args: Vec<String>
+    /// # }
+    /// # impl Dispatcher<ThisProgram> for CMDGreet {
+    /// #     fn node(&self) -> Node {
+    /// #         Node::default().join("greet")
+    /// #     }
+    /// #     fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+    /// #         Routable::to_chain(Foo { args })
+    /// #     }
+    /// #     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
+    /// #         Box::new(CMDGreet)
+    /// #     }
+    /// # }
+    /// let mut program = Program::<ThisProgram>::new();
+    /// program.with_dispatcher(CMDGreet);
+    /// ```
     #[cfg_attr(
         feature = "dispatch_tree",
         deprecated(
@@ -53,13 +206,43 @@ where
         self
     }
 
-    /// Add some dispatchers to the program.
-    #[cfg_attr(
-        feature = "dispatch_tree",
-        deprecated(
-            note = "When the `dispatch_tree` feature is enabled, the `dispatcher` field no longer exists inside Program. All types are collected at compile time by the `gen_program!()` macro, so the `with_dispatcher` function is no longer needed"
-        )
+    /// Add a group of Dispatchers to the program
+    ///
+    /// This dynamically registers a group of Dispatchers into the program, used for command matching at program startup
+    ///
+    /// ```
+    /// # use mingling_core::Program;
+    /// # use mingling_core::ChainProcess;
+    /// # use mingling_core::Dispatcher;
+    /// # use mingling_core::Grouped;
+    /// # use mingling_core::Routable;
+    /// # use mingling_core::Node;
+    /// # use mingling_core::MockProgramCollect as ThisProgram;
+    /// # unsafe impl Grouped<ThisProgram> for Foo {
+    /// # fn member_id() -> ThisProgram { ThisProgram::Foo }
+    /// # }
+    /// # struct CMDGreet;
+    /// # struct Foo {
+    /// #     args: Vec<String>
+    /// # }
+    /// # impl Dispatcher<ThisProgram> for CMDGreet {
+    /// #     fn node(&self) -> Node {
+    /// #         Node::default().join("greet")
+    /// #     }
+    /// #     fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+    /// #         Routable::to_chain(Foo { args })
+    /// #     }
+    /// #     fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
+    /// #         Box::new(CMDGreet)
+    /// #     }
+    /// # }
+    /// let mut program = Program::<ThisProgram>::new();
+    /// program.with_dispatchers((CMDGreet, /* Other Dispatchers */));
+    /// ```
+    #[deprecated(
+        note = "with_dispatchers is no longer the recommended way to register Dispatchers, please split into multiple with_dispatcher calls"
     )]
+    #[allow(deprecated)]
     pub fn with_dispatchers<D>(&mut self, dispatchers: D) -> &mut Self
     where
         D: Into<Dispatchers<C>>,
@@ -77,26 +260,29 @@ where
     }
 }
 
-/// A collection of dispatchers.
+/// Represents a group of Dispatchers
 ///
-/// This struct holds a vector of boxed `Dispatcher` trait objects,
-/// allowing multiple dispatchers to be grouped together and passed
-/// to the program via `Program::with_dispatchers`.
-/// A collection of dispatchers.
+/// It records a group of Dispatchers and implements conversion from tuples `(Disp, ..)` for this type,
+/// allowing for simpler construction syntax when using `with_dispatchers`
 ///
-/// This struct holds a vector of boxed `Dispatcher` trait objects,
-/// allowing multiple dispatchers to be grouped together and passed
-/// to the program via `Program::with_dispatchers`.
+/// # Limits
+///
+/// Dispatchers supports conversion from tuples of up to 7 Dispatchers
+#[deprecated(
+    note = "with_dispatchers is no longer the recommended way to register Dispatchers, please split into multiple with_dispatcher calls"
+)]
 pub struct Dispatchers<G> {
     dispatcher: Vec<Box<dyn Dispatcher<G> + Send + Sync + 'static>>,
 }
 
+#[allow(deprecated)]
 impl<G> From<Vec<Box<dyn Dispatcher<G> + Send + Sync>>> for Dispatchers<G> {
     fn from(dispatcher: Vec<Box<dyn Dispatcher<G> + Send + Sync>>) -> Self {
         Self { dispatcher }
     }
 }
 
+#[allow(deprecated)]
 impl<G> From<Box<dyn Dispatcher<G> + Send + Sync>> for Dispatchers<G> {
     fn from(dispatcher: Box<dyn Dispatcher<G> + Send + Sync>) -> Self {
         Self {
@@ -105,6 +291,7 @@ impl<G> From<Box<dyn Dispatcher<G> + Send + Sync>> for Dispatchers<G> {
     }
 }
 
+#[allow(deprecated)]
 impl<D, G> From<(D,)> for Dispatchers<G>
 where
     D: Dispatcher<G> + Send + Sync + 'static,
@@ -117,6 +304,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<D1, D2, G> From<(D1, D2)> for Dispatchers<G>
 where
     D1: Dispatcher<G> + Send + Sync + 'static,
@@ -130,6 +318,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<D1, D2, D3, G> From<(D1, D2, D3)> for Dispatchers<G>
 where
     D1: Dispatcher<G> + Send + Sync + 'static,
@@ -148,6 +337,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<D1, D2, D3, D4, G> From<(D1, D2, D3, D4)> for Dispatchers<G>
 where
     D1: Dispatcher<G> + Send + Sync + 'static,
@@ -168,6 +358,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<D1, D2, D3, D4, D5, G> From<(D1, D2, D3, D4, D5)> for Dispatchers<G>
 where
     D1: Dispatcher<G> + Send + Sync + 'static,
@@ -190,6 +381,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<D1, D2, D3, D4, D5, D6, G> From<(D1, D2, D3, D4, D5, D6)> for Dispatchers<G>
 where
     D1: Dispatcher<G> + Send + Sync + 'static,
@@ -214,6 +406,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<D1, D2, D3, D4, D5, D6, D7, G> From<(D1, D2, D3, D4, D5, D6, D7)> for Dispatchers<G>
 where
     D1: Dispatcher<G> + Send + Sync + 'static,
@@ -240,6 +433,7 @@ where
     }
 }
 
+#[allow(deprecated)]
 impl<G> std::ops::Deref for Dispatchers<G> {
     type Target = Vec<Box<dyn Dispatcher<G> + Send + Sync + 'static>>;
 
@@ -248,6 +442,7 @@ impl<G> std::ops::Deref for Dispatchers<G> {
     }
 }
 
+#[allow(deprecated)]
 impl<G> From<Dispatchers<G>> for Vec<Box<dyn Dispatcher<G> + Send + Sync + 'static>> {
     fn from(val: Dispatchers<G>) -> Self {
         val.dispatcher
@@ -259,8 +454,6 @@ mod tests {
     use super::*;
     use crate::ChainProcess;
     use std::fmt::Display;
-
-    /// A minimal mock Dispatcher for testing Dispatchers conversions.
     #[derive(Clone)]
     struct MockDispatcher {
         name: &'static str,
@@ -279,8 +472,6 @@ mod tests {
             Box::new(self.clone())
         }
     }
-
-    /// Minimal mock group for Dispatchers tests
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     #[allow(dead_code)]
     enum MockG {
@@ -294,6 +485,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_single_tuple() {
         let disp = MockDispatcher { name: "foo" };
         let dispatchers: Dispatchers<MockG> = Dispatchers::from((disp,));
@@ -301,6 +493,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_two_tuple() {
         let d1 = MockDispatcher { name: "a" };
         let d2 = MockDispatcher { name: "b" };
@@ -309,6 +502,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_three_tuple() {
         let d1 = MockDispatcher { name: "x" };
         let d2 = MockDispatcher { name: "y" };
@@ -318,6 +512,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_four_tuple() {
         let d1 = MockDispatcher { name: "1" };
         let d2 = MockDispatcher { name: "2" };
@@ -328,6 +523,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_five_tuple() {
         let d1 = MockDispatcher { name: "a" };
         let d2 = MockDispatcher { name: "b" };
@@ -339,6 +535,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_six_tuple() {
         let d1 = MockDispatcher { name: "a" };
         let d2 = MockDispatcher { name: "b" };
@@ -351,6 +548,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_seven_tuple() {
         let d1 = MockDispatcher { name: "a" };
         let d2 = MockDispatcher { name: "b" };
@@ -364,6 +562,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_vec_of_boxed() {
         let d1: Box<dyn Dispatcher<MockG> + Send + Sync> = Box::new(MockDispatcher { name: "a" });
         let d2: Box<dyn Dispatcher<MockG> + Send + Sync> = Box::new(MockDispatcher { name: "b" });
@@ -372,6 +571,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_from_single_boxed() {
         let d: Box<dyn Dispatcher<MockG> + Send + Sync> = Box::new(MockDispatcher { name: "x" });
         let dispatchers: Dispatchers<MockG> = d.into();
@@ -379,6 +579,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_deref() {
         let disp = MockDispatcher { name: "test" };
         let dispatchers: Dispatchers<MockG> = Dispatchers::from((disp,));
@@ -387,6 +588,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn test_dispatchers_into_vec() {
         let disp = MockDispatcher { name: "foo" };
         let dispatchers: Dispatchers<MockG> = Dispatchers::from((disp,));

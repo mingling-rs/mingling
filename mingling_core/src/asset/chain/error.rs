@@ -1,12 +1,15 @@
 use crate::error::ProgramInternalExecuteError;
 
-/// Represents errors that can occur during chain processing.
+/// Represents error types that occur in a chained processing pipeline.
+///
+/// This enum is used to uniformly encapsulate various exceptions that may
+/// occur during the execution of an entire chain, including IO errors and
+/// other custom error messages.
 #[derive(Debug)]
 pub enum ChainProcessError {
-    /// An error with a custom description.
+    /// Other unclassified generic errors, stored as a string description.
     Other(String),
-
-    /// An I/O error that occurred during chain processing.
+    /// Errors resulting from a failed IO operation, holding the standard library's [`std::io::Error`]
     IO(std::io::Error),
 }
 
