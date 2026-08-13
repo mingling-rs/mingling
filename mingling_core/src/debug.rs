@@ -1,4 +1,3 @@
-// Doc Not Optimize
 #[macro_export]
 #[doc(hidden)]
 /// A macro that only executes the given expressions when the `debug` feature is enabled.
