@@ -19,7 +19,7 @@ pub use group::*;
 pub struct AnyOutput<G> {
     pub(crate) inner: Box<dyn std::any::Any + Send + 'static>,
 
-    /// The [`TypeId`] of the concrete type stored in `inner`.
+    /// The [`TypeId`](std::any::TypeId) of the concrete type stored in `inner`.
     ///
     /// This is set during construction and used for type-checking
     /// in downcast, restore, and is methods.
@@ -35,6 +35,10 @@ pub struct AnyOutput<G> {
 
 impl<G> AnyOutput<G> {
     /// Create an `AnyOutput` from a `Send + Grouped<G>` type
+    ///
+    /// # Panics
+    ///
+    /// This function does not panic.
     pub fn new<T>(value: T) -> Self
     where
         T: Send + Grouped<G> + 'static,
@@ -46,7 +50,7 @@ impl<G> AnyOutput<G> {
         }
     }
 
-    /// Create an `AnyOutput` from a raw value with a manually specified [`member_id`].
+    /// Create an `AnyOutput` from a raw value with a manually specified `member_id`.
     ///
     /// This function bypasses the [`Grouped`] trait, meaning the `member_id` you provide
     /// does **not** have to match the actual concrete type `T`. The scheduler uses
@@ -72,9 +76,9 @@ impl<G> AnyOutput<G> {
         }
     }
 
-    /// Get the [`TypeId`] of the concrete type stored in `inner`.
+    /// Get the [`TypeId`](std::any::TypeId) of the concrete type stored in `inner`.
     ///
-    /// The `TypeId` is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
+    /// The [`TypeId`](std::any::TypeId) is set during construction (via [`AnyOutput::new`] or [`AnyOutput::new_bare`])
     /// and is used for subsequent downcasting and type checking.
     pub const fn type_id(&self) -> std::any::TypeId {
         self.type_id
@@ -128,7 +132,7 @@ impl<G> AnyOutput<G> {
     ///
     /// # Safety
     ///
-    /// This is only safe when `T` matches the `TypeId` stored in the `AnyOutput`.
+    /// This is only safe when `T` matches the [`TypeId`](std::any::TypeId) stored in the `AnyOutput`.
     /// Generated code (via `gen_program!()`) guarantees this by dispatching on
     /// `member_id` before calling `restore`.
     pub fn restore<T: 'static>(self) -> Option<T> {

@@ -24,7 +24,7 @@ mod tester;
 
 /// Module for setting up a `Mingling` program.
 ///
-/// This module provides the [`ProgramSetup`] type, which allows users to configure
+/// This module provides the [`ProgramSetup`](https://docs.rs/mingling/latest/mingling/setup/trait.ProgramSetup.html) type, which allows users to configure
 /// and initialize the program's execution environment.
 pub mod setup {
     pub use crate::program::setup::ProgramSetup;

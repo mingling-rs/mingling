@@ -3,7 +3,7 @@ use crate::{AnyOutput, ChainProcess, Grouped, ProgramCollect};
 /// Represents a type that can be routed within a group.
 ///
 /// Used to indicate that a group member can be routed into another [`ChainProcess`]
-/// within the execution logic of a [`Chain`].
+/// within the execution logic of a [`Chain`](https://docs.rs/mingling/latest/mingling/trait.Chain.html).
 ///
 /// # Blanket impl
 ///

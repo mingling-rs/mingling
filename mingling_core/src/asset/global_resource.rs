@@ -1158,7 +1158,7 @@ where
 ///
 /// # Usage
 ///
-/// `GlobalResource<ResType>` implements [`Deref`] (with target type `ResType`), so it can be
+/// `GlobalResource<ResType>` implements [`Deref`](https://doc.rust-lang.org/stable/core/ops/trait.Deref.html) (with target type `ResType`), so it can be
 /// dereferenced directly like `&ResType` to access the underlying value:
 ///
 /// ```

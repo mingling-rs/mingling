@@ -2,8 +2,8 @@ use crate::RenderResult;
 
 /// Mingling's program help request.
 ///
-/// It provides help capability to a program by binding an entry type. When [`Program`]'s `user_context.help` is `true`,
-/// the first Entry produced by [`Dispatcher`] will be sent into [`HelpRequest`] and rendered into a [`RenderResult`] for the user.
+/// It provides help capability to a program by binding an entry type. When [`Program`](https://docs.rs/mingling/latest/mingling/struct.Program.html)'s `user_context.help` is `true`,
+/// the first Entry produced by [`Dispatcher`](https://docs.rs/mingling/latest/mingling/trait.Dispatcher.html) will be sent into [`HelpRequest`] and rendered into a [`RenderResult`] for the user.
 ///
 /// # Manual impl
 ///
