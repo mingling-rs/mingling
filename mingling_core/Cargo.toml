@@ -51,3 +51,6 @@ log = { workspace = true, optional = true }
 env_logger = { workspace = true, optional = true }
 
 might_be_async.workspace = true
+
+[dev-dependencies]
+temp-env = "0.3.6"
