@@ -1,4 +1,3 @@
-// Doc Not Optimize
 /// Whether the `advanced` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "advanced"))]
