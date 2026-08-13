@@ -24,6 +24,12 @@ pub enum MockProgramCollect {
     Bar,
 }
 
+impl std::fmt::Display for MockProgramCollect {
+    fn fmt(&self, _f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!()
+    }
+}
+
 /// SAFETY: This is a mock type used only for temporary testing.
 /// It will never actually enter the macro system.
 /// The internal `panic!` ensures that `member_id` will never be executed.
