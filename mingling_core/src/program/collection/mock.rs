@@ -19,6 +19,7 @@ use serde::Serialize;
 #[cfg_attr(feature = "structural_renderer", derive(Serialize))]
 #[allow(unused)]
 #[doc(hidden)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum MockProgramCollect {
     Foo,
     Bar,
