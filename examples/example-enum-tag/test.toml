@@ -1,0 +1,17 @@
+[[runs]]
+input = [ "lang-select" ]
+
+expect.exit-code = 0
+expect.result = "Selected: Rust"
+
+[[runs]]
+input = [ "lang-select", "Python" ]
+
+expect.exit-code = 0
+expect.result = "Selected: Python"
+
+[[runs]]
+input = [ "lang-select", "OCaml" ]
+
+expect.exit-code = 0
+expect.result = "Selected: OCaml"

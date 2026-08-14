@@ -1,0 +1,17 @@
+[[runs]]
+input = [ "connect", "192.168.1.1:8080" ]
+
+expect.exit-code = 0
+expect.result = "Connected to \"192.168.1.1:8080\""
+
+[[runs]]
+input = [ "connect" ]
+
+expect.exit-code = 0
+expect.result = "Failed to parse address"
+
+[[runs]]
+input = [ "connect", "invalid" ]
+
+expect.exit-code = 0
+expect.result = "Failed to parse address"

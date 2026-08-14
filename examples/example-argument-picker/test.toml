@@ -1,0 +1,41 @@
+[[runs]]
+input = [ "calc", "1", "+", "1" ]
+
+expect.exit-code = 0
+expect.result = "Result: 2"
+
+[[runs]]
+input = [ "calc", "7", "*", "7" ]
+
+expect.exit-code = 0
+expect.result = "Result: 49"
+
+[[runs]]
+input = [ "calc" ]
+
+expect.exit-code = 0
+expect.result = "Error: First number (number_a) was not provided."
+
+[[runs]]
+input = [ "calc", "1" ]
+
+expect.exit-code = 0
+expect.result = "Error: Operator was not provided."
+
+[[runs]]
+input = [ "calc", "1", "+" ]
+
+expect.exit-code = 0
+expect.result = "Error: Second number (number_b) was not provided."
+
+[[runs]]
+input = [ "calc", "4", "/", "3" ]
+
+expect.exit-code = 0
+expect.result = "Result: 1.3333334"
+
+[[runs]]
+input = [ "calc", "4", "/", "3", "--round" ]
+
+expect.exit-code = 0
+expect.result = "Result: 1"

@@ -26,16 +26,16 @@ cargo ci
 
 Every CI step is an independent switch (`--check-*`). Running `cargo ci` with no options executes **all** steps in the order below; pass one or more `--check-*` flags to run only the selected steps.
 
-| Step            | Flag                    | What it does                                                                                                                                       |
-| --------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Build           | `--check-build`         | Recursively finds all `Cargo.toml` files and runs `cargo build` for each crate in parallel (workspace members build with all documented features). |
-| Clippy          | `--check-clippy`        | Runs `cargo clippy ... -- -D warnings` for every crate in parallel; any warning fails the check.                                                   |
-| Test            | `--check-test`          | Runs `cargo test` for every crate in parallel (workspace tests run with all documented features; `arg-picker` is excluded).                        |
-| Arg picker      | `--check-arg-picker`    | Runs `cargo test -p arg-picker` with its default features.                                                                                         |
-| Markdown code   | `--check-markdown-code` | Runs the `test-all-markdown-code` tool to verify code blocks in all `*.md` files compile. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md).     |
-| Examples        | `--check-examples`      | Runs the `test-examples` tool to verify all examples behave as expected.                                                                           |
-| Docs up to date | `--check-docs-refresh`  | Runs the documentation refresh tools and `cargo fmt`, then fails if the working tree is no longer clean (i.e. the docs were stale).                |
-| API docs        | `--check-api-docs`      | Builds API docs with the `[package.metadata.docs.rs]` features and fails if `docs/api-docs/` is out of date.                                       |
+| Step            | Flag                    | What it does                                                                                                                                                |
+| --------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Build           | `--check-build`         | Recursively finds all `Cargo.toml` files and runs `cargo build` for each crate in parallel (workspace members build with all documented features).          |
+| Clippy          | `--check-clippy`        | Runs `cargo clippy ... -- -D warnings` for every crate in parallel; any warning fails the check.                                                            |
+| Test            | `--check-test`          | Runs `cargo test` for every crate in parallel (workspace tests run with all documented features; `arg-picker` is excluded).                                 |
+| Arg picker      | `--check-arg-picker`    | Runs `cargo test -p arg-picker` with its default features.                                                                                                  |
+| Markdown code   | `--check-markdown-code` | Runs the `test-all-markdown-code` tool to verify code blocks in all `*.md` files compile. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md).              |
+| Examples        | `--check-examples`      | Runs the `test-examples` tool to verify all examples behave as expected. Each example declares its expected output tests in `examples/<example>/test.toml`. |
+| Docs up to date | `--check-docs-refresh`  | Runs the documentation refresh tools and `cargo fmt`, then fails if the working tree is no longer clean (i.e. the docs were stale).                         |
+| API docs        | `--check-api-docs`      | Builds API docs with the `[package.metadata.docs.rs]` features and fails if `docs/api-docs/` is out of date.                                                |
 
 ### Docs up to date in detail
 
@@ -48,6 +48,10 @@ Every CI step is an independent switch (`--check-*`). Running `cargo ci` with no
 - `sync-examples`
 
 Finally, it runs `cargo fmt` to unify code formatting. Because the refresh tools regenerate derived files, running this check against stale documentation modifies the working tree — and `ci.rs` fails the run in that case. (Using `--dirty` skips the cleanliness check, which makes this flag behave like a plain "refresh docs" command.)
+
+### Examples in detail
+
+`--check-examples` runs the `test-examples` tool, which scans `examples/*/test.toml`. Each file contains `[[runs]]` entries declaring the CLI arguments (`input`) and the expected `exit-code` / `result`. The tool builds every example that has a `test.toml` and executes each run against the built binary, so an example that changes its behavior only needs its own `test.toml` updated.
 
 ### Combining steps
 

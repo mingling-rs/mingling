@@ -1,0 +1,5 @@
+[[runs]]
+input = [ "cmd5" ]
+
+expect.exit-code = 0
+expect.result = "It's works!"

@@ -1,0 +1,29 @@
+[[runs]]
+input = [ "1" ]
+
+expect.exit-code = 0
+expect.result = ""
+
+[[runs]]
+input = [ "2" ]
+
+expect.exit-code = 0
+expect.result = ""
+
+[[runs]]
+input = [ "3" ]
+
+expect.exit-code = 0
+expect.result = ""
+
+[[runs]]
+input = [ "4" ]
+
+expect.exit-code = 0
+expect.result = ""
+
+[[runs]]
+input = [ "5" ]
+
+expect.exit-code = 0
+expect.result = ""

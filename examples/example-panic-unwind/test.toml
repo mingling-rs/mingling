@@ -1,0 +1,11 @@
+[[runs]]
+input = [ "panic" ]
+
+expect.exit-code = 0
+expect.result = "Program not panic"
+
+[[runs]]
+input = [ "panic", "something_went_wrong" ]
+
+expect.exit-code = 0
+expect.result = "Program panic: something_went_wrong"

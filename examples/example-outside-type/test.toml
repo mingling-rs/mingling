@@ -1,0 +1,17 @@
+[[runs]]
+input = [ "parse", "42" ]
+
+expect.exit-code = 0
+expect.result = "Parsed number: 42"
+
+[[runs]]
+input = [ "parse", "hello" ]
+
+expect.exit-code = 0
+expect.result = "Parse error: invalid digit found in string"
+
+[[runs]]
+input = [ "error" ]
+
+expect.exit-code = 0
+expect.result = "IO_ERROR: Error"

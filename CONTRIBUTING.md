@@ -6,22 +6,22 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 
 ## 1. Project Structure 📦
 
-| Category                    | Path/Name            | Description                                                        |
-| --------------------------- | -------------------- | ------------------------------------------------------------------ |
-| **Entry crate**             | `mingling/`          | Project entry point                                                |
-| **Core library**            | `mingling_core/`     | Imported as an external dependency                                 |
-| **Macro library**           | `mingling_macros/`   | Imported as an external dependency                                 |
-| **Mingling Pathfinder**     | `mingling_pathf/`    | Build-time module path resolution for types                        |
-| **Mingling Picker2**        | `arg_picker/`        | Mingling Arguments Parser                                          |
-| **Mingling Picker2 Macros** | `arg_picker_macros/` | Mingling Arguments Parser Macros                                   |
-| **Scaffolding tool**        | `mling/`             | Scaffolding tool `mingling-cli`                                    |
-| **Examples**                | `examples/`          | To add expected output tests, modify `examples/test-examples.toml` |
-| **Documents**               | `docs/`              | All documents                                                      |
-| **Dev Documents**           | `docs/dev/`          | Internal documents                                                 |
-| **Resources**               | `docs/res/`          | All resources                                                      |
-| **Development tools**       | `.run/src/bin`       | Contains scripts and Rust tools                                    |
-| **CI**                      | `.run/src/bin/ci.rs` | Can be invoked directly via `cargo ci`                             |
-| **Temporary files**         | `.temp/`             | Ignored by `.gitignore`                                            |
+| Category                    | Path/Name            | Description                                                          |
+| --------------------------- | -------------------- | -------------------------------------------------------------------- |
+| **Entry crate**             | `mingling/`          | Project entry point                                                  |
+| **Core library**            | `mingling_core/`     | Imported as an external dependency                                   |
+| **Macro library**           | `mingling_macros/`   | Imported as an external dependency                                   |
+| **Mingling Pathfinder**     | `mingling_pathf/`    | Build-time module path resolution for types                          |
+| **Mingling Picker2**        | `arg_picker/`        | Mingling Arguments Parser                                            |
+| **Mingling Picker2 Macros** | `arg_picker_macros/` | Mingling Arguments Parser Macros                                     |
+| **Scaffolding tool**        | `mling/`             | Scaffolding tool `mingling-cli`                                      |
+| **Examples**                | `examples/`          | To add expected output tests, add a `test.toml` in the example's dir |
+| **Documents**               | `docs/`              | All documents                                                        |
+| **Dev Documents**           | `docs/dev/`          | Internal documents                                                   |
+| **Resources**               | `docs/res/`          | All resources                                                        |
+| **Development tools**       | `.run/src/bin`       | Contains scripts and Rust tools                                      |
+| **CI**                      | `.run/src/bin/ci.rs` | Can be invoked directly via `cargo ci`                               |
+| **Temporary files**         | `.temp/`             | Ignored by `.gitignore`                                              |
 
 ## 2. How to Contribute
 
@@ -51,7 +51,20 @@ tags = ["tag1", "tag2"]    # Tags (optional)
 files = ["Cargo.toml", "src/main.rs"]
 ```
 
-If you change expected behavior, update the test assertions in `examples/test-examples.toml`.
+Optionally, each example may contain a `test.toml` file declaring expected output tests, which are executed by CI (`./run.sh test-examples`):
+
+```toml
+[[runs]]
+input = ["greet", "Alice"]
+
+expect.exit-code = 0
+expect.result = "Hello, Alice!"
+```
+
+- `input` is the list of CLI arguments passed to the example binary
+- `expect.exit-code` / `expect.result` assert the expected process exit code and stdout output
+
+If you change expected behavior, update the assertions in the example's `test.toml`.
 
 After editing examples, run these scripts to keep things in sync:
 

@@ -1,18 +1,20 @@
-use std::collections::HashMap;
+use std::path::Path;
 
 use colored::Colorize;
 use indicatif::ProgressBar;
 use serde::Deserialize;
 use tools::{eprintln_cargo_style, println_cargo_style};
 
+/// An example's `test.toml` (`[[runs]]` entries).
 #[derive(Deserialize)]
 struct TestConfig {
-    test: HashMap<String, Vec<TestCase>>,
+    runs: Vec<TestCase>,
 }
 
+/// A single `[[runs]]` entry of an example's `test.toml`.
 #[derive(Deserialize)]
 struct TestCase {
-    command: String,
+    input: Vec<String>,
     expect: Expect,
 }
 
@@ -27,10 +29,10 @@ fn main() {
     #[cfg(windows)]
     let _ = colored::control::set_virtual_terminal(true);
 
-    let config = load_config();
+    let configs = load_all_test_configs();
 
     // Count total test cases upfront
-    let total: usize = config.test.values().map(|cases| cases.len()).sum();
+    let total: usize = configs.iter().map(|(_, cases)| cases.len()).sum();
     let bar = ProgressBar::new(total as u64);
     bar.set_style(
         indicatif::ProgressStyle::default_bar()
@@ -43,7 +45,7 @@ fn main() {
     );
     bar.set_message("examples");
 
-    let passed = run_all_tests(&config, &bar);
+    let passed = run_all_tests(&configs, &bar);
 
     bar.finish_and_clear();
 
@@ -55,24 +57,51 @@ fn main() {
     }
 }
 
-/// Parse test config from TOML file
-fn load_config() -> TestConfig {
-    let content = std::fs::read_to_string("examples/test-examples.toml").unwrap_or_else(|e| {
-        eprintln_cargo_style!("Failed to read TOML config file: {}", e);
+/// Load `examples/<name>/test.toml` for every example that has one, in
+/// alphabetical order of the example directory name.
+fn load_all_test_configs() -> Vec<(String, Vec<TestCase>)> {
+    let examples_dir = Path::new("examples");
+    let mut configs = Vec::new();
+
+    let entries = std::fs::read_dir(examples_dir).unwrap_or_else(|e| {
+        eprintln_cargo_style!("Failed to read examples dir: {}", e);
         std::process::exit(1);
     });
 
-    toml::from_str(&content).unwrap_or_else(|e| {
-        eprintln_cargo_style!("Failed to parse TOML config: {}", e);
-        std::process::exit(1);
-    })
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let test_toml = path.join("test.toml");
+        if !test_toml.is_file() {
+            continue;
+        }
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default()
+            .to_string();
+        let content = std::fs::read_to_string(&test_toml).unwrap_or_else(|e| {
+            eprintln_cargo_style!("Failed to read {}: {}", test_toml.display(), e);
+            std::process::exit(1);
+        });
+        let config: TestConfig = toml::from_str(&content).unwrap_or_else(|e| {
+            eprintln_cargo_style!("Failed to parse {}: {}", test_toml.display(), e);
+            std::process::exit(1);
+        });
+        configs.push((name, config.runs));
+    }
+
+    configs.sort_by(|a, b| a.0.cmp(&b.0));
+    configs
 }
 
 /// Run all example test groups, return number passed
-fn run_all_tests(config: &TestConfig, bar: &ProgressBar) -> usize {
+fn run_all_tests(configs: &[(String, Vec<TestCase>)], bar: &ProgressBar) -> usize {
     let mut passed = 0;
 
-    for (example_name, test_cases) in &config.test {
+    for (example_name, test_cases) in configs {
         bar.set_message(example_name.clone());
 
         if !build_example(example_name) {
@@ -103,15 +132,15 @@ fn build_example(example_name: &str) -> bool {
 /// Run a single test case, return true on pass
 fn run_single_test(example_name: &str, test_case: &TestCase, bar: &ProgressBar) -> bool {
     let binary_path = format!(".temp/target/debug/{}", get_binary_name(example_name));
-    let args: Vec<&str> = test_case.command.split_whitespace().collect();
+    let command = test_case.input.join(" ");
 
     let output = match std::process::Command::new(&binary_path)
-        .args(&args)
+        .args(&test_case.input)
         .output()
     {
         Ok(o) => o,
         Err(e) => {
-            bar.println(format!("'{}' - failed to run: {}", test_case.command, e));
+            bar.println(format!("'{command}' - failed to run: {e}"));
             return false;
         }
     };
@@ -127,7 +156,7 @@ fn run_single_test(example_name: &str, test_case: &TestCase, bar: &ProgressBar) 
     if exit_ok && result_ok {
         true
     } else {
-        bar.println(format!("failed: '{}'", test_case.command));
+        bar.println(format!("failed: '{command}'"));
         if !exit_ok {
             bar.println(format!(
                 "  Expected exit code: {}, actual: {}",

@@ -1,0 +1,29 @@
+[[runs]]
+input = [ "transfer" ]
+
+expect.exit-code = 0
+expect.result = "file:  (1048576)"
+
+[[runs]]
+input = [ "transfer", "--dir", "src" ]
+
+expect.exit-code = 0
+expect.result = "dir: src (1048576)"
+
+[[runs]]
+input = [ "transfer", "--size", "500", "myfile.txt" ]
+
+expect.exit-code = 0
+expect.result = "file: myfile.txt (500)"
+
+[[runs]]
+input = [ "strict-transfer", "README.md" ]
+
+expect.exit-code = 0
+expect.result = "file: README.md (1048576)"
+
+[[runs]]
+input = [ "strict-transfer" ]
+
+expect.exit-code = 0
+expect.result = "Error: name is not provided"

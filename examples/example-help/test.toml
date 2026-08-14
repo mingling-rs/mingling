@@ -1,0 +1,11 @@
+[[runs]]
+input = [ "greet" ]
+
+expect.exit-code = 0
+expect.result = ""
+
+[[runs]]
+input = [ "greet", "--help" ]
+
+expect.exit-code = 0
+expect.result = "Usage: greet <NAME>"

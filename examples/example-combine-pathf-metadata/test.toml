@@ -1,0 +1,17 @@
+[[runs]]
+input = [ "hello" ]
+
+expect.exit-code = 0
+expect.result = "Hello, World!"
+
+[[runs]]
+input = [ "hello", "Alice" ]
+
+expect.exit-code = 0
+expect.result = "Hello, Alice!"
+
+[[runs]]
+input = [ "desc" ]
+
+expect.exit-code = 0
+expect.result = "EntryHello desc = okay"

@@ -1,0 +1,11 @@
+[[runs]]
+input = [ "none" ]
+
+expect.exit-code = 0
+expect.result = "None"
+
+[[runs]]
+input = [ "show" ]
+
+expect.exit-code = 0
+expect.result = "Initialized\nbaz: qux\nfoo: bar\nhello: world\nkey: value\nrust: lang"

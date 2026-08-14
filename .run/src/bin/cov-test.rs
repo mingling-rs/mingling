@@ -18,7 +18,6 @@
 //! cargo install --git https://github.com/Weicao-CatilGrass/cargo-llvm-cov cargo-llvm-cov
 //! ```
 
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -34,15 +33,16 @@ const OUTPUT_DIR: &str = "docs/cov-test";
 /// in one place so the final `report` can merge everything.
 const COV_TARGET_DIR: &str = ".temp/cov-llvm";
 
-/// Parsed `examples/test-examples.toml` (`test.<example> = [ { command, expect } ]`).
+/// An example's `test.toml` (`[[runs]]` entries).
 #[derive(Deserialize)]
 struct TestConfig {
-    test: HashMap<String, Vec<TestCase>>,
+    runs: Vec<TestCase>,
 }
 
+/// One `[[runs]]` entry of an example's `test.toml`.
 #[derive(Deserialize)]
 struct TestCase {
-    command: String,
+    input: Vec<String>,
 }
 
 fn main() {
@@ -108,7 +108,7 @@ fn main() {
     }
 
     // 3. Examples: build each example with explicit RUSTFLAGS, then execute
-    //    every command from test-examples.toml directly.
+    //    every command declared in the example's test.toml directly.
     //
     //    NOTE: `cargo llvm-cov run` cannot be used here. Its rustc wrapper
     //    only instruments the crates of the *current* cargo project (with
@@ -127,7 +127,7 @@ fn main() {
     }
     let examples = load_example_commands(&repo_root);
     let mut built = std::collections::HashSet::new();
-    for (example, command) in &examples {
+    for (example, input) in &examples {
         if built.insert(example.clone()) {
             println_cargo_style!("Building: {}", example);
             run_cmd!(format!(
@@ -150,7 +150,7 @@ fn main() {
             example
         );
         match std::process::Command::new(&binary)
-            .args(command.split_whitespace())
+            .args(input)
             .env("LLVM_PROFILE_FILE", &profraw)
             .status()
         {
@@ -279,22 +279,43 @@ fn find_test_crate_manifests(repo_root: &Path) -> Vec<PathBuf> {
     manifests
 }
 
-/// Parse `examples/test-examples.toml` into `(example_name, command)` pairs.
-fn load_example_commands(repo_root: &Path) -> Vec<(String, String)> {
-    let content =
-        fs::read_to_string(repo_root.join("examples/test-examples.toml")).unwrap_or_else(|e| {
-            eprintln_cargo_style!("Failed to read examples/test-examples.toml: {}", e);
+/// Parse every `examples/<name>/test.toml` into `(example_name, input)` pairs.
+fn load_example_commands(repo_root: &Path) -> Vec<(String, Vec<String>)> {
+    let examples_dir = repo_root.join("examples");
+    let mut entries: Vec<_> = std::fs::read_dir(&examples_dir)
+        .unwrap_or_else(|e| {
+            eprintln_cargo_style!("Failed to read {}: {}", examples_dir.display(), e);
             std::process::exit(1);
-        });
-    let config: TestConfig = toml::from_str(&content).unwrap_or_else(|e| {
-        eprintln_cargo_style!("Failed to parse examples/test-examples.toml: {}", e);
-        std::process::exit(1);
-    });
+        })
+        .flatten()
+        .collect();
+    entries.sort_by_key(|e| e.file_name());
 
     let mut pairs = Vec::new();
-    for (example, cases) in &config.test {
-        for case in cases {
-            pairs.push((example.clone(), case.command.clone()));
+    for entry in entries {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+        let test_toml = path.join("test.toml");
+        if !test_toml.is_file() {
+            continue;
+        }
+        let name = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default()
+            .to_string();
+        let content = fs::read_to_string(&test_toml).unwrap_or_else(|e| {
+            eprintln_cargo_style!("Failed to read {}: {}", test_toml.display(), e);
+            std::process::exit(1);
+        });
+        let config: TestConfig = toml::from_str(&content).unwrap_or_else(|e| {
+            eprintln_cargo_style!("Failed to parse {}: {}", test_toml.display(), e);
+            std::process::exit(1);
+        });
+        for case in config.runs {
+            pairs.push((name.clone(), case.input));
         }
     }
     pairs

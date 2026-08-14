@@ -1,0 +1,11 @@
+[[runs]]
+input = [ "render", "Bob", "22" ]
+
+expect.exit-code = 0
+expect.result = "Bob is 22 years old"
+
+[[runs]]
+input = [ "render", "Bob", "22", "--json" ]
+
+expect.exit-code = 0
+expect.result = "{\"member_name\":\"Bob\",\"member_age\":22}"

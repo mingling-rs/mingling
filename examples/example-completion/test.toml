@@ -1,0 +1,5 @@
+[[runs]]
+input = [ "greet", "World", "--repeat", "1" ]
+
+expect.exit-code = 0
+expect.result = "Hello, World!"

@@ -1,0 +1,5 @@
+[[runs]]
+input = [ "download", "readme.txt" ]
+
+expect.exit-code = 0
+expect.result = "\"readme.txt\" downloaded."

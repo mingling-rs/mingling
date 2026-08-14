@@ -1,0 +1,17 @@
+[[runs]]
+input = [ "hello", "Alice" ]
+
+expect.exit-code = 0
+expect.result = "Hello, Alice"
+
+[[runs]]
+input = [ "hello" ]
+
+expect.exit-code = 1
+expect.result = "No name provided (with exit code 1)"
+
+[[runs]]
+input = [ "hello", "--help" ]
+
+expect.exit-code = 2
+expect.result = "Usage: hello <NAME>"

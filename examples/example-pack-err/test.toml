@@ -1,0 +1,35 @@
+[[runs]]
+input = [ "find" ]
+
+expect.exit-code = 0
+expect.result = "Search path not provided"
+
+[[runs]]
+input = [ "find", "Cargo.toml" ]
+
+expect.exit-code = 0
+expect.result = "Not a directory: Cargo.toml"
+
+[[runs]]
+input = [ "find", "examples" ]
+
+expect.exit-code = 0
+expect.result = "Found directory: examples"
+
+[[runs]]
+input = [ "find-structural", "--json" ]
+
+expect.exit-code = 0
+expect.result = "{\"name\":\"error_not_found_structural\"}"
+
+[[runs]]
+input = [ "find-structural", "Cargo.toml", "--json" ]
+
+expect.exit-code = 0
+expect.result = "{\"name\":\"error_not_dir_structural\",\"info\":\"Cargo.toml\"}"
+
+[[runs]]
+input = [ "find-structural", "examples", "--json" ]
+
+expect.exit-code = 0
+expect.result = "{\"inner\":\"examples\"}"

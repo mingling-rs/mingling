@@ -1,0 +1,29 @@
+[[runs]]
+input = [ "hello" ]
+
+expect.exit-code = 0
+expect.result = "No name provided"
+
+[[runs]]
+input = [ "hello", "MyBestFriendAlice" ]
+
+expect.exit-code = 0
+expect.result = "Name too long: 17 > 10"
+
+[[runs]]
+input = [ "hello", "Alice" ]
+
+expect.exit-code = 0
+expect.result = "Name not available"
+
+[[runs]]
+input = [ "hello", "Peter" ]
+
+expect.exit-code = 0
+expect.result = "Hello, Peter"
+
+[[runs]]
+input = [ "hallo" ]
+
+expect.exit-code = 0
+expect.result = "Command not found: \"hallo\""
