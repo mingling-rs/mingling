@@ -17,6 +17,9 @@ pub use dirs::*;
 mod exit_code;
 pub use exit_code::*;
 
+mod osc94;
+pub use osc94::*;
+
 #[cfg(feature = "repl")]
 mod repl_basic;
 #[cfg(feature = "repl")]

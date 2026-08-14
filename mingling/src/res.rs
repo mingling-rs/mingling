@@ -9,3 +9,6 @@ pub use exit_code::*;
 
 mod confirmer;
 pub use confirmer::*;
+
+mod osc94;
+pub use osc94::*;

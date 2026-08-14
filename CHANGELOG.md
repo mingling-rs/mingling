@@ -412,6 +412,73 @@ None
         - Empty input produces no arguments.
         - **Note:** the setup does **not** validate input — stdin content is treated as trusted arguments appended directly, so untrusted input can inject arbitrary arguments. It also has no per-subcommand granularity; if different subcommands need different stdin behavior, do not use this setup.
 
+16. **[`res:osc94`]** **[`setups:osc94`]** Added the `OSC94` resource and `OSC94Setup` for managing terminal `OSC 9;4` protocol status:
+
+    ### `OSC94` resource
+    - **`mingling::res::OSC94`** — A new resource type providing support for the [OSC 9;4 protocol](https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences), which allows sending task progress notifications via ANSI escape sequences. It is typically registered via [`OSC94Setup`] and injected into functions through Mingling's resource injection system.
+
+        - **`OSC94::get_mut(&self) -> OSC94Guard`** — Returns an [`OSC94Guard`] with an initial state of [`OSC94State::Clean`]. If the current environment supports the `OSC 9;4` protocol, state changes will be sent to the terminal in real time.
+
+        Derives `Debug`, `Default`, `Clone`, `Copy`.
+
+    ### `OSC94Guard`
+    - **`mingling::res::OSC94Guard`** — A guard for modifying process state, obtained via [`OSC94::get_mut`]. When the guard is dropped, the process state is automatically restored to [`OSC94State::Clean`], so no manual cleanup is needed.
+
+        - **`set_clean_state(&mut self)`** — Sets the process state to Clean, indicating the process has finished or is in a normal, problem-free state.
+        - **`set_error_state(&mut self)`** — Sets the process state to Error, indicating an error occurred during process execution.
+        - **`set_warn_state(&mut self)`** — Sets the process state to Warn, indicating a warning occurred but hasn't reached error level.
+        - **`set_unknown_state(&mut self)`** — Sets the process state to Unknown, indicating the process state cannot be determined or has not been defined.
+        - **`set_progress(&mut self, progress: f32)`** — Sets the progress value (should be between `0.0` and `1.0`; values outside this range are not clamped, but it is recommended to keep them within range).
+        - **`state(&self) -> OSC94State`** — Returns the current process state.
+        - **`progress(&self) -> f32`** — Returns the actual progress value only when the state is `OSC94State::Normal`; otherwise returns `0.0`.
+
+    ### `OSC94State` enum
+    - **`mingling::res::OSC94State`** — Represents the `OSC 9;4` protocol message state:
+
+        - **`Clean`** — Clears/hides progress (used when task completes), corresponding to state code `0`.
+        - **`Normal(f32)`** — Normal state, state code `1`, requires a progress value (0-100).
+        - **`Error`** — Error state, state code `2` (usually displayed in red).
+        - **`Unknown`** — Uncertain state, state code `3` (shown as an indeterminate animation for unknown progress).
+        - **`Warn`** — Warning state, state code `4` (usually displayed in yellow).
+
+        - **`state_code(&self) -> u8`** — Returns the state code for the `OSC 9;4` protocol.
+        - **`progress(&self) -> f32`** — Returns the progress value (0-100) for the `Normal` state, clamped to the valid range.
+        - **`to_escape_sequence(&self) -> String`** — Converts the message into the corresponding `OSC 9;4` escape sequence string.
+        - **`send(&self)`** — Sends the `OSC 9;4` message to the terminal via stdout. Panics if the stdout stream cannot be flushed.
+
+        Implements `Display` (formats as the escape sequence), `From<OSC94State> for String`, and `From<&OSC94State> for String`. Derives `Debug`, `Clone`, `Copy`, `PartialEq`.
+
+    ### `OSC94Setup`
+    - **`mingling::setup::OSC94Setup`** — A `ProgramSetup` that registers an `OSC94` resource in the program's resource store, with its `is_support` flag determined at setup time by inspecting environment variables. The support check looks at:
+
+        - **`TERM_PROGRAM`** — `ghostty`, `WezTerm`, `iTerm.app`
+        - **`WT_SESSION`** — Windows Terminal
+        - **`VTE_VERSION`** — VTE-based terminals (such as GNOME Terminal, Konsole, etc.)
+        - **`TERM`** — terminal emulators containing `xterm`
+
+        Registered via `program.with_setup(OSC94Setup)`.
+
+    Usage example:
+
+    ```rust,ignore
+    use mingling::{macros::command, res::OSC94, setup::OSC94Setup};
+
+    fn main() {
+        let mut program = ThisProgram::new();
+        program.with_setup(OSC94Setup);
+        program.exec_and_exit();
+    }
+
+    #[command]
+    fn hello(osc: &OSC94) {
+        let mut guard = osc.get_mut();
+        guard.set_progress(0.5);
+        // ... do work ...
+        guard.set_warn_state();
+        // ... guard is dropped, state automatically restored to Clean
+    }
+    ```
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.
