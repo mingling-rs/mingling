@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use std::{
     fmt::{Display, Formatter},
     io::Write,
@@ -8,24 +7,107 @@ use std::{
 use crate::RenderResultMode::{Stderr, Stdout};
 
 /// Render result, containing the rendered text content.
+///
+/// `RenderResult` is the core data structure used throughout the rendering pipeline
+/// to collect and output text content. It maintains a render buffer (`render_buffer`),
+/// where each entry carries an output mode [`RenderResultMode`] that determines
+/// whether the content is ultimately written to stdout or stderr. It also records
+/// the process exit code (`exit_code`), which can be used to terminate the process
+/// with the appropriate status after rendering completes.
+///
+/// # Features
+///
+/// - **Buffered output**: All rendered content is first collected into the buffer
+///   and can be output uniformly at a convenient time.
+/// - **Immediate output**: Can be enabled via [`immediate_output`](RenderResult::immediate_output),
+///   causing content to be flushed to stdout/stderr in real time while also being
+///   added to the buffer.
+/// - **Dual-channel output**: The `Stdout` and `Stderr` modes distinguish between
+///   normal output and error output.
+/// - **Exit code management**: Supports carrying an exit code to exit the process
+///   with a specific status code after rendering.
+///
+/// # Conversions to and from Other Types
+///
+/// `RenderResult` implements conversions for various sources and targets:
+///
+/// - From types implementing `impl Into<String>` (such as `&str`, `String`, `&String`),
+///   producing a result containing only that text directed to stdout.
+/// - From integer types (`i32`, `u8`, etc.), producing an empty result with the
+///   specified exit code.
+/// - Into `String`, extracting the concatenated text of all buffered content.
+/// - Into `ExitCode`, for use when the process exits.
+///
+/// # Examples
+///
+/// ```
+/// use mingling_core::{RenderResult, RenderResultMode};
+///
+/// // Create an empty render result
+/// let result = RenderResult::new();
+/// assert!(result.is_empty());
+///
+/// // Create from a string
+/// let result: RenderResult = "Hello, world!".into();
+/// assert_eq!(result.to_string(), "Hello, world!");
+///
+/// // Specify an exit code via an integer
+/// let result: RenderResult = 42.into();
+/// assert_eq!(result.exit_code, 42);
+///
+/// // Create via a closure (implemented by `From<F>`)
+/// let result: RenderResult = (|| RenderResult::from("closure result")).into();
+/// assert_eq!(result.to_string(), "closure result");
+/// ```
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct RenderResult {
-    /// Whether the output should be written immediately.
+    /// Whether immediate output is enabled.
     ///
-    /// When set to `true`, rendered content will be flushed to stdout/stderr
-    /// in real time while also being collected in the render buffer.
+    /// When set to `true`, rendered content is flushed to stdout/stderr in real time
+    /// while also being written to the buffer, enabling live output. This is useful
+    /// in scenarios where results should be displayed incrementally, such as in
+    /// long-running rendering tasks where the user wants to see partial output
+    /// without waiting for the entire rendering process to complete.
+    ///
+    /// The default value is `false`, meaning all content is first written to the
+    /// buffer and output uniformly at the end.
     immediate_output: bool,
 
-    /// The buffered render output, stored as a list of (text, mode) pairs.
+    /// Render buffer, stored as a list of (text, output mode) pairs.
     ///
-    /// Each entry contains a rendered string together with a `RenderResultMode`
-    /// indicating whether it should be output to stdout or stderr.
+    /// Each entry contains:
+    /// * The rendered string content;
+    /// * A [`RenderResultMode`] enum value indicating whether the content should
+    ///   be output to standard output (`Stdout`) or standard error (`Stderr`).
+    ///
+    /// The buffer preserves insertion order, guaranteeing the correct ordering of
+    /// rendered content. The [`std_print`](RenderResult::std_print) method outputs
+    /// the content to the corresponding streams according to their modes.
+    ///
+    /// This design allows mixing stdout and stderr content within a single result
+    /// while precisely controlling the output direction of each, which is especially
+    /// important in scenarios such as command-line tools and logging systems.
     render_buffer: Vec<(String, RenderResultMode)>,
 
-    /// The exit code to return from the rendering process.
+    /// The exit code for the rendering process.
     ///
-    /// A value of `0` indicates success, while non-zero values indicate
-    /// various error conditions.
+    /// The default value is `0` (indicating success); non-zero values indicate
+    /// various error conditions. After rendering completes, the
+    /// [`exit_process`](RenderResult::exit_process) method can use this exit code
+    /// to terminate the current process, or the `From<RenderResult> for ExitCode`
+    /// conversion can be used with `std::process::ExitCode`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::RenderResult;
+    ///
+    /// let mut result = RenderResult::new();
+    /// assert_eq!(result.exit_code, 0); // default success
+    ///
+    /// result.exit_code = 1; // mark an error
+    /// assert_eq!(result.exit_code, 1);
+    /// ```
     pub exit_code: i32,
 }
 
