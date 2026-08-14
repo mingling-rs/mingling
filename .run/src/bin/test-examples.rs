@@ -3,7 +3,7 @@ use std::path::Path;
 use colored::Colorize;
 use indicatif::ProgressBar;
 use serde::Deserialize;
-use tools::{eprintln_cargo_style, println_cargo_style};
+use tools::{eprintln_cargo_style, println_cargo_style, run_parallel};
 
 /// An example's `test.toml` (`[[runs]]` entries).
 #[derive(Deserialize)]
@@ -31,7 +31,13 @@ fn main() {
 
     let configs = load_all_test_configs();
 
-    // Count total test cases upfront
+    // Phase 1: build all examples in parallel.
+    if let Err(code) = build_all_examples(&configs) {
+        // `run_parallel` already printed every failed build above.
+        std::process::exit(code);
+    }
+
+    // Phase 2: run the tests serially against the pre-built binaries.
     let total: usize = configs.iter().map(|(_, cases)| cases.len()).sum();
     let bar = ProgressBar::new(total as u64);
     bar.set_style(
@@ -97,17 +103,30 @@ fn load_all_test_configs() -> Vec<(String, Vec<TestCase>)> {
     configs
 }
 
-/// Run all example test groups, return number passed
+/// Phase 1: build every example that has a `test.toml` in parallel.
+///
+/// Build tasks are spawned in parallel (like `ci.rs`'s `build_all`); on any
+/// build failure the whole run aborts with the first failure's exit code.
+fn build_all_examples(configs: &[(String, Vec<TestCase>)]) -> Result<(), i32> {
+    let tasks: Vec<(String, String, String)> = configs
+        .iter()
+        .map(|(name, _)| {
+            (
+                format!("Build: {name}"),
+                name.clone(),
+                format!("cargo build --manifest-path examples/{name}/Cargo.toml --color always"),
+            )
+        })
+        .collect();
+    run_parallel("Building", tasks)
+}
+
+/// Phase 2: run all example test groups serially, return number passed
 fn run_all_tests(configs: &[(String, Vec<TestCase>)], bar: &ProgressBar) -> usize {
     let mut passed = 0;
 
     for (example_name, test_cases) in configs {
         bar.set_message(example_name.clone());
-
-        if !build_example(example_name) {
-            bar.inc(test_cases.len() as u64);
-            continue;
-        }
 
         for test_case in test_cases {
             if run_single_test(example_name, test_case, bar) {
@@ -118,15 +137,6 @@ fn run_all_tests(configs: &[(String, Vec<TestCase>)], bar: &ProgressBar) -> usiz
     }
 
     passed
-}
-
-/// Build the example binary, return true on success
-fn build_example(example_name: &str) -> bool {
-    let manifest = format!("examples/{example_name}/Cargo.toml");
-    tools::run_cmd_capture(format!(
-        "cargo build --manifest-path {manifest} --color always",
-    ))
-    .is_ok()
 }
 
 /// Run a single test case, return true on pass

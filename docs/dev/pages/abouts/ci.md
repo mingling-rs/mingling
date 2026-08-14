@@ -51,7 +51,12 @@ Finally, it runs `cargo fmt` to unify code formatting. Because the refresh tools
 
 ### Examples in detail
 
-`--check-examples` runs the `test-examples` tool, which scans `examples/*/test.toml`. Each file contains `[[runs]]` entries declaring the CLI arguments (`input`) and the expected `exit-code` / `result`. The tool builds every example that has a `test.toml` and executes each run against the built binary, so an example that changes its behavior only needs its own `test.toml` updated.
+`--check-examples` runs the `test-examples` tool in two phases:
+
+1. **Build** — every example that has a `test.toml` is built in parallel (one `cargo build` task per example, reusing the shared `.temp/target` cache).
+2. **Test** — each `[[runs]]` entry in `examples/*/test.toml` is executed serially against the pre-built binary, asserting the CLI arguments (`input`) and the expected `exit-code` / `result`.
+
+An example that changes its behavior only needs its own `test.toml` updated.
 
 ### Combining steps
 
