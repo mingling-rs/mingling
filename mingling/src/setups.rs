@@ -1,13 +1,3 @@
-// Doc Not Optimize
-mod basic;
-pub use basic::*;
-
-mod dirs;
-pub use dirs::*;
-
-mod exit_code;
-pub use exit_code::*;
-
 /// Picker's `ProgramSetup` variant.
 ///
 /// Internally does not use its own argument parsing,
@@ -15,14 +5,27 @@ pub use exit_code::*;
 #[cfg(feature = "picker")]
 pub mod picker;
 
-#[cfg(feature = "structural_renderer")]
-mod structural_renderer;
+mod basic;
+pub use basic::*;
 
-#[cfg(feature = "structural_renderer")]
-pub use structural_renderer::*;
+mod confirmer;
+pub use confirmer::*;
+
+mod dirs;
+pub use dirs::*;
+
+mod exit_code;
+pub use exit_code::*;
 
 #[cfg(feature = "repl")]
 mod repl_basic;
-
 #[cfg(feature = "repl")]
 pub use repl_basic::*;
+
+mod stdin_args;
+pub use stdin_args::*;
+
+#[cfg(feature = "structural_renderer")]
+mod structural_renderer;
+#[cfg(feature = "structural_renderer")]
+pub use structural_renderer::*;

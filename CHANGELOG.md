@@ -377,6 +377,41 @@ None
 
     The `ArgumentSplitter` trait is a public API addition, so downstream code can now reuse the same argument-splitting logic that the REPL uses for parsing input lines.
 
+14. **[`res`]** Added the `Confirmer` resource:
+
+    - **`mingling::res::Confirmer`** — A new resource type for interactive confirmation prompts. It caches the confirmed state to avoid repeated prompts, and is typically registered via [`ConfirmerSetup`] and injected into functions through Mingling's resource injection system.
+
+        - **`Confirmer::new()`** — Creates a new `Confirmer` instance in the unconfirmed state.
+        - **`Confirmer::new_confirmed()`** — Creates a `Confirmer` in the confirmed state; `ask`/`try_ask` return `true` directly without prompting.
+        - **`set_confirmed(&mut self)`** — Marks the confirmer as confirmed; subsequent `ask`/`try_ask` calls return `true` directly.
+        - **`ask<P: ConfirmerPredicate>(&self, ask: impl AsRef<str>) -> bool`** — Prompts the user at most **one** time. Returns `false` if the user provides an unrecognizable answer, `true` if already confirmed.
+        - **`try_ask<P: ConfirmerPredicate>(&self, ask: impl AsRef<str>, count: impl Into<ConfirmerCount>) -> Option<bool>`** — Prompts the user up to `count` times. Returns `Some(true)` for confirmation, `Some(false)` for rejection, and `None` if the maximum attempts are exhausted without a parseable answer. The prompt is written to stderr.
+
+        - **`ConfirmerCount` enum** — Specifies the maximum number of attempts: `Loop` (0, indefinite) or `Max(usize)` (positive integer). `From` impls are provided for all integer types (`i8`, `i16`, `i32`, `i64`, `i128`, `isize`, `u8`, `u16`, `u32`, `u64`, `u128`, `usize`); `0` maps to `Loop`, negative values clamp to `Max(usize::MAX)`.
+
+        - **`ConfirmerPredicate` trait** — Defines how to parse user confirmation input. Implementors provide `is_yes(str: &str) -> Option<bool>`: `Some(true)` for yes, `Some(false)` for no, `None` for unparseable input (requiring re-entry).
+
+        - **`YesConfirm` predicate** — Accepts `"y"`/`"yes"` as yes and `"n"`/`"no"` as no. Case-insensitive with leading/trailing whitespace trimming.
+
+        - **`TrueConfirm` predicate** — Accepts `"true"`/`"t"` as yes and `"false"`/`"f"` as no. Case-insensitive with leading/trailing whitespace trimming.
+
+        Derives `Debug`, `Default`, `Clone`, `Copy`.
+
+15. **[`setups`]** Added the `ConfirmerSetup` and `StandardInputArgsSetup` program setups:
+
+    ### `ConfirmerSetup`
+    - **`mingling::setup::ConfirmerSetup`** — A `ProgramSetup` that registers a `Confirmer` resource and installs a pre-dispatch hook checking the user's `confirmation` config mode. When `program.user_context.confirmation == ConfirmationMode::Skip`, the hook marks the `Confirmer` as confirmed via `modify_res`, so all `ask`/`try_ask` calls return `true` without prompting.
+
+        - Registered via `program.with_setup(ConfirmerSetup)`.
+        - Applies uniformly to all subcommands of the entire program; it does not support per-command overrides.
+
+    ### `StandardInputArgsSetup`
+    - **`mingling::setup::StandardInputArgsSetup`** — A `ProgramSetup` that reads piped/redirected standard input and appends the split arguments to the end of the program's argument list.
+
+        - A `pre_dispatch` hook checks whether stdin is a terminal via `IsTerminal`; if it is **not** a terminal (i.e., there is piped or redirected input), it reads all of stdin to the end, converts it to UTF-8 (strict first, lossy fallback), splits it via `ArgumentSplitter::split_args()` (whitespace, single/double quotes, backslash escaping), and appends the resulting arguments to `ctx.arguments` (a `&mut Vec<String>`, per the `pre_dispatch` hook's mutable-arguments semantics from **BREAKING CHANGE #6** in this release).
+        - Empty input produces no arguments.
+        - **Note:** the setup does **not** validate input — stdin content is treated as trusted arguments appended directly, so untrusted input can inject arbitrary arguments. It also has no per-subcommand granularity; if different subcommands need different stdin behavior, do not use this setup.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.
