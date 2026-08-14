@@ -257,6 +257,8 @@ impl OSC94Guard {
 
 impl Drop for OSC94Guard {
     fn drop(&mut self) {
-        OSC94State::Clean.send();
+        if self.is_support {
+            OSC94State::Clean.send();
+        }
     }
 }
