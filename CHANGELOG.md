@@ -462,6 +462,41 @@ None
 
     _This is a pure deletion change with no behavioral replacement. If downstream code used the `Title`, `Lower`, or `Upper` variants, it needs to switch to other naming styles (such as `Pascal`, `Kebab`, `Snake`, or `Dot`)._
 
+6. **[`core:hook`]** **[BREAKING]** Changed `HookPreDispatchInfo.arguments` from `&'a [String]` (immutable slice) to `&'a mut Vec<String>` (mutable reference), and updated the `pre_dispatch` hook signature accordingly. The `pre_dispatch` hook can now **rewrite the program's command-line arguments before they are matched against registered dispatchers**, enabling argument normalization, injection, or filtering at the hook level.
+
+    **Type changes:**
+
+    - `HookPreDispatchInfo.arguments: &'a [String]` → `arguments: &'a mut Vec<String>`
+    - `ProgramHook<C>::pre_dispatch` field type: `Box<dyn for<'a> Fn(&HookPreDispatchInfo<'a>) -> ProgramControls<C>>` → `Box<dyn for<'a> Fn(&mut HookPreDispatchInfo<'a>) -> ProgramControls<C>>`
+    - `ProgramHookBuilder::on_pre_dispatch<F, R>` bound: `F: for<'a> Fn(&HookPreDispatchInfo<'a>) -> R` → `F: for<'a> Fn(&mut HookPreDispatchInfo<'a>) -> R`
+    - `Program::run_hook_pre_dispatch` parameter: `&HookPreDispatchInfo` → `&mut HookPreDispatchInfo`
+
+    **Execution pipeline changes:**
+
+    - `exec()` now clones `program.args` into a local mutable `Vec<String>` and passes `&mut` to `exec_with_args`, so hooks rewriting arguments do not mutate the program's stored args (the rewritten copy is what gets dispatched).
+    - `exec_with_args` now takes `args: &mut Vec<String>` instead of `args: &[String]`, and passes `&mut *args` into `run_hook_pre_dispatch`.
+    - `ProgramOnceExec::once_exec` takes the program args via `std::mem::take` into a local mutable `Vec<String>` and passes `&mut` through to `exec_with_args`, ensuring the same mutable-args semantics in the `once_exec` path.
+    - `ReplExec::exec` and `exec_once` in `repl_exec.rs` now pass `&mut Vec<String>` through the same execution path.
+
+    **Migration guide:**
+
+    - Any `pre_dispatch` hook closures must now accept `&mut HookPreDispatchInfo` instead of `&HookPreDispatchInfo`:
+
+        ```rust
+        // Before
+        .on_pre_dispatch(|info: &HookPreDispatchInfo| { ... })
+
+        // After
+        .on_pre_dispatch(|info: &mut HookPreDispatchInfo| {
+            // info.arguments is now &mut Vec<String> — can be mutated
+        })
+        ```
+
+    - References to `info.arguments` inside hooks that previously treated it as `&[String]` will need to adapt to `&mut Vec<String>` (e.g., `info.arguments.as_slice()` instead of `info.arguments` in comparison positions, or explicit dereference / indexing changes).
+    - While most `&[String]`-style usages are transparently compatible via `Deref`, code that relied on the immutability guarantee of the slice (e.g., passing `info.arguments` to functions expecting `&[String]` via coercion) may need `info.arguments.as_slice()` or `&*info.arguments`.
+
+    _Behavioral change: hooks can now rewrite the argument list before dispatch — e.g., inserting default flags, removing deprecated options, or expanding shorthand syntax. Hook authors should be careful to preserve the program's expected argument layout when mutating the list._
+
 ---
 
 ### Release 0.3.0 (2026-07-27)

@@ -15,13 +15,14 @@ pub fn exec<C>(program: &'static Program<C>) -> Result<RenderResult, ProgramInte
 where
     C: ProgramCollect<Enum = C> + Send + Sync,
 {
-    might_be_async::invoke!(exec_with_args(program, &program.args))
+    let mut args = program.args.clone();
+    might_be_async::invoke!(exec_with_args(program, &mut args))
 }
 
 #[might_be_async::func]
 pub fn exec_with_args<C>(
     program: &'static Program<C>,
-    args: &[String],
+    args: &mut Vec<String>,
 ) -> Result<RenderResult, ProgramInternalExecuteError>
 where
     C: ProgramCollect<Enum = C> + Send + Sync,
@@ -51,7 +52,9 @@ where
 
     // Run hooks
     control!(
-        program.run_hook_pre_dispatch(&crate::hook::HookPreDispatchInfo { arguments: args }),
+        program.run_hook_pre_dispatch(&mut crate::hook::HookPreDispatchInfo {
+            arguments: &mut *args,
+        }),
         current
     );
 

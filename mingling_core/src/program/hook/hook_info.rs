@@ -7,7 +7,10 @@ pub struct HookBeginInfo {}
 /// Represents the data passed to `pre_dispatch` hook.
 pub struct HookPreDispatchInfo<'a> {
     /// Arguments entered by the user before dispatching
-    pub arguments: &'a [String],
+    ///
+    /// The reference is mutable so the hook can rewrite the arguments before
+    /// they are matched against the registered dispatchers.
+    pub arguments: &'a mut Vec<String>,
 }
 
 /// Represents the data passed to `post_dispatch` hook.

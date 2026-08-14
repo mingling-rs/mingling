@@ -25,15 +25,19 @@ where
         self.run_hook_on_begin(&crate::hook::HookBeginInfo {});
 
         self.args = self.args.iter().skip(1).cloned().collect();
+        let mut args = std::mem::take(&mut self.args);
 
         #[cfg(not(feature = "async"))]
         {
             #[cfg(panic = "abort")]
-            return self.exec_wrapper(|p| crate::exec::exec(p).map_err(|e| e.into()));
+            return self
+                .exec_wrapper(|p| crate::exec::exec_with_args(p, &mut args).map_err(|e| e.into()));
 
             #[cfg(not(panic = "abort"))]
             match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                self.exec_wrapper(|p| crate::exec::exec(p).map_err(std::convert::Into::into))
+                self.exec_wrapper(|p| {
+                    crate::exec::exec_with_args(p, &mut args).map_err(std::convert::Into::into)
+                })
             })) {
                 Ok(result) => result,
                 Err(panic_info) => {
@@ -60,7 +64,11 @@ where
         #[cfg(feature = "async")]
         {
             return self
-                .exec_wrapper(|p| async { crate::exec::exec(p).await.map_err(Into::into) })
+                .exec_wrapper(|p| async move {
+                    crate::exec::exec_with_args(p, &mut args)
+                        .await
+                        .map_err(Into::into)
+                })
                 .await;
         }
     }

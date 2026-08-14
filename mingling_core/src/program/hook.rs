@@ -64,8 +64,9 @@ where
     pub begin: Option<Box<dyn Fn(&HookBeginInfo) + Send + Sync>>,
 
     /// Executes before the program dispatches
-    pub pre_dispatch:
-        Option<Box<dyn for<'a> Fn(&HookPreDispatchInfo<'a>) -> ProgramControls<C> + Send + Sync>>,
+    pub pre_dispatch: Option<
+        Box<dyn for<'a> Fn(&mut HookPreDispatchInfo<'a>) -> ProgramControls<C> + Send + Sync>,
+    >,
 
     /// Executes after the program dispatches
     pub post_dispatch: Option<
@@ -162,7 +163,10 @@ where
         }
     }
 
-    pub(crate) fn run_hook_pre_dispatch(&self, info: &HookPreDispatchInfo) -> ProgramControls<C> {
+    pub(crate) fn run_hook_pre_dispatch(
+        &self,
+        info: &mut HookPreDispatchInfo,
+    ) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -475,7 +479,7 @@ where
     #[must_use]
     pub fn on_pre_dispatch<F, R>(mut self, handler: F) -> Self
     where
-        F: for<'a> Fn(&HookPreDispatchInfo<'a>) -> R + 'static + Send + Sync,
+        F: for<'a> Fn(&mut HookPreDispatchInfo<'a>) -> R + 'static + Send + Sync,
         R: Into<ProgramControls<C>>,
     {
         self.pre_dispatch = Some(Box::new(move |info| handler(info).into()));
@@ -801,16 +805,21 @@ mod tests {
     #[test]
     fn test_hook_on_pre_dispatch() {
         static CALLED: AtomicBool = AtomicBool::new(false);
-        let hook =
-            ProgramHook::<MockHookEnum>::empty().on_pre_dispatch(|info: &HookPreDispatchInfo| {
-                assert_eq!(info.arguments, &["a", "b"]);
+        let mut args = vec!["a".to_string(), "b".to_string()];
+        let hook = ProgramHook::<MockHookEnum>::empty().on_pre_dispatch(
+            |info: &mut HookPreDispatchInfo| {
+                assert_eq!(info.arguments.as_slice(), &["a", "b"]);
+                // The hook may rewrite the arguments before dispatch
+                info.arguments.push("c".to_string());
                 CALLED.store(true, Ordering::SeqCst);
-            });
+            },
+        );
         assert!(hook.pre_dispatch.is_some());
-        (hook.pre_dispatch.as_ref().unwrap())(&HookPreDispatchInfo {
-            arguments: &["a".to_string(), "b".to_string()],
+        (hook.pre_dispatch.as_ref().unwrap())(&mut HookPreDispatchInfo {
+            arguments: &mut args,
         });
         assert!(CALLED.load(Ordering::SeqCst));
+        assert_eq!(args.as_slice(), &["a", "b", "c"]);
     }
 
     #[test]
@@ -910,7 +919,7 @@ mod tests {
     fn test_hook_builder_chaining() {
         let hook = ProgramHook::<MockHookEnum>::empty()
             .on_begin::<_, ()>(|_: &HookBeginInfo| ())
-            .on_pre_dispatch(|_: &HookPreDispatchInfo| ())
+            .on_pre_dispatch(|_: &mut HookPreDispatchInfo| ())
             .on_post_dispatch(|_: &HookPostDispatchInfo<MockHookEnum>| ())
             .on_pre_chain(|_: &HookPreChainInfo<MockHookEnum>| ())
             .on_post_chain(|_: &HookPostChainInfo<MockHookEnum>| ())

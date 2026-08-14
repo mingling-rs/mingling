@@ -58,10 +58,10 @@ where
             line: &mut readline,
         });
 
-        let args = split_input_string(&readline);
+        let mut args = split_input_string(&readline);
 
         p.run_hook_repl_pre_exec(&crate::hook::HookREPLPreExecInfo { args: &args });
-        match might_be_async::invoke!(exec_once(p, &args)) {
+        match might_be_async::invoke!(exec_once(p, &mut args)) {
             Ok(r) => {
                 p.run_hook_repl_on_receive_result(&crate::hook::HookREPLOnReceiveResultInfo {
                     result: &r,
@@ -91,13 +91,13 @@ where
 #[cfg(not(feature = "async"))]
 fn exec_once<C>(
     p: &'static Program<C>,
-    args: &[String],
+    args: &mut Vec<String>,
 ) -> Result<RenderResult, ProgramInternalExecuteError>
 where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,
 {
     #[cfg(panic = "abort")]
-    let exec_result = super::exec::exec_with_args(p, &args);
+    let exec_result = super::exec::exec_with_args(p, args);
 
     #[cfg(not(panic = "abort"))]
     let exec_result = {
@@ -130,7 +130,7 @@ where
 #[cfg(feature = "async")]
 async fn exec_once<C>(
     p: &'static Program<C>,
-    args: &[String],
+    args: &mut Vec<String>,
 ) -> Result<RenderResult, ProgramInternalExecuteError>
 where
     C: ProgramCollect<Enum = C> + Send + Sync + 'static,
