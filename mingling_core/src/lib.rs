@@ -110,3 +110,6 @@ pub mod __private {
 
 /// Mingling's convention metadatas, which can be bound to types using `#[metadata]`, to provide identification for types
 pub mod metadata;
+
+/// Some common utilities in Mingling, providing a collection of functionality needed by many modules.
+pub mod utils;

@@ -352,6 +352,31 @@ None
 
     `Default` is still derived (all fields default to empty/`None`).
 
+13. **[`core:utils`]** Added a new `utils` module to `mingling_core` with the `ArgumentSplitter` trait, providing a reusable implementation of shell-style command-line argument splitting. The trait is implemented for `str` and internally for `String`, and provides a `split_args()` method that splits a string input into a `Vec<String>` of arguments, respecting single quotes, double quotes, and backslash escaping.
+
+    **Trait definition:**
+
+    ```rust
+    pub trait ArgumentSplitter {
+        /// Splits the string into a `Vec<String>` of arguments, respecting
+        /// single quotes, double quotes, and backslash escaping.
+        fn split_args(&self) -> Vec<String>;
+    }
+
+    impl ArgumentSplitter for str { /* ... */ }
+    impl ArgumentSplitter for String { /* ... */ }
+    ```
+
+    **Splitting rules** (identical semantics to the previously private `splitter` module):
+
+    - **Whitespace separation** — Arguments are separated by spaces (`' '`); consecutive spaces collapse and empty tokens are dropped.
+    - **Single/double quotes** — Text inside `'...'` or `"..."` is treated as a single argument; the quote characters are stripped. Within quoted segments, backslash escapes the next character (so `"b c"` produces `b c`, and `"b\"c"` produces `b"c`).
+    - **Backslash escaping** (outside quotes) — A backslash takes the next character literally (e.g., `b\ c` produces `b c`; `b\"c` produces `b"c`); a trailing backslash with no following character is ignored/lost.
+
+    **Integration:** The previously private `split_input` / `split_input_string` functions in `mingling_core::program::repl_exec::splitter` have been removed; `repl_exec` now uses `readline.split_args()` on the input string. The `utils` module is exported as `mingling_core::utils`.
+
+    The `ArgumentSplitter` trait is a public API addition, so downstream code can now reuse the same argument-splitting logic that the REPL uses for parsing input lines.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.

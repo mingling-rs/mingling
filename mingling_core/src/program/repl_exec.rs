@@ -7,10 +7,8 @@ use std::io::Write;
 #[doc(hidden)]
 pub mod res;
 
-mod splitter;
-
 use crate::error::{ProgramInternalExecuteError, ProgramPanic};
-use crate::program::repl_exec::splitter::split_input_string;
+use crate::utils::ArgumentSplitter;
 use crate::{Program, ProgramCollect, RenderResult};
 use crate::{program::repl_exec::res::ResREPL, this};
 
@@ -58,7 +56,7 @@ where
             line: &mut readline,
         });
 
-        let mut args = split_input_string(&readline);
+        let mut args = readline.split_args();
 
         p.run_hook_repl_pre_exec(&crate::hook::HookREPLPreExecInfo { args: &args });
         match might_be_async::invoke!(exec_once(p, &mut args)) {
