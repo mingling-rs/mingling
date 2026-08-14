@@ -1,4 +1,5 @@
-use mingling::{RenderResult, StructuralData, StructuralRenderer, StructuralRendererSetting};
+use mingling::config::StructuralRendererSetting;
+use mingling::{RenderResult, StructuralData, StructuralRenderer};
 use serde::Serialize;
 
 #[derive(Debug, Clone, PartialEq, Serialize, StructuralData)]
@@ -76,4 +77,3 @@ fn test_render_ron() {
 }
 
 mingling::macros::gen_program!();
-

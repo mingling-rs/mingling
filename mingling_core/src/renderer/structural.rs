@@ -1,6 +1,6 @@
 // Doc Not Optimize
 use crate::{
-    ProgramCollect, RenderResult, StructuralRendererSetting,
+    ProgramCollect, RenderResult, config::StructuralRendererSetting,
     renderer::structural::error::StructuralRendererSerializeError,
 };
 use serde::Serialize;

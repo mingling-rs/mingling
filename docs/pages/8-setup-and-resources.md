@@ -11,7 +11,7 @@ When a program needs to do some init work at startup—like parsing global args 
 // Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
-@@@use mingling::Verbosity;
+@@@use mingling::config::Verbosity;
 #[program_setup]
 fn my_setup(program: &mut Program<ThisProgram>) {
     // Extract global flag from args
@@ -43,7 +43,7 @@ The most common use of Setup is extracting global args. Mingling provides a few 
 // Features: ["extras"]
 @@@use mingling::macros::program_setup;
 @@@use mingling::Program;
-@@@use mingling::Verbosity;
+@@@use mingling::config::Verbosity;
 #[program_setup]
 fn my_setup(program: &mut Program<ThisProgram>) {
     // Boolean flag

@@ -253,7 +253,7 @@ impl ProgramCollect for ThisProgram {
     #[cfg(feature = "structural_renderer")]
     fn structural_render(
         _any: mingling_core::AnyOutput<Self::Enum>,
-        _setting: &mingling_core::StructuralRendererSetting,
+        _setting: &mingling_core::config::StructuralRendererSetting,
     ) -> Result<mingling_core::RenderResult, mingling_core::error::StructuralRendererSerializeError>
     {
         todo!()

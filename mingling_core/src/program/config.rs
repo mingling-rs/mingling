@@ -1,4 +1,28 @@
 // Doc Not Optimize
+
+//! Config module for program output settings and user context.
+//!
+//! This module provides configuration types and settings for controlling
+//! how the program outputs errors, rendered results, panic messages,
+//! verbosity levels, colors, progress indicators, and other user-defined
+//! context values used throughout the program lifecycle.
+//!
+//! The module includes the following items:
+//! - [`ErrorOutput`]: Output mode for error messages.
+//! - [`RenderOutput`]: Output mode for rendered results.
+//! - [`PanicSilence`]: Panic message handling.
+//! - [`Verbosity`]: Verbosity level for program output.
+//! - [`ColorOutput`]: Color output mode.
+//! - [`ProgressOutput`]: Progress indicator mode.
+//! - [`ProgramStdoutSetting`]: Program stdout settings.
+//! - [`ClapHelpPrintBehaviour`]: Behavior when Clap Dispatcher outputs help information.
+//! - [`ConfirmationMode`]: Confirmation mode for user prompts.
+//! - [`ExecutionMode`]: Execution mode.
+//! - [`InteractionMode`]: Interaction mode.
+//! - [`YesAssumption`]: Yes assumption mode for prompts.
+//! - [`ProgramUserContext`]: Program user context.
+//! - [`StructuralRendererSetting`]: Settings for the structural renderer output format.
+
 /// Output mode for error messages
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ErrorOutput {

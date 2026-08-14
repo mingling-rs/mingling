@@ -2,40 +2,46 @@
 #[cfg(not(windows))]
 use std::env;
 
+#[cfg(feature = "structural_renderer")]
+use crate::config::StructuralRendererSetting;
 use crate::{
-    AnyOutput, GlobalResContainer, asset::dispatcher::Dispatcher, error::ChainProcessError,
+    AnyOutput, GlobalResContainer,
+    asset::dispatcher::Dispatcher,
+    config::{ProgramStdoutSetting, ProgramUserContext},
+    error::ChainProcessError,
     hook::ProgramHook,
 };
 
+pub mod config;
+
 #[doc(hidden)]
 pub mod error;
+
 #[doc(hidden)]
 pub mod exec;
-#[doc(hidden)]
-pub mod setup;
 
 pub mod hook;
-
-mod collection;
-pub use collection::*;
-
-mod once_exec;
 
 #[cfg(feature = "repl")]
 #[doc(hidden)]
 pub mod repl_exec;
 
+#[doc(hidden)]
+pub mod setup;
+
+mod collection;
+pub use collection::*;
+
 mod single_instance;
 pub use single_instance::*;
-
-mod config;
-pub use config::*;
 
 mod flag;
 pub use flag::*;
 
 mod string_vec;
 pub use string_vec::*;
+
+mod once_exec;
 
 /// Program, used to define the behavior of the entire command-line program
 #[derive(Default)]

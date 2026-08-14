@@ -375,7 +375,7 @@ None
     - `pick_global_argument(program, arg)` → `program.pick_argument(arg)`
     - Import `mingling::picker::PickerHelper` instead of `mingling::picker::{pick_global_flag, pick_global_argument}`
 
-4. **[`core:program`]** **[BREAKING]** Refactored the program configuration settings into typed enums. The previously boolean-based fields in `ProgramStdoutSetting` and `ProgramUserContext` have been replaced with new semantic enum types, improving type safety and self-documentation.
+4. **[`core:program`]** **[BREAKING]** Refactored the program configuration settings into typed enums and moved them to a dedicated `config` module. The previously boolean-based fields in `ProgramStdoutSetting` and `ProgramUserContext` have been replaced with new semantic enum types, improving type safety and self-documentation. Additionally, all configuration types — including `StructuralRendererSetting` — have been moved under `mingling_core::config`, with the `config` module made public.
 
     **`ProgramStdoutSetting` changes:**
 
@@ -398,7 +398,12 @@ None
     - `ProgramStdoutSetting::default()`: `ErrorOutput::Show`, `RenderOutput::Show`, `PanicSilence::Show`, `Verbosity::Normal`, `ColorOutput::Enabled`, `ProgressOutput::Enabled`
     - `ProgramUserContext::default()`: `confirmation: ConfirmationMode::Confirm`, `execution: ExecutionMode::Normal`, `interaction: InteractionMode::NonInteractive`, `yes_assumption: YesAssumption::None`
 
-    All new enum types are defined in `mingling_core::program::config` and re-exported from the `mingling_core` crate root.
+    **Module reorganization:**
+
+    - All config types are defined in `mingling_core::program::config`, which is now a public module (`pub mod config`).
+    - `StructuralRendererSetting` (previously exposed at the crate root) now lives in `mingling_core::config` and must be referenced as `mingling_core::config::StructuralRendererSetting`.
+    - Internal usages across `program.rs`, `collection.rs`, `mock.rs`, `once_exec.rs`, `hook.rs`, `structural.rs`, and setup modules have been updated to reference the new `config::` path.
+    - The `config` module is re-exported from the `mingling_core` crate root as `mingling_core::config`.
 
     **Migration guide:**
 
@@ -415,6 +420,7 @@ None
     - `ctx.force = true` → `ctx.execution = ExecutionMode::Force`
     - `ctx.interactive = true` → `ctx.interaction = InteractionMode::Interactive`
     - `ctx.assume_yes = true` → `ctx.yes_assumption = YesAssumption::AssumeYes`
+    - References to `mingling_core::StructuralRendererSetting` → `mingling_core::config::StructuralRendererSetting`
 
     _Behavioral semantics are preserved — the same configuration states are expressible in both the old boolean form and the new enum form, but the typed enums eliminate impossible states (e.g., both `verbose` and `quiet` set simultaneously) and make the intent of each setting explicit through named variants._
 

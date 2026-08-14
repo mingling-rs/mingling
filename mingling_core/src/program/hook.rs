@@ -768,7 +768,7 @@ mod tests {
         #[cfg(feature = "structural_renderer")]
         fn structural_render(
             _any: crate::AnyOutput<Self>,
-            _setting: &crate::StructuralRendererSetting,
+            _setting: &crate::config::StructuralRendererSetting,
         ) -> Result<crate::RenderResult, crate::error::StructuralRendererSerializeError> {
             unreachable!()
         }

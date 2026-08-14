@@ -50,8 +50,8 @@ fn main() {
 
     // Set clap help output mode
     program.stdout_setting.clap_help_print_behaviour =
-        mingling::ClapHelpPrintBehaviour::WriteToRenderResult;
-    //  mingling::ClapHelpPrintBehaviour::PrintDirectly
+        mingling::config::ClapHelpPrintBehaviour::WriteToRenderResult;
+    //  mingling::config::ClapHelpPrintBehaviour::PrintDirectly
     //
     // PrintDirectly:
     //   Let Clap print help information directly to stdout

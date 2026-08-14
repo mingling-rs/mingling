@@ -1,8 +1,9 @@
 // Doc Not Optimize
 use arg_picker::{PickerArg, value::Flag};
 use mingling_core::{
-    ConfirmationMode, ErrorOutput, InteractionMode, Program, ProgramCollect, RenderOutput,
-    YesAssumption, setup::ProgramSetup,
+    Program, ProgramCollect,
+    config::{ConfirmationMode, ErrorOutput, InteractionMode, RenderOutput, YesAssumption},
+    setup::ProgramSetup,
 };
 
 use crate::{

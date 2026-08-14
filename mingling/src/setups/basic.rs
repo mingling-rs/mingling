@@ -2,7 +2,8 @@
 #![allow(deprecated)]
 
 use mingling_core::{
-    ConfirmationMode, Flag, InteractionMode, Program, ProgramCollect, YesAssumption,
+    Flag, Program, ProgramCollect,
+    config::{ConfirmationMode, ErrorOutput, InteractionMode, RenderOutput, YesAssumption},
     setup::ProgramSetup,
 };
 
@@ -95,8 +96,8 @@ where
 {
     fn setup(self, program: &mut Program<C>) {
         program.global_flag(self.flag, |p| {
-            p.stdout_setting.render_output = mingling_core::RenderOutput::Hide;
-            p.stdout_setting.error_output = mingling_core::ErrorOutput::Hide;
+            p.stdout_setting.render_output = RenderOutput::Hide;
+            p.stdout_setting.error_output = ErrorOutput::Hide;
         });
     }
 }

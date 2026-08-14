@@ -99,7 +99,7 @@ where
 
         // Read exit code
         // Render result
-        if stdout_setting.render_output == crate::RenderOutput::Show {
+        if stdout_setting.render_output == crate::config::RenderOutput::Show {
             result.std_print();
         }
 
@@ -163,7 +163,7 @@ where
             .unwrap();
 
         #[cfg(not(panic = "abort"))]
-        if program.stdout_setting.silence_panic == super::PanicSilence::Silence {
+        if program.stdout_setting.silence_panic == super::config::PanicSilence::Silence {
             std::panic::set_hook(Box::new(|_| {}));
         }
 

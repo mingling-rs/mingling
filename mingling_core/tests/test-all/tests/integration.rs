@@ -6,7 +6,7 @@ use mingling::RenderResult;
 use mingling::StringVec;
 use mingling::StructuralData;
 use mingling::StructuralRenderer;
-use mingling::StructuralRendererSetting;
+use mingling::config::StructuralRendererSetting;
 use mingling::core_res::ResREPL;
 use mingling::hook::ProgramHook;
 use mingling::{ShellContext, ShellFlag, Suggest};

@@ -195,7 +195,7 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
 
 ```rust
 // Features: ["extras"]
-use mingling::{ErrorOutput, macros::program_setup, Program};
+use mingling::{config::ErrorOutput, macros::program_setup, Program};
  
 fn main() {
     let mut program = ThisProgram::new();

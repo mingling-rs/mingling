@@ -15,7 +15,7 @@
 //! OhMyGod
 //! ```
 
-use mingling::PanicSilence;
+use mingling::config::PanicSilence;
 use mingling::{hook::ProgramHook, prelude::*};
 use std::io::Write;
 

@@ -635,8 +635,8 @@ pub mod example_basic {}
 ///
 ///     // Set clap help output mode
 ///     program.stdout_setting.clap_help_print_behaviour =
-///         mingling::ClapHelpPrintBehaviour::WriteToRenderResult;
-///     //  mingling::ClapHelpPrintBehaviour::PrintDirectly
+///         mingling::config::ClapHelpPrintBehaviour::WriteToRenderResult;
+///     //  mingling::config::ClapHelpPrintBehaviour::PrintDirectly
 ///     //
 ///     // PrintDirectly:
 ///     //   Let Clap print help information directly to stdout
@@ -2472,7 +2472,7 @@ pub mod example_pack_err {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::PanicSilence;
+/// use mingling::config::PanicSilence;
 /// use mingling::{hook::ProgramHook, prelude::*};
 /// use std::io::Write;
 ///

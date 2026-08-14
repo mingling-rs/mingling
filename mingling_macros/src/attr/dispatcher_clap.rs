@@ -154,7 +154,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
 
                 let this = ::mingling::this::<#program_path>();
                 match this.stdout_setting.clap_help_print_behaviour {
-                    ::mingling::ClapHelpPrintBehaviour::WriteToRenderResult => {
+                    ::mingling::config::ClapHelpPrintBehaviour::WriteToRenderResult => {
                         let mut cmd = <#struct_name as ::clap::CommandFactory>::command()
                             .color(ColorChoice::Always);
                         let styled = cmd.render_help();
@@ -162,7 +162,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
                         let _ = write!(result, "{}", styled.ansi());
                         result
                     }
-                    ::mingling::ClapHelpPrintBehaviour::PrintDirectly => {
+                    ::mingling::config::ClapHelpPrintBehaviour::PrintDirectly => {
                         let mut command = <#struct_name as ::clap::CommandFactory>::command();
                         command.print_help().unwrap();
                         ::mingling::RenderResult::new()

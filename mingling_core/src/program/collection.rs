@@ -8,7 +8,7 @@ use crate::Dispatcher;
 use crate::{AnyOutput, ChainProcess, Grouped, RenderResult};
 
 #[cfg(feature = "structural_renderer")]
-use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
+use crate::{config::StructuralRendererSetting, error::StructuralRendererSerializeError};
 
 #[cfg(feature = "comp")]
 use crate::{ShellContext, Suggest};

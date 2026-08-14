@@ -50,27 +50,27 @@ where
     fn setup(self, program: &mut Program<C>) {
         #[cfg(feature = "json_serde_fmt")]
         program.global_flag("--json", |p| {
-            p.structural_renderer_name = crate::StructuralRendererSetting::Json;
+            p.structural_renderer_name = crate::config::StructuralRendererSetting::Json;
         });
         #[cfg(feature = "json_serde_fmt")]
         program.global_flag("--json-pretty", |p| {
-            p.structural_renderer_name = crate::StructuralRendererSetting::JsonPretty;
+            p.structural_renderer_name = crate::config::StructuralRendererSetting::JsonPretty;
         });
         #[cfg(feature = "yaml_serde_fmt")]
         program.global_flag("--yaml", |p| {
-            p.structural_renderer_name = crate::StructuralRendererSetting::Yaml;
+            p.structural_renderer_name = crate::config::StructuralRendererSetting::Yaml;
         });
         #[cfg(feature = "toml_serde_fmt")]
         program.global_flag("--toml", |p| {
-            p.structural_renderer_name = crate::StructuralRendererSetting::Toml;
+            p.structural_renderer_name = crate::config::StructuralRendererSetting::Toml;
         });
         #[cfg(feature = "ron_serde_fmt")]
         program.global_flag("--ron", |p| {
-            p.structural_renderer_name = crate::StructuralRendererSetting::Ron;
+            p.structural_renderer_name = crate::config::StructuralRendererSetting::Ron;
         });
         #[cfg(feature = "ron_serde_fmt")]
         program.global_flag("--ron-pretty", |p| {
-            p.structural_renderer_name = crate::StructuralRendererSetting::RonPretty;
+            p.structural_renderer_name = crate::config::StructuralRendererSetting::RonPretty;
         });
     }
 }

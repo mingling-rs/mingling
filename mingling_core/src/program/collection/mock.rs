@@ -10,7 +10,7 @@ use crate::Dispatcher;
 use crate::{ShellContext, Suggest};
 
 #[cfg(feature = "structural_renderer")]
-use crate::{StructuralRendererSetting, error::StructuralRendererSerializeError};
+use crate::{config::StructuralRendererSetting, error::StructuralRendererSerializeError};
 
 #[cfg(feature = "structural_renderer")]
 use serde::Serialize;
