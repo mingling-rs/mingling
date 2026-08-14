@@ -9,3 +9,10 @@ input = [ "render", "Bob", "22", "--json" ]
 
 expect.exit-code = 0
 expect.result = "{\"member_name\":\"Bob\",\"member_age\":22}"
+
+[[runs]]
+input = [ "render", "Bob", "22", "--yaml" ]
+
+expect.exit-code = 0
+expect.result = """member_name: Bob
+member_age: 22"""

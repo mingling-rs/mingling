@@ -2970,6 +2970,7 @@ pub mod example_setup {}
 /// path = "../../mingling"
 /// features = [
 ///     "structural_renderer",
+///     "yaml_serde_fmt",
 ///     "parser",
 /// ]
 ///

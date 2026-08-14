@@ -10,6 +10,7 @@ serde = { version = "1.0.228", features = ["derive"] }
 path = "../../mingling"
 features = [
     "structural_renderer",
+    "yaml_serde_fmt",
     "parser",
 ]
 
