@@ -1,10 +1,98 @@
 use std::{
-    fmt::{Display, Formatter},
+    fmt::{self, Display, Formatter},
     io::Write,
     process::{ExitCode, exit},
 };
 
 use crate::RenderResultMode::{Stderr, Stdout};
+
+/// A single emitted output item handed to a print hook.
+///
+/// `RenderResultPrint` bundles the text content and the output mode together
+/// into one value, so a print hook can route the content to stdout/stderr — or
+/// any custom sink — as a unit instead of juggling two separate arguments.
+///
+/// Values of this type are produced whenever a [`RenderResult`] with bound
+/// print hooks (see [`RenderResult::bind_print_hook`] and
+/// [`RenderResult::immediate_output`]) writes content through
+/// `print`/`println`/`eprint`/`eprintln`, and are handed to every hook in
+/// binding order. They are also used to flush another result's buffered content
+/// via [`RenderResult::append_other`] when the destination has hooks bound.
+///
+/// # Fields
+///
+/// * `content` — The raw text that was written, including any trailing newline
+///   added by `println`/`eprintln`.
+/// * `mode` — The output mode (`Stdout` or `Stderr`) the content was written
+///   with, which tells the hook where the content belongs.
+///
+/// # Examples
+///
+/// ```
+/// use mingling_core::{RenderResult, RenderResultMode, RenderResultPrint};
+///
+/// // Build an output item manually
+/// let print = RenderResultPrint {
+///     content: "Hello, world!".to_string(),
+///     mode: RenderResultMode::Stdout,
+/// };
+/// assert_eq!(print.content, "Hello, world!");
+/// assert_eq!(print.mode, RenderResultMode::Stdout);
+///
+/// // Use it inside a print hook
+/// let mut result = RenderResult::default();
+/// result.bind_print_hook(|print| match print.mode {
+///     RenderResultMode::Stdout => print!("{}", print.content),
+///     RenderResultMode::Stderr => eprint!("{}", print.content),
+/// });
+/// result.eprintln("something went wrong"); // goes to stderr via the hook
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RenderResultPrint {
+    /// The emitted text content.
+    ///
+    /// This is the raw text that was written to the render buffer when the
+    /// hook fired. For `println`/`eprintln` it includes the trailing newline;
+    /// for `print`/`eprint` it is exactly the given text.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResultMode, RenderResultPrint};
+    ///
+    /// let print = RenderResultPrint {
+    ///     content: "Hello".to_string(),
+    ///     mode: RenderResultMode::Stdout,
+    /// };
+    /// assert_eq!(print.content, "Hello");
+    /// ```
+    pub content: String,
+
+    /// The output mode the content was written with.
+    ///
+    /// Indicates whether the content was originally directed to stdout
+    /// (`Stdout`) or stderr (`Stderr`), allowing a hook to route the content
+    /// to the matching stream.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResultMode, RenderResultPrint};
+    ///
+    /// let print = RenderResultPrint {
+    ///     content: "error".to_string(),
+    ///     mode: RenderResultMode::Stderr,
+    /// };
+    /// assert_eq!(print.mode, RenderResultMode::Stderr);
+    /// ```
+    pub mode: RenderResultMode,
+}
+
+/// Optional list of print hooks bound to a `RenderResult`.
+///
+/// Each hook receives the emitted [`RenderResultPrint`]. See
+/// [`RenderResult::bind_print_hook`] and [`RenderResult::immediate_output`].
+type PrintHook = Option<Vec<Box<dyn FnMut(RenderResultPrint)>>>;
 
 /// Render result, containing the rendered text content.
 ///
@@ -20,8 +108,9 @@ use crate::RenderResultMode::{Stderr, Stdout};
 /// - **Buffered output**: All rendered content is first collected into the buffer
 ///   and can be output uniformly at a convenient time.
 /// - **Immediate output**: Can be enabled via [`immediate_output`](RenderResult::immediate_output),
-///   causing content to be flushed to stdout/stderr in real time while also being
-///   added to the buffer.
+///   which binds a print hook that flushes content to stdout/stderr in real time
+///   while also being added to the buffer. Custom hooks can be bound with
+///   [`bind_print_hook`](RenderResult::bind_print_hook).
 /// - **Dual-channel output**: The `Stdout` and `Stderr` modes distinguish between
 ///   normal output and error output.
 /// - **Exit code management**: Supports carrying an exit code to exit the process
@@ -59,19 +148,19 @@ use crate::RenderResultMode::{Stderr, Stdout};
 /// let result: RenderResult = (|| RenderResult::from("closure result")).into();
 /// assert_eq!(result.to_string(), "closure result");
 /// ```
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
+#[derive(Default)]
 pub struct RenderResult {
-    /// Whether immediate output is enabled.
+    /// Print hooks invoked with the buffered content and its output mode.
     ///
-    /// When set to `true`, rendered content is flushed to stdout/stderr in real time
-    /// while also being written to the buffer, enabling live output. This is useful
-    /// in scenarios where results should be displayed incrementally, such as in
-    /// long-running rendering tasks where the user wants to see partial output
-    /// without waiting for the entire rendering process to complete.
+    /// When hooks are bound (via [`immediate_output`](RenderResult::immediate_output)
+    /// or [`bind_print_hook`](RenderResult::bind_print_hook)), every
+    /// `print`/`println`/`eprint`/`eprintln` call additionally emits the content
+    /// through each hook in binding order — typically flushing it to stdout/stderr
+    /// in real time — while the content is still appended to the buffer.
     ///
-    /// The default value is `false`, meaning all content is first written to the
-    /// buffer and output uniformly at the end.
-    immediate_output: bool,
+    /// The default value is `None`, meaning content is only buffered and output
+    /// uniformly at the end (e.g. via [`std_print`](RenderResult::std_print)).
+    print_hook: PrintHook,
 
     /// Render buffer, stored as a list of (text, output mode) pairs.
     ///
@@ -110,6 +199,36 @@ pub struct RenderResult {
     /// ```
     pub exit_code: i32,
 }
+
+impl fmt::Debug for RenderResult {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RenderResult")
+            .field("render_buffer", &self.render_buffer)
+            .field("exit_code", &self.exit_code)
+            .field("print_hooks", &self.print_hook.as_ref().map(Vec::len))
+            .finish()
+    }
+}
+
+impl Clone for RenderResult {
+    /// The bound print hooks are opaque closures and cannot be cloned, so the
+    /// cloned result is created without any hooks.
+    fn clone(&self) -> Self {
+        Self {
+            print_hook: None,
+            render_buffer: self.render_buffer.clone(),
+            exit_code: self.exit_code,
+        }
+    }
+}
+
+impl PartialEq for RenderResult {
+    fn eq(&self, other: &Self) -> bool {
+        self.render_buffer == other.render_buffer && self.exit_code == other.exit_code
+    }
+}
+
+impl Eq for RenderResult {}
 
 /// Enum representing the output mode for render results.
 ///
@@ -244,12 +363,13 @@ impl RenderResult {
         Self::default()
     }
 
-    /// Marks the render result for immediate output, bypassing any buffering or
-    /// deferred rendering.
+    /// Enables immediate output by binding a print hook that flushes content to
+    /// stdout/stderr in real time.
     ///
-    /// When set, the rendered content will be both collected in the result and
-    /// immediately flushed to stdout/stderr in real time, rather than being
-    /// deferred for later display.
+    /// After this is called, every `print`/`println`/`eprint`/`eprintln` call
+    /// writes its content to the corresponding output stream immediately, while
+    /// also keeping it in the buffer for later use (e.g. [`std_print`](RenderResult::std_print)
+    /// or `to_string()`).
     ///
     /// # Examples
     ///
@@ -258,9 +378,47 @@ impl RenderResult {
     ///
     /// let mut result = RenderResult::default();
     /// result.immediate_output();
+    /// result.print("Hello, ");
+    /// result.print("world!"); // flushed to stdout right away
+    /// assert_eq!(result.to_string(), "Hello, world!");
     /// ```
-    pub const fn immediate_output(&mut self) -> &mut Self {
-        self.immediate_output = true;
+    pub fn immediate_output(&mut self) -> &mut Self {
+        self.bind_print_hook(|RenderResultPrint { content, mode }| match mode {
+            Stdout => print!("{content}"),
+            Stderr => eprint!("{content}"),
+        })
+    }
+
+    /// Binds a custom print hook invoked with the content and output mode of
+    /// every `print`/`println`/`eprint`/`eprintln` call.
+    ///
+    /// Multiple hooks can be bound; they are invoked in binding order. This is
+    /// the building block behind [`immediate_output`](RenderResult::immediate_output)
+    /// and can be used to route output to a custom sink (e.g. for testing).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.bind_print_hook(|print| {
+    ///     println!(
+    ///         "[{}] {}",
+    ///         if print.mode == RenderResultMode::Stdout {
+    ///             "out"
+    ///         } else {
+    ///             "err"
+    ///         },
+    ///         print.content
+    ///     );
+    /// });
+    /// result.print("Hello");
+    /// ```
+    pub fn bind_print_hook(&mut self, hook: impl FnMut(RenderResultPrint) + 'static) -> &mut Self {
+        self.print_hook
+            .get_or_insert_with(Vec::new)
+            .push(Box::new(hook));
         self
     }
 
@@ -317,12 +475,12 @@ impl RenderResult {
 
     /// Appends the contents of another `RenderResult` to this one.
     ///
-    /// If this `RenderResult` has `immediate_output` enabled but the other does not,
-    /// the other's content will be immediately flushed to the appropriate output stream
-    /// (stdout/stderr) while also being appended to the render buffer.
+    /// If this `RenderResult` has print hooks bound but the other does not, the
+    /// other's content is emitted through this result's hooks (e.g. flushed to
+    /// stdout/stderr) while also being appended to the render buffer.
     ///
-    /// The `exit_code` of the other result is **not** transferred — only the buffered
-    /// content and the `immediate_output` flag of the other result are merged.
+    /// The `exit_code` and the print hooks of the other result are **not**
+    /// transferred — only its buffered content is merged.
     ///
     /// # Arguments
     ///
@@ -345,17 +503,15 @@ impl RenderResult {
     pub fn append_other(&mut self, other: impl Into<Self>) {
         let other = other.into();
 
-        // If self has immediate output enabled, but the input does not, the input needs immediate output.
-        let immediate_output = !other.immediate_output && self.immediate_output;
+        // If self has hooks but the other does not, the other's buffered content
+        // was never emitted — flush it through self's hooks while appending.
+        let should_emit = self.print_hook.is_some() && other.print_hook.is_none();
 
-        for i in other.render_buffer {
-            if immediate_output {
-                match &i.1 {
-                    Stdout => print!("{}", i.0),
-                    Stderr => eprint!("{}", i.0),
-                }
+        for (content, mode) in other.render_buffer {
+            if should_emit {
+                self.emit(&content, mode);
             }
-            self.render_buffer.push(i);
+            self.render_buffer.push((content, mode));
         }
     }
 
@@ -373,9 +529,7 @@ impl RenderResult {
     /// ```
     pub fn print(&mut self, text: impl Into<String>) {
         let text = text.into();
-        if self.immediate_output {
-            print!("{text}");
-        }
+        self.emit(&text, Stdout);
         self.append_to_buffer(text, Stdout);
     }
 
@@ -393,9 +547,7 @@ impl RenderResult {
     /// ```
     pub fn println(&mut self, text: impl Into<String>) {
         let text = text.into();
-        if self.immediate_output {
-            println!("{text}");
-        }
+        self.emit(&format!("{text}\n"), Stdout);
         self.append_line_to_buffer(text, Stdout);
     }
 
@@ -413,9 +565,7 @@ impl RenderResult {
     /// ```
     pub fn eprint(&mut self, text: impl Into<String>) {
         let text = text.into();
-        if self.immediate_output {
-            eprint!("{text}");
-        }
+        self.emit(&text, Stderr);
         self.append_to_buffer(text, Stderr);
     }
 
@@ -433,9 +583,7 @@ impl RenderResult {
     /// ```
     pub fn eprintln(&mut self, text: impl Into<String>) {
         let text = text.into();
-        if self.immediate_output {
-            eprintln!("{text}");
-        }
+        self.emit(&format!("{text}\n"), Stderr);
         self.append_line_to_buffer(text, Stderr);
     }
 
@@ -538,7 +686,7 @@ impl RenderResult {
     ///
     /// # Returns
     ///
-    /// A new `RenderResult` with the same `immediate_output` flag and `exit_code`, but with
+    /// A new `RenderResult` with the same print hooks and `exit_code`, but with
     /// trimmed text content.
     ///
     /// # Examples
@@ -579,8 +727,20 @@ impl RenderResult {
 
         Self {
             render_buffer: buffer,
-            immediate_output: self.immediate_output,
+            print_hook: self.print_hook,
             exit_code: self.exit_code,
+        }
+    }
+
+    /// Emits `content` to every bound print hook, if any.
+    fn emit(&mut self, content: &str, mode: RenderResultMode) {
+        if let Some(hooks) = &mut self.print_hook {
+            for hook in hooks {
+                hook(RenderResultPrint {
+                    content: content.to_string(),
+                    mode,
+                });
+            }
         }
     }
 
@@ -623,7 +783,9 @@ fn string_to_render_result(string: impl Into<String>, mode: RenderResultMode) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
     use std::io::Write as IoWrite;
+    use std::rc::Rc;
 
     #[test]
     fn default_creates_empty_text_with_exit_code_zero() {
@@ -748,5 +910,80 @@ mod tests {
         let trimmed = result.trim_buffer();
         assert_eq!(trimmed.render_buffer[0].1, RenderResultMode::Stderr);
         assert_eq!(trimmed.to_string(), "error");
+    }
+
+    #[test]
+    fn print_hooks_receive_content_and_mode() {
+        let mut result = RenderResult::default();
+        let captured: Rc<RefCell<Vec<RenderResultPrint>>> = Rc::default();
+        let hook_captured = Rc::clone(&captured);
+        result.bind_print_hook(move |print| hook_captured.borrow_mut().push(print));
+
+        result.print("Hello");
+        result.eprintln("World");
+
+        assert_eq!(
+            captured.borrow()[0],
+            RenderResultPrint {
+                content: "Hello".to_string(),
+                mode: RenderResultMode::Stdout
+            }
+        );
+        assert_eq!(
+            captured.borrow()[1],
+            RenderResultPrint {
+                content: "World\n".to_string(),
+                mode: RenderResultMode::Stderr
+            }
+        );
+        assert_eq!(result.to_string(), "HelloWorld");
+    }
+
+    #[test]
+    fn immediate_output_binds_stdout_hook() {
+        let mut result = RenderResult::default();
+        assert!(result.print_hook.is_none());
+        result.immediate_output();
+        assert!(result.print_hook.is_some());
+    }
+
+    #[test]
+    fn append_other_emits_through_hooks_when_self_has_them() {
+        let mut dest = RenderResult::default();
+        let emitted: Rc<RefCell<Vec<String>>> = Rc::default();
+        let hook_emitted = Rc::clone(&emitted);
+        dest.bind_print_hook(move |print| hook_emitted.borrow_mut().push(print.content));
+
+        let mut src = RenderResult::default();
+        src.append_to_buffer("Hello", RenderResultMode::Stdout);
+        dest.append_other(src);
+
+        assert_eq!(emitted.borrow().as_slice(), ["Hello"]);
+        assert_eq!(dest.to_string(), "Hello");
+    }
+
+    #[test]
+    fn append_other_does_not_reemit_when_other_has_hooks() {
+        let mut dest = RenderResult::default();
+        let emitted: Rc<RefCell<Vec<String>>> = Rc::default();
+        let hook_emitted = Rc::clone(&emitted);
+        dest.bind_print_hook(move |print| hook_emitted.borrow_mut().push(print.content));
+
+        let mut src = RenderResult::default();
+        src.bind_print_hook(|_| {});
+        src.append_to_buffer("Hello", RenderResultMode::Stdout);
+        dest.append_other(src);
+
+        assert!(emitted.borrow().is_empty());
+        assert_eq!(dest.to_string(), "Hello");
+    }
+
+    #[test]
+    fn write_does_not_emit_through_hooks() {
+        let mut result = RenderResult::default();
+        result.bind_print_hook(|_| panic!("append_to_buffer must not emit"));
+
+        IoWrite::write(&mut result, b"Hello").unwrap();
+        assert_eq!(result.to_string(), "Hello");
     }
 }

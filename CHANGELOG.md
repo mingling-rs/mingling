@@ -323,6 +323,35 @@ None
 
     The suggestion collection was also reworked: it now uses a `BTreeSet<SuggestItem>` for natural ordering and deduplication (replacing the previous `Vec<String>` + manual `sort()`/`dedup()`), carries both the suggested token and the fully-qualified owner node path used for the description lookup, and returns `Suggest::Suggest(suggestions)` directly. `entry_description` returns `None` for intermediate trie segments that have no entry of their own or entries without a registered `Description`, in which case suggestions fall back to plain `SuggestItem::new(token)`. The final empty-suggestions fallback to `file_suggest()` is unchanged.
 
+12. **[`core:render`]** Reworked the `RenderResult` immediate-output mechanism from a single boolean flag into a general **print-hook** system, enabling multiple user-defined hooks to be invoked with the content and output mode of every write.
+
+    **`RenderResultPrint` struct** — Added a new public struct bundling the emitted text content and its output mode:
+
+    - **`content: String`** — The raw text written. For `println`/`eprintln` it includes the trailing newline; for `print`/`eprint` it is exactly the given text.
+    - **`mode: RenderResultMode`** — The output mode (`Stdout` or `Stderr`) the content was written with, telling the hook where the content belongs.
+
+    Derives `Debug`, `Clone`, `PartialEq`, `Eq`.
+
+    **`print_hook` field** — Replaced `immediate_output: bool` with `print_hook: PrintHook` (a `Vec<Box<dyn FnMut(RenderResultPrint)>>` inside an `Option`). The default is `None`, meaning content is only buffered and output uniformly at the end (e.g. via `std_print`).
+
+    **`bind_print_hook()` method** — New method that pushes a user-provided hook onto the hook list; multiple hooks can be bound and are invoked in binding order. Returns `&mut Self` for chaining.
+
+    **`immediate_output()` behavior change** — Now calls `bind_print_hook()` with a hook that flushes content to stdout/stderr in real time (functionally identical to the old boolean behavior, but implemented via the hook mechanism). No longer `const`.
+
+    **`emit()` private helper** — Iterates bound hooks and invokes each with a `RenderResultPrint { content, mode }` value.
+
+    **Write methods updated** — `print`, `println`, `eprint`, and `eprintln` now call `self.emit(&text, Stdout/Stderr)` (after formatting the trailing newline for `println`/`eprintln`) instead of checking the `immediate_output` flag.
+
+    **`append_other()` semantics** — Now checks whether _self has hooks_ and _other has none_; when true, other's buffered content is emitted through self's hooks while being appended. The other's hooks and `exit_code` are **not** transferred — only its buffered content is merged.
+
+    **Manual trait impls** — Since hooks are opaque closures that cannot be cloned or meaningfully compared, hand-written impls replaced the derives:
+
+    - **`Clone`** — Clones the buffered content and exit code but drops the print hooks (creates a result with no hooks).
+    - **`PartialEq` / `Eq`** — Compares only the render buffer and exit code; hooks are ignored.
+    - **`Debug`** — Prints the buffered content, exit code, and the _number_ of bound hooks (`print_hooks: Vec::len`), avoiding attempting to format opaque closures.
+
+    `Default` is still derived (all fields default to empty/`None`).
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`macros`]** **[BREAKING]** Renamed the `extra_macros` feature to `extras`. All feature-gated macro re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extra_macros")]` to `#[cfg(feature = "extras")]`.
