@@ -6,12 +6,12 @@ pub use state::*;
 /// Provides support for the `OSC 9;4` protocol. You can inject it into the execution flow
 /// through Mingling's resource injection system, and use it to control your process state.
 ///
-/// Typically, `OSC94` is registered via [`OSC94Setup`], and then injected into functions
+/// Typically, `OSC94` is registered via `OSC94Setup`, and then injected into functions
 /// through Mingling's resource injection system.
 ///
 /// # Registration
 ///
-/// Before use, the [`OSC94Setup`] must be registered with the program:
+/// Before use, the `OSC94Setup` must be registered with the program:
 ///
 /// ```
 /// # use mingling::MockProgramCollect as ThisProgram;
@@ -70,7 +70,7 @@ impl OSC94 {
 /// A guard for modifying process state.
 ///
 /// Obtained via [`OSC94::get_mut`]. When the guard is dropped, the process state is
-/// automatically restored to [`OS94State::Clean`], so no manual cleanup is needed.
+/// automatically restored to `OS94State::Clean`, so no manual cleanup is needed.
 ///
 /// # Example
 ///

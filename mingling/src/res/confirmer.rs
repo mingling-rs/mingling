@@ -4,12 +4,12 @@ use std::io::{BufRead, Write};
 ///
 /// This structure caches the confirmed state to avoid repeated prompts.
 ///
-/// Typically, `Confirmer` is registered via [`ConfirmerSetup`], and then injected into functions
+/// Typically, `Confirmer` is registered via `ConfirmerSetup`, and then injected into functions
 /// through Mingling's resource injection system.
 ///
 /// # Registration
 ///
-/// Before use, the [`ConfirmerSetup`] must be registered with the program:
+/// Before use, the `ConfirmerSetup` must be registered with the program:
 ///
 /// ```
 /// # use mingling::MockProgramCollect as ThisProgram;

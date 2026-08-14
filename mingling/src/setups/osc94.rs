@@ -34,7 +34,7 @@ use crate::res::OSC94;
 /// # Notes
 ///
 /// - The support state is determined at setup time and stored in the resource store.
-/// - Use [`OSC94Message`] to construct and send progress notification messages.
+/// - Use `OSC94Message` to construct and send progress notification messages.
 pub struct OSC94Setup;
 
 impl<C> ProgramSetup<C> for OSC94Setup
