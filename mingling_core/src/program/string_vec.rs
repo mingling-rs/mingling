@@ -1,7 +1,48 @@
-// Doc Not Optimize
+/// A type wrapper around `Vec<String>`.
+///
+/// `StringVec` simplifies the process of creating a `Vec<String>` from various
+/// string collection types (such as arrays, slices, `Vec<&str>`, `Vec<String>`, etc.)
+/// by providing multiple convenient `From` conversion implementations.
+/// It also implements [`Deref`] and `Into<Vec<String>>`, allowing you to manipulate it
+/// just like a regular `Vec<String>`.
+///
+/// # Examples
+///
+/// ```
+/// # use mingling_core::StringVec;
+/// // Create from a string array
+/// let sv = StringVec::from(["hello", "world"]);
+///
+/// // Has the Deref behavior of a regular Vec, can be used like a Vec<String>
+/// assert_eq!(sv.len(), 2);
+/// assert_eq!(sv[0], "hello");
+///
+/// // Iterate
+/// for s in sv.iter() {
+///     println!("{}", s);
+/// }
+///
+/// // Convert back to Vec<String>
+/// let v: Vec<String> = sv.into();
+/// assert_eq!(v, vec!["hello".to_string(), "world".to_string()]);
+/// ```
+///
+/// # Supported conversion sources
+///
+/// - `[&str; N]`: fixed-length string literal arrays
+/// - `&[&str]`: string literal slice references
+/// - `Vec<&str>`: string literal dynamic arrays
+/// - `Vec<String>`: `String` dynamic arrays (moved directly, no copy)
+/// - `&[String]`: `String` slice references (shallow copies elements)
+///
+/// # Notes
+///
+/// This type is marked as `#[doc(hidden)]`, typically used internally
+/// and not usually shown directly in public documentation.
 #[derive(Debug, Clone)]
 #[doc(hidden)]
 pub struct StringVec {
+    /// The internally stored actual string vector.
     vec: Vec<String>,
 }
 
