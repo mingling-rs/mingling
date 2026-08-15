@@ -23,6 +23,9 @@ pub mod CRATE_ROOT {
 #[cfg(feature = "core")]
 pub mod metadata;
 
+/// Support for the `OSC 9;4` protocol
+pub mod osc94;
+
 #[cfg(feature = "core")]
 mod example_docs;
 
@@ -142,6 +145,9 @@ pub use mingling_macros::Grouped;
 
 #[cfg(feature = "structural_renderer")]
 pub use mingling_macros::StructuralData;
+
+/// Mingling's confirmation module, providing core support for Confirmer
+pub mod confirm;
 
 #[doc = include_str!("docs/docsrs_examples.md")]
 #[cfg(all(feature = "core", feature = "docs_rs"))]

@@ -1,5 +1,7 @@
 use std::io::{BufRead, Write};
 
+use crate::confirm::{ConfirmerCount, ConfirmerPredicate};
+
 /// A confirmer for interactive confirmation.
 ///
 /// This structure caches the confirmed state to avoid repeated prompts.
@@ -23,7 +25,8 @@ use std::io::{BufRead, Write};
 /// # Examples
 ///
 /// ```
-/// use mingling::res::{Confirmer, YesConfirm};
+/// use mingling::res::Confirmer;
+/// use mingling::confirm::YesConfirm;
 ///
 /// // In actual use, obtain the registered confirmer through the resource injection system
 /// let confirmer = Confirmer::new_confirmed();
@@ -57,7 +60,8 @@ impl Confirmer {
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::{Confirmer, YesConfirm};
+    /// use mingling::res::Confirmer;
+    /// use mingling::confirm::YesConfirm;
     ///
     /// let confirmer = Confirmer::new_confirmed();
     /// assert!(confirmer.ask::<YesConfirm>("Continue? [y/n] "));
@@ -76,7 +80,8 @@ impl Confirmer {
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::{Confirmer, YesConfirm};
+    /// use mingling::res::Confirmer;
+    /// use mingling::confirm::YesConfirm;
     ///
     /// let mut confirmer = Confirmer::new();
     /// confirmer.set_confirmed();
@@ -103,7 +108,8 @@ impl Confirmer {
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::{Confirmer, YesConfirm};
+    /// use mingling::res::Confirmer;
+    /// use mingling::confirm::YesConfirm;
     ///
     /// let confirmer = Confirmer::new_confirmed();
     /// let confirmed = confirmer.ask::<YesConfirm>("Delete this file? [y/n] ");
@@ -135,7 +141,8 @@ impl Confirmer {
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::{Confirmer, YesConfirm};
+    /// use mingling::res::Confirmer;
+    /// use mingling::confirm::YesConfirm;
     ///
     /// let confirmer = Confirmer::new_confirmed();
     /// let confirmed = confirmer.try_ask::<YesConfirm>("Confirm execution? [y/n] ", 3);
@@ -172,97 +179,6 @@ impl Confirmer {
                     }
                 }
             }
-        }
-    }
-}
-
-/// Specifies the maximum number of attempts for a confirmation prompt.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ConfirmerCount {
-    /// Loop indefinitely until the user gives a parseable answer.
-    Loop,
-    /// Ask at most the specified number of times.
-    Max(usize),
-}
-
-macro_rules! impl_from_for_confirmer_count {
-    ($($t:ty),*) => {
-        $(
-            impl From<$t> for ConfirmerCount {
-                fn from(n: $t) -> Self {
-                    if n == 0 {
-                        ConfirmerCount::Loop
-                    } else {
-                        match usize::try_from(n) {
-                            Ok(max) => ConfirmerCount::Max(max),
-                            Err(_) => ConfirmerCount::Max(usize::MAX),
-                        }
-                    }
-                }
-            }
-        )*
-    };
-}
-
-impl_from_for_confirmer_count!(
-    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
-);
-
-/// Defines how to parse user confirmation input.
-///
-/// A type implementing this trait determines which user input strings are treated as "yes" or "no".
-pub trait ConfirmerPredicate {
-    /// Parses the user's input string, returning whether it is "yes".
-    ///
-    /// Returns `Some(true)` for yes, `Some(false)` for no,
-    /// and `None` if the input cannot be parsed (requiring re-entry).
-    fn is_yes(str: &str) -> Option<bool>;
-}
-
-/// A `ConfirmerPredicate` implementation that accepts "y"/"yes" as yes and "n"/"no" as no.
-///
-/// Input comparison is case-insensitive and automatically trims leading/trailing whitespace.
-///
-/// # Examples
-///
-/// ```
-/// use mingling::res::{Confirmer, YesConfirm};
-///
-/// let confirmer = Confirmer::default();
-/// let confirmed = confirmer.ask::<YesConfirm>("Continue? [y/n] ");
-/// ```
-pub struct YesConfirm;
-
-/// A `ConfirmerPredicate` implementation that accepts "true"/"t" as yes and "false"/"f" as no.
-///
-/// Input comparison is case-insensitive and automatically trims leading/trailing whitespace.
-///
-/// # Examples
-///
-/// ```
-/// use mingling::res::{Confirmer, TrueConfirm};
-///
-/// let confirmer = Confirmer::default();
-/// let confirmed = confirmer.ask::<TrueConfirm>("Enable this feature? [true/false] ");
-/// ```
-pub struct TrueConfirm;
-
-impl ConfirmerPredicate for YesConfirm {
-    fn is_yes(str: &str) -> Option<bool> {
-        match str.trim().to_lowercase().as_str() {
-            "y" | "yes" => Some(true),
-            "n" | "no" => Some(false),
-            _ => None,
-        }
-    }
-}
-
-impl ConfirmerPredicate for TrueConfirm {
-    fn is_yes(str: &str) -> Option<bool> {
-        match str.trim().to_lowercase().as_str() {
-            "true" | "t" => Some(true),
-            "false" | "f" => Some(false),
-            _ => None,
         }
     }
 }

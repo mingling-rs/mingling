@@ -377,7 +377,7 @@ None
 
     The `ArgumentSplitter` trait is a public API addition, so downstream code can now reuse the same argument-splitting logic that the REPL uses for parsing input lines.
 
-14. **[`res`]** Added the `Confirmer` resource:
+14. **[`confirm`]** Added the `Confirmer` resource and its confirmation predicates:
 
     - **`mingling::res::Confirmer`** — A new resource type for interactive confirmation prompts. It caches the confirmed state to avoid repeated prompts, and is typically registered via [`ConfirmerSetup`] and injected into functions through Mingling's resource injection system.
 
@@ -387,15 +387,15 @@ None
         - **`ask<P: ConfirmerPredicate>(&self, ask: impl AsRef<str>) -> bool`** — Prompts the user at most **one** time. Returns `false` if the user provides an unrecognizable answer, `true` if already confirmed.
         - **`try_ask<P: ConfirmerPredicate>(&self, ask: impl AsRef<str>, count: impl Into<ConfirmerCount>) -> Option<bool>`** — Prompts the user up to `count` times. Returns `Some(true)` for confirmation, `Some(false)` for rejection, and `None` if the maximum attempts are exhausted without a parseable answer. The prompt is written to stderr.
 
-        - **`ConfirmerCount` enum** — Specifies the maximum number of attempts: `Loop` (0, indefinite) or `Max(usize)` (positive integer). `From` impls are provided for all integer types (`i8`, `i16`, `i32`, `i64`, `i128`, `isize`, `u8`, `u16`, `u32`, `u64`, `u128`, `usize`); `0` maps to `Loop`, negative values clamp to `Max(usize::MAX)`.
+    - **`mingling::confirm::ConfirmerCount`** — Specifies the maximum number of attempts: `Loop` (0, indefinite) or `Max(usize)` (positive integer). `From` impls are provided for all integer types (`i8`, `i16`, `i32`, `i64`, `i128`, `isize`, `u8`, `u16`, `u32`, `u64`, `u128`, `usize`); `0` maps to `Loop`, negative values clamp to `Max(usize::MAX)`.
 
-        - **`ConfirmerPredicate` trait** — Defines how to parse user confirmation input. Implementors provide `is_yes(str: &str) -> Option<bool>`: `Some(true)` for yes, `Some(false)` for no, `None` for unparseable input (requiring re-entry).
+    - **`mingling::confirm::ConfirmerPredicate`** — Defines how to parse user confirmation input. Implementors provide `is_yes(str: &str) -> Option<bool>`: `Some(true)` for yes, `Some(false)` for no, `None` for unparseable input (requiring re-entry).
 
-        - **`YesConfirm` predicate** — Accepts `"y"`/`"yes"` as yes and `"n"`/`"no"` as no. Case-insensitive with leading/trailing whitespace trimming.
+    - **`mingling::confirm::YesConfirm`** — Accepts `"y"`/`"yes"` as yes and `"n"`/`"no"` as no. Case-insensitive with leading/trailing whitespace trimming.
 
-        - **`TrueConfirm` predicate** — Accepts `"true"`/`"t"` as yes and `"false"`/`"f"` as no. Case-insensitive with leading/trailing whitespace trimming.
+    - **`mingling::confirm::TrueConfirm`** — Accepts `"true"`/`"t"` as yes and `"false"`/`"f"` as no. Case-insensitive with leading/trailing whitespace trimming.
 
-        Derives `Debug`, `Default`, `Clone`, `Copy`.
+    The `Confirmer` resource derives `Debug`, `Default`, `Clone`, `Copy`. The `confirm` module also houses `ConfirmerCount`, `ConfirmerPredicate`, `YesConfirm`, and `TrueConfirm` at `mingling::confirm::*`.
 
 15. **[`setups`]** Added the `ConfirmerSetup` and `StandardInputArgsSetup` program setups:
 
@@ -412,7 +412,7 @@ None
         - Empty input produces no arguments.
         - **Note:** the setup does **not** validate input — stdin content is treated as trusted arguments appended directly, so untrusted input can inject arbitrary arguments. It also has no per-subcommand granularity; if different subcommands need different stdin behavior, do not use this setup.
 
-16. **[`res:osc94`]** **[`setups:osc94`]** Added the `OSC94` resource and `OSC94Setup` for managing terminal `OSC 9;4` protocol status:
+16. **[`osc94`]** **[`setups:osc94`]** Added the `OSC94` resource and `OSC94Setup` for managing terminal `OSC 9;4` protocol status:
 
     ### `OSC94` resource
     - **`mingling::res::OSC94`** — A new resource type providing support for the [OSC 9;4 protocol](https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences), which allows sending task progress notifications via ANSI escape sequences. It is typically registered via [`OSC94Setup`] and injected into functions through Mingling's resource injection system.
@@ -422,7 +422,7 @@ None
         Derives `Debug`, `Default`, `Clone`, `Copy`.
 
     ### `OSC94Guard`
-    - **`mingling::res::OSC94Guard`** — A guard for modifying process state, obtained via [`OSC94::get_mut`]. When the guard is dropped, the process state is automatically restored to [`OSC94State::Clean`], so no manual cleanup is needed.
+    - **`mingling::osc94::OSC94Guard`** — A guard for modifying process state, obtained via [`OSC94::get_mut`]. When the guard is dropped, the process state is automatically restored to [`OSC94State::Clean`], so no manual cleanup is needed.
 
         - **`set_clean_state(&mut self)`** — Sets the process state to Clean, indicating the process has finished or is in a normal, problem-free state.
         - **`set_error_state(&mut self)`** — Sets the process state to Error, indicating an error occurred during process execution.
@@ -433,7 +433,7 @@ None
         - **`progress(&self) -> f32`** — Returns the actual progress value only when the state is `OSC94State::Normal`; otherwise returns `0.0`.
 
     ### `OSC94State` enum
-    - **`mingling::res::OSC94State`** — Represents the `OSC 9;4` protocol message state:
+    - **`mingling::osc94::OSC94State`** — Represents the `OSC 9;4` protocol message state:
 
         - **`Clean`** — Clears/hides progress (used when task completes), corresponding to state code `0`.
         - **`Normal(f32)`** — Normal state, state code `1`, requires a progress value (0-100).
