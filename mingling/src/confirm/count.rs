@@ -19,7 +19,7 @@
 ///
 /// - `ConfirmCount::from(3)` → asks at most **3** times before giving up.
 /// - `ConfirmCount::from(1)` → asks exactly **1** time.
-/// - `ConfirmCount::from(0)` → interpreted as [`Loop`], meaning it will keep asking
+/// - `ConfirmCount::from(0)` → interpreted as [`ConfirmCount::Loop`], meaning it will keep asking
 ///   indefinitely until a valid answer is parsed.
 ///
 /// # Examples

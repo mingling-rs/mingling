@@ -54,8 +54,8 @@ impl ResConfirm {
 
     /// Creates a `Confirm` instance in the confirmed state.
     ///
-    /// The returned `Confirm` will directly return `true` when calling [`ask`](Confirm::ask) or
-    /// [`try_ask`](Confirm::try_ask), without prompting the user.
+    /// The returned `Confirm` will directly return `true` when calling [`ask`](ResConfirm::ask) or
+    /// [`try_ask`](ResConfirm::try_ask), without prompting the user.
     ///
     /// # Examples
     ///
@@ -73,8 +73,8 @@ impl ResConfirm {
 
     /// Marks the Confirm as confirmed.
     ///
-    /// After calling this method, subsequent calls to [`ask`](Confirm::ask) or
-    /// [`try_ask`](Confirm::try_ask) on this Confirm will directly return `true`
+    /// After calling this method, subsequent calls to [`ask`](ResConfirm::ask) or
+    /// [`try_ask`](ResConfirm::try_ask) on this Confirm will directly return `true`
     /// without prompting the user.
     ///
     /// # Examples

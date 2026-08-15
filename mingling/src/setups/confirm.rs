@@ -30,7 +30,7 @@ use crate::res::ResConfirm;
 /// - Registers a [`ResConfirm`] resource that tracks confirmation state.
 /// - At the beginning of command execution, checks whether the user's
 ///   confirmation mode is set to `Skip`.
-/// - If confirmation is skipped, the [`Confirm`] resource is updated
+/// - If confirmation is skipped, the [`ResConfirm`] resource is updated
 ///   to record the confirmed state.
 ///
 /// # Notes

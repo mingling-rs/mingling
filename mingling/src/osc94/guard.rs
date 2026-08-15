@@ -2,12 +2,12 @@ use crate::osc94::OSC94State;
 
 /// A guard for modifying process state.
 ///
-/// Obtained via [`OSC94::get_mut`]. When the guard is dropped, the process state is
+/// Obtained via [`crate::res::ResOSC94::get_mut`]. When the guard is dropped, the process state is
 /// automatically restored to `OS94State::Clean`, so no manual cleanup is needed.
 ///
 /// # Example
 ///
-/// Create a guard via [`ResOSC94`], and the state is automatically restored to Clean
+/// Create a guard via [`crate::res::ResOSC94`], and the state is automatically restored to Clean
 /// when the guard is dropped:
 ///
 /// ```
