@@ -68,6 +68,12 @@ just_template = "0.2.1"
 # Template sources
 sha2 = "0.10"
 
+# Self-update
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "gzip"] }
+zip = { version = "2", default-features = false, features = ["deflate"] }
+tar = "0.4"
+flate2 = "1"
+
 [build-dependencies]
 # Configure & Serialization
 serde = { version = "1.0.229", features = ["derive"] }
