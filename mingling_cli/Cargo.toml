@@ -69,8 +69,7 @@ just_template = "0.2.1"
 sha2 = "0.10"
 
 # Self-update
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "gzip"] }
-zip = { version = "2", default-features = false, features = ["deflate"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "gzip"] }
 tar = "0.4"
 flate2 = "1"
 

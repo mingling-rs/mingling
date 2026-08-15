@@ -1,34 +1,40 @@
-use std::{fs, io, path::Path, path::PathBuf};
+use std::{fs, path::Path, path::PathBuf};
 
 use mingling::{
     Grouped, LazyRes, RenderResult, Routable,
     macros::{chain, command, metadata, renderer, routeify},
     metadata::Description,
 };
+use sha2::{Digest, Sha256};
 
 use crate::{Next, config::ResMlingConfig, eprintln_cargo, println_cargo};
 
-/// Config key holding the GitHub repository that publishes the mling packages.
-const CONFIG_KEY_GITHUB: &str = "mingling-github";
+/// Config key holding the base URL that hosts the mling release packages.
+const CONFIG_KEY_UPDATE_URL: &str = "update-url";
 
 /// Default update source, used when the config key is unset.
-const DEFAULT_GITHUB: &str = "https://github.com/mingling-rs/mingling";
+const DEFAULT_UPDATE_URL: &str = "https://mingling-rs.github.io/mingling/dist";
 
 /// Name of the staged update package inside `{data_dir}/mingling`.
 const UPDATE_FILE_NAME: &str = "update.tar.gz";
 
-/// The resolved download task: fetch the newest artifact and stage it.
+/// Records the sha256 of the last applied update, written by the wrapper.
+const LAST_UPDATE_FILE_NAME: &str = "last-update.sha256";
+
+/// The resolved download task: check the remote checksum and stage the package.
 #[derive(Debug, Default, Grouped)]
 pub struct StateUpdateDownload {
-    pub owner: String,
-    pub repo: String,
+    pub base_url: String,
     pub update_path: PathBuf,
 }
 
-/// The staged update package, ready to be applied by the `mling` wrapper.
+/// The latest package is already installed.
 #[derive(Debug, Default, Grouped)]
-pub struct ResultUpdate {
-    pub artifact_name: String,
+pub struct ResultUpdateUpToDate;
+
+/// The latest package was downloaded, verified, and staged for the wrapper.
+#[derive(Debug, Default, Grouped)]
+pub struct ResultUpdateStaged {
     pub update_path: PathBuf,
 }
 
@@ -37,20 +43,14 @@ pub struct ResultUpdate {
 pub enum UpdateError {
     /// The data directory could not be determined.
     NoDataDirectory,
-    /// The configured update source is not a GitHub repository URL.
-    InvalidRepo(String),
-    /// A network or API request failed.
+    /// The configured update URL is not a valid `http(s)://` URL.
+    InvalidUrl(String),
+    /// A network request failed, or the remote responded with an error.
     Network(String),
-    /// No matching artifact was found.
-    NoArtifact(String),
+    /// The downloaded package failed its sha256 verification.
+    ChecksumMismatch(String),
     /// Writing the staged update package failed.
     Io(String),
-}
-
-/// A downloaded artifact with its inner `*.tar.gz` extracted.
-struct Artifact {
-    name: String,
-    tar_gz: Vec<u8>,
 }
 
 #[metadata(EntryUpdate)]
@@ -61,45 +61,46 @@ pub fn desc_update() -> Description {
 #[command(routeify)]
 pub fn update(config: &mut LazyRes<ResMlingConfig>) -> Next {
     let config = config.get_ref();
-    let source = config.get_or(CONFIG_KEY_GITHUB, DEFAULT_GITHUB);
+    let source = config.get_or(CONFIG_KEY_UPDATE_URL, DEFAULT_UPDATE_URL);
     let Some(update_path) = update_package_path() else {
         return UpdateError::NoDataDirectory.to_chain();
     };
-    match parse_github_repo(source) {
-        Some((owner, repo)) => StateUpdateDownload {
-            owner,
-            repo,
-            update_path,
-        }
-        .to_chain(),
-        None => UpdateError::InvalidRepo(source.to_string()).to_chain(),
+    if !is_http_url(source) {
+        return UpdateError::InvalidUrl(source.to_string()).to_chain();
     }
+    StateUpdateDownload {
+        base_url: source.to_string(),
+        update_path,
+    }
+    .to_chain()
 }
 
-/// Fetch the newest artifact for the current platform and stage it at
+/// Check the remote checksum against the installed version; if they differ,
+/// download the package, verify its checksum, and stage it at
 /// `{data_dir}/mingling/update.tar.gz`.
 #[chain(routeify)]
 pub async fn handle_state_update_download(state: StateUpdateDownload) -> Next {
-    match fetch_latest_artifact(&state.owner, &state.repo).await {
-        Ok(artifact) => {
-            if let Err(e) = write_update_package(&artifact.tar_gz, &state.update_path) {
-                return UpdateError::Io(e).to_chain();
-            }
-            ResultUpdate {
-                artifact_name: artifact.name,
-                update_path: state.update_path,
-            }
-            .to_chain()
+    match check_and_fetch(&state.base_url, &state.update_path).await {
+        Ok(FetchOutcome::UpToDate) => ResultUpdateUpToDate.to_chain(),
+        Ok(FetchOutcome::Staged) => ResultUpdateStaged {
+            update_path: state.update_path,
         }
+        .to_chain(),
         Err(e) => e.to_chain(),
     }
 }
 
 #[renderer]
-pub fn render_result_update(r: ResultUpdate) -> RenderResult {
+pub fn render_result_update_up_to_date(_: ResultUpdateUpToDate) -> RenderResult {
     let mut result = RenderResult::new();
-    println_cargo!(result, "Downloaded: {}", r.artifact_name);
-    println_cargo!(result, "Staged: {}", r.update_path.display());
+    println_cargo!(result, "mling is already up to date");
+    result
+}
+
+#[renderer]
+pub fn render_result_update_staged(r: ResultUpdateStaged) -> RenderResult {
+    let mut result = RenderResult::new();
+    println_cargo!(result, "Downloaded: {}", r.update_path.display());
     println_cargo!(result, "Run `mling` again to apply the update");
     result
 }
@@ -111,14 +112,14 @@ pub fn render_error_update(err: UpdateError) -> RenderResult {
         UpdateError::NoDataDirectory => {
             eprintln_cargo!(result, "failed to determine the data directory");
         }
-        UpdateError::InvalidRepo(source) => {
+        UpdateError::InvalidUrl(source) => {
             eprintln_cargo!(
                 result,
-                "invalid update source `{}`, expected a GitHub repository URL like `https://github.com/mingling-rs/mingling`",
+                "invalid update URL `{}`, expected an `http(s)://` URL such as `https://mingling-rs.github.io/mingling/dist`",
                 source
             );
         }
-        UpdateError::Network(msg) | UpdateError::NoArtifact(msg) | UpdateError::Io(msg) => {
+        UpdateError::Network(msg) | UpdateError::ChecksumMismatch(msg) | UpdateError::Io(msg) => {
             eprintln_cargo!(result, "{}", msg);
         }
     }
@@ -130,27 +131,17 @@ pub fn update_package_path() -> Option<PathBuf> {
     dirs::data_dir().map(|dir| dir.join("mingling").join(UPDATE_FILE_NAME))
 }
 
-/// Extract `owner` / `repo` from a GitHub URL such as
-/// `https://github.com/mingling-rs/mingling`. Trailing slashes and `.git`
-/// suffixes are tolerated, and a bare `owner/repo` is accepted as well.
-fn parse_github_repo(source: &str) -> Option<(String, String)> {
-    let trimmed = source.trim().trim_end_matches('/');
-    if trimmed.is_empty() {
-        return None;
-    }
-    let path = match trimmed.rfind("://") {
-        Some(idx) => &trimmed[idx + 3..],
-        None => trimmed,
-    };
-    let mut segments = path.split('/').filter(|s| !s.is_empty());
-    // The first segment is the host; take the two path segments after it.
-    segments.next()?;
-    let owner = segments.next()?;
-    let repo = segments.next()?.trim_end_matches(".git");
-    Some((owner.to_string(), repo.to_string()))
+/// `{data_dir}/mingling/last-update.sha256`, the checksum of the last applied update.
+fn last_update_checksum_path() -> Option<PathBuf> {
+    dirs::data_dir().map(|dir| dir.join("mingling").join(LAST_UPDATE_FILE_NAME))
 }
 
-/// The platform suffix used by the CI artifact names (`mling-{os}-...`).
+fn is_http_url(source: &str) -> bool {
+    let source = source.trim();
+    source.starts_with("http://") || source.starts_with("https://")
+}
+
+/// The platform suffix used by the package names (`mling-{os}.tar.gz`).
 fn update_os_name() -> &'static str {
     if cfg!(windows) {
         "win"
@@ -163,127 +154,113 @@ fn update_os_name() -> &'static str {
     }
 }
 
-/// Query the GitHub Actions API, pick the newest non-expired artifact for the
-/// current platform, download it, and extract the inner `*.tar.gz`.
-async fn fetch_latest_artifact(owner: &str, repo: &str) -> Result<Artifact, UpdateError> {
+enum FetchOutcome {
+    UpToDate,
+    Staged,
+}
+
+/// Fetch `mling-{os}.tar.gz.sha256`, skip the download when the installed
+/// version already matches, then download and verify the package before
+/// staging it.
+async fn check_and_fetch(base_url: &str, update_path: &Path) -> Result<FetchOutcome, UpdateError> {
+    let os = update_os_name();
+    let base = base_url.trim_end_matches('/');
+    let checksum_url = format!("{base}/mling-{os}.tar.gz.sha256");
+    let package_url = format!("{base}/mling-{os}.tar.gz");
+
     let client = reqwest::Client::builder()
         .user_agent(format!("mling-updater/{}", env!("CARGO_PKG_VERSION")))
         .build()
         .map_err(|e| UpdateError::Network(format!("failed to build HTTP client: {e}")))?;
 
-    let list_url =
-        format!("https://api.github.com/repos/{owner}/{repo}/actions/artifacts?per_page=100");
-    let mut request = client
-        .get(&list_url)
-        .header("Accept", "application/vnd.github+json");
-    if let Ok(token) = std::env::var("GITHUB_TOKEN")
-        && !token.is_empty()
-    {
-        request = request.header("Authorization", format!("Bearer {token}"));
-    }
-
-    let response = request.send().await.map_err(|e| {
-        UpdateError::Network(format!("failed to query GitHub Actions artifacts: {e}"))
+    // 1. Fetch the remote checksum first.
+    let response = client.get(&checksum_url).send().await.map_err(|e| {
+        UpdateError::Network(format!(
+            "failed to fetch checksum from `{checksum_url}`: {e}"
+        ))
     })?;
     if !response.status().is_success() {
         return Err(UpdateError::Network(format!(
-            "GitHub Actions API returned {} for `{list_url}`",
+            "failed to fetch checksum from `{checksum_url}`: HTTP {}",
             response.status()
         )));
     }
-    let json: serde_json::Value = response
-        .json()
+    let checksum_text = response
+        .text()
         .await
-        .map_err(|e| UpdateError::Network(format!("failed to parse GitHub response: {e}")))?;
+        .map_err(|e| UpdateError::Network(format!("failed to read checksum: {e}")))?;
+    let remote_sha = parse_sha256(&checksum_text).ok_or_else(|| {
+        UpdateError::Network(format!("invalid checksum file at `{checksum_url}`"))
+    })?;
 
-    let os = update_os_name();
-    let prefix = format!("mling-{os}-");
-    let artifact = json
-        .get("artifacts")
-        .and_then(serde_json::Value::as_array)
-        .into_iter()
-        .flatten()
-        .filter(|a| {
-            a.get("expired").and_then(serde_json::Value::as_bool) != Some(true)
-                && a.get("name")
-                    .and_then(serde_json::Value::as_str)
-                    .is_some_and(|name| name.starts_with(&prefix))
-        })
-        .max_by_key(|a| {
-            a.get("created_at")
-                .and_then(serde_json::Value::as_str)
-                .unwrap_or("")
-        })
-        .ok_or_else(|| {
-            UpdateError::NoArtifact(format!("no `{prefix}*` artifact found in {owner}/{repo}"))
-        })?;
+    // 2. Skip the download when the installed version already matches.
+    if let Some(local_sha) = read_last_update_checksum()
+        && local_sha == remote_sha
+    {
+        return Ok(FetchOutcome::UpToDate);
+    }
 
-    let name = artifact
-        .get("name")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or("mling")
-        .to_string();
-    let download_url = artifact
-        .get("archive_download_url")
-        .and_then(serde_json::Value::as_str)
-        .unwrap_or(&format!(
-            "https://api.github.com/repos/{owner}/{repo}/actions/artifacts/{}/zip",
-            artifact
-                .get("id")
-                .and_then(serde_json::Value::as_u64)
-                .unwrap_or(0)
-        ))
-        .to_string();
-
+    // 3. Download the package.
     let response =
-        client.get(&download_url).send().await.map_err(|e| {
-            UpdateError::Network(format!("failed to download artifact `{name}`: {e}"))
+        client.get(&package_url).send().await.map_err(|e| {
+            UpdateError::Network(format!("failed to download `{package_url}`: {e}"))
         })?;
     if !response.status().is_success() {
         return Err(UpdateError::Network(format!(
-            "failed to download artifact `{name}`: HTTP {}",
+            "failed to download `{package_url}`: HTTP {}",
             response.status()
         )));
     }
-    let zip_bytes = response
+    let bytes = response
         .bytes()
         .await
-        .map_err(|e| UpdateError::Network(format!("failed to read artifact `{name}`: {e}")))?;
+        .map_err(|e| UpdateError::Network(format!("failed to read package body: {e}")))?;
 
-    let tar_gz = extract_tar_gz_from_zip(&zip_bytes)
-        .map_err(|e| UpdateError::Network(format!("invalid artifact `{name}`: {e}")))?;
-    Ok(Artifact { name, tar_gz })
+    // 4. Verify the package before staging it.
+    let actual_sha = sha256_hex(&bytes);
+    if actual_sha != remote_sha {
+        return Err(UpdateError::ChecksumMismatch(format!(
+            "checksum mismatch for `{package_url}`: expected {remote_sha}, got {actual_sha}"
+        )));
+    }
+
+    // 5. Stage it for the wrapper.
+    write_update_package(&bytes, update_path)?;
+    Ok(FetchOutcome::Staged)
 }
 
-/// The GitHub artifact is a zip containing the `mling-{os}-{sha}-{date}.tar.gz`
-/// built by CI; extract that inner file.
-fn extract_tar_gz_from_zip(zip_bytes: &[u8]) -> Result<Vec<u8>, String> {
-    let reader = io::Cursor::new(zip_bytes);
-    let mut archive = zip::ZipArchive::new(reader).map_err(|e| e.to_string())?;
-    for index in 0..archive.len() {
-        let mut file = archive.by_index(index).map_err(|e| e.to_string())?;
-        let file_name = file.name().to_string();
-        if file_name.ends_with(".tar.gz") {
-            let mut tar_gz = Vec::with_capacity(file.size() as usize);
-            io::copy(&mut file, &mut tar_gz).map_err(|e| e.to_string())?;
-            return Ok(tar_gz);
-        }
-    }
-    Err("artifact contains no `*.tar.gz` file".to_string())
+/// Parse the sha256 hex digest from a `sha256sum`-style line (`<hash>  <file>`).
+fn parse_sha256(line: &str) -> Option<String> {
+    let hash = line.split_whitespace().next()?;
+    (hash.len() == 64 && hash.chars().all(|c| c.is_ascii_hexdigit())).then(|| hash.to_string())
+}
+
+/// The checksum of the last update applied by the wrapper, if recorded.
+fn read_last_update_checksum() -> Option<String> {
+    let path = last_update_checksum_path()?;
+    let content = fs::read_to_string(path).ok()?;
+    let sha = content.trim();
+    (!sha.is_empty()).then(|| sha.to_string())
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    format!("{:x}", hasher.finalize())
 }
 
 /// Stage the update package at the wrapper's well-known location. The bytes are
 /// written to a temporary file first so a failed download never corrupts a
 /// previously staged update.
-fn write_update_package(tar_gz: &[u8], update_path: &Path) -> Result<(), String> {
-    let parent = update_path
-        .parent()
-        .ok_or_else(|| format!("no parent directory for {}", update_path.display()))?;
-    fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+fn write_update_package(package: &[u8], update_path: &Path) -> Result<(), UpdateError> {
+    let parent = update_path.parent().ok_or_else(|| {
+        UpdateError::Io(format!("no parent directory for {}", update_path.display()))
+    })?;
+    fs::create_dir_all(parent).map_err(|e| UpdateError::Io(e.to_string()))?;
     let tmp_path = parent.join("update.tar.gz.tmp");
-    fs::write(&tmp_path, tar_gz).map_err(|e| e.to_string())?;
+    fs::write(&tmp_path, package).map_err(|e| UpdateError::Io(e.to_string()))?;
     if update_path.exists() {
-        fs::remove_file(update_path).map_err(|e| e.to_string())?;
+        fs::remove_file(update_path).map_err(|e| UpdateError::Io(e.to_string()))?;
     }
-    fs::rename(&tmp_path, update_path).map_err(|e| e.to_string())
+    fs::rename(&tmp_path, update_path).map_err(|e| UpdateError::Io(e.to_string()))
 }

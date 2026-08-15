@@ -1,10 +1,12 @@
 use std::env;
 use std::ffi::OsString;
 use std::fs;
+use std::io;
 use std::path::{Component, Path, PathBuf};
 use std::process::{self, Command};
 
 use flate2::read::GzDecoder;
+use sha2::{Digest, Sha256};
 use tar::Archive;
 
 fn main() {
@@ -83,6 +85,13 @@ fn apply_update_if_present() {
 
     match unpack_update(&update_path, &current_exe, install_root) {
         Ok(()) => {
+            // Record the applied package's checksum so `mling update` can tell
+            // that this installation is already up to date.
+            if let Some(checksum_path) = last_update_checksum_path()
+                && let Ok(checksum) = sha256_file(&update_path)
+            {
+                let _ = fs::write(checksum_path, checksum);
+            }
             let _ = fs::remove_file(update_path);
         }
         Err(e) => eprintln!("mling: failed to apply update: {e}"),
@@ -134,4 +143,18 @@ fn sanitize_relative_path(path: &Path) -> PathBuf {
         }
     }
     out
+}
+
+/// `{data_dir}/mingling/last-update.sha256`, where the wrapper records the
+/// checksum of the update it applied.
+fn last_update_checksum_path() -> Option<PathBuf> {
+    dirs::data_dir().map(|data_dir| data_dir.join("mingling").join("last-update.sha256"))
+}
+
+/// The sha256 hex digest of a file.
+fn sha256_file(path: &Path) -> io::Result<String> {
+    let mut file = fs::File::open(path)?;
+    let mut hasher = Sha256::new();
+    io::copy(&mut file, &mut hasher)?;
+    Ok(format!("{:x}", hasher.finalize()))
 }
