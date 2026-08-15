@@ -38,20 +38,9 @@ jobs:
           name: docs-test-result-${{ matrix.os }}.md
           path: .temp/DOCS-TEST-RESULT.md
 
-  Move-Unreleased-Tag:
-    if: github.ref == 'refs/heads/main'
-    needs: [Check]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - run: |
-          git tag -f unreleased
-          git push origin unreleased --force
-
-  Package-Mling:
-    needs: [Move-Unreleased-Tag]
+  # Build the distributable packages in parallel with the checks, so that the
+  # `unreleased` tag and the Pages deployment always publish fresh artifacts.
+  Build:
     strategy:
       fail-fast: false
       matrix:
@@ -61,7 +50,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Compute artifact metadata
+      - name: Compute package metadata
         id: metadata
         shell: bash
         run: |
@@ -71,8 +60,6 @@ jobs:
             macOS) os="mac" ;;
           esac
           echo "os=$os" >> "$GITHUB_OUTPUT"
-          echo "short_sha=${GITHUB_SHA:0:8}" >> "$GITHUB_OUTPUT"
-          echo "date=$(date +%y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - name: Install mling
         shell: bash
@@ -84,20 +71,35 @@ jobs:
           fi
 
       - name: Package mling
-        id: package
         shell: bash
         run: |
           mkdir -p dist
-          name="mling-${{ steps.metadata.outputs.os }}-${{ steps.metadata.outputs.short_sha }}-${{ steps.metadata.outputs.date }}.tar.gz"
+          name="mling-${{ steps.metadata.outputs.os }}.tar.gz"
           tar -czf "dist/$name" -C .temp/mling .
-          echo "artifact_name=${name%.tar.gz}" >> "$GITHUB_OUTPUT"
+          if command -v sha256sum >/dev/null 2>&1; then
+            (cd dist && sha256sum "$name" > "$name.sha256")
+          else
+            (cd dist && shasum -a 256 "$name" > "$name.sha256")
+          fi
 
-      - name: Upload mling artifact
+      - name: Upload mling package
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.package.outputs.artifact_name }}
-          path: dist/mling-*.tar.gz
+          name: mling-${{ steps.metadata.outputs.os }}-pkg
+          path: dist/
           if-no-files-found: error
+
+  Move-Unreleased-Tag:
+    if: github.ref == 'refs/heads/main'
+    needs: [Check, Build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: |
+          git tag -f unreleased
+          git push origin unreleased --force
 
   Deploy-Github-Pages:
     needs: [Move-Unreleased-Tag]
@@ -128,6 +130,12 @@ jobs:
 
       - name: Delete .temp directory before deployment
         run: rm -rf .temp
+
+      - name: Download mling packages
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
