@@ -112,8 +112,10 @@ tag = "unreleased"
 features = []
 ```
 
-> [!NOTE]
-> To learn more, check out [Writing with Mingling](https://github.com/mingling-rs/mingling/blob/main/GETTING-STARTED.md)
+To learn more, check out [Writing with Mingling](https://github.com/mingling-rs/mingling/blob/main/GETTING-STARTED.md)
+
+> [!Note]
+> You can also use the `mling` scaffolding tool to build, check, and manage your project [Download](https://mingling-rs.github.io/mingling/dist) | [About](https://github.com/mingling-rs/mingling/tree/main/mingling_cli)
 
 ## Roadmap
 
@@ -160,6 +162,7 @@ See [LICENSE-MIT](LICENSE-MIT) or [LICENSE-APACHE](LICENSE-APACHE) file for deta
 
 **To learn more, check out the following links:**
 
+- ⚡ Mingling CLI - [About Mling](https://mingling-rs.github.io/mingling/dist)
 - 📦 Repo - [Github](https://github.com/mingling-rs/mingling) | [Gitee](https://gitee.com/mingling-rs/mingling) | [Origin](https://catilgrass.cn/mingling.git)
 - 🚪 Mainpage - [Github](https://mingling-rs.github.io/mingling/) | [crates.io](https://crates.io/crates/mingling)
 - 💡 Examples - [Github](https://mingling-rs.github.io/mingling/docs/examples.html)

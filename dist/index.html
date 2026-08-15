@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Mling CLI — Download</title>
+        <link
+            rel="icon"
+            type="image/png"
+            href="../docs/res/favicon_small.png"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
+            body {
+                font-family: "Noto Serif SC", Georgia, "Times New Roman", serif;
+                background-color: #1a1410;
+                color: #e8ddd0;
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                overflow-x: hidden;
+            }
+
+            a {
+                color: #d4a84b;
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            a:hover {
+                color: #e8c46a;
+            }
+
+            .container {
+                max-width: 1080px;
+                margin: 0 auto;
+                padding: 0 1.5rem;
+            }
+
+            nav {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0.8rem 2rem;
+                background: rgba(26, 20, 16, 0.88);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-bottom: 1px solid rgba(212, 168, 75, 0.12);
+            }
+
+            nav .logo {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-weight: 700;
+                font-size: 1.1rem;
+                color: #e8ddd0;
+            }
+
+            nav .logo img {
+                width: 28px;
+                height: 28px;
+                filter: brightness(0) invert(1);
+            }
+
+            nav .nav-links {
+                display: flex;
+                gap: 1.5rem;
+                align-items: center;
+                font-size: 0.9rem;
+            }
+
+            nav .nav-links a {
+                color: #9a8a7a;
+                transition: color 0.2s;
+            }
+
+            nav .nav-links a:hover {
+                color: #d4a84b;
+            }
+
+            nav .nav-links .btn-nav {
+                display: inline-block;
+                padding: 0.35rem 1rem;
+                border: 1px solid #d4a84b;
+                border-radius: 20px;
+                color: #d4a84b;
+                font-weight: 600;
+                font-size: 0.85rem;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+            }
+
+            nav .nav-links .btn-nav:hover {
+                background: #d4a84b;
+                color: #1a1410;
+            }
+
+            .hero {
+                padding: 5rem 1.5rem 3rem;
+                text-align: center;
+            }
+
+            .hero h1 {
+                font-size: 2.75rem;
+                font-weight: 700;
+                color: #e8ddd0;
+                margin-bottom: 0.75rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+                color: #9a8a7a;
+                max-width: 640px;
+                margin: 0 auto 2.5rem;
+            }
+
+            .download-row {
+                display: flex;
+                gap: 1.25rem;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .download-card {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 0.4rem;
+                min-width: 220px;
+                padding: 1.75rem 1.5rem;
+                background: #241c16;
+                border: 1px solid #3a2e24;
+                border-radius: 2px;
+                color: #e8ddd0;
+                transition:
+                    border-color 0.25s,
+                    transform 0.2s;
+            }
+
+            .download-card:hover {
+                border-color: #d4a84b;
+                color: #e8ddd0;
+                transform: translateY(-4px);
+            }
+
+            .download-card .platform {
+                width: 44px;
+                height: 44px;
+                margin-bottom: 0.25rem;
+            }
+
+            .download-card .platform.invert {
+                filter: brightness(0) invert(1);
+            }
+
+            .download-card .os-name {
+                font-size: 1.05rem;
+                font-weight: 700;
+            }
+
+            .download-card .file-name {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.78rem;
+                color: #d4a84b;
+                text-decoration: underline;
+                transition: color 0.2s;
+            }
+
+            .download-card .file-name:hover {
+                color: #e8c46a;
+            }
+
+            .download-card .checksum {
+                font-size: 0.78rem;
+                color: #7a6a5a;
+            }
+
+            .download-card .checksum a {
+                color: #7a6a5a;
+                text-decoration: underline;
+            }
+
+            .download-card .checksum a:hover {
+                color: #d4a84b;
+            }
+
+            .checksum-note {
+                margin: 1.25rem auto 0;
+                width: fit-content;
+                font-size: 0.8rem;
+                color: #6a5a4a;
+                text-align: center;
+            }
+
+            .section {
+                padding: 3.5rem 1.5rem;
+                border-top: 1px solid #2a1e14;
+            }
+
+            .section.alt {
+                background: #241c16;
+            }
+
+            .section h2 {
+                font-size: 1.6rem;
+                font-weight: 700;
+                color: #e8ddd0;
+                margin-bottom: 1rem;
+            }
+
+            .section h2::before {
+                content: "✦";
+                color: #c43931;
+                margin-right: 0.5rem;
+            }
+
+            .section h2 span {
+                color: #c43931;
+            }
+
+            .section p {
+                color: #9a8a7a;
+                margin-bottom: 1.25rem;
+                max-width: 720px;
+            }
+
+            .code-block {
+                background: #1a1410;
+                border: 1px solid #3a2e24;
+                border-radius: 2px;
+                padding: 1.5rem 1.5rem 1.5rem;
+                overflow-x: auto;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            }
+
+            .code-block pre {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+            }
+
+            .code-block code {
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-variant-ligatures: contextual;
+                font-size: 0.85rem;
+                line-height: 1.65;
+                color: #c0b0a0;
+            }
+
+            .code-block code .cm {
+                color: #6a5a4a;
+            }
+
+            .cmd-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 1rem;
+                margin-top: 1rem;
+            }
+
+            .cmd-card {
+                background: #1a1410;
+                border: 1px solid #3a2e24;
+                border-radius: 2px;
+                padding: 1.25rem 1.25rem;
+            }
+
+            .cmd-card code {
+                display: inline-block;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.85rem;
+                color: #d4a84b;
+                margin-bottom: 0.4rem;
+            }
+
+            .cmd-card p {
+                font-size: 0.85rem;
+                color: #9a8a7a;
+                margin-bottom: 0;
+            }
+
+            footer {
+                padding: 2rem 1.5rem;
+                text-align: center;
+                color: #6a5a4a;
+                font-size: 0.85rem;
+                border-top: 1px solid #2a1e14;
+            }
+
+            footer a {
+                color: #7a6a5a;
+            }
+
+            footer a:hover {
+                color: #d4a84b;
+            }
+
+            @media (max-width: 768px) {
+                nav {
+                    padding: 0.8rem 1rem;
+                }
+
+                nav .nav-links {
+                    gap: 0.8rem;
+                }
+
+                .hero h1 {
+                    font-size: 2rem;
+                }
+
+                .download-card {
+                    min-width: 100%;
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav>
+            <a href="../" class="logo">
+                <img
+                    src="../docs/res/icon.png"
+                    alt="Mingling icon"
+                    width="28"
+                    height="28"
+                />
+                Mìng Lìng
+            </a>
+            <div class="nav-links">
+                <a
+                    href="https://github.com/mingling-rs/mingling/tree/main/mingling_cli"
+                    target="_blank"
+                    >GitHub</a
+                >
+                <a
+                    href="https://crates.io/crates/mingling-cli"
+                    target="_blank"
+                    class="btn-nav"
+                    >cargo install mingling-cli</a
+                >
+            </div>
+        </nav>
+
+        <section class="hero">
+            <h1>Mingling CLI</h1>
+            <p class="subtitle">
+                The command-line companion for scaffolding, managing, and
+                updating Mingling projects. Install it once, then let
+                <code>mling update</code> keep it fresh.
+            </p>
+        </section>
+
+        <section class="section alt">
+            <div class="container">
+                <h2>How to use</h2>
+                <p>Some commands you will use every day:</p>
+                <div class="cmd-grid">
+                    <div class="cmd-card">
+                        <code>mling proj-init 0.4@basic</code>
+                        <p>Initialize a project</p>
+                    </div>
+                    <div class="cmd-card">
+                        <code>mling install</code>
+                        <p>Install the project to the Mingling package list</p>
+                    </div>
+                    <div class="cmd-card">
+                        <code>mling pkg-enable your-cli@0.1.0</code>
+                        <p>Enable the specified package</p>
+                    </div>
+                    <div class="cmd-card">
+                        <code>mling lint</code>
+                        <p>Mingling Linter</p>
+                    </div>
+                    <div class="cmd-card">
+                        <code>mling -h</code>
+                        <p>Show help messages</p>
+                    </div>
+                    <div class="cmd-card">
+                        <code>mling update</code>
+                        <p>Update mling to the latest version</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2>Download</h2>
+                <p>
+                    Choose the package for your platform and download the latest
+                    build.
+                </p>
+                <div class="download-row">
+                    <div class="download-card">
+                        <svg
+                            class="platform invert"
+                            viewBox="0 0 128 128"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M113.823 104.595c-1.795-1.478-3.629-2.921-5.308-4.525-1.87-1.785-3.045-3.944-2.789-6.678.147-1.573-.216-2.926-2.113-3.452.446-1.154.864-1.928 1.033-2.753.188-.92.178-1.887.204-2.834.264-9.96-3.334-18.691-8.663-26.835-2.454-3.748-5.017-7.429-7.633-11.066-4.092-5.688-5.559-12.078-5.633-18.981a47.564 47.564 0 00-1.081-9.475C80.527 11.956 77.291 7.233 71.422 4.7c-4.497-1.942-9.152-2.327-13.901-1.084-6.901 1.805-11.074 6.934-10.996 14.088.074 6.885.417 13.779.922 20.648.288 3.893-.312 7.252-2.895 10.34-2.484 2.969-4.706 6.172-6.858 9.397-1.229 1.844-2.317 3.853-3.077 5.931-2.07 5.663-3.973 11.373-7.276 16.5-1.224 1.9-1.363 4.026-.494 6.199.225.563.363 1.429.089 1.882-2.354 3.907-5.011 7.345-10.066 8.095-3.976.591-4.172 1.314-4.051 5.413.1 3.337.061 6.705-.28 10.021-.363 3.555.008 4.521 3.442 5.373 7.924 1.968 15.913 3.647 23.492 6.854 3.227 1.365 6.465.891 9.064-1.763 2.713-2.771 6.141-3.855 9.844-3.859 6.285-.005 12.572.298 18.86.369 1.702.02 2.679.653 3.364 2.199.84 1.893 2.26 3.284 4.445 3.526 4.193.462 8.013-.16 11.19-3.359 3.918-3.948 8.436-7.066 13.615-9.227 1.482-.619 2.878-1.592 4.103-2.648 2.231-1.922 2.113-3.146-.135-5zM62.426 24.12c.758-2.601 2.537-4.289 5.243-4.801 2.276-.43 4.203.688 5.639 3.246 1.546 2.758 2.054 5.64.734 8.658-1.083 2.474-1.591 2.707-4.123 1.868-.474-.157-.937-.343-1.777-.652.708-.594 1.154-1.035 1.664-1.382 1.134-.772 1.452-1.858 1.346-3.148-.139-1.694-1.471-3.194-2.837-3.175-1.225.017-2.262 1.167-2.4 2.915-.086 1.089.095 2.199.173 3.589-3.446-1.023-4.711-3.525-3.662-7.118zm-12.75-2.251c1.274-1.928 3.197-2.314 5.101-1.024 2.029 1.376 3.547 5.256 2.763 7.576-.285.844-1.127 1.5-1.716 2.241l-.604-.374c-.23-1.253-.276-2.585-.757-3.733-.304-.728-1.257-1.184-1.919-1.762-.622.739-1.693 1.443-1.757 2.228-.088 1.084.477 2.28.969 3.331.311.661 1.001 1.145 1.713 1.916l-1.922 1.51c-3.018-2.7-3.915-8.82-1.871-11.909zM87.34 86.075c-.203 2.604-.5 2.713-3.118 3.098-1.859.272-2.359.756-2.453 2.964a101.744 101.744 0 00-.012 7.753c.061 1.77-.537 3.158-1.755 4.393-6.764 6.856-14.845 10.105-24.512 8.926-4.17-.509-6.896-3.047-9.097-6.639.98-.363 1.705-.607 2.412-.894 3.122-1.27 3.706-3.955 1.213-6.277-1.884-1.757-3.986-3.283-6.007-4.892-1.954-1.555-3.934-3.078-5.891-4.629-1.668-1.323-2.305-3.028-2.345-5.188-.094-5.182.972-10.03 3.138-14.747 1.932-4.209 3.429-8.617 5.239-12.885.935-2.202 1.906-4.455 3.278-6.388 1.319-1.854 2.134-3.669 1.988-5.94-.084-1.276-.016-2.562-.016-3.843l.707-.352c1.141.985 2.302 1.949 3.423 2.959 4.045 3.646 7.892 3.813 12.319.67 1.888-1.341 3.93-2.47 5.927-3.652.497-.294 1.092-.423 1.934-.738 2.151 5.066 4.262 10.033 6.375 15 1.072 2.524 1.932 5.167 3.264 7.547 2.671 4.775 4.092 9.813 4.07 15.272-.012 2.83.137 5.67-.081 8.482z"
+                            />
+                        </svg>
+                        <span class="os-name">Linux</span>
+                        <a class="file-name" href="./mling-linux.tar.gz"
+                            >mling-linux.tar.gz</a
+                        >
+                        <span class="checksum"
+                            ><a href="./mling-linux.tar.gz.sha256"
+                                >SHA256</a
+                            ></span
+                        >
+                    </div>
+                    <div class="download-card">
+                        <svg
+                            class="platform invert"
+                            viewBox="0 0 128 128"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M126 1.637l-67 9.834v49.831l67-.534zM1.647 66.709l.003 42.404 50.791 6.983-.04-49.057zm56.82.68l.094 49.465 67.376 9.509.016-58.863zM1.61 19.297l.047 42.383 50.791-.289-.023-49.016z"
+                            />
+                        </svg>
+                        <span class="os-name">Windows</span>
+                        <a class="file-name" href="./mling-win.tar.gz"
+                            >mling-win.tar.gz</a
+                        >
+                        <span class="checksum"
+                            ><a href="./mling-win.tar.gz.sha256"
+                                >SHA256</a
+                            ></span
+                        >
+                    </div>
+                    <div class="download-card">
+                        <svg
+                            class="platform invert"
+                            viewBox="0 0 128 128"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                d="M97.905 67.885c.174 18.8 16.494 25.057 16.674 25.137-.138.44-2.607 8.916-8.597 17.669-5.178 7.568-10.553 15.108-19.018 15.266-8.318.152-10.993-4.934-20.504-4.934-9.508 0-12.479 4.776-20.354 5.086-8.172.31-14.395-8.185-19.616-15.724C15.822 94.961 7.669 66.8 18.616 47.791c5.438-9.44 15.158-15.417 25.707-15.571 8.024-.153 15.598 5.398 20.503 5.398 4.902 0 14.106-6.676 23.782-5.696 4.051.169 15.421 1.636 22.722 12.324-.587.365-13.566 7.921-13.425 23.639M82.272 21.719c4.338-5.251 7.258-12.563 6.462-19.836-6.254.251-13.816 4.167-18.301 9.416-4.02 4.647-7.54 12.087-6.591 19.216 6.971.54 14.091-3.542 18.43-8.796"
+                            />
+                        </svg>
+                        <span class="os-name">macOS</span>
+                        <a class="file-name" href="./mling-mac.tar.gz"
+                            >mling-mac.tar.gz</a
+                        >
+                        <span class="checksum"
+                            ><a href="./mling-mac.tar.gz.sha256"
+                                >SHA256</a
+                            ></span
+                        >
+                    </div>
+                </div>
+
+                <p class="checksum-note">
+                    Packages are built on every push to
+                    <a
+                        href="https://github.com/mingling-rs/mingling"
+                        target="_blank"
+                        >main</a
+                    >
+                    and published here automatically.
+                </p>
+            </div>
+        </section>
+
+        <section class="section alt">
+            <div class="container">
+                <h2>Install</h2>
+                <p>
+                    Extract the package and load the bundled environment script
+                    — it adds <code>bin/</code> to <code>PATH</code> and enables
+                    shell completion.
+                </p>
+                <div class="code-block">
+                    <pre><code><span class="cm"># Linux / macOS (zsh, bash, fish)</span>
+tar -xzf mling-linux.tar.gz
+source load_mling.sh
+
+<span class="cm"># Windows (PowerShell)</span>
+tar -xzf mling-win.tar.gz
+.\load_mling.ps1</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2>Update</h2>
+                <p>
+                    <code>mling</code> can update itself. It downloads from this
+                    page by default, verifies the sha256 checksum, and applies
+                    the new version on your next invocation.
+                </p>
+                <div class="code-block">
+                    <pre><code><span class="cm"># Update to the latest build</span>
+mling update
+
+<span class="cm"># Point it at a custom mirror if needed</span>
+mling cfg update-url https://mingling-rs.github.io/mingling/dist
+mling update</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <a href="../">Mìng Lìng</a> ·
+            <a href="https://github.com/mingling-rs/mingling" target="_blank"
+                >GitHub</a
+            >
+            ·
+            <a href="../docs/doc.html">Docs</a>
+        </footer>
+    </body>
+</html>
