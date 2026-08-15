@@ -26,6 +26,15 @@
 
             html {
                 scroll-behavior: smooth;
+                scroll-snap-type: y mandatory;
+            }
+
+            .hero,
+            .code-demo,
+            .code-demo-mirror {
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                min-height: 100vh;
             }
 
             body {
@@ -36,6 +45,69 @@
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
                 overflow-x: hidden;
+            }
+
+            /* Dashed lines along the container (1080px) edges, excluding hero */
+            body > section:not(.hero) {
+                position: relative;
+            }
+
+            body > section:not(.hero)::before,
+            body > section:not(.hero)::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: repeating-linear-gradient(
+                    to bottom,
+                    rgba(212, 168, 75, 0.25) 0,
+                    rgba(212, 168, 75, 0.25) 4px,
+                    transparent 4px,
+                    transparent 9px
+                );
+                pointer-events: none;
+                z-index: 49;
+            }
+
+            body > section:not(.hero)::before {
+                left: max(0px, calc(50% - 540px));
+            }
+
+            body > section:not(.hero)::after {
+                right: max(0px, calc(50% - 540px));
+            }
+
+            /* Diamond markers at line intersections */
+            .line-diamond {
+                position: absolute;
+                top: -4px;
+                width: 8px;
+                height: 8px;
+                background: rgba(212, 168, 75, 0.25);
+                transform: rotate(45deg);
+                pointer-events: none;
+                z-index: 50;
+            }
+
+            .line-diamond.left {
+                left: calc(max(0px, calc(50% - 540px)) - 4px);
+            }
+
+            .line-diamond.right {
+                right: calc(max(0px, calc(50% - 540px)) - 4px);
+            }
+
+            /* Horizontal dashed dividers between pages (border-image, same style as vertical lines) */
+            body > section + section,
+            body > footer {
+                border-top: 1px solid rgba(212, 168, 75, 0.25);
+                border-image: repeating-linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.25) 0 4px,
+                        transparent 4px 9px
+                    )
+                    1;
             }
 
             a {
@@ -55,7 +127,7 @@
             .container {
                 max-width: 1080px;
                 margin: 0 auto;
-                padding: 0 1.5rem;
+                position: relative;
             }
 
             .section-title {
@@ -149,7 +221,7 @@
             .hero::before {
                 content: "";
                 position: absolute;
-                top: 20%;
+                top: 26%;
                 left: 50%;
                 width: 600px;
                 height: 600px;
@@ -162,6 +234,41 @@
                 pointer-events: none;
             }
 
+            /* Tiled grid background (field grid) */
+            .hero::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    );
+                background-size:
+                    40px 40px,
+                    40px 40px,
+                    20px 20px,
+                    20px 20px;
+                pointer-events: none;
+                z-index: 0;
+            }
+
             .hero-content {
                 display: flex;
                 flex-direction: column;
@@ -171,6 +278,7 @@
                 max-width: 820px;
                 position: relative;
                 z-index: 1;
+                margin-top: 3rem;
             }
 
             .hero h1 {
@@ -305,11 +413,11 @@
             @keyframes watermarkIn {
                 0% {
                     opacity: 0;
-                    top: 30%;
+                    top: 36%;
                 }
                 100% {
                     opacity: 0.3;
-                    top: 15%;
+                    top: 21%;
                 }
             }
 
@@ -346,13 +454,46 @@
             .code-demo {
                 padding: 5rem 1.5rem;
                 background: #241c16;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .code-demo .code-grid {
                 display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 3rem;
-                align-items: center;
+                grid-template-columns: 60fr 40fr;
+                grid-template-rows: 6fr 4fr;
+                gap: 2rem;
+                align-items: stretch;
+            }
+
+            .code-demo .code-grid > .code-block {
+                grid-row: span 2;
+            }
+
+            .code-demo-mirror {
+                background-color: #1a1410;
+                padding-top: calc(5rem + 1.75rem);
+            }
+
+            .code-demo-mirror .code-grid {
+                grid-template-columns: 38fr 62fr;
+                grid-template-rows: 5fr 5fr;
+                grid-template-areas:
+                    "text code"
+                    "term code";
+            }
+
+            .code-demo-mirror .code-grid > .code-text {
+                grid-area: text;
+            }
+
+            .code-demo-mirror .code-grid > .terminal-block {
+                grid-area: term;
+            }
+
+            .code-demo-mirror .code-grid > .code-block {
+                grid-area: code;
             }
 
             .code-demo .code-text h2 {
@@ -372,11 +513,26 @@
                 margin-bottom: 1.5rem;
             }
 
+            .code-demo .code-text .star {
+                color: #c43931;
+                margin-right: 0.5rem;
+            }
+
+            .code-demo .code-text p b {
+                color: #e8ddd0;
+                font-weight: 700;
+            }
+
+            .code-demo .code-text .hl-word {
+                color: #c43931;
+                font-weight: 700;
+            }
+
             .code-demo .code-text .features-list {
                 list-style: none;
                 display: flex;
                 flex-direction: column;
-                gap: 0.6rem;
+                gap: 0.25rem;
             }
 
             .code-demo .code-text .features-list li {
@@ -394,13 +550,127 @@
                 flex-shrink: 0;
             }
 
+            .code-demo .example-link {
+                display: inline-block;
+                margin-top: 1.5rem;
+                padding: 0.5rem 1.25rem;
+                border: 1px solid #d4a84b;
+                border-radius: 2.5px;
+                color: #d4a84b;
+                font-size: 0.9rem;
+                font-weight: 600;
+                font-family: "Segoe UI", sans-serif;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+            }
+
+            .code-demo .example-link:hover {
+                background: #d4a84b;
+                color: #1a1410;
+            }
+
+            .terminal-block {
+                background: #000;
+                border: 1px solid #3a2e24;
+                border-radius: 2.5px;
+                padding: 1rem 1.25rem;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                position: relative;
+            }
+
+            .terminal-block pre {
+                margin: 0;
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-size: 1.33rem;
+                line-height: 1.6;
+                color: #d0d0d0;
+                white-space: pre;
+                position: relative;
+            }
+
+            .term-cursor {
+                display: inline-block;
+                width: 0.6em;
+                height: 1.15em;
+                background: #d0d0d0;
+                vertical-align: text-bottom;
+                margin-left: 1px;
+                animation: termBlink 1s steps(1) infinite;
+            }
+
+            .term-cmd {
+                color: #7ec699;
+            }
+
+            .term-arg {
+                color: #d4a84b;
+            }
+
+            .term-prompt {
+                color: #6a5a4a;
+            }
+
+            .term-out {
+                color: #d0d0d0;
+            }
+
+            @keyframes termBlink {
+                50% {
+                    opacity: 0;
+                }
+            }
+
+            .term-suggest {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(212, 168, 75, 0.07);
+                border-top: 1px solid rgba(212, 168, 75, 0.3);
+                padding: 0.4rem 1.25rem;
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-size: 1.33rem;
+                line-height: 1.5;
+                white-space: pre;
+                display: none;
+                pointer-events: none;
+            }
+
+            .term-suggest .sug-cmd {
+                color: #7ec699;
+            }
+
+            .term-suggest .sug-arg {
+                color: #d4a84b;
+            }
+
+            .term-suggest .sug-desc {
+                color: #6a5a4a;
+                font-size: 0.9rem;
+            }
+
+            .term-suggest .sug-active {
+                background: rgba(212, 168, 75, 0.18);
+                border-radius: 2px;
+                padding: 0 0.35rem;
+                margin: 0 -0.35rem;
+                color: #fff;
+            }
+
+            .term-suggest .sug-active .sug-arg,
+            .term-suggest .sug-active .sug-cmd {
+                color: #ffd97a;
+            }
+
             .code-block {
                 background: #241c16;
                 border: 1px solid #3a2e24;
-                border-radius: 2px;
-                padding: 2rem 1.5rem 1.5rem;
+                border-radius: 2.5px;
+                padding: 2.5rem 1.875rem 1.875rem;
                 overflow-x: auto;
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
                 position: relative;
             }
 
@@ -408,26 +678,44 @@
                 margin: 0;
                 padding: 0;
                 background: transparent;
+                min-height: 440px;
+                position: relative;
             }
 
             .code-block code {
                 font-family: "JetBrains Mono", "Noto Serif SC", monospace;
                 font-variant-ligatures: contextual;
-                font-size: 0.85rem;
+                font-size: 1.0625rem;
                 line-height: 1.65;
                 background: transparent !important;
                 padding: 0 !important;
             }
 
-            .code-block::before {
-                content: "▲ example-basic";
+            .code-line-highlight {
                 position: absolute;
-                top: 0.5rem;
-                right: 1rem;
-                font-size: 0.7rem;
+                left: 0;
+                right: 0;
+                height: 28px;
+                background: rgba(255, 255, 255, 0.1);
+                border-left: 2px solid rgba(255, 255, 255, 0.45);
+                pointer-events: none;
+                opacity: 0;
+                transition:
+                    opacity 0.15s ease,
+                    top 0.08s ease;
+                z-index: 3;
+            }
+
+            .code-block::before {
+                content: "▲ main.rs";
+                position: absolute;
+                top: 0.625rem;
+                right: 1.25rem;
+                font-size: 0.875rem;
                 color: #6a5a4a;
                 font-family: "Segoe UI", sans-serif;
                 letter-spacing: 0.5px;
+                z-index: 2;
             }
 
             .features {
@@ -487,8 +775,10 @@
                     rgba(212, 168, 75, 0.06),
                     transparent
                 );
-                border-top: 1px solid rgba(212, 168, 75, 0.1);
-                border-bottom: 1px solid rgba(212, 168, 75, 0.1);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
             }
 
             .cta-banner h2 {
@@ -524,12 +814,88 @@
                 margin-top: 0.5rem;
             }
 
+            .feature-carousel {
+                position: relative;
+                max-width: 540px;
+                margin: 2.5rem auto 0;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            .carousel-viewport {
+                flex: 1;
+                overflow: hidden;
+            }
+
+            .carousel-track {
+                display: flex;
+                transition: transform 0.4s ease;
+            }
+
+            .carousel-track > .carousel-code {
+                flex: 0 0 100%;
+                margin: 0;
+                text-align: left;
+                background: #0f0b08;
+                border: 1px solid #3a2e24;
+                border-radius: 2.5px;
+                padding: 0;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                overflow: hidden;
+                position: relative;
+                box-sizing: border-box;
+                aspect-ratio: 16 / 9;
+            }
+
+            .carousel-track > .carousel-code code {
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-size: 0.95rem;
+                line-height: 1.6;
+                background: transparent !important;
+                padding: 1.5rem !important;
+                margin: 0;
+                display: block;
+                border: none;
+                border-radius: 0;
+            }
+
+            .carousel-track > .carousel-code .code-line-highlight {
+                left: 1.5rem;
+                right: 1.5rem;
+            }
+
+            .carousel-arrow {
+                background: transparent;
+                border: 1px solid rgba(212, 168, 75, 0.4);
+                color: #d4a84b;
+                font-size: 1.5rem;
+                width: 2.4rem;
+                height: 2.4rem;
+                border-radius: 50%;
+                cursor: pointer;
+                flex-shrink: 0;
+                line-height: 1;
+                padding: 0;
+                transition:
+                    background 0.2s,
+                    color 0.2s;
+            }
+
+            .carousel-arrow:hover {
+                background: #d4a84b;
+                color: #1a1410;
+            }
+
             footer {
                 padding: 2rem 1.5rem;
                 text-align: center;
                 color: #6a5a4a;
                 font-size: 0.85rem;
                 border-top: 1px solid #2a1e14;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             footer a {
@@ -558,6 +924,28 @@
                 z-index: 9999;
             }
 
+            /* ── Cursor glow dot ── */
+            .cursor-dot {
+                position: fixed;
+                pointer-events: none;
+                border-radius: 50%;
+                width: 400px;
+                height: 400px;
+                background: radial-gradient(
+                    circle,
+                    rgba(212, 168, 75, 0.06) 0%,
+                    rgba(212, 168, 75, 0.02) 45%,
+                    transparent 70%
+                );
+                transform: translate(-50%, -50%);
+                z-index: 10000;
+                opacity: 0;
+                transition:
+                    opacity 0.3s ease,
+                    left 0.12s ease-out,
+                    top 0.12s ease-out;
+            }
+
             @keyframes inkSpread {
                 0% {
                     width: 0;
@@ -572,6 +960,16 @@
             }
 
             @media (max-width: 768px) {
+                html {
+                    scroll-snap-type: none;
+                }
+
+                .hero,
+                .code-demo,
+                .code-demo-mirror {
+                    min-height: auto;
+                }
+
                 nav {
                     padding: 0.6rem 1rem;
                 }
@@ -603,9 +1001,23 @@
                     gap: 2rem;
                 }
 
+                .code-demo .code-grid > .code-block {
+                    grid-row: auto;
+                }
+
+                .code-demo-mirror .code-grid {
+                    grid-template-columns: 1fr;
+                    grid-template-rows: auto auto auto;
+                    grid-template-areas:
+                        "code"
+                        "text"
+                        "term";
+                }
+
                 .code-block {
                     font-size: 0.75rem;
                     padding: 1rem;
+                    transform: none;
                 }
             }
 
@@ -617,10 +1029,6 @@
                 .hero .cta-row {
                     flex-direction: column;
                     align-items: center;
-                }
-
-                .features-grid {
-                    grid-template-columns: 1fr;
                 }
             }
         </style>
@@ -662,7 +1070,7 @@
                     alt=""
                     style="
                         position: absolute;
-                        top: 30%;
+                        top: 36%;
                         left: 50%;
                         transform: translate(-50%, -50%);
                         width: 600px;
@@ -679,12 +1087,13 @@
                 <h1>#[Mìng&nbsp;Lìng]</h1>
                 <p class="slogan" id="typewriter"></p>
 
-                <p class="desc">A <b>proc-macro based</b> Rust CLI framework</p>
+                <p class="desc">
+                    A <b>state-driven and data-driven</b> CLI workflow
+                    orchestration framework
+                </p>
 
                 <div class="cta-row">
-                    <a href="docs/doc.html" class="btn-primary">
-                        📖 Read The Docs
-                    </a>
+                    <a href="docs/doc.html" class="btn-primary"> Documents </a>
                     <a
                         href="https://github.com/mingling-rs/mingling"
                         target="_blank"
@@ -704,139 +1113,113 @@
         <!-- Code Demo -->
         <section class="code-demo">
             <div class="container code-grid">
+                <div class="code-block">
+                    <pre><code class="language-rust">
+#[derive(Grouped)]
+pub struct ResultHello(String);
+
+#[command]
+pub fn hello(args: Entry) -> ResultHello {
+    let name = args
+        .pick_or(&amp;arg![String], || "World".into())
+        .unwrap();
+    ResultHello(name)
+}
+
+#[renderer(buffer)]
+pub fn render_hello(hello: ResultHello) {
+    r_println!("Hello, {}", hello.0);
+}
+                    </code></pre>
+                </div>
+
                 <div class="code-text">
                     <h2>
-                        Dispatch, Parse<br />
-                        Then <span>Render</span>
+                        One Command,<br />
+                        One <span>Function.</span>
                     </h2>
                     <p>
-                        A proc-macro &amp; type-system CLI framework for
-                        building complex command-line programs with many
-                        subcommands.
+                        <span class="star">✦</span> <b>Command</b> is just a
+                        <span class="hl-word">Function</span>,<br />
+                        <span class="star">✦</span> <b>Renderer</b> is just a
+                        <span class="hl-word">Function</span>,<br />
+                        <span class="star">✦</span> <b>Mingling</b> wires them
+                        together<br />
+                        <span class="star">✦</span> with no builder boilerplate.
                     </p>
                     <ul class="features-list">
                         <li>
-                            Separation of concerns: parsing, logic, rendering
+                            <code>#[command]</code> turns a function into a
+                            subcommand
                         </li>
                         <li>
-                            Compile-time prefix-tree routing
-                            <a
-                                href="docs/example-viewer.html?name=example-dispatch-tree"
-                                >(optional)</a
-                            >
+                            <code>#[renderer]</code> — output, decoupled from
+                            logic
                         </li>
                         <li>
-                            Dynamic shell completion out of the box
-                            <a
-                                href="docs/example-viewer.html?name=example-completion"
-                                >(optional)</a
-                            >
+                            <code>pick / pick_or</code> — typed args via
+                            arg-picker
                         </li>
                     </ul>
                 </div>
 
-                <div class="code-block">
-                    <pre><code class="language-rust">
-use mingling::prelude::*;
-
-dispatcher!("greet", CMDGreet => EntryGreet);
-
-fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
-    program.exec_and_exit();
-}
-
-pack!(ResultGreeting = String);
-
-#[chain]
-fn handle_greet(args: EntryGreet) -> Next {
-    let name =
-        args.pick_or((), "World").unpack();
-    ResultGreeting::new(name)
-}
-
-#[renderer]
-fn render_greet(result: ResultGreeting) -> RenderResult {
-    let mut r = RenderResult::new();
-    writeln!(r, "Hello, {}!", *result).ok();
-    r
-}
-
-gen_program!();
-                    </code></pre>
+                <div class="terminal-block">
+                    <pre><code class="no-highlight" id="term-output">~# <s></s><span class="term-cmd">my-cli</span> <span class="term-arg">hello</span><s></s>
+<span class="instant">Hello, World!</span>
+~# <s></s><span class="term-cmd">my-cli</span> <span class="term-arg">hello</span><s></s> <span class="term-arg">Mingling</span><s></s>
+<span class="instant">Hello, Mingling!</span></code></pre>
                 </div>
             </div>
         </section>
 
-        <!-- Features -->
-        <section class="features">
-            <div class="container">
-                <h2 class="section-title">
-                    <span>Mìng&nbsp;Lìng</span> — Build Complex CLIs, For You!
-                </h2>
+        <!-- Code Demo (mirrored) -->
+        <section class="code-demo code-demo-mirror">
+            <div class="container code-grid">
+                <div class="code-block">
+                    <pre><code class="language-rust">
+#[command(entry = EntryHello)]
+pub fn hello() { /* ... */ }
 
-                <div class="features-grid">
-                    <div class="feature-card">
-                        <span class="icon">🧩</span>
-                        <h3>Separation of Concerns</h3>
-                        <p>
-                            Decouple parsing, business logic, rendering, help
-                            text, and completion — each is just a function with
-                            the right attribute macro.
-                        </p>
-                    </div>
+#[command]
+pub fn bye() { /* ... */ }
 
-                    <div class="feature-card">
-                        <span class="icon">⚡</span>
-                        <h3>Blazing Dispatch</h3>
-                        <p>
-                            With the <code>dispatch_tree</code> feature, your
-                            subcommand structure is hardened into a prefix tree
-                            at compile time. O(len) lookup.
-                        </p>
-                    </div>
+#[completion(EntryHello)]
+pub fn complete_hello(ctx: &amp;ShellContext) -&gt; Suggest {
+    if ctx.previous_word == "hello" {
+        suggest! {
+            "Alice": "The Sender",
+            "Bob": "The Receiver",
+        }
+    } else {
+        suggest! {}
+    }
+}
+                    </code></pre>
+                </div>
 
-                    <div class="feature-card">
-                        <span class="icon">🔄</span>
-                        <h3>Dynamic Completion</h3>
-                        <p>
-                            Enable <code>comp</code> and get smart,
-                            context-aware shell completions for bash, zsh, fish,
-                            and pwsh — no manual registration.
-                        </p>
-                    </div>
+                <div class="code-text">
+                    <h2>
+                        Type, Tab,<br />
+                        <span>Suggest.</span>
+                    </h2>
+                    <p>
+                        <span class="star">✦</span> <b>hello</b> offers Alice
+                        &amp; Bob,<br />
+                        <span class="star">✦</span> <b>bye</b> gets a friendly
+                        farewell,<br />
+                        <span class="star">✦</span> <b>Mingling</b> completes by
+                        context —<br />
+                        <span class="star">✦</span> suggestions born at runtime.
+                    </p>
+                    <a
+                        href="docs/example-viewer.html?name=example-completion"
+                        class="example-link"
+                        >View Full Example →</a
+                    >
+                </div>
 
-                    <div class="feature-card">
-                        <span class="icon">📦</span>
-                        <h3>Lightweight &amp; Modular</h3>
-                        <p>
-                            Minimal core dependencies. Pull in advanced features
-                            (REPL, structured output, Clap binding) only when
-                            you need them via feature flags.
-                        </p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="icon">📤</span>
-                        <h3>Structured Output</h3>
-                        <p>
-                            Add <code>general_renderer</code> and your program
-                            gains <code>--json</code> /
-                            <code>--yaml</code> flags automatically. Great for
-                            scripting and pipe workflows.
-                        </p>
-                    </div>
-
-                    <div class="feature-card">
-                        <span class="icon">🔁</span>
-                        <h3>REPL Mode</h3>
-                        <p>
-                            Call <code>program.exec_repl()</code> and your CLI
-                            becomes an interactive shell — perfect for debugging
-                            and exploration.
-                        </p>
-                    </div>
+                <div class="terminal-block">
+                    <pre><code class="no-highlight term-sequence"></code></pre>
                 </div>
             </div>
         </section>
@@ -844,15 +1227,47 @@ gen_program!();
         <!-- CTA Banner -->
         <section class="cta-banner">
             <h2>Ready to command your CLI?</h2>
-            <p>
-                Add Mingling to your project in one line, or dive straight into
-                the docs.
-            </p>
-            <code>cargo add mingling</code>
-            <div class="cta-row" style="margin-top: 1.5rem">
-                <a href="docs/doc.html" class="btn-primary">
-                    📖 Read The Docs
-                </a>
+            <p>You can choose a way to install</p>
+
+            <div class="feature-carousel">
+                <button class="carousel-arrow prev" aria-label="Previous">
+                    ‹
+                </button>
+                <div class="carousel-viewport">
+                    <div class="carousel-track">
+                        <pre
+                            class="carousel-code"
+                        ><code class="language-bash"># Initialize your project
+cargo init
+
+# Add Mingling
+cargo add mingling@0.4.0</code></pre>
+                        <pre
+                            class="carousel-code"
+                        ><code class="language-toml"># Add the Mingling dependency
+[dependencies.mingling]
+version = "0.4.0"
+features = [
+    "extras", # extra macro support
+    "picker", # argument picker
+]</code></pre>
+                        <pre
+                            class="carousel-code"
+                        ><code class="language-bash"># Download and install mingling-cli
+# https://mingling-rs.github.io/mingling/dist/
+
+mling proj-init 0.4.0@basic
+nano checklist.toml # Edit
+
+# Run `proj-init` again to deploy
+mling proj-init</code></pre>
+                    </div>
+                </div>
+                <button class="carousel-arrow next" aria-label="Next">›</button>
+            </div>
+
+            <div class="cta-row" style="margin-top: 2rem">
+                <a href="docs/doc.html" class="btn-primary"> Documents </a>
                 <a
                     href="https://github.com/mingling-rs/mingling"
                     target="_blank"
@@ -868,6 +1283,43 @@ gen_program!();
         <script src="docs/scripts/highlight/rust.min.js"></script>
         <script>
             hljs.highlightAll();
+
+            // Highlight the hovered line (code blocks + terminal blocks)
+            function attachLineHighlight(container) {
+                var pre =
+                    container.tagName === "PRE"
+                        ? container
+                        : container.querySelector("pre");
+                var code = pre.querySelector("code");
+                var hl = document.createElement("div");
+                hl.className = "code-line-highlight";
+                pre.appendChild(hl);
+
+                var lineHeight = parseFloat(getComputedStyle(code).lineHeight);
+                var padTop = parseFloat(getComputedStyle(code).paddingTop) || 0;
+
+                pre.addEventListener("mousemove", function (e) {
+                    var rect = pre.getBoundingClientRect();
+                    var y = e.clientY - rect.top;
+                    var index = Math.floor((y - padTop) / lineHeight);
+                    var lineCount = code.innerText.split("\n").length;
+                    if (index < 0) index = 0;
+                    if (index >= lineCount) index = lineCount - 1;
+                    hl.style.top = padTop + index * lineHeight + "px";
+                    hl.style.height = lineHeight + "px";
+                    hl.style.opacity = "1";
+                });
+
+                pre.addEventListener("mouseleave", function () {
+                    hl.style.opacity = "0";
+                });
+            }
+
+            document
+                .querySelectorAll(
+                    ".code-block, .terminal-block, .carousel-code",
+                )
+                .forEach(attachLineHighlight);
         </script>
 
         <script>
@@ -899,6 +1351,19 @@ gen_program!();
         </script>
 
         <script>
+            // Persistent glow dot following the mouse
+            var cursorDot = document.createElement("div");
+            cursorDot.className = "cursor-dot";
+            document.body.appendChild(cursorDot);
+
+            document.addEventListener("mousemove", function (e) {
+                cursorDot.style.left = e.clientX + "px";
+                cursorDot.style.top = e.clientY + "px";
+                if (cursorDot.style.opacity !== "1") {
+                    cursorDot.style.opacity = "1";
+                }
+            });
+
             document.addEventListener("click", function (e) {
                 var drop = document.createElement("div");
                 drop.className = "ink-drop";
@@ -909,6 +1374,433 @@ gen_program!();
                     drop.remove();
                 }, 1000);
             });
+        </script>
+
+        <script>
+            // Feature carousel (infinite loop via cloned first/last cards)
+            (function () {
+                var track = document.querySelector(
+                    ".feature-carousel .carousel-track",
+                );
+                if (!track) return;
+                var cards = Array.prototype.slice.call(track.children);
+                var count = cards.length;
+                if (count < 2) return;
+
+                // Clone first and last cards
+                var firstClone = cards[0].cloneNode(true);
+                var lastClone = cards[count - 1].cloneNode(true);
+                track.appendChild(firstClone);
+                track.insertBefore(lastClone, cards[0]);
+
+                var total = count + 2;
+                var index = 1; // start from the first real card
+                var animating = false;
+                var prev = document.querySelector(".feature-carousel .prev");
+                var next = document.querySelector(".feature-carousel .next");
+
+                function setTransform(animate) {
+                    track.style.transition = animate
+                        ? "transform 0.4s ease"
+                        : "none";
+                    track.style.transform = "translateX(-" + index * 100 + "%)";
+                }
+
+                function update(animate) {
+                    setTransform(animate);
+                    if (animate) {
+                        animating = true;
+                        setTimeout(function () {
+                            animating = false;
+                            if (index === total - 1) {
+                                index = 1;
+                                setTransform(false);
+                            } else if (index === 0) {
+                                index = total - 2;
+                                setTransform(false);
+                            }
+                        }, 400);
+                    }
+                }
+
+                next.addEventListener("click", function () {
+                    if (animating) return;
+                    index = Math.min(total - 1, index + 1);
+                    update(true);
+                });
+
+                prev.addEventListener("click", function () {
+                    if (animating) return;
+                    index = Math.max(0, index - 1);
+                    update(true);
+                });
+
+                setTransform(false);
+            })();
+        </script>
+
+        <script>
+            // Disable full-page snap after the mirrored page so the CTA area is reachable
+            (function () {
+                var html = document.documentElement;
+                var mirror = document.querySelector(".code-demo-mirror");
+                if (!mirror) return;
+                var disabled = false;
+                var mirrorTop = mirror.offsetTop;
+
+                window.addEventListener(
+                    "wheel",
+                    function (e) {
+                        // Scrolling down near the mirrored page: release the snap early
+                        if (
+                            e.deltaY > 0 &&
+                            window.scrollY >= mirrorTop - 5 &&
+                            !disabled
+                        ) {
+                            html.style.scrollSnapType = "none";
+                            disabled = true;
+                        }
+                    },
+                    { passive: true },
+                );
+
+                window.addEventListener(
+                    "scroll",
+                    function () {
+                        // Restore the snap when back above the mirrored page
+                        if (disabled && window.scrollY < mirrorTop) {
+                            html.style.scrollSnapType = "";
+                            disabled = false;
+                        }
+                    },
+                    { passive: true },
+                );
+            })();
+        </script>
+
+        <script>
+            // Insert diamond decorations at the line intersections
+            (function () {
+                document
+                    .querySelectorAll("body > section + section, body > footer")
+                    .forEach(function (el) {
+                        var left = document.createElement("span");
+                        left.className = "line-diamond left";
+                        var right = document.createElement("span");
+                        right.className = "line-diamond right";
+                        el.appendChild(left);
+                        el.appendChild(right);
+                    });
+            })();
+        </script>
+
+        <script>
+            // Terminal typewriter effect: <s></s> marks pauses, loops after a 5s pause
+            (function () {
+                function attachTypewriter(term) {
+                    var steps = [];
+                    var parser = document.createElement("div");
+                    parser.innerHTML = term.innerHTML;
+
+                    function walk(node, cls) {
+                        if (node.nodeType === Node.TEXT_NODE) {
+                            var text = node.textContent;
+                            for (var i = 0; i < text.length; i++) {
+                                steps.push({
+                                    type: "char",
+                                    ch: text[i],
+                                    cls: cls,
+                                });
+                            }
+                        } else if (node.nodeName === "S") {
+                            steps.push({ type: "pause", ms: 500 });
+                        } else if (node.nodeName === "SPAN") {
+                            if (
+                                (node.className || "").indexOf("instant") !== -1
+                            ) {
+                                steps.push({
+                                    type: "instant",
+                                    text: node.textContent,
+                                });
+                            } else {
+                                var newCls = node.className || cls;
+                                for (
+                                    var j = 0;
+                                    j < node.childNodes.length;
+                                    j++
+                                ) {
+                                    walk(node.childNodes[j], newCls);
+                                }
+                            }
+                        } else {
+                            for (var k = 0; k < node.childNodes.length; k++) {
+                                walk(node.childNodes[k], cls);
+                            }
+                        }
+                    }
+                    for (var k = 0; k < parser.childNodes.length; k++) {
+                        walk(parser.childNodes[k], "");
+                    }
+
+                    var cursor = document.createElement("span");
+                    cursor.className = "term-cursor";
+
+                    var index = 0;
+
+                    function tick() {
+                        if (index >= steps.length) {
+                            setTimeout(reset, 5000);
+                            return;
+                        }
+                        var s = steps[index];
+                        index++;
+                        if (s.type === "pause") {
+                            setTimeout(tick, s.ms);
+                            return;
+                        }
+                        if (s.type === "instant") {
+                            cursor.insertAdjacentText("beforebegin", s.text);
+                            setTimeout(tick, 250);
+                            return;
+                        }
+                        if (s.cls) {
+                            var span = document.createElement("span");
+                            span.className = s.cls;
+                            span.textContent = s.ch;
+                            term.insertBefore(span, cursor);
+                        } else {
+                            cursor.insertAdjacentText("beforebegin", s.ch);
+                        }
+                        setTimeout(tick, s.ch === "\n" ? 180 : 45);
+                    }
+
+                    function reset() {
+                        while (term.firstChild && term.firstChild !== cursor) {
+                            term.removeChild(term.firstChild);
+                        }
+                        index = 0;
+                        setTimeout(tick, 400);
+                    }
+
+                    while (term.firstChild) {
+                        term.removeChild(term.firstChild);
+                    }
+                    term.appendChild(cursor);
+                    setTimeout(tick, 1200);
+                }
+
+                document
+                    .querySelectorAll(
+                        ".terminal-block code:not(.term-sequence)",
+                    )
+                    .forEach(attachTypewriter);
+            })();
+        </script>
+
+        <script>
+            // Terminal completion animation sequence engine (for term-sequence terminals)
+            (function () {
+                var sequence = [
+                    {
+                        type: "type",
+                        text: "~# ",
+                        speed: 45,
+                        cls: "term-prompt",
+                    },
+                    {
+                        type: "type",
+                        text: "my-cli",
+                        speed: 45,
+                        cls: "term-cmd",
+                    },
+                    { type: "type", text: " ", speed: 45 },
+                    { type: "wait", ms: 600 },
+                    {
+                        type: "suggest",
+                        lines: [
+                            { text: "hello", active: true },
+                            { text: "bye" },
+                        ],
+                        ms: 1200,
+                    },
+                    { type: "instant", text: "hello", cls: "term-arg" },
+                    { type: "instant", text: " " },
+                    { type: "clear-suggest" },
+                    { type: "wait", ms: 500 },
+                    {
+                        type: "suggest",
+                        lines: [
+                            { text: "Alice", desc: "The Sender", active: true },
+                            { text: "Bob", desc: "The Receiver" },
+                        ],
+                        ms: 1200,
+                    },
+                    { type: "instant", text: "Alice", cls: "term-arg" },
+                    { type: "clear-suggest" },
+                    { type: "wait", ms: 600 },
+                    { type: "enter" },
+                    { type: "instant", text: "Hello, Alice!", cls: "term-out" },
+                    { type: "wait", ms: 500 },
+                    { type: "enter" },
+                    {
+                        type: "type",
+                        text: "~# ",
+                        speed: 45,
+                        cls: "term-prompt",
+                    },
+                    {
+                        type: "type",
+                        text: "my-cli",
+                        speed: 45,
+                        cls: "term-cmd",
+                    },
+                    { type: "type", text: " ", speed: 45 },
+                    { type: "wait", ms: 600 },
+                    { type: "type", text: "b", speed: 350, cls: "term-arg" },
+                    { type: "wait", ms: 500 },
+                    {
+                        type: "suggest",
+                        lines: [{ text: "bye", active: true }],
+                        ms: 800,
+                    },
+                    { type: "instant", text: "ye", cls: "term-arg" },
+                    { type: "clear-suggest" },
+                    { type: "wait", ms: 600 },
+                    { type: "enter" },
+                    { type: "instant", text: "Goodbye!", cls: "term-out" },
+                    { type: "wait", ms: 500 },
+                    { type: "enter" },
+                ];
+
+                function attachSequence(term) {
+                    var wrap = term.closest(".terminal-block");
+                    var suggestEl = document.createElement("div");
+                    suggestEl.className = "term-suggest";
+                    wrap.appendChild(suggestEl);
+
+                    var cursor = document.createElement("span");
+                    cursor.className = "term-cursor";
+
+                    function setSuggest(lines) {
+                        suggestEl.innerHTML = "";
+                        lines.forEach(function (l) {
+                            var row = document.createElement("div");
+                            if (l.desc) {
+                                row.innerHTML =
+                                    '<span class="sug-arg">' +
+                                    l.text +
+                                    '</span> <span class="sug-desc">-- ' +
+                                    l.desc +
+                                    "</span>";
+                            } else {
+                                row.innerHTML =
+                                    '<span class="sug-cmd">' +
+                                    l.text +
+                                    "</span>";
+                            }
+                            if (l.active) {
+                                row.className = "sug-active";
+                            }
+                            suggestEl.appendChild(row);
+                        });
+                        suggestEl.style.display = "block";
+                    }
+
+                    function clearSuggest() {
+                        suggestEl.style.display = "none";
+                        suggestEl.innerHTML = "";
+                    }
+
+                    function typeText(text, speed, cls, done) {
+                        if (text.length === 0) {
+                            done();
+                            return;
+                        }
+                        var i = 0;
+                        (function step() {
+                            if (cls) {
+                                var span = document.createElement("span");
+                                span.className = cls;
+                                span.textContent = text[i];
+                                term.insertBefore(span, cursor);
+                            } else {
+                                cursor.insertAdjacentText(
+                                    "beforebegin",
+                                    text[i],
+                                );
+                            }
+                            i++;
+                            if (i < text.length) {
+                                setTimeout(step, speed);
+                            } else {
+                                done();
+                            }
+                        })();
+                    }
+
+                    function runSequence(idx) {
+                        if (idx >= sequence.length) {
+                            setTimeout(reset, 5000);
+                            return;
+                        }
+                        var s = sequence[idx];
+                        function next() {
+                            runSequence(idx + 1);
+                        }
+                        switch (s.type) {
+                            case "type":
+                                typeText(s.text, s.speed || 45, s.cls, next);
+                                break;
+                            case "instant":
+                                if (s.cls) {
+                                    var span = document.createElement("span");
+                                    span.className = s.cls;
+                                    span.textContent = s.text;
+                                    term.insertBefore(span, cursor);
+                                } else {
+                                    cursor.insertAdjacentText(
+                                        "beforebegin",
+                                        s.text,
+                                    );
+                                }
+                                next();
+                                break;
+                            case "enter":
+                                cursor.insertAdjacentText("beforebegin", "\n");
+                                next();
+                                break;
+                            case "wait":
+                                setTimeout(next, s.ms);
+                                break;
+                            case "suggest":
+                                setSuggest(s.lines);
+                                setTimeout(next, s.ms || 800);
+                                break;
+                            case "clear-suggest":
+                                clearSuggest();
+                                next();
+                                break;
+                        }
+                    }
+
+                    function reset() {
+                        clearSuggest();
+                        while (term.firstChild && term.firstChild !== cursor) {
+                            term.removeChild(term.firstChild);
+                        }
+                        runSequence(0);
+                    }
+
+                    term.appendChild(cursor);
+                    setTimeout(function () {
+                        runSequence(0);
+                    }, 1200);
+                }
+
+                document
+                    .querySelectorAll(".terminal-block code.term-sequence")
+                    .forEach(attachSequence);
+            })();
         </script>
 
         <footer>

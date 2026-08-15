@@ -11,10 +11,6 @@ file = "./README.md"
 pattern = "version = \"{VER}\""
 
 [[file]]
-file = "./mingling/README.md"
-pattern = "version = \"{VER}\""
-
-[[file]]
 file = "./docs/_zh_CN/pages/1-getting-started.md"
 pattern = "version = \"{VER}\""
 
@@ -27,5 +23,13 @@ file = "./docs/res/guide.txt"
 pattern = "mingling = \"{VER}\""
 
 [[file]]
-file = "./mingling_core/src/docs/build.md"
+file = "./index.html"
+pattern = "cargo add mingling@{VER}"
+
+[[file]]
+file = "./index.html"
 pattern = "version = \"{VER}\""
+
+[[file]]
+file = "./index.html"
+pattern = "mling proj-init {VER}@basic"
