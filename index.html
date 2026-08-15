@@ -888,14 +888,39 @@
             }
 
             footer {
-                padding: 2rem 1.5rem;
+                padding: 3rem 1.5rem 2rem;
                 text-align: center;
                 color: #6a5a4a;
                 font-size: 0.85rem;
                 border-top: 1px solid #2a1e14;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                gap: 2rem;
+            }
+
+            .footer-links {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 0.6rem 1.5rem;
+                max-width: 960px;
+                width: 100%;
+                text-align: left;
+            }
+
+            .footer-links p {
+                margin: 0;
+                color: #7a6a5a;
+                line-height: 1.7;
+            }
+
+            .footer-links a {
+                color: #7a6a5a;
+            }
+
+            .footer-links a:hover {
+                color: #b0a090;
             }
 
             footer a {
@@ -972,6 +997,10 @@
 
                 nav {
                     padding: 0.6rem 1rem;
+                }
+
+                .footer-links {
+                    grid-template-columns: repeat(2, 1fr);
                 }
 
                 nav .nav-links {
@@ -1264,17 +1293,6 @@ mling proj-init</code></pre>
                     </div>
                 </div>
                 <button class="carousel-arrow next" aria-label="Next">›</button>
-            </div>
-
-            <div class="cta-row" style="margin-top: 2rem">
-                <a href="docs/doc.html" class="btn-primary"> Documents </a>
-                <a
-                    href="https://github.com/mingling-rs/mingling"
-                    target="_blank"
-                    class="btn-secondary"
-                >
-                    GitHub →
-                </a>
             </div>
         </section>
 
@@ -1804,6 +1822,82 @@ mling proj-init</code></pre>
         </script>
 
         <footer>
+            <div class="footer-links">
+                <p>
+                    <a
+                        href="https://mingling-rs.github.io/mingling/dist"
+                        target="_blank"
+                        >Mingling CLI</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://github.com/mingling-rs/mingling"
+                        target="_blank"
+                        >Repository (github.com)</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://gitee.com/mingling-rs/mingling"
+                        target="_blank"
+                        >Repository (gitee.com)</a
+                    >
+                </p>
+                <p>
+                    <a href="https://catilgrass.cn/mingling.git" target="_blank"
+                        >Repository (catilgrass.cn)</a
+                    >
+                </p>
+                <p>
+                    <a href="https://crates.io/crates/mingling" target="_blank"
+                        >Library (crates.io)</a
+                    >
+                </p>
+                <p><a href="docs/examples.html">Examples</a></p>
+                <p>
+                    <a
+                        href="https://mingling-rs.github.io/mingling/docs/doc.html#/"
+                        target="_blank"
+                        >Help Doc</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/"
+                        target="_blank"
+                        >帮助文档</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://docs.rs/mingling/latest/mingling/"
+                        target="_blank"
+                        >API Doc (docs.rs)</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://mingling-rs.github.io/mingling/docs/api-docs/mingling/"
+                        target="_blank"
+                        >API Doc (latest)</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://mingling-rs.github.io/mingling/docs/dev/"
+                        target="_blank"
+                        >Dev Doc</a
+                    >
+                </p>
+                <p>
+                    <a
+                        href="https://mingling-rs.github.io/mingling/docs/cov-test/"
+                        target="_blank"
+                        >Coverage Test</a
+                    >
+                </p>
+            </div>
             <p>
                 Built With ❤️ by
                 <a href="https://github.com/Weicao-CatilGrass" target="_blank"
