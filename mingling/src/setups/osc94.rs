@@ -1,11 +1,11 @@
 use mingling_core::{Program, ProgramCollect, setup::ProgramSetup};
 
-use crate::res::OSC94;
+use crate::res::ResOSC94;
 
 /// `OSC 9;4` Setup for managing terminal progress notification state
 ///
 /// This Setup manages the terminal's `OSC 9;4` protocol support state within the
-/// program's resource store. It registers an [`OSC94`] resource that tracks whether
+/// program's resource store. It registers an [`ResOSC94`] resource that tracks whether
 /// the current terminal supports the protocol, and provides a helper resource that
 /// can be used to send progress notification messages.
 ///
@@ -26,7 +26,7 @@ use crate::res::OSC94;
 ///
 /// # Behavior
 ///
-/// - Registers an [`OSC94`] resource that tracks whether the current terminal
+/// - Registers an [`ResOSC94`] resource that tracks whether the current terminal
 ///   supports the `OSC 9;4` protocol.
 /// - The support check inspects various environment variables such as `TERM_PROGRAM`,
 ///   `WT_SESSION`, `VTE_VERSION`, and `TERM`.
@@ -42,7 +42,7 @@ where
     C: ProgramCollect<Enum = C> + 'static,
 {
     fn setup(self, program: &mut Program<C>) {
-        program.with_resource(OSC94 {
+        program.with_resource(ResOSC94 {
             is_support: is_support_osc94(),
         });
     }

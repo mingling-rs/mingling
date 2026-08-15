@@ -1,91 +1,91 @@
 use std::io::{BufRead, Write};
 
-use crate::confirm::{ConfirmerCount, ConfirmerPredicate};
+use crate::confirm::{ConfirmCount, ConfirmPredicate};
 
-/// A confirmer for interactive confirmation.
+/// A confirm for interactive confirmation.
 ///
 /// This structure caches the confirmed state to avoid repeated prompts.
 ///
-/// Typically, `Confirmer` is registered via `ConfirmerSetup`, and then injected into functions
+/// Typically, `ResConfirm` is registered via `ConfirmSetup`, and then injected into functions
 /// through Mingling's resource injection system.
 ///
 /// # Registration
 ///
-/// Before use, the `ConfirmerSetup` must be registered with the program:
+/// Before use, the `ConfirmSetup` must be registered with the program:
 ///
 /// ```
 /// # use mingling::MockProgramCollect as ThisProgram;
-/// use mingling::setup::ConfirmerSetup;
+/// use mingling::setup::ConfirmSetup;
 /// use mingling::Program;
 ///
 /// let mut program = Program::<ThisProgram>::new();
-/// program.with_setup(ConfirmerSetup);
+/// program.with_setup(ConfirmSetup);
 /// ```
 ///
 /// # Examples
 ///
 /// ```
-/// use mingling::res::Confirmer;
+/// use mingling::res::ResConfirm;
 /// use mingling::confirm::YesConfirm;
 ///
-/// // In actual use, obtain the registered confirmer through the resource injection system
-/// let confirmer = Confirmer::new_confirmed();
-/// assert!(confirmer.ask::<YesConfirm>("Continue? [y/n] "));
+/// // In actual use, obtain the registered Confirm through the resource injection system
+/// let confirm = ResConfirm::new_confirmed();
+/// assert!(confirm.ask::<YesConfirm>("Continue? [y/n] "));
 /// ```
 #[derive(Debug, Default, Clone, Copy)]
-pub struct Confirmer {
+pub struct ResConfirm {
     pub(crate) confirmed: bool,
 }
 
-impl Confirmer {
-    /// Creates a new `Confirmer` instance.
+impl ResConfirm {
+    /// Creates a new `ResConfirm` instance.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::Confirmer;
+    /// use mingling::res::ResConfirm;
     ///
-    /// let confirmer = Confirmer::new();
+    /// let confirm = ResConfirm::new();
     /// ```
     #[must_use]
     pub const fn new() -> Self {
         Self { confirmed: false }
     }
 
-    /// Creates a `Confirmer` instance in the confirmed state.
+    /// Creates a `Confirm` instance in the confirmed state.
     ///
-    /// The returned `Confirmer` will directly return `true` when calling [`ask`](Confirmer::ask) or
-    /// [`try_ask`](Confirmer::try_ask), without prompting the user.
+    /// The returned `Confirm` will directly return `true` when calling [`ask`](Confirm::ask) or
+    /// [`try_ask`](Confirm::try_ask), without prompting the user.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::Confirmer;
+    /// use mingling::res::ResConfirm;
     /// use mingling::confirm::YesConfirm;
     ///
-    /// let confirmer = Confirmer::new_confirmed();
-    /// assert!(confirmer.ask::<YesConfirm>("Continue? [y/n] "));
+    /// let confirm = ResConfirm::new_confirmed();
+    /// assert!(confirm.ask::<YesConfirm>("Continue? [y/n] "));
     /// ```
     #[must_use]
     pub const fn new_confirmed() -> Self {
         Self { confirmed: true }
     }
 
-    /// Marks the confirmer as confirmed.
+    /// Marks the Confirm as confirmed.
     ///
-    /// After calling this method, subsequent calls to [`ask`](Confirmer::ask) or
-    /// [`try_ask`](Confirmer::try_ask) on this confirmer will directly return `true`
+    /// After calling this method, subsequent calls to [`ask`](Confirm::ask) or
+    /// [`try_ask`](Confirm::try_ask) on this Confirm will directly return `true`
     /// without prompting the user.
     ///
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::Confirmer;
+    /// use mingling::res::ResConfirm;
     /// use mingling::confirm::YesConfirm;
     ///
-    /// let mut confirmer = Confirmer::new();
-    /// confirmer.set_confirmed();
-    /// assert!(confirmer.ask::<YesConfirm>("Continue? [y/n] "));
+    /// let mut confirm = ResConfirm::new();
+    /// confirm.set_confirmed();
+    /// assert!(confirm.ask::<YesConfirm>("Continue? [y/n] "));
     /// ```
     pub const fn set_confirmed(&mut self) {
         self.confirmed = true;
@@ -108,14 +108,14 @@ impl Confirmer {
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::Confirmer;
+    /// use mingling::res::ResConfirm;
     /// use mingling::confirm::YesConfirm;
     ///
-    /// let confirmer = Confirmer::new_confirmed();
-    /// let confirmed = confirmer.ask::<YesConfirm>("Delete this file? [y/n] ");
+    /// let confirm = ResConfirm::new_confirmed();
+    /// let confirmed = confirm.ask::<YesConfirm>("Delete this file? [y/n] ");
     /// ```
-    pub fn ask<P: ConfirmerPredicate>(&self, ask: impl AsRef<str>) -> bool {
-        self.try_ask::<P>(ask, ConfirmerCount::Max(1))
+    pub fn ask<P: ConfirmPredicate>(&self, ask: impl AsRef<str>) -> bool {
+        self.try_ask::<P>(ask, ConfirmCount::Max(1))
             .unwrap_or(false)
     }
 
@@ -141,16 +141,16 @@ impl Confirmer {
     /// # Examples
     ///
     /// ```
-    /// use mingling::res::Confirmer;
+    /// use mingling::res::ResConfirm;
     /// use mingling::confirm::YesConfirm;
     ///
-    /// let confirmer = Confirmer::new_confirmed();
-    /// let confirmed = confirmer.try_ask::<YesConfirm>("Confirm execution? [y/n] ", 3);
+    /// let confirm = ResConfirm::new_confirmed();
+    /// let confirmed = confirm.try_ask::<YesConfirm>("Confirm execution? [y/n] ", 3);
     /// ```
-    pub fn try_ask<P: ConfirmerPredicate>(
+    pub fn try_ask<P: ConfirmPredicate>(
         &self,
         ask: impl AsRef<str>,
-        count: impl Into<ConfirmerCount>,
+        count: impl Into<ConfirmCount>,
     ) -> Option<bool> {
         if self.confirmed {
             return Some(true);
@@ -172,8 +172,8 @@ impl Confirmer {
 
             attempts += 1;
             match count {
-                ConfirmerCount::Loop => {}
-                ConfirmerCount::Max(max) => {
+                ConfirmCount::Loop => {}
+                ConfirmCount::Max(max) => {
                     if attempts >= max {
                         return None;
                     }

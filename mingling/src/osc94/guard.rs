@@ -7,14 +7,14 @@ use crate::osc94::OSC94State;
 ///
 /// # Example
 ///
-/// Create a guard via [`OSC94`], and the state is automatically restored to Clean
+/// Create a guard via [`ResOSC94`], and the state is automatically restored to Clean
 /// when the guard is dropped:
 ///
 /// ```
-/// use mingling::res::OSC94;
+/// use mingling::res::ResOSC94;
 /// use mingling::osc94::OSC94Guard;
 ///
-/// let osc94 = OSC94::default();
+/// let osc94 = ResOSC94::default();
 /// {
 ///     let mut guard: OSC94Guard = osc94.get_mut();
 ///     guard.set_progress(0.5);
@@ -34,10 +34,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::{OSC94Guard, OSC94State};
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let mut guard: OSC94Guard = osc94.get_mut();
     /// guard.set_progress(0.5);
     /// guard.set_clean_state();
@@ -57,10 +57,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::{OSC94Guard, OSC94State};
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let mut guard: OSC94Guard = osc94.get_mut();
     /// guard.set_error_state();
     /// assert_eq!(guard.state(), OSC94State::Error);
@@ -80,10 +80,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::{OSC94Guard, OSC94State};
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let mut guard: OSC94Guard = osc94.get_mut();
     /// guard.set_warn_state();
     /// assert_eq!(guard.state(), OSC94State::Warn);
@@ -102,10 +102,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::{OSC94Guard, OSC94State};
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let mut guard: OSC94Guard = osc94.get_mut();
     /// guard.set_unknown_state();
     /// assert_eq!(guard.state(), OSC94State::Unknown);
@@ -131,10 +131,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::OSC94Guard;
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let mut guard: OSC94Guard = osc94.get_mut();
     /// guard.set_progress(0.5);
     /// assert_eq!(guard.progress(), 0.5);
@@ -155,10 +155,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::{OSC94Guard, OSC94State};
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let guard: OSC94Guard = osc94.get_mut();
     /// assert_eq!(guard.state(), OSC94State::Clean);
     /// ```
@@ -179,10 +179,10 @@ impl OSC94Guard {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::OSC94Guard;
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let mut guard: OSC94Guard = osc94.get_mut();
     /// guard.set_progress(0.25);
     /// assert_eq!(guard.progress(), 0.25);

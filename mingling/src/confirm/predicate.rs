@@ -1,7 +1,7 @@
 /// Defines how to parse user confirmation input.
 ///
 /// A type implementing this trait determines which user input strings are treated as "yes" or "no".
-pub trait ConfirmerPredicate {
+pub trait ConfirmPredicate {
     /// Parses the user's input string, returning whether it is "yes".
     ///
     /// Returns `Some(true)` for yes, `Some(false)` for no,
@@ -9,37 +9,37 @@ pub trait ConfirmerPredicate {
     fn is_yes(str: &str) -> Option<bool>;
 }
 
-/// A `ConfirmerPredicate` implementation that accepts "y"/"yes" as yes and "n"/"no" as no.
+/// A `ConfirmPredicate` implementation that accepts "y"/"yes" as yes and "n"/"no" as no.
 ///
 /// Input comparison is case-insensitive and automatically trims leading/trailing whitespace.
 ///
 /// # Examples
 ///
 /// ```
-/// use mingling::res::Confirmer;
+/// use mingling::res::ResConfirm;
 /// use mingling::confirm::YesConfirm;
 ///
-/// let confirmer = Confirmer::default();
-/// let confirmed = confirmer.ask::<YesConfirm>("Continue? [y/n] ");
+/// let confirm = ResConfirm::default();
+/// let confirmed = confirm.ask::<YesConfirm>("Continue? [y/n] ");
 /// ```
 pub struct YesConfirm;
 
-/// A `ConfirmerPredicate` implementation that accepts "true"/"t" as yes and "false"/"f" as no.
+/// A `ConfirmPredicate` implementation that accepts "true"/"t" as yes and "false"/"f" as no.
 ///
 /// Input comparison is case-insensitive and automatically trims leading/trailing whitespace.
 ///
 /// # Examples
 ///
 /// ```
-/// use mingling::res::Confirmer;
+/// use mingling::res::ResConfirm;
 /// use mingling::confirm::TrueConfirm;
 ///
-/// let confirmer = Confirmer::default();
-/// let confirmed = confirmer.ask::<TrueConfirm>("Enable this feature? [true/false] ");
+/// let confirm = ResConfirm::default();
+/// let confirmed = confirm.ask::<TrueConfirm>("Enable this feature? [true/false] ");
 /// ```
 pub struct TrueConfirm;
 
-impl ConfirmerPredicate for YesConfirm {
+impl ConfirmPredicate for YesConfirm {
     fn is_yes(str: &str) -> Option<bool> {
         match str.trim().to_lowercase().as_str() {
             "y" | "yes" => Some(true),
@@ -49,7 +49,7 @@ impl ConfirmerPredicate for YesConfirm {
     }
 }
 
-impl ConfirmerPredicate for TrueConfirm {
+impl ConfirmPredicate for TrueConfirm {
     fn is_yes(str: &str) -> Option<bool> {
         match str.trim().to_lowercase().as_str() {
             "true" | "t" => Some(true),

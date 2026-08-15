@@ -7,8 +7,8 @@ pub use dirs::*;
 mod exit_code;
 pub use exit_code::*;
 
-mod confirmer;
-pub use confirmer::*;
+mod confirm;
+pub use confirm::*;
 
 mod osc94;
 pub use osc94::*;

@@ -5,7 +5,7 @@ use crate::osc94::{OSC94Guard, OSC94State};
 /// Provides support for the `OSC 9;4` protocol. You can inject it into the execution flow
 /// through Mingling's resource injection system, and use it to control your process state.
 ///
-/// Typically, `OSC94` is registered via `OSC94Setup`, and then injected into functions
+/// Typically, `ResOSC94` is registered via `OSC94Setup`, and then injected into functions
 /// through Mingling's resource injection system.
 ///
 /// # Registration
@@ -24,21 +24,21 @@ use crate::osc94::{OSC94Guard, OSC94State};
 /// # Example
 ///
 /// ```
-/// use mingling::res::OSC94;
+/// use mingling::res::ResOSC94;
 /// use mingling::osc94::OSC94State;
 ///
-/// let osc94 = OSC94::default();
+/// let osc94 = ResOSC94::default();
 /// let mut guard = osc94.get_mut();
 ///
 /// guard.set_progress(0.5);
 /// assert_eq!(guard.state(), OSC94State::Normal(0.5));
 /// ```
 #[derive(Debug, Default, Clone, Copy)]
-pub struct OSC94 {
+pub struct ResOSC94 {
     pub(crate) is_support: bool,
 }
 
-impl OSC94 {
+impl ResOSC94 {
     /// Get a guard for modifying progress.
     ///
     /// The returned [`OSC94Guard`] allows you to set the process state and progress.
@@ -52,10 +52,10 @@ impl OSC94 {
     /// # Example
     ///
     /// ```
-    /// use mingling::res::OSC94;
+    /// use mingling::res::ResOSC94;
     /// use mingling::osc94::OSC94State;
     ///
-    /// let osc94 = OSC94::default();
+    /// let osc94 = ResOSC94::default();
     /// let guard = osc94.get_mut();
     /// assert_eq!(guard.state(), OSC94State::Clean);
     /// ```

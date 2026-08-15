@@ -8,8 +8,8 @@ pub mod picker;
 mod basic;
 pub use basic::*;
 
-mod confirmer;
-pub use confirmer::*;
+mod confirm;
+pub use confirm::*;
 
 mod dirs;
 pub use dirs::*;

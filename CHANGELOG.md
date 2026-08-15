@@ -397,12 +397,12 @@ None
 
     The `Confirmer` resource derives `Debug`, `Default`, `Clone`, `Copy`. The `confirm` module also houses `ConfirmerCount`, `ConfirmerPredicate`, `YesConfirm`, and `TrueConfirm` at `mingling::confirm::*`.
 
-15. **[`setups`]** Added the `ConfirmerSetup` and `StandardInputArgsSetup` program setups:
+15. **[`setups`]** Added the `ConfirmSetup` and `StandardInputArgsSetup` program setups:
 
-    ### `ConfirmerSetup`
-    - **`mingling::setup::ConfirmerSetup`** — A `ProgramSetup` that registers a `Confirmer` resource and installs a pre-dispatch hook checking the user's `confirmation` config mode. When `program.user_context.confirmation == ConfirmationMode::Skip`, the hook marks the `Confirmer` as confirmed via `modify_res`, so all `ask`/`try_ask` calls return `true` without prompting.
+    ### `ConfirmSetup`
+    - **`mingling::setup::ConfirmSetup`** — A `ProgramSetup` that registers a `ResConfirm` resource and installs a pre-dispatch hook checking the user's `confirmation` config mode. When `program.user_context.confirmation == ConfirmationMode::Skip`, the hook marks the `ResConfirm` as confirmed via `modify_res`, so all `ask`/`try_ask` calls return `true` without prompting.
 
-        - Registered via `program.with_setup(ConfirmerSetup)`.
+        - Registered via `program.with_setup(ConfirmSetup)`.
         - Applies uniformly to all subcommands of the entire program; it does not support per-command overrides.
 
     ### `StandardInputArgsSetup`
@@ -412,17 +412,17 @@ None
         - Empty input produces no arguments.
         - **Note:** the setup does **not** validate input — stdin content is treated as trusted arguments appended directly, so untrusted input can inject arbitrary arguments. It also has no per-subcommand granularity; if different subcommands need different stdin behavior, do not use this setup.
 
-16. **[`osc94`]** **[`setups:osc94`]** Added the `OSC94` resource and `OSC94Setup` for managing terminal `OSC 9;4` protocol status:
+16. **[`osc94`]** **[`setups:osc94`]** Added the `ResOSC94` resource and `OSC94Setup` for managing terminal `OSC 9;4` protocol status:
 
-    ### `OSC94` resource
-    - **`mingling::res::OSC94`** — A new resource type providing support for the [OSC 9;4 protocol](https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences), which allows sending task progress notifications via ANSI escape sequences. It is typically registered via [`OSC94Setup`] and injected into functions through Mingling's resource injection system.
+    ### `ResOSC94` resource
+    - **`mingling::res::ResOSC94`** — A new resource type providing support for the [OSC 9;4 protocol](https://learn.microsoft.com/en-us/windows/terminal/tutorials/progress-bar-sequences), which allows sending task progress notifications via ANSI escape sequences. It is typically registered via [`OSC94Setup`] and injected into functions through Mingling's resource injection system.
 
-        - **`OSC94::get_mut(&self) -> OSC94Guard`** — Returns an [`OSC94Guard`] with an initial state of [`OSC94State::Clean`]. If the current environment supports the `OSC 9;4` protocol, state changes will be sent to the terminal in real time.
+        - **`ResOSC94::get_mut(&self) -> OSC94Guard`** — Returns an [`OSC94Guard`] with an initial state of [`OSC94State::Clean`]. If the current environment supports the `OSC 9;4` protocol, state changes will be sent to the terminal in real time.
 
         Derives `Debug`, `Default`, `Clone`, `Copy`.
 
     ### `OSC94Guard`
-    - **`mingling::osc94::OSC94Guard`** — A guard for modifying process state, obtained via [`OSC94::get_mut`]. When the guard is dropped, the process state is automatically restored to [`OSC94State::Clean`], so no manual cleanup is needed.
+    - **`mingling::osc94::OSC94Guard`** — A guard for modifying process state, obtained via [`ResOSC94::get_mut`]. When the guard is dropped, the process state is automatically restored to [`OSC94State::Clean`], so no manual cleanup is needed.
 
         - **`set_clean_state(&mut self)`** — Sets the process state to Clean, indicating the process has finished or is in a normal, problem-free state.
         - **`set_error_state(&mut self)`** — Sets the process state to Error, indicating an error occurred during process execution.
@@ -449,7 +449,7 @@ None
         Implements `Display` (formats as the escape sequence), `From<OSC94State> for String`, and `From<&OSC94State> for String`. Derives `Debug`, `Clone`, `Copy`, `PartialEq`.
 
     ### `OSC94Setup`
-    - **`mingling::setup::OSC94Setup`** — A `ProgramSetup` that registers an `OSC94` resource in the program's resource store, with its `is_support` flag determined at setup time by inspecting environment variables. The support check looks at:
+    - **`mingling::setup::OSC94Setup`** — A `ProgramSetup` that registers an `ResOSC94` resource in the program's resource store, with its `is_support` flag determined at setup time by inspecting environment variables. The support check looks at:
 
         - **`TERM_PROGRAM`** — `ghostty`, `WezTerm`, `iTerm.app`
         - **`WT_SESSION`** — Windows Terminal
@@ -461,7 +461,7 @@ None
     Usage example:
 
     ```rust,ignore
-    use mingling::{macros::command, res::OSC94, setup::OSC94Setup};
+    use mingling::{macros::command, res::ResOSC94, setup::OSC94Setup};
 
     fn main() {
         let mut program = ThisProgram::new();
@@ -470,7 +470,7 @@ None
     }
 
     #[command]
-    fn hello(osc: &OSC94) {
+    fn hello(osc: &ResOSC94) {
         let mut guard = osc.get_mut();
         guard.set_progress(0.5);
         // ... do work ...
