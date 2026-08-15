@@ -50,6 +50,55 @@ jobs:
           git tag -f unreleased
           git push origin unreleased --force
 
+  Package-Mling:
+    needs: [Move-Unreleased-Tag]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Compute artifact metadata
+        id: metadata
+        shell: bash
+        run: |
+          case "$RUNNER_OS" in
+            Windows) os="win" ;;
+            Linux) os="linux" ;;
+            macOS) os="mac" ;;
+          esac
+          echo "os=$os" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${GITHUB_SHA:0:8}" >> "$GITHUB_OUTPUT"
+          echo "date=$(date +%y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - name: Install mling
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            powershell -ExecutionPolicy Bypass -File .run/src/bin/install-mling.ps1
+          else
+            bash .run/src/bin/install-mling.sh
+          fi
+
+      - name: Package mling
+        id: package
+        shell: bash
+        run: |
+          mkdir -p dist
+          name="mling-${{ steps.metadata.outputs.os }}-${{ steps.metadata.outputs.short_sha }}-${{ steps.metadata.outputs.date }}.tar.gz"
+          tar -czf "dist/$name" -C .temp/mling .
+          echo "artifact_name=${name%.tar.gz}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload mling artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.package.outputs.artifact_name }}
+          path: dist/mling-*.tar.gz
+          if-no-files-found: error
+
   Deploy-Github-Pages:
     needs: [Move-Unreleased-Tag]
     permissions:
