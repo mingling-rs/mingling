@@ -26,8 +26,9 @@ pub struct LintMetadata {
 #[program_setup]
 pub fn lint_registry_setup(p: &mut Program<ThisProgram>) {
     p.with_resource(ResLintRegistry::lazy_init(|| {
-        let registry: ResLintRegistry = serde_json::from_str(include_str!("../../registry.json"))
-            .expect("failed to parse embedded registry.json");
+        let registry: ResLintRegistry =
+            serde_json::from_str(include_str!(concat!(env!("OUT_DIR"), "/registry.json")))
+                .expect("failed to parse embedded registry.json");
         registry
     }));
 }

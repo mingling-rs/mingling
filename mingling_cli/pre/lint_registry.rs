@@ -1,4 +1,4 @@
-use std::{fs, io::Error};
+use std::{fs, io::Error, path::Path};
 
 use just_template::{Template, tmpl};
 
@@ -67,7 +67,8 @@ pub fn gen_mod_file() -> Result<(), Error> {
 /// Generate lint metadata registry
 ///
 /// Parses each `.rs` file in `src/lints/` (excluding mod.rs and _init.rs),
-/// extracts doc-comment metadata, and writes the result as JSON.
+/// extracts doc-comment metadata, and writes the result as `registry.json`
+/// in the cargo `OUT_DIR`.
 pub fn gen_lint_registry() -> Result<(), Error> {
     let root = std::env::current_dir()?;
     let lints_dir = root.join("src").join("lints");
@@ -102,7 +103,8 @@ pub fn gen_lint_registry() -> Result<(), Error> {
     });
 
     let json = serde_json::json!({ "lints": lints });
-    let out_path = root.join("registry.json");
+    let out_dir = std::env::var("OUT_DIR").expect("OUT_DIR is not set");
+    let out_path = Path::new(&out_dir).join("registry.json");
     fs::write(&out_path, serde_json::to_string_pretty(&json).unwrap())?;
     Ok(())
 }
