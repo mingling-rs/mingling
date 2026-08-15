@@ -86,7 +86,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mling-${{ steps.metadata.outputs.os }}-pkg
-          path: dist/
+          path: dist/mling-*
           if-no-files-found: error
 
   Move-Unreleased-Tag:
