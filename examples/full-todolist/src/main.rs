@@ -9,9 +9,10 @@
 use mingling::{
     LazyInit, LazyRes,
     macros::route,
+    picker::value::Flag,
     prelude::*,
     res::ResExitCode,
-    setup::{ExitCodeSetup, HelpFlagSetup, StructuralRendererSetup},
+    setup::{ExitCodeSetup, picker::HelpFlagSetup, picker::StructuralRendererSetup},
 };
 use std::io::Write;
 
@@ -51,7 +52,7 @@ fn main() {
     // Setups
     program.with_setup(ExitCodeSetup::default());
     program.with_setup(StructuralRendererSetup);
-    program.with_setup(HelpFlagSetup::new(["--help", "-h"]));
+    program.with_setup(HelpFlagSetup::new(&arg![help: Flag, 'h']));
 
     // Flags
     let all = program.pick_global_flag(["-A", "--all"]);
@@ -74,9 +75,10 @@ fn main() {
 #[chain]
 fn handle_add(args: EntryAdd) -> Next {
     let task: String = route! {
-        args
-            .pick_or_route((), ErrorNoTaskDescriptionProvided::new(()))
-            .unpack()
+        args.pick_or_route(&arg![String], || {
+            ErrorNoTaskDescriptionProvided::new(()).to_chain()
+        })
+        .to_result()
     };
     StateAddTodo::new(task).to_chain()
 }
@@ -115,7 +117,8 @@ fn handle_list(_args: EntryList, todolist: &mut LazyRes<ResTodoList>) -> Next {
 #[chain]
 fn handle_complete(args: EntryComplete) -> Next {
     let index: i32 = route! {
-        args.pick_or_route((), ErrorNoIndexProvided::new(())).unpack()
+        args.pick_or_route(&arg![i32], || ErrorNoIndexProvided::new(()).to_chain())
+            .to_result()
     };
     StateCompleteTodo::new(index).to_chain()
 }

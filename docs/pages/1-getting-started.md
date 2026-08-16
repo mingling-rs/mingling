@@ -27,7 +27,7 @@ Some features **directly affect the entire lifecycle behavior**, so you need to 
 [dependencies.mingling]
 version = "0.5.0"
 features = [
-    "parser",
+    "picker",
     "comp",
 ]
 ```

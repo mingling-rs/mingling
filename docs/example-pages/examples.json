@@ -16,21 +16,6 @@
     ]
   },
   {
-    "id": "example-argument-parse",
-    "name": "Argument Parse",
-    "icon": "📋",
-    "category": "parsing",
-    "desc": "Shows how to use Mingling's `parser` feature with a `Picker` to extract and validate typed arguments from the command line.\n",
-    "tags": [
-      "pick",
-      "Pickable"
-    ],
-    "files": [
-      "src/main.rs",
-      "Cargo.toml"
-    ]
-  },
-  {
     "id": "example-argument-picker",
     "name": "Argument Picker",
     "icon": "📋",
@@ -140,21 +125,6 @@
     "files": [
       "src/main.rs",
       "build.rs",
-      "Cargo.toml"
-    ]
-  },
-  {
-    "id": "example-custom-pickable",
-    "name": "Custom Pickable",
-    "icon": "🎯",
-    "category": "parsing",
-    "desc": "Shows how to implement the `Pickable` trait on custom types for seamless extraction from CLI arguments via Picker.\n",
-    "tags": [
-      "Pickable",
-      "custom"
-    ],
-    "files": [
-      "src/main.rs",
       "Cargo.toml"
     ]
   },

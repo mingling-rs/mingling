@@ -17,8 +17,8 @@
 //! member_age: 22
 //! ```
 
-use mingling::prelude::*;
-use mingling::{parser::Picker, setup::StructuralRendererSetup, Grouped, StructuralData};
+use mingling::setup::picker::StructuralRendererSetup;
+use mingling::{Grouped, StructuralData, prelude::*};
 use serde::Serialize;
 use std::io::Write;
 
@@ -55,10 +55,10 @@ struct Info {
 
 #[chain]
 fn parse_render(prev: EntryRender) -> Next {
-    let (name, age) = Picker::new(prev.inner)
-        .pick::<String>(())
-        .pick::<i32>(())
-        .unpack();
+    let (name, age) = prev
+        .pick_or_default(&arg![String])
+        .pick_or_default(&arg![i32])
+        .unwrap();
     Info { name, age }.to_render()
 }
 

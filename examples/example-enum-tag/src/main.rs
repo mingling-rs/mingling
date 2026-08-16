@@ -16,8 +16,10 @@
 //! ```
 
 use mingling::{
-    macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Grouped, ShellContext,
-    Suggest,
+    EnumTag, Grouped, ShellContext, Suggest,
+    macros::suggest_enum,
+    picker::{PickerArgResult, SinglePickable},
+    prelude::*,
 };
 use std::io::Write;
 
@@ -57,9 +59,7 @@ pub enum ProgrammingLanguages {
     #[enum_desc("A general-purpose programming language with clean syntax, known for readability")]
     Python,
 
-    #[enum_desc(
-        "An object-oriented scripting language, famous for its concise and elegant syntax"
-    )]
+    #[enum_desc("An object-oriented scripting language, famous for its concise and elegant syntax")]
     Ruby,
 
     #[default]
@@ -68,9 +68,31 @@ pub enum ProgrammingLanguages {
 }
 
 // --------- IMPORTANT ---------
-// Implement the PickableEnum trait for ProgrammingLanguages,
-// so that `Picker` can parse this enum
-impl PickableEnum for ProgrammingLanguages {}
+// NOTE: Due to the migration from the legacy `parser` to `picker`, the `EnumTag` -> `Picker` path
+// is not yet complete, so a manual implementation is used for now.
+// Once that path is complete, `#[derive(EnumTag)]` can automatically implement `SinglePickable`,
+// replacing this manual implementation.
+impl SinglePickable for ProgrammingLanguages {
+    fn pick_single(str: Option<&str>) -> PickerArgResult<Self> {
+        let Some(str) = str else {
+            return PickerArgResult::NotFound;
+        };
+        let lang = match str.to_lowercase().as_str() {
+            "c" => Self::C,
+            "c++" | "cpp" => Self::CPlusPlus,
+            "c#" | "csharp" => Self::Csharp,
+            "java" => Self::Java,
+            "javascript" | "js" => Self::JavaScript,
+            "kotlin" => Self::Kotlin,
+            "ocaml" => Self::OCaml,
+            "python" => Self::Python,
+            "ruby" => Self::Ruby,
+            "rust" => Self::Rust,
+            _ => return PickerArgResult::NotFound,
+        };
+        PickerArgResult::Parsed(lang)
+    }
+}
 // --------- IMPORTANT ---------
 
 dispatcher!("lang-select", EntryLanguageSelection);
@@ -78,7 +100,7 @@ dispatcher!("lang-select", EntryLanguageSelection);
 #[chain]
 fn handle_language_selection(args: EntryLanguageSelection) -> Next {
     // You can use Picker to directly parse ProgrammingLanguages
-    let lang: ProgrammingLanguages = args.pick(()).unpack();
+    let lang: ProgrammingLanguages = args.pick_or_default(&arg![ProgrammingLanguages]).unwrap();
     lang.into()
 }
 

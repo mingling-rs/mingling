@@ -9,7 +9,7 @@ path = "../../mingling"
 features = [
     # Enable `comp` features
     "comp",
-    "parser",
+    "picker",
 ]
 
 [build-dependencies.mingling]

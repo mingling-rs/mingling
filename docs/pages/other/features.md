@@ -330,23 +330,11 @@ analyze_and_build_type_mapping().unwrap();
  
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-pathfinder)
 
-## Feature `parser`
-
-**Description:**
-
-Enables the argument parser module, providing argument parsing functionality.
-
-When enabled, you can use `Picker` for simple argument extraction, supporting methods like `pick()` and `pick_or()`.
-
-See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-argument-parse)
-
 ## Feature `picker`
 
 **Description:**
 
-Introduces the `arg-picker` dependency, providing more advanced argument parsing capabilities for Mingling.
-
-It can coexist with the `parser` and `clap` features, but it is recommended not to enable it alongside the `parser` feature, as their APIs are very similar.
+Introduces the `arg-picker` dependency, providing advanced argument parsing capabilities for Mingling.
 
 `picker` is an argument parser independent of Mingling and does not rely on the built-in argument extraction API of `mingling_core`.
 

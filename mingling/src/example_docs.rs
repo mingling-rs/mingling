@@ -1,127 +1,5 @@
 // Auto generated
 
-/// Example Argument Parse
-///
-///  > This example demonstrates how to use the `parser` feature to parse user input
-///
-///  Run:
-///  ```bash
-///  cargo run --manifest-path examples/example-argument-parse/Cargo.toml --quiet -- transfer README.md --size 32kib
-///  cargo run --manifest-path examples/example-argument-parse/Cargo.toml --quiet -- transfer src/ --dir
-///  cargo run --manifest-path examples/example-argument-parse/Cargo.toml --quiet -- strict-transfer README.md
-///  cargo run --manifest-path examples/example-argument-parse/Cargo.toml --quiet -- strict-transfer --dir
-///  ```
-///
-///  Output:
-///  ```plaintext
-///  file: README.md (32768)
-///  dir: src/ (1048576)
-///  file: README.md (1048576)
-///  Error: name is not provided
-///  ```
-///
-/// Source code (./Cargo.toml)
-/// ```toml
-/// [package]
-/// name = "example-argument-parse"
-/// version = "0.1.0"
-/// edition = "2024"
-///
-/// [dependencies.mingling]
-/// path = "../../mingling"
-///
-/// # Enable `parser` features
-/// features = ["parser", "extras"]
-///
-/// [workspace]
-/// ```
-///
-/// Source code (./src/main.rs)
-/// ```ignore
-/// use mingling::{macros::route, prelude::*};
-/// use std::io::Write;
-///
-/// dispatcher!("transfer", EntryTransfer);
-/// dispatcher!("strict-transfer", EntryStrictTransfer);
-///
-/// pack!(ResultFile = (bool, usize, String)); // (IsDir, Size, Name)
-///
-/// #[chain]
-/// fn handle_transfer_parse(args: EntryTransfer) -> Next {
-///     // --------- IMPORTANT ---------
-///     // First parse flag arguments (like --dir/-D), then positional arguments
-///     let result: ResultFile = args
-///         // Name --dir --size 20mib
-///         //            ^^^^^^^^^^^^_ first
-///         .pick::<bool>(["--dir", "-D"])
-///         // Name --dir
-///         //      ^^^^^_ second (or `-D`)
-///         .pick_or::<usize>("--size", 1024 * 1024_usize)
-///         // Name
-///         // ^^^^_ finally, pick positional arg
-///         .pick::<String>(())
-///         .after(|str| str.trim().replace(' ', ""))
-///         // Unpack to tuple (is_dir, size, name)
-///         .unpack()
-///         // Convert into ResultFile
-///         .into();
-///     // --------- IMPORTANT ---------
-///     result.into()
-/// }
-///
-/// pack!(ErrorNoNameProvided = ());
-///
-/// #[chain]
-/// fn handle_strict_transfer_parse(args: EntryStrictTransfer) -> Next {
-///     // --------- IMPORTANT ---------
-///     // Strict parsing: error immediately if the name is not provided
-///     let result: ResultFile = route! { // Use `route!` to wrap a Picker that contains `or_route`
-///         args
-///             .pick::<bool>(["--dir", "-D"])
-///             .pick_or::<usize>("--size", 1024 * 1024_usize)
-///             // Finally parse the positional argument; if not found, route to `ErrorNoNameProvided`
-///             .pick_or_route::<String, _>((), ErrorNoNameProvided::default())
-///             .after(|str| str.trim().replace(' ', ""))
-///             .unpack()
-///     }
-///     // Convert into ResultFile
-///     .into();
-///     // --------- IMPORTANT ---------
-///     result.to_chain()
-/// }
-///
-/// /// Renders the parsed transfer result (file/dir, size, name).
-/// #[renderer]
-/// fn render_result_file(result: ResultFile) -> RenderResult {
-///     let (is_dir, size, name) = result.into();
-///     let mut result = RenderResult::new();
-///     writeln!(
-///         result,
-///         "{}: {} ({})",
-///         if is_dir { "dir" } else { "file" },
-///         name,
-///         size
-///     )
-///     .ok();
-///     result
-/// }
-///
-/// /// Renders the error when no name is provided.
-/// #[renderer]
-/// fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
-///     let mut result = RenderResult::new();
-///     writeln!(result, "Error: name is not provided").ok();
-///     result
-/// }
-///
-/// gen_program!();
-///
-/// fn main() {
-///     let program = ThisProgram::new();
-///     program.exec_and_exit();
-/// }
-/// ```
-pub mod example_argument_parse {}
 /// Example Argument Picker
 ///
 ///  > Demonstrates how to use Mingling's `picker` feature and `Picker` to extract typed arguments from the command line.
@@ -401,8 +279,8 @@ pub mod example_argument_picker {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 ///
-/// # Enable `parser` features
-/// features = ["async", "parser"]
+/// # Enable `picker` features
+/// features = ["async", "picker"]
 ///
 /// # Import any async runtime, e.g. Tokio
 /// [dependencies.tokio]
@@ -438,7 +316,7 @@ pub mod example_argument_picker {}
 /// #[chain]
 /// //  vvvvv_ `async` keyword can be used directly here
 /// pub async fn handle_download(args: EntryDownload) -> Next {
-///     let file_name = args.pick(()).unpack();
+///     let file_name = args.pick_or_default(&arg![String]).unwrap();
 ///     fake_download(file_name).await.into()
 /// }
 ///
@@ -963,7 +841,7 @@ pub mod example_command_macro {}
 /// features = [
 ///     # Enable `comp` features
 ///     "comp",
-///     "parser",
+///     "picker",
 /// ]
 ///
 /// [build-dependencies.mingling]
@@ -1013,18 +891,22 @@ pub mod example_command_macro {}
 ///     }
 ///
 ///     // When the user is typing `--repeat`
-///     if ctx.filling_argument(["-r", "--repeat"]) {
+///     if ctx.previous_word == "-r" || ctx.previous_word == "--repeat" {
 ///         return suggest! {}; // Don't suggest anything
 ///     }
 ///
 ///     // When the user is typing `-`
-///     if ctx.typing_argument() {
-///         return suggest! {
+///     if ctx.current_word.starts_with('-') {
+///         // Remove arguments that have already been typed by the user
+///         let typed: Vec<&str> = ctx.all_words.iter().map(String::as_str).collect();
+///         let mut set = suggest! {
 ///             "-r": "Number of repetitions",
 ///             "--repeat": "Number of repetitions",
+///         };
+///         if let Suggest::Suggest(items) = &mut set {
+///             items.retain(|item| !typed.contains(&item.suggest().as_str()));
 ///         }
-///         // Remove arguments that have already been typed by the user
-///         .strip_typed_argument(ctx);
+///         return set;
 ///     }
 ///
 ///     // Otherwise, suggest nothing
@@ -1041,9 +923,9 @@ pub mod example_command_macro {}
 /// #[chain]
 /// fn handle_greet(args: EntryGreet) -> Next {
 ///     let result: ResultName = args
-///         .pick_or(["-r", "--repeat"], 1)
-///         .pick_or((), "World")
-///         .unpack()
+///         .pick_or(&arg![repeat: u8, 'r'], || 1)
+///         .pick_or(&arg![String], || "World".to_string())
+///         .unwrap()
 ///         .into();
 ///     result.into()
 /// }
@@ -1064,155 +946,6 @@ pub mod example_command_macro {}
 /// gen_program!();
 /// ```
 pub mod example_completion {}
-/// Example Custom Pickable
-///
-///  > This example demonstrates how to use the Pickable trait to add parsing for your types
-///
-///  Run:
-///  ```bash
-///  cargo run --manifest-path examples/example-custom-pickable/Cargo.toml --quiet -- connect 127.0.0.1:5012
-///  cargo run --manifest-path examples/example-custom-pickable/Cargo.toml --quiet -- connect 127.0.0.1
-///  ```
-///
-///  Output:
-///  ```plaintext
-///  Connected to "127.0.0.1:5012"
-///  Failed to parse address
-///  ```
-///
-/// Source code (./Cargo.toml)
-/// ```toml
-/// [package]
-/// name = "example-custom-pickable"
-/// version = "0.1.0"
-/// edition = "2024"
-///
-/// [dependencies.mingling]
-/// path = "../../mingling"
-///
-/// features = ["parser", "extras"]
-///
-/// [workspace]
-/// ```
-///
-/// Source code (./src/main.rs)
-/// ```ignore
-/// use mingling::{macros::route, parser::Pickable, prelude::*, Grouped};
-/// use std::io::Write;
-///
-/// // Define types that can be recognized by Mingling
-/// //               ________________________ `Pickable` trait needs to implement Default
-/// //              /                ________ The Grouped derive macro registers an ID for this type
-/// //              |               /           Mingling uses this ID to identify the type
-/// //              vvvvvvv         vvvvvvv
-/// #[derive(Debug, Default, Clone, Grouped)]
-/// pub struct Address {
-///     pub ip: [u8; 4],
-///     pub port: u16,
-/// }
-///
-/// // --------- IMPORTANT ---------
-/// impl Pickable for Address {
-///     type Output = Address;
-///     fn pick(args: &mut mingling::parser::Argument, flag: mingling::Flag) -> Option<Self::Output> {
-///         // Extract the raw string from Argument using the Flag
-///         let raw: String = args.pick_argument(flag)?.clone();
-///
-///         // Use TryFrom to parse the address
-///         Address::try_from(raw).ok()
-///     }
-/// }
-/// // --------- IMPORTANT ---------
-///
-/// dispatcher!("connect", EntryConnect);
-/// pack!(ErrorParseAddressFailed = ());
-///
-/// #[chain]
-/// fn handle_connect(prev: EntryConnect) -> Next {
-///     let connect: Address =
-///         route! { prev.pick_or_route((), ErrorParseAddressFailed::default()).unpack() };
-///     connect.to_chain()
-/// }
-///
-/// /// Renders the connected address.
-/// #[renderer]
-/// pub fn render_address(addr: Address) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     write!(render_result, "Connected to \"{}\"", addr).ok();
-///     render_result
-/// }
-///
-/// /// Renders the error message when address parsing fails.
-/// #[renderer]
-/// pub fn render_error_parse_address_failed(_: ErrorParseAddressFailed) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     write!(render_result, "Failed to parse address").ok();
-///     render_result
-/// }
-///
-/// gen_program!();
-///
-/// fn main() {
-///     ThisProgram::new().exec_and_exit();
-/// }
-///
-/// // Address conversion
-///
-/// impl TryFrom<String> for Address {
-///     type Error = String;
-///
-///     fn try_from(raw: String) -> Result<Self, Self::Error> {
-///         // Expected format: "192.168.1.1:8080"
-///         let parts: Vec<&str> = raw.split(':').collect();
-///         if parts.len() != 2 {
-///             return Err("Invalid format: expected 'IP:PORT'".to_string());
-///         }
-///
-///         let ip_str = parts[0];
-///         let port_str = parts[1];
-///
-///         // Parse IP address (4 octets separated by dots)
-///         let ip_parts: Vec<&str> = ip_str.split('.').collect();
-///         if ip_parts.len() != 4 {
-///             return Err("Invalid IP address format".to_string());
-///         }
-///
-///         let mut ip = [0u8; 4];
-///         for (i, part) in ip_parts.iter().enumerate() {
-///             ip[i] = part
-///                 .parse::<u8>()
-///                 .map_err(|_| format!("Invalid IP octet: {part}"))?;
-///         }
-///
-///         // Parse port
-///         let port = port_str
-///             .parse::<u16>()
-///             .map_err(|_| format!("Invalid port: {port_str}"))?;
-///
-///         Ok(Address { ip, port })
-///     }
-/// }
-///
-/// impl From<Address> for String {
-///     fn from(addr: Address) -> String {
-///         format!(
-///             "{}.{}.{}.{}:{}",
-///             addr.ip[0], addr.ip[1], addr.ip[2], addr.ip[3], addr.port
-///         )
-///     }
-/// }
-///
-/// impl std::fmt::Display for Address {
-///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-///         write!(
-///             f,
-///             "{}.{}.{}.{}:{}",
-///             self.ip[0], self.ip[1], self.ip[2], self.ip[3], self.port
-///         )
-///     }
-/// }
-/// ```
-pub mod example_custom_pickable {}
 /// Example Dispatch Tree
 ///
 ///  > This example will introduce how to use `dispatch_tree`
@@ -1317,7 +1050,7 @@ pub mod example_dispatch_tree {}
 ///
 /// features = [
 ///     "comp",
-///     "parser"
+///     "picker"
 /// ]
 ///
 /// [workspace]
@@ -1326,8 +1059,10 @@ pub mod example_dispatch_tree {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::{
-///     macros::suggest_enum, parser::PickableEnum, prelude::*, EnumTag, Grouped, ShellContext,
-///     Suggest,
+///     EnumTag, Grouped, ShellContext, Suggest,
+///     macros::suggest_enum,
+///     picker::{PickerArgResult, SinglePickable},
+///     prelude::*,
 /// };
 /// use std::io::Write;
 ///
@@ -1367,9 +1102,7 @@ pub mod example_dispatch_tree {}
 ///     #[enum_desc("A general-purpose programming language with clean syntax, known for readability")]
 ///     Python,
 ///
-///     #[enum_desc(
-///         "An object-oriented scripting language, famous for its concise and elegant syntax"
-///     )]
+///     #[enum_desc("An object-oriented scripting language, famous for its concise and elegant syntax")]
 ///     Ruby,
 ///
 ///     #[default]
@@ -1378,9 +1111,31 @@ pub mod example_dispatch_tree {}
 /// }
 ///
 /// // --------- IMPORTANT ---------
-/// // Implement the PickableEnum trait for ProgrammingLanguages,
-/// // so that `Picker` can parse this enum
-/// impl PickableEnum for ProgrammingLanguages {}
+/// // NOTE: Due to the migration from the legacy `parser` to `picker`, the `EnumTag` -> `Picker` path
+/// // is not yet complete, so a manual implementation is used for now.
+/// // Once that path is complete, `#[derive(EnumTag)]` can automatically implement `SinglePickable`,
+/// // replacing this manual implementation.
+/// impl SinglePickable for ProgrammingLanguages {
+///     fn pick_single(str: Option<&str>) -> PickerArgResult<Self> {
+///         let Some(str) = str else {
+///             return PickerArgResult::NotFound;
+///         };
+///         let lang = match str.to_lowercase().as_str() {
+///             "c" => Self::C,
+///             "c++" | "cpp" => Self::CPlusPlus,
+///             "c#" | "csharp" => Self::Csharp,
+///             "java" => Self::Java,
+///             "javascript" | "js" => Self::JavaScript,
+///             "kotlin" => Self::Kotlin,
+///             "ocaml" => Self::OCaml,
+///             "python" => Self::Python,
+///             "ruby" => Self::Ruby,
+///             "rust" => Self::Rust,
+///             _ => return PickerArgResult::NotFound,
+///         };
+///         PickerArgResult::Parsed(lang)
+///     }
+/// }
 /// // --------- IMPORTANT ---------
 ///
 /// dispatcher!("lang-select", EntryLanguageSelection);
@@ -1388,7 +1143,7 @@ pub mod example_dispatch_tree {}
 /// #[chain]
 /// fn handle_language_selection(args: EntryLanguageSelection) -> Next {
 ///     // You can use Picker to directly parse ProgrammingLanguages
-///     let lang: ProgrammingLanguages = args.pick(()).unpack();
+///     let lang: ProgrammingLanguages = args.pick_or_default(&arg![ProgrammingLanguages]).unwrap();
 ///     lang.into()
 /// }
 ///
@@ -2396,7 +2151,7 @@ pub mod example_pack_err {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["parser"]
+/// features = ["picker"]
 ///
 /// # Enable panic unwinding in release builds
 /// [profile.release]
@@ -2437,7 +2192,7 @@ pub mod example_pack_err {}
 ///
 /// #[chain]
 /// fn handle_panic(prev: EntryPanic) -> Next {
-///     let panic_info = prev.pick::<Option<String>>(()).unpack();
+///     let panic_info = prev.pick_or_default(&arg![Option<String>]).unwrap();
 ///     match panic_info {
 ///         Some(s) => {
 ///             // Panic happens here, will be caught
@@ -2536,7 +2291,7 @@ pub mod example_pathfinder {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["repl", "parser", "extras"]
+/// features = ["repl", "picker", "extras"]
 ///
 /// [dependencies]
 /// just_fmt = "0.1.2"
@@ -2626,7 +2381,7 @@ pub mod example_pathfinder {}
 /// // Parse cd command arguments
 /// #[chain]
 /// fn parse_cd_args(prev: EntryCd) -> Next {
-///     let join = prev.pick(()).unpack();
+///     let join = prev.pick_or_default(&arg![String]).unwrap();
 ///     StateChangeDirectory::new(join).into()
 /// }
 ///
@@ -2745,7 +2500,7 @@ pub mod example_repl_basic {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["parser"]
+/// features = ["picker"]
 ///
 /// [workspace]
 /// ```
@@ -2787,7 +2542,7 @@ pub mod example_repl_basic {}
 /// fn render_modify_current(args: EntryModifyCurrent, current_dir: &mut ResCurrentDir) -> Next {
 ///     current_dir.current_dir = current_dir
 ///         .current_dir
-///         .join(args.pick::<String>(()).unpack());
+///         .join(args.pick_or_default(&arg![String]).unwrap());
 ///     EntryCurrent::default().into()
 /// }
 ///
@@ -2940,7 +2695,7 @@ pub mod example_setup {}
 /// features = [
 ///     "structural_renderer",
 ///     "yaml_serde_fmt",
-///     "parser",
+///     "picker",
 /// ]
 ///
 /// [workspace]
@@ -2948,8 +2703,8 @@ pub mod example_setup {}
 ///
 /// Source code (./src/main.rs)
 /// ```ignore
-/// use mingling::prelude::*;
-/// use mingling::{parser::Picker, setup::StructuralRendererSetup, Grouped, StructuralData};
+/// use mingling::setup::picker::StructuralRendererSetup;
+/// use mingling::{Grouped, StructuralData, prelude::*};
 /// use serde::Serialize;
 /// use std::io::Write;
 ///
@@ -2986,10 +2741,10 @@ pub mod example_setup {}
 ///
 /// #[chain]
 /// fn parse_render(prev: EntryRender) -> Next {
-///     let (name, age) = Picker::new(prev.inner)
-///         .pick::<String>(())
-///         .pick::<i32>(())
-///         .unpack();
+///     let (name, age) = prev
+///         .pick_or_default(&arg![String])
+///         .pick_or_default(&arg![i32])
+///         .unwrap();
 ///     Info { name, age }.to_render()
 /// }
 ///

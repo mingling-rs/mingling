@@ -330,23 +330,11 @@ analyze_and_build_type_mapping().unwrap();
  
 详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-pathfinder)
 
-## 特性 `parser`
-
-**介绍:**
-
-启用参数解析器模块，提供参数解析功能。
-
-开启后可以使用 `Picker` 进行简易的参数提取，支持 `pick()` 和 `pick_or()` 等方法。
-
-详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-argument-parse)
-
 ## 特性 `picker`
 
 **介绍：**
 
 引入依赖 `arg-picker`，为 Mingling 提供更高级的参数解析能力。
-
-它可以与 `parser`、`clap` 特性共存，但建议不要和 `parser` 特性同时启用，因为两者的 API 极为相似。
 
 `picker` 是独立于 Mingling 的参数解析器，不依赖 `mingling_core` 的内置参数提取 API。
 

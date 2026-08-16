@@ -36,10 +36,6 @@ pub use mingling::*;
 #[cfg(feature = "core")]
 pub use mingling_core as mingling;
 
-/// `Mingling` argument parser (Built-in)
-#[cfg(feature = "parser")]
-pub mod parser;
-
 /// `Mingling` argument parser (Picker2)
 #[cfg(feature = "picker")]
 pub mod picker;
@@ -231,10 +227,8 @@ pub mod prelude {
     pub use mingling_macros::r_println;
 
     #[cfg(all(feature = "macros", feature = "comp"))]
+    #[cfg(feature = "comp")]
     pub use crate::macros::completion;
-
-    #[cfg(feature = "parser")]
-    pub use crate::parser::AsPicker;
 
     #[cfg(feature = "picker")]
     pub use arg_picker::prelude::arg;

@@ -41,7 +41,7 @@ fn main() {
 
 #[chain]
 fn handle_panic(prev: EntryPanic) -> Next {
-    let panic_info = prev.pick::<Option<String>>(()).unpack();
+    let panic_info = prev.pick_or_default(&arg![Option<String>]).unwrap();
     match panic_info {
         Some(s) => {
             // Panic happens here, will be caught

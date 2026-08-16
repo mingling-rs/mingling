@@ -5,6 +5,6 @@ edition = "2024"
 
 [dependencies.mingling]
 path = "../../mingling"
-features = ["parser"]
+features = ["picker"]
 
 [workspace]

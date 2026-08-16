@@ -209,7 +209,7 @@ Use `@@@` for:
 
 ````markdown
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 // Dependencies:
 // serde = "1"
 
@@ -237,6 +237,6 @@ mingling::macros::gen_program!();
 
 ```toml
 [dependencies]
-mingling = { path = "../../mingling", features = ["parser"] }
+mingling = { path = "../../mingling", features = ["picker"] }
 serde = { version = "1", features = ["derive"] }
 ```

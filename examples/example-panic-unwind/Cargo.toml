@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies.mingling]
 path = "../../mingling"
-features = ["parser"]
+features = ["picker"]
 
 # Enable panic unwinding in release builds
 [profile.release]

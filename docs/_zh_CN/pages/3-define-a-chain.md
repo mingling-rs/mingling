@@ -92,7 +92,7 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
 ```
  
-如果你启用了 `parser` 特性，还可以用 `Picker` 做更灵活的参数提取，不过那是后话了。
+如果你启用了 `picker` 特性，还可以用 `Picker` 做更灵活的参数提取，不过那是后话了。
 
 ## 组合起来
 

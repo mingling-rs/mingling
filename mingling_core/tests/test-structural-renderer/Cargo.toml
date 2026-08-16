@@ -7,5 +7,5 @@ publish = false
 [workspace]
 
 [dependencies]
-mingling = { path = "../../../mingling", features = ["structural_renderer_full", "parser"] }
+mingling = { path = "../../../mingling", features = ["structural_renderer_full", "picker"] }
 serde = { version = "1", features = ["derive"] }

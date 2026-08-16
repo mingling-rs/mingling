@@ -11,7 +11,7 @@ path = "../../mingling"
 features = [
     "structural_renderer",
     "yaml_serde_fmt",
-    "parser",
+    "picker",
 ]
 
 [workspace]

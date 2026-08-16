@@ -229,17 +229,6 @@ pub const MINGLING_NIGHTLY: bool = false;
 #[cfg(feature = "nightly")]
 #[allow(unused)]
 pub const MINGLING_NIGHTLY: bool = true;
-/// Whether the `parser` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "parser"))]
-#[allow(unused)]
-pub const MINGLING_PARSER: bool = false;
-
-/// Whether the `parser` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "parser")]
-#[allow(unused)]
-pub const MINGLING_PARSER: bool = true;
 /// Whether the `pathf` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "pathf"))]

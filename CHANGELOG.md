@@ -202,6 +202,67 @@ None
 
     _No behavioral changes to command matching — the semantics of dot-separated command paths, kebab-case normalization, and "longest registered prefix wins" are all preserved by the compiled-in string-based dispatch trie / linear list. The removal is purely an API simplification: the `Node` intermediate abstraction and the dispatcher-boxing machinery are gone._
 
+4. **[`feat:parser`]** **[BREAKING REMOVAL]** Removed the legacy `parser` feature and its entire module tree — `mingling::parser` (with `Argument`, `Picker`, `Pickable`, `PickableEnum`, `AsPicker`, `Yes`, `True`, `PathCheckRule`, `PathsChecker`, `PathChecker`, and the built-in `size`-based `usize` size parsing). The `Parser` has been fully superseded by the `picker` feature, which uses the standalone `arg-picker` crate. The `size` crate dependency (only used by the parser's `usize` size-string parsing) has also been removed from `mingling/Cargo.toml`.
+
+    ### What changed
+
+    The `parser` feature provided an internal argument-parsing module (`mingling::parser`) with a fluent `Picker` API for extracting typed values from `Vec<String>` command-line arguments. This functionality has been entirely replaced by the `picker` feature (`arg-picker` crate), so the legacy built-in parser is now dead code and has been removed.
+
+    **Removed public modules and types:**
+
+    - **`mingling::parser` module** — Entire module removed (`mingling/src/parser.rs` and the whole `mingling/src/parser/` directory), including:
+        - **`Argument`** — The struct wrapping `Vec<String>` with `pick_argument`, `pick_arguments`, `pick_flag`, `dump_remains`, and `strip_all_flags` methods.
+        - **`Picker`** — The fluent builder struct with `pick`, `pick_or`, `pick_or_route`, `require`, and `operate_args` methods.
+        - **`Pickable`** — The trait defining `pick(&mut Argument, Flag) -> Option<Self::Output>`.
+        - **`PickableEnum`** — The marker trait for `EnumTag`-implementing enums providing blanket `Pickable` impls.
+        - **`AsPicker`** — The blanket trait implementing `pick`/`pick_or`/`pick_or_route` for all `Into<Vec<String>>` types.
+        - **`Pick1`–`Pick12` / `PickWithRoute1`–`PickWithRoute12`** — Builder structs for chained picks, with `after`, `after_or_route`, `unpack`, `unpack_directly`, and `operate_args`.
+        - **`Yes`** / **`True`** — Explicit boolean-like enums with `is_yes`/`is_no` and `is_true`/`is_false` helpers.
+        - **`PathCheckRule`** / **`PathsChecker`** / **`PathChecker`** — Path validation helpers (`must_file`, `must_dir`, `must_exist`, etc.).
+        - **Built-in `Pickable` impls** — For `String`, `Vec<String>`, all integer/float types, `bool`, `usize` (special size-string parsing like `"25MiB"`), `Vec<usize>`, `Vec<PathBuf>`, `PathBuf`, `Argument`, and `Option<T>`.
+        - The `usize` size-string parsing (e.g. `"25mib"` → `25 * 1024 * 1024`) used the external `size` crate, which has been removed from the dependency tree.
+
+    **Other changes:**
+
+    - **`mingling::features::MINGLING_PARSER`** constant — Removed from `mingling/src/features.rs`.
+    - **`mingling::prelude::AsPicker`** re-export — Removed from the prelude.
+    - **Deleted examples** — Removed `example-argument-parse` and `example-custom-pickable` (and their entries in `docs/example-pages/examples.json`), as they only demonstrated the legacy `parser` API.
+    - **Docs updated** — `docs/pages/6-argument-parse-picker.md` (and `docs/_zh_CN` and `docs/dev` copies) now document the `picker` feature API; the `parser` section of `docs/pages/other/features.md` was removed.
+    - **`mingling/Cargo.toml`** — Removed `parser = ["dep:size"]` from `[features]`, removed `size = { version = "0.5", optional = true }` from `[dependencies]`, and removed `"parser"` from the dev-dependency and example feature lists.
+    - **`mingling/src/lib.rs`** — Removed `#[cfg(feature = "parser")] pub mod parser;` and the prelude's `#[cfg(feature = "parser")] pub use crate::parser::AsPicker;`.
+    - **`mingling/src/parser/` directory** — Entirely deleted (including `args.rs`, `picker.rs`, `picker/builtin.rs`, `picker/bools.rs`, `picker/path.rs`, `picker/path/rule.rs`, and `test.rs`).
+    - **`Cargo.lock`** and per-example `Cargo.lock` files — Removed the `size` package entry and added `arg-picker` / `arg-picker-macros` where the `picker` feature is enabled.
+
+    **Migration guide:**
+
+    - **Replace the `parser` feature with `picker`** in `Cargo.toml`:
+        ```toml
+        # Old:
+        features = ["parser"]
+        # New:
+        features = ["picker"]
+        ```
+    - **Replace API usage** with the `arg-picker` equivalents from the `picker` feature:
+        | Legacy `parser` API                               | New `picker` API                                                                                                      |
+        | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+        | `prev.pick(())`                                   | `prev.pick_or_default(&arg![T])` (or `prev.pick(&arg![T])`)                                                           |
+        | `prev.pick(flag)`                                 | `prev.pick(&arg![name: T, 'n'])`                                                                                      |
+        | `prev.pick_or(flag, default)`                     | `prev.pick_or(&arg![name: T, 'n'], \|\| default)`                                                                     |
+        | `prev.pick_or_route(flag, route)` + `.unpack()`   | `prev.pick_or_route(&arg![T], \|\| route.to_chain())` + `.to_result()` + `route!`                                     |
+        | `args.pick_argument(flag)`                        | Use `arg_picker::picker::PickerArg` / the `arg!` macro                                                                |
+        | `impl Pickable for T { ... }`                     | `impl SinglePickable for T { fn pick_single(str: Option<&str>) -> PickerArgResult<Self> { ... } }`                    |
+        | `impl PickableEnum for T {}` on an `EnumTag` enum | Implement `SinglePickable` manually with a `match`                                                                    |
+        | `.after(...)`                                     | `.post(...)`                                                                                                          |
+        | `.unpack()`                                       | `.unwrap()`                                                                                                           |
+        | `usize` size-string parsing (`"25MiB"`)           | Not directly supported by `arg-picker`; parse manually (e.g., via `size` directly or a custom `SinglePickable`)       |
+        | `PathCheckRule` / `PathsChecker` / `PathChecker`  | Use the new path wrapper types in `mingling::picker::value` (`FilePath`, `DirPath`, `NoPath`, `RecursiveFiles`, etc.) |
+        | `Yes` / `True`                                    | Use `mingling::picker::value::Flag` (flag-based) and explicit value checks for confirmations                          |
+    - **Remove any `use mingling::parser::...;` imports.** All `parser` items are gone. Use the `picker` feature's module (`mingling::picker`, `arg_picker::prelude::arg`, etc.).
+    - **If you used the `usize` size-string parsing** (e.g., `preved.pick::<usize>("--size").unpack()` with inputs like `"25mib"`), implement a custom `SinglePickable` or use the `size` crate directly.
+    - **If you used `AsPicker`** on `Vec<String>` / `&[String]`, use `arg_picker::picker::IntoPicker` (or `EntryPicker`, for program entry types) instead.
+
+    _Behavioral note:_ the `picked` values, flag parsing semantics, and the "longest registered prefix wins" matching rule are all preserved by the `picker` feature's `arg-picker` API. The removal is purely a dead-code cleanup: the legacy built-in parser has been fully superseded by `picker`, and downstream code must migrate to the new API names described above.
+
 ---
 
 ## Contents

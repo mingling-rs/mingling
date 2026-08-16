@@ -8,7 +8,7 @@ path = "../../mingling"
 
 features = [
     "comp",
-    "parser"
+    "picker"
 ]
 
 [workspace]

@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies.mingling]
 path = "../../mingling"
 
-# Enable `parser` features
-features = ["async", "parser"]
+# Enable `picker` features
+features = ["async", "picker"]
 
 # Import any async runtime, e.g. Tokio
 [dependencies.tokio]

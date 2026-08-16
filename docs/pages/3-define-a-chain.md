@@ -92,7 +92,7 @@ fn handle_greet(args: EntryGreet) -> Next {
 }
 ```
  
-If you enable the `parser` feature, you can also use `Picker` for more flexible param extraction — but that's a topic for later.
+If you enable the `picker` feature, you can also use `Picker` for more flexible param extraction — but that's a topic for later.
 
 ## Putting It Together
 

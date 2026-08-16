@@ -10,7 +10,7 @@ serde_json = "1.0.150"
 [dependencies.mingling]
 path = "../../mingling"
 features = [
-    "parser",
+    "picker",
     "extras",
     "structural_renderer",
 ]

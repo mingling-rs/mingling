@@ -49,7 +49,7 @@ dispatcher!("modify-current", EntryModifyCurrent);
 fn render_modify_current(args: EntryModifyCurrent, current_dir: &mut ResCurrentDir) -> Next {
     current_dir.current_dir = current_dir
         .current_dir
-        .join(args.pick::<String>(()).unpack());
+        .join(args.pick_or_default(&arg![String]).unwrap());
     EntryCurrent::default().into()
 }
 

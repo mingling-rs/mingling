@@ -13,7 +13,7 @@ mingling = { path = "../../../mingling", features = [
     "builds",
     "repl",
     "dispatch_tree",
-    "parser",
+    "picker",
     "extras",
 ] }
 tokio = { version = "1", features = ["full"] }

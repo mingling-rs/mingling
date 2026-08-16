@@ -19,34 +19,38 @@ let name = args.first().cloned().unwrap_or_else(|| "World".to_string());
 ```toml
 # Cargo.toml
 [dependencies.mingling]
-features = ["parser"]
+features = ["picker"]
 ```
  
 好了，让我们看看 `Picker` 的写法：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
-    let name = prev.pick_or((), "World").unpack();
+    let name = prev
+        .pick_or(&arg![String], || "World".to_string())
+        .unwrap();
     ResultName::new(name).into()
 }
 ```
  
-`AsPicker` 为所有可以转换为 `Vec<String>` 的类型实现了 `pick`、`pick_or`、`pick_or_route` 函数：它们可以语义化地从字符串列表中 **拾取 (Pick)** 参数，并转换为结构化数据。
+`EntryPicker` 为所有入口类型实现了 `pick`、`pick_or`、`pick_or_default` 和 `pick_or_route` 函数：它们可以通过 `arg!` 宏声明要拾取的内容，语义化地从字符串列表中 **拾取 (Pick)** 参数，并转换为结构化数据。
 
 对于上述示例中的代码：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
-let name = prev.pick_or((), "World").unpack();
+let name = prev
+    .pick_or(&arg![String], || "World".to_string())
+    .unwrap();
 @@@ResultName::new(name).into()
 @@@}
 ```
@@ -54,75 +58,79 @@ let name = prev.pick_or((), "World").unpack();
 它的语义为：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
 @@@let name: String =
-   prev.pick_or((), "World").unpack();
-// ~~~~ ~~~~~~~ ~~  ~~~~~~~  ~~~~~~~~
-// |    |       |   |        |_ 解包为 String
-// |    |       |   |__________ 默认值为 "World"
-// |    |       |______________ 取出第一个位置参数（不指定标志）
-// |    |______________________ 拾取或使用默认
-// |___________________________ 从前一个输入中
+   prev.pick_or(&arg![String], || "World".to_string()).unwrap();
+// ~~~~ ~~~~~~~ ~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~
+// |    |       |             |                        |_ 解包为 String
+// |    |       |             |__________________________ 默认值为 "World"
+// |    |       |________________________________________ 取出第一个位置参数（声明为 String）
+// |    |________________________________________________ 拾取或使用默认
+// |_____________________________________________________ 从前一个输入中
 @@@}
 ```
  
 ## 解析标志参数
 
-若你的程序需要解析标志参数（例如 `greet --name Alice`），可以使用如下方式
+若你的程序需要解析标志参数（例如 `greet --name Alice`），可以在 `arg!` 中声明一个具名标志：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
-    let name = prev.pick_or(["--name", "-n"], "World").unpack();
+    let name = prev
+        .pick_or(&arg![name: String, 'n'], || "World".to_string())
+        .unwrap();
     ResultName::new(name).into()
 }
 ```
  
+`arg!` 宏会从字段名推导长标志名（`--name`），`'n'` 则添加短别名（`-n`）。
+
 同理，它的语义为：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
 @@@let name: String =
-   prev.pick_or(["--name", "-n"], "World").unpack();
-// ~~~~ ~~~~~~~ ~~~~~~~~~~~~~~~~  ~~~~~~~  ~~~~~~~~
-// |    |       |                 |        |_ 解包为 String
-// |    |       |                 |__________ 默认值为 "World"
-// |    |       |____________________________ 取出 "--name" 或 "-n" 后面的参数
-// |    |____________________________________ 拾取或使用默认
-// |_________________________________________ 从前一个输入中
+   prev.pick_or(&arg![name: String, 'n'], || "World".to_string()).unwrap();
+// ~~~~ ~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~  ~~~~~~
+// |    |       |                          |                      |_ 解包为 String
+// |    |       |                          |________________________ 默认值为 "World"
+// |    |       |___________________________________________________ 取出 "--name" 或 "-n" 后面的参数
+// |    |___________________________________________________________ 拾取或使用默认
+// |________________________________________________________________ 从前一个输入中
 @@@}
 ```
  
-## 关于 `.unpack()`
+## 关于 `.unwrap()` 与 `route!`
 
-你可能注意到了，`Picker` 在命令解析的最后，会执行一个 `.unpack()` 函数，它的作用是将前面解析出来的结果，转换为结构化信息。
+你可能注意到了，`Picker` 在命令解析的最后，会执行一个 `.unwrap()`（或 `route!`）函数，它的作用是将前面解析出来的结果，转换为结构化信息。
 
-对于只拾取了一次的数据来说，`.unpack()` 会返回单个数据，而对于多次拾取，`Picker` 则会返回元组：
+对于只拾取了一次的数据来说，`.unwrap()` 会返回单个数据，而对于多次拾取，`Picker` 则会返回元组：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@dispatcher!("test", EntryTest);
 @@@pack!(ResultInfo = (String, u8, u32));
  
 #[chain]
 fn handle_test_entry(prev: EntryTest) -> Next {
     let (name, age, id) = prev
-        .pick::<String>(["--name", "-n"])
-        .pick::<u8>(["--age", "-a"])
-        .pick::<u32>(["--id", "-I"])
-        .unpack();
+        .pick_or_default(&arg![name: String, 'n'])
+        .pick_or_default(&arg![age: u8, 'a'])
+        .pick_or_default(&arg![id: u32, 'I'])
+        .unwrap();
  
     ResultInfo::new((name, age, id)).into()
 }
@@ -138,7 +146,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 先来看一个简单示例
 
 ```rust
-// Features: ["parser", "extras"]
+// Features: ["picker", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", EntryGreet);
@@ -147,12 +155,13 @@ fn handle_test_entry(prev: EntryTest) -> Next {
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
-    let pick_result = prev
-        .pick_or_route(["--name", "-n"], ErrorNoName::default())
-        .unpack();
- 
-    // 使用 route! 宏展开 pick_result
-    let name = route!(pick_result);
+    // 使用 route! 宏展开 Result<Value, Route>
+    let name = route!(
+        prev.pick_or_route(&arg![name: String, 'n'], || {
+            ErrorNoName::default().to_chain()
+        })
+        .to_result()
+    );
     ResultName::new(name).into()
 }
  
@@ -162,18 +171,18 @@ fn render_greet(result: ResultName) {
 }
 ```
  
-若使用 `pick_or_route`，写法会变得相对复杂：因为 `.unpack()` 不再直接返回参数，而是 `Result<Value, Route>`。
+若使用 `pick_or_route`，`.to_result()` 不再直接返回参数，而是 `Result<Value, Route>`。
 
 不过 **Mingling** 的 `extras` 特性提供了简化展开的宏 `route!`，它不复杂，只是省略了一部分样板代码：
 
 ```rust
-// Features: ["parser", "extras"]
+// Features: ["picker", "extras"]
 @@@ pack!(ErrorFail = ());
 @@@ use mingling::macros::route;
+@@@ use mingling::picker::IntoPicker;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
-@@@ let pick_result = args.pick_or_route::<String, _>((), ErrorFail::new(())).unpack();
-let name = route!(pick_result);
+let name = route!(args.pick_or_route(&arg![String], || ErrorFail::new(()).to_chain()).to_result());
 @@@ mingling::macros::empty_result!()
 @@@ }
 ```
@@ -181,14 +190,14 @@ let name = route!(pick_result);
 它展开为：
 
 ```rust
-// Features: ["parser", "extras"]
+// Features: ["picker", "extras"]
 @@@ pack!(ErrorFail = ());
+@@@ use mingling::picker::IntoPicker;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
-@@@ let pick_result = args.pick_or_route::<String, _>((), ErrorFail::new(())).unpack();
-let name = match pick_result {
+let name = match args.pick_or_route(&arg![String], || ErrorFail::new(()).to_chain()).to_result() {
     Ok(r) => r,
-    Err(e) => return e.to_chain(),
+    Err(e) => return e,
 };
 @@@ mingling::macros::empty_result!()
 @@@ }
@@ -196,122 +205,59 @@ let name = match pick_result {
  
 ## 提取值的后处理
 
-在您使用 `pick` 提取了用户输入后，可以使用 `after` 立刻处理该参数
+在您使用 `pick` 提取了用户输入后，可以使用 `post` 立刻处理该参数
 
-````rust
-// Features: ["parser"]
+```rust
+// Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
-        .pick_or(["--name", "-n"], "World")
+        .pick_or(&arg![name: String, 'n'], || "World".to_string())
         // 在提取出 --name 后，立刻格式化
-        .after(|name: String| {
+        .post(|name: String| {
             name.replace(['-', '_', '.'], " ")
                 .to_lowercase()
                 .trim()
                 .to_string()
         })
-        .unpack();
+        .unwrap();
  
     ResultName::new(name).into()
-}
-```
- 
-同样，你可以使用 `after_or_route` 来处理输入参数的格式错误
-
-```rust
-// Features: ["parser", "extras"]
-@@@use mingling::macros::buffer;
-@@@use mingling::macros::route;
-@@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
-@@@pack!(ErrorNameTooLong = usize);
- 
-#[chain]
-fn handle_greet_entry(prev: EntryGreet) -> Next {
-    let pick_result = prev
-        .pick_or(["--name", "-n"], "World")
-        .after_or_route(|name: &String| {
-            if name.len() < 32 {
-                Ok(name.clone())
-            } else {
-                Err(ErrorNameTooLong::new(name.len()))
-            }
-        })
-        .unpack();
-    let name = route!(pick_result);
- 
-    ResultName::new(name).into()
-}
- 
-#[renderer(buffer)]
-fn render_name_too_long(prev: ErrorNameTooLong) {
-    let len = *prev;
-    r_println!("Error: name too long (length: {} > 32)", len);
-}
- 
-#[renderer(buffer)]
-fn render_name(prev: ResultName) {
-    r_println!("Hello, {}!", *prev);
 }
 ```
  
 ## 布尔值解析
 
-`Picker` 当然也可以解析布尔类型，但是布尔类型分为显式和隐式模式：
-
-| 模式 | 格式                                |
-| ---- | ----------------------------------- |
-| 隐式 | `--confirmed`                       |
-| 显式 | `--confirm true` 或 `--confirm yes` |
-
-- 使用 `.pick::<bool>(flag)` 时，采用隐式解析：只要标志存在即为 `true`
-- 使用 `.pick::<Yes>(flag)` 或 `.pick::<True>(flag)` 时，采用显式解析
-
-一般来说使用隐式解析即可，但在处理重要的确认行为时，显式逻辑更符合语义。
+`Picker` 将布尔值解析为**标志**：标志存在即为 `true`。
 
 ```rust
-// Features: ["parser"]
-@@@use mingling::parser::Yes;
+// Features: ["picker"]
+@@@use mingling::picker::value::Flag;
 @@@dispatcher!("test", EntryTest);
 @@@pack!(ResultDone = ());
  
 #[chain]
 fn handle_entry(prev: EntryTest) -> Next {
-@@@ let prev1 = prev.clone();
-    let _confirmed: bool = prev.pick::<Yes>(()).unpack().is_yes();
-@@@ let prev = prev1;
-    let _confirm: bool = prev.pick::<bool>(["--confirm", "-C"]).unpack();
+    // `--confirm` / `-C` 存在 → true
+    let _confirm: bool = *prev.pick(&arg![confirm: Flag, 'C']).unwrap();
     ResultDone::default().to_render()
 }
 ```
  
-## 特殊用法：`usize` 解析
+> [!NOTE]
+> 对于重要的确认行为，如果精确的布尔语义很关键，请将标志与显式的值检查配合使用。
 
-**Mingling** 为 `usize` 提供了一个特殊的用法：解析类似 `25G`、`32mib` 等字样
-
-```rust
-// Features: ["parser"]
- 
-#[test]
-fn parse_size() {
-    let vec = vec!["--size".to_string(), "25mib".to_string()];
-    let size: usize = vec.pick(["--size", "-S"]).unpack();
-    assert_eq!(size, 25 * 1024 * 1024);
-}
-```
- 
 ## 自定义可解析类型
 
-你可以使用 `Pickable` trait 使你的类型支持被 `Picker` 解析，这也是 `Picker` 拓展性的来源
+你可以使用 `SinglePickable` trait 使你的类型支持被 `Picker` 解析，这也是 `Picker` 拓展性的来源
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@use mingling::macros::buffer;
-@@@use mingling::parser::{Pickable, Argument};
+@@@use mingling::picker::{PickerArgResult, SinglePickable};
 @@@use mingling::Flag;
 #[derive(Default, Clone)]
 pub struct Address {
@@ -319,14 +265,18 @@ pub struct Address {
     port: u16,
 }
  
-impl Pickable for Address {
-    type Output = Self;
-    fn pick(args: &mut Argument, flag: Flag) -> Option<Self::Output> {
-        let raw = args.pick_argument(flag)?;
+impl SinglePickable for Address {
+    fn pick_single(str: Option<&str>) -> PickerArgResult<Self> {
+        let Some(raw) = str else {
+            return PickerArgResult::NotFound;
+        };
         let parts: Vec<&str> = raw.split(':').collect();
-        let ip = parts.first()?.to_string();
-        let port: u16 = parts.get(1)?.parse().ok()?;
-        Some(Address { ip, port })
+        let ip = parts.first().copied().unwrap_or_default().to_string();
+        let port: u16 = match parts.get(1).and_then(|p| p.parse().ok()) {
+            Some(p) => p,
+            None => return PickerArgResult::NotFound,
+        };
+        PickerArgResult::Parsed(Address { ip, port })
     }
 }
 @@@dispatcher!("connect", EntryConnect);
@@ -334,7 +284,7 @@ impl Pickable for Address {
  
 #[chain]
 fn handle_connect_entry(prev: EntryConnect) -> Next {
-    let address: Address = prev.pick("--addr").unpack();
+    let address: Address = prev.pick_or_default(&arg![Address]).unwrap();
     ResultConnected::new(address).into()
 }
  
@@ -351,14 +301,14 @@ fn render_connected(addr: ResultConnected) {
 Connected: IP: 127.0.0.1 PORT: 8080
 ```
  
-## 自动为枚举实现 Pickable
+## 为枚举实现 Pickable
 
-要为枚举类型实现 `Pickable`，只需该枚举实现了 `EnumTag`，然后为其实现 `PickableEnum` 即可
+要让枚举支持 `Picker` 解析，可以手写 `SinglePickable`，用 match 匹配输入：
 
 ```rust
-// Features: ["parser"]
+// Features: ["picker"]
 @@@use mingling::macros::buffer;
-@@@use mingling::parser::PickableEnum;
+@@@use mingling::picker::{PickerArgResult, SinglePickable};
 @@@use mingling::EnumTag;
 #[derive(Debug, Default, EnumTag)]
 pub enum Fruits {
@@ -368,13 +318,26 @@ pub enum Fruits {
     Orange,
 }
  
-impl PickableEnum for Fruits {}
+impl SinglePickable for Fruits {
+    fn pick_single(str: Option<&str>) -> PickerArgResult<Self> {
+        let Some(str) = str else {
+            return PickerArgResult::NotFound;
+        };
+        let fruit = match str.to_lowercase().as_str() {
+            "apple" => Self::Apple,
+            "banana" => Self::Banana,
+            "orange" => Self::Orange,
+            _ => return PickerArgResult::NotFound,
+        };
+        PickerArgResult::Parsed(fruit)
+    }
+}
 @@@dispatcher!("eat", EntryEat);
 @@@pack!(ResultFruit = Fruits);
  
 #[chain]
 fn handle_eat_entry(prev: EntryEat) -> Next {
-    let fruit: Fruits = prev.pick("--fruit").unpack();
+    let fruit: Fruits = prev.pick_or_default(&arg![Fruits]).unwrap();
     ResultFruit::new(fruit).into()
 }
  
@@ -389,4 +352,3 @@ fn render_fruit(prev: ResultFruit) {
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass
 </p>
-````

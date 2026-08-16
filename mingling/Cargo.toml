@@ -16,7 +16,6 @@ tokio.workspace = true
 mingling = { path = ".", features = [
     "comp",
     "structural_renderer",
-    "parser",
     "repl",
 ] }
 
@@ -30,7 +29,6 @@ features = [
     "structural_renderer",
     "repl",
     "comp",
-    "parser",
     "picker",
     "clap",
     "extras",
@@ -63,7 +61,6 @@ clap = ["mingling_core/clap", "mingling_macros/clap"]
 dispatch_tree = ["mingling_macros/dispatch_tree"]
 repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
-parser = ["dep:size"]
 picker = ["mingling_core/picker", "dep:arg-picker", "arg-picker/mingling_support"]
 pathf = ["mingling_core/pathf", "mingling_macros/pathf"]
 
@@ -112,4 +109,3 @@ mingling_core = { workspace = true, optional = true }
 mingling_macros = { workspace = true, optional = true }
 arg-picker = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
-size = { version = "0.5", optional = true }

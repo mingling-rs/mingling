@@ -74,18 +74,22 @@ fn complete_greet_entry(ctx: &ShellContext) -> Suggest {
     }
 
     // When the user is typing `--repeat`
-    if ctx.filling_argument(["-r", "--repeat"]) {
+    if ctx.previous_word == "-r" || ctx.previous_word == "--repeat" {
         return suggest! {}; // Don't suggest anything
     }
 
     // When the user is typing `-`
-    if ctx.typing_argument() {
-        return suggest! {
+    if ctx.current_word.starts_with('-') {
+        // Remove arguments that have already been typed by the user
+        let typed: Vec<&str> = ctx.all_words.iter().map(String::as_str).collect();
+        let mut set = suggest! {
             "-r": "Number of repetitions",
             "--repeat": "Number of repetitions",
+        };
+        if let Suggest::Suggest(items) = &mut set {
+            items.retain(|item| !typed.contains(&item.suggest().as_str()));
         }
-        // Remove arguments that have already been typed by the user
-        .strip_typed_argument(ctx);
+        return set;
     }
 
     // Otherwise, suggest nothing
@@ -102,9 +106,9 @@ pack!(ResultName = (u8, String));
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let result: ResultName = args
-        .pick_or(["-r", "--repeat"], 1)
-        .pick_or((), "World")
-        .unpack()
+        .pick_or(&arg![repeat: u8, 'r'], || 1)
+        .pick_or(&arg![String], || "World".to_string())
+        .unwrap()
         .into();
     result.into()
 }
