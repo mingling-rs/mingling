@@ -33,3 +33,7 @@ pattern = "version = \"{VER}\""
 [[file]]
 file = "./index.html"
 pattern = "mling proj-init {VER}@basic"
+
+[[file]]
+file = "./dist/index.html"
+pattern = "mling proj-init {VER}@basic"

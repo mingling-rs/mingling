@@ -15,6 +15,10 @@
             href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap"
             rel="stylesheet"
         />
+        <link
+            rel="stylesheet"
+            href="../docs/scripts/highlight/github-dark.min.css"
+        />
         <style>
             *,
             *::before,
@@ -26,6 +30,17 @@
 
             html {
                 scroll-behavior: smooth;
+                scroll-snap-type: y mandatory;
+            }
+
+            .hero,
+            .section {
+                scroll-snap-align: start;
+                scroll-snap-stop: always;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
             }
 
             body {
@@ -54,6 +69,11 @@
             }
 
             nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -116,10 +136,57 @@
             .hero {
                 padding: 5rem 1.5rem 3rem;
                 text-align: center;
+                position: relative;
+            }
+
+            .hero h1,
+            .hero .subtitle {
+                position: relative;
+                z-index: 1;
+            }
+
+            /* Tiled grid background (field grid) */
+            .hero::after {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image:
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    );
+                background-size:
+                    40px 40px,
+                    40px 40px,
+                    20px 20px,
+                    20px 20px;
+                background-position:
+                    calc(50% - 540px + 20px) 0,
+                    calc(50% - 540px) 0,
+                    calc(50% - 540px + 10px) 0,
+                    calc(50% - 540px + 10px) 0;
+                pointer-events: none;
+                z-index: 0;
             }
 
             .hero h1 {
-                font-size: 2.75rem;
+                font-size: 5.5rem;
                 font-weight: 700;
                 color: #e8ddd0;
                 margin-bottom: 0.75rem;
@@ -130,6 +197,83 @@
                 color: #9a8a7a;
                 max-width: 640px;
                 margin: 0 auto 2.5rem;
+                line-height: 1.8;
+                text-align: left;
+            }
+
+            .hero .subtitle .star {
+                color: #c43931;
+                margin-right: 0.5rem;
+            }
+
+            .hero .subtitle b {
+                color: #e8ddd0;
+                font-weight: 700;
+            }
+
+            .hero .subtitle code {
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-size: 0.9em;
+                color: #d4a84b;
+                background: rgba(212, 168, 75, 0.08);
+                padding: 0.1rem 0.35rem;
+                border-radius: 2px;
+            }
+
+            /* Hero command carousel terminal */
+            .hero-term {
+                width: 520px;
+                max-width: 100%;
+                margin: 0 auto;
+                background: #0f0b08;
+                border: 1px solid #3a2e24;
+                border-radius: 2.5px;
+                padding: 0.65rem 1.1rem;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                text-align: left;
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                font-size: 0.95rem;
+                line-height: 1.6;
+                white-space: nowrap;
+                overflow: hidden;
+                position: relative;
+                z-index: 1;
+            }
+
+            .hero-term pre {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+            }
+
+            .hero-term code {
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
+                background: transparent !important;
+                padding: 0 !important;
+            }
+
+            .term-prompt {
+                color: #6a5a4a;
+            }
+
+            .term-cmd {
+                color: #7ec699;
+            }
+
+            .term-cursor {
+                display: inline-block;
+                width: 0.6em;
+                height: 1.15em;
+                background: #d0d0d0;
+                vertical-align: text-bottom;
+                margin-left: 1px;
+                animation: termBlink 1s steps(1) infinite;
+            }
+
+            @keyframes termBlink {
+                50% {
+                    opacity: 0;
+                }
             }
 
             .download-row {
@@ -177,15 +321,34 @@
             }
 
             .download-card .file-name {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 0.5rem;
+                width: 100%;
+                padding: 0.55rem 0.9rem;
+                background: rgba(212, 168, 75, 0.1);
+                border: 1px solid rgba(212, 168, 75, 0.45);
+                border-radius: 2px;
+                color: #d4a84b;
                 font-family: "JetBrains Mono", monospace;
                 font-size: 0.78rem;
-                color: #d4a84b;
-                text-decoration: underline;
-                transition: color 0.2s;
+                text-decoration: none;
+                transition:
+                    background 0.2s,
+                    color 0.2s,
+                    border-color 0.2s;
             }
 
             .download-card .file-name:hover {
-                color: #e8c46a;
+                background: #d4a84b;
+                color: #1a1410;
+                border-color: #d4a84b;
+            }
+
+            .download-card .file-name .btn-arrow {
+                flex-shrink: 0;
+                font-size: 0.9rem;
             }
 
             .download-card .checksum {
@@ -216,7 +379,7 @@
             }
 
             .section.alt {
-                background: #241c16;
+                background-color: #241c16;
             }
 
             .section h2 {
@@ -236,10 +399,121 @@
                 color: #c43931;
             }
 
+            .section h3 {
+                font-size: 1.25rem;
+                font-weight: 700;
+                color: #e8ddd0;
+                margin: 0 0 0.75rem;
+            }
+
+            .section h3::before {
+                content: "✦";
+                color: #c43931;
+                margin-right: 0.5rem;
+            }
+
+            .section h3:not(:first-of-type) {
+                margin-top: 2rem;
+            }
+
             .section p {
                 color: #9a8a7a;
                 margin-bottom: 1.25rem;
                 max-width: 720px;
+            }
+
+            /* Dashed lines along the container edges, excluding hero */
+            body > section:not(.hero) {
+                position: relative;
+                background-image:
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    );
+                background-size:
+                    40px 40px,
+                    40px 40px,
+                    20px 20px,
+                    20px 20px;
+                background-position:
+                    calc(50% - 540px + 20px) 0,
+                    calc(50% - 540px) 0,
+                    calc(50% - 540px + 10px) 0,
+                    calc(50% - 540px + 10px) 0;
+            }
+
+            body > section:not(.hero)::before,
+            body > section:not(.hero)::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: repeating-linear-gradient(
+                    to bottom,
+                    rgba(212, 168, 75, 0.25) 0,
+                    rgba(212, 168, 75, 0.25) 4px,
+                    transparent 4px,
+                    transparent 9px
+                );
+                pointer-events: none;
+                z-index: 49;
+            }
+
+            body > section:not(.hero)::before {
+                left: max(0px, calc(50% - 540px));
+            }
+
+            body > section:not(.hero)::after {
+                right: max(0px, calc(50% - 540px));
+            }
+
+            /* Diamond markers at line intersections */
+            .line-diamond {
+                position: absolute;
+                top: -4px;
+                width: 8px;
+                height: 8px;
+                background: rgba(212, 168, 75, 0.25);
+                transform: rotate(45deg);
+                pointer-events: none;
+                z-index: 50;
+            }
+
+            .line-diamond.left {
+                left: calc(max(0px, calc(50% - 540px)) - 4px);
+            }
+
+            .line-diamond.right {
+                right: calc(max(0px, calc(50% - 540px)) - 4px);
+            }
+
+            /* Horizontal dashed dividers between pages */
+            body > section + section,
+            body > footer {
+                border-top: 1px solid rgba(212, 168, 75, 0.25);
+                border-image: repeating-linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.25) 0 4px,
+                        transparent 4px 9px
+                    )
+                    1;
             }
 
             .code-block {
@@ -249,12 +523,29 @@
                 padding: 1.5rem 1.5rem 1.5rem;
                 overflow-x: auto;
                 box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+                margin-bottom: 1.5rem;
             }
 
             .code-block pre {
                 margin: 0;
                 padding: 0;
                 background: transparent;
+                position: relative;
+            }
+
+            .code-line-highlight {
+                position: absolute;
+                left: 0;
+                right: 0;
+                height: 28px;
+                background: rgba(255, 255, 255, 0.1);
+                border-left: 2px solid rgba(255, 255, 255, 0.45);
+                pointer-events: none;
+                opacity: 0;
+                transition:
+                    opacity 0.15s ease,
+                    top 0.08s ease;
+                z-index: 3;
             }
 
             .code-block code {
@@ -263,38 +554,83 @@
                 font-size: 0.85rem;
                 line-height: 1.65;
                 color: #c0b0a0;
+                background: transparent !important;
+                padding: 0 !important;
             }
 
             .code-block code .cm {
                 color: #6a5a4a;
             }
 
-            .cmd-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 1rem;
-                margin-top: 1rem;
-            }
-
-            .cmd-card {
-                background: #1a1410;
+            /* Shell simulator for help output */
+            .shell-term {
+                background: #0f0b08;
                 border: 1px solid #3a2e24;
-                border-radius: 2px;
-                padding: 1.25rem 1.25rem;
+                border-radius: 2.5px;
+                padding: 1.5rem 1.75rem;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+                overflow-x: auto;
+                overflow-y: auto;
+                max-width: 960px;
+                max-height: 480px;
+                margin: 0 auto;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
             }
 
-            .cmd-card code {
-                display: inline-block;
-                font-family: "JetBrains Mono", monospace;
-                font-size: 0.85rem;
-                color: #d4a84b;
-                margin-bottom: 0.4rem;
+            .shell-term::-webkit-scrollbar {
+                display: none;
             }
 
-            .cmd-card p {
+            .shell-term pre {
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                position: relative;
+            }
+
+            .shell-term code {
+                font-family: "JetBrains Mono", "Noto Serif SC", monospace;
                 font-size: 0.85rem;
-                color: #9a8a7a;
-                margin-bottom: 0;
+                line-height: 1.7;
+                color: #c0b0a0;
+                white-space: pre;
+                display: block;
+                background: transparent !important;
+                padding: 0 !important;
+            }
+
+            .shell-term b {
+                font-weight: 700;
+                color: #e8ddd0;
+            }
+
+            .shell-term i {
+                font-style: italic;
+            }
+
+            .shell-term u {
+                text-decoration: underline;
+            }
+
+            .shell-term .t-cyan {
+                color: #79c0ff;
+            }
+
+            .shell-term .t-green {
+                color: #7ee787;
+            }
+
+            .shell-term .t-heading {
+                background: #e8ddd0;
+                color: #1a1410;
+                font-weight: 700;
+                padding: 0 0.25rem;
+            }
+
+            .shell-term .t-quote {
+                background: #6a5a4a;
+                color: #6a5a4a;
             }
 
             footer {
@@ -314,6 +650,15 @@
             }
 
             @media (max-width: 768px) {
+                html {
+                    scroll-snap-type: none;
+                }
+
+                .hero,
+                .section {
+                    min-height: auto;
+                }
+
                 nav {
                     padding: 0.8rem 1rem;
                 }
@@ -328,6 +673,59 @@
 
                 .download-card {
                     min-width: 100%;
+                }
+            }
+
+            /* Cursor glow dot */
+            .cursor-dot {
+                position: fixed;
+                pointer-events: none;
+                border-radius: 50%;
+                width: 400px;
+                height: 400px;
+                background: radial-gradient(
+                    circle,
+                    rgba(212, 168, 75, 0.06) 0%,
+                    rgba(212, 168, 75, 0.02) 45%,
+                    transparent 70%
+                );
+                transform: translate(-50%, -50%);
+                z-index: 10000;
+                opacity: 0;
+                transition:
+                    opacity 0.3s ease,
+                    left 0.12s ease-out,
+                    top 0.12s ease-out;
+            }
+
+            /* Ink drop effect */
+            .ink-drop {
+                position: fixed;
+                pointer-events: none;
+                border-radius: 50%;
+                background: radial-gradient(
+                    circle,
+                    rgba(212, 168, 75, 0.15) 0%,
+                    rgba(196, 57, 49, 0.06) 50%,
+                    transparent 100%
+                );
+                width: 0;
+                height: 0;
+                transform: translate(-50%, -50%);
+                animation: inkSpread 0.9s ease-out forwards;
+                z-index: 9999;
+            }
+
+            @keyframes inkSpread {
+                0% {
+                    width: 0;
+                    height: 0;
+                    opacity: 1;
+                }
+                100% {
+                    width: 500px;
+                    height: 500px;
+                    opacity: 0;
                 }
             }
         </style>
@@ -362,41 +760,23 @@
         <section class="hero">
             <h1>Mingling CLI</h1>
             <p class="subtitle">
-                The command-line companion for scaffolding, managing, and
-                updating Mingling projects. Install it once, then let
-                <code>mling update</code> keep it fresh.
+                <span class="star">✦</span> <b>Scaffold</b> — generate projects
+                with <code>proj-init</code><br />
+                <span class="star">✦</span> <b>Manage</b> — install, enable, and
+                inspect packages<br />
+                <span class="star">✦</span> <b>Update</b> — <code>mling</code>
+                keeps itself fresh
             </p>
+            <div class="hero-term">
+                <pre><code class="no-highlight term-hero"></code></pre>
+            </div>
         </section>
 
         <section class="section alt">
             <div class="container">
                 <h2>How to use</h2>
-                <p>Some commands you will use every day:</p>
-                <div class="cmd-grid">
-                    <div class="cmd-card">
-                        <code>mling proj-init 0.4@basic</code>
-                        <p>Initialize a project</p>
-                    </div>
-                    <div class="cmd-card">
-                        <code>mling install</code>
-                        <p>Install the project to the Mingling package list</p>
-                    </div>
-                    <div class="cmd-card">
-                        <code>mling pkg-enable your-cli@0.1.0</code>
-                        <p>Enable the specified package</p>
-                    </div>
-                    <div class="cmd-card">
-                        <code>mling lint</code>
-                        <p>Mingling Linter</p>
-                    </div>
-                    <div class="cmd-card">
-                        <code>mling -h</code>
-                        <p>Show help messages</p>
-                    </div>
-                    <div class="cmd-card">
-                        <code>mling update</code>
-                        <p>Update mling to the latest version</p>
-                    </div>
+                <div class="shell-term">
+                    <pre><code class="no-highlight" id="shell-help"></code></pre>
                 </div>
             </div>
         </section>
@@ -424,7 +804,7 @@
                         </svg>
                         <span class="os-name">Linux</span>
                         <a class="file-name" href="./mling-linux.tar.gz"
-                            >mling-linux.tar.gz</a
+                            >DOWNLOAD<span class="btn-arrow">↓</span></a
                         >
                         <span class="checksum"
                             ><a href="./mling-linux.tar.gz.sha256"
@@ -445,7 +825,7 @@
                         </svg>
                         <span class="os-name">Windows</span>
                         <a class="file-name" href="./mling-win.tar.gz"
-                            >mling-win.tar.gz</a
+                            >DOWNLOAD<span class="btn-arrow">↓</span></a
                         >
                         <span class="checksum"
                             ><a href="./mling-win.tar.gz.sha256"
@@ -466,7 +846,7 @@
                         </svg>
                         <span class="os-name">macOS</span>
                         <a class="file-name" href="./mling-mac.tar.gz"
-                            >mling-mac.tar.gz</a
+                            >DOWNLOAD<span class="btn-arrow">↓</span></a
                         >
                         <span class="checksum"
                             ><a href="./mling-mac.tar.gz.sha256"
@@ -490,14 +870,14 @@
 
         <section class="section alt">
             <div class="container">
-                <h2>Install</h2>
+                <h3>Install</h3>
                 <p>
                     Extract the package and load the bundled environment script
                     — it adds <code>bin/</code> to <code>PATH</code> and enables
                     shell completion.
                 </p>
                 <div class="code-block">
-                    <pre><code><span class="cm"># Linux / macOS (zsh, bash, fish)</span>
+                    <pre><code class="language-bash"><span class="cm"># Linux / macOS (zsh, bash, fish)</span>
 tar -xzf mling-linux.tar.gz
 source load_mling.sh
 
@@ -505,19 +885,14 @@ source load_mling.sh
 tar -xzf mling-win.tar.gz
 .\load_mling.ps1</code></pre>
                 </div>
-            </div>
-        </section>
-
-        <section class="section">
-            <div class="container">
-                <h2>Update</h2>
+                <h3>Update</h3>
                 <p>
                     <code>mling</code> can update itself. It downloads from this
                     page by default, verifies the sha256 checksum, and applies
                     the new version on your next invocation.
                 </p>
                 <div class="code-block">
-                    <pre><code><span class="cm"># Update to the latest build</span>
+                    <pre><code class="language-bash"><span class="cm"># Update to the latest build</span>
 mling update
 
 <span class="cm"># Point it at a custom mirror if needed</span>
@@ -535,5 +910,222 @@ mling update</code></pre>
             ·
             <a href="../docs/doc.html">Docs</a>
         </footer>
+
+        <script src="../docs/scripts/display-parse.js"></script>
+        <script src="../docs/scripts/highlight/highlight.min.js"></script>
+        <script src="../docs/scripts/highlight/bash.min.js"></script>
+        <script>
+            hljs.highlightAll();
+        </script>
+
+        <script>
+            // Load and render help.txt with the same coloring logic as display.rs
+            (function () {
+                var el = document.getElementById("shell-help");
+                if (!el) return;
+                fetch("../mingling_cli/help/help.txt")
+                    .then(function (r) {
+                        if (!r.ok) throw new Error("HTTP " + r.status);
+                        return r.text();
+                    })
+                    .then(function (text) {
+                        el.innerHTML = window.MlingDisplay.parse(text);
+                    })
+                    .catch(function (err) {
+                        el.textContent =
+                            "Failed to load help.txt: " + err.message;
+                    });
+            })();
+        </script>
+
+        <script>
+            // Highlight the hovered line in code blocks
+            (function () {
+                function attachLineHighlight(container) {
+                    var pre =
+                        container.tagName === "PRE"
+                            ? container
+                            : container.querySelector("pre");
+                    var code = pre.querySelector("code");
+                    var hl = document.createElement("div");
+                    hl.className = "code-line-highlight";
+                    pre.appendChild(hl);
+
+                    var lineHeight = parseFloat(
+                        getComputedStyle(code).lineHeight,
+                    );
+                    var padTop =
+                        parseFloat(getComputedStyle(code).paddingTop) || 0;
+
+                    pre.addEventListener("mousemove", function (e) {
+                        var rect = pre.getBoundingClientRect();
+                        var y = e.clientY - rect.top;
+                        var index = Math.floor((y - padTop) / lineHeight);
+                        var lineCount = code.innerText.split("\n").length;
+                        if (index < 0) index = 0;
+                        if (index >= lineCount) index = lineCount - 1;
+                        hl.style.top = padTop + index * lineHeight + "px";
+                        hl.style.height = lineHeight + "px";
+                        hl.style.opacity = "1";
+                    });
+
+                    pre.addEventListener("mouseleave", function () {
+                        hl.style.opacity = "0";
+                    });
+                }
+
+                document
+                    .querySelectorAll(".code-block, .shell-term")
+                    .forEach(attachLineHighlight);
+            })();
+        </script>
+
+        <script>
+            // Hero command carousel typewriter
+            (function () {
+                var code = document.querySelector(".term-hero");
+                if (!code) return;
+
+                var commands = [
+                    "mling metadata",
+                    "mling lint",
+                    "mling ra-lint",
+                    "mling proj-init 0.4.0@basic",
+                    "mling class-add subcommand calc",
+                    "mling install",
+                    "mling pkg-enable your-cli@0.1.0",
+                    "mling pkg-show",
+                    "mling cfg update-url <URL>",
+                    "mling update",
+                    "mling -h",
+                ];
+                var idx = 0;
+                var cursor = document.createElement("span");
+                cursor.className = "term-cursor";
+                code.appendChild(cursor);
+
+                function clear() {
+                    while (code.firstChild && code.firstChild !== cursor) {
+                        code.removeChild(code.firstChild);
+                    }
+                }
+
+                function typeText(text, cls, speed, done) {
+                    var i = 0;
+                    (function step() {
+                        if (cls) {
+                            var span = document.createElement("span");
+                            span.className = cls;
+                            span.textContent = text[i];
+                            code.insertBefore(span, cursor);
+                        } else {
+                            cursor.insertAdjacentText("beforebegin", text[i]);
+                        }
+                        i++;
+                        if (i < text.length) {
+                            setTimeout(step, speed);
+                        } else {
+                            done();
+                        }
+                    })();
+                }
+
+                function play() {
+                    var cmd = commands[idx];
+                    idx = (idx + 1) % commands.length;
+                    clear();
+                    typeText("~# ", "term-prompt", 60, function () {
+                        typeText(cmd, "term-cmd", 55, function () {
+                            setTimeout(play, 2500);
+                        });
+                    });
+                }
+
+                setTimeout(play, 800);
+            })();
+        </script>
+
+        <script>
+            // Insert diamond decorations at line intersections
+            (function () {
+                document
+                    .querySelectorAll("body > section + section, body > footer")
+                    .forEach(function (el) {
+                        var left = document.createElement("span");
+                        left.className = "line-diamond left";
+                        var right = document.createElement("span");
+                        right.className = "line-diamond right";
+                        el.appendChild(left);
+                        el.appendChild(right);
+                    });
+            })();
+        </script>
+
+        <script>
+            // Persistent glow dot following the mouse
+            var cursorDot = document.createElement("div");
+            cursorDot.className = "cursor-dot";
+            document.body.appendChild(cursorDot);
+
+            document.addEventListener("mousemove", function (e) {
+                cursorDot.style.left = e.clientX + "px";
+                cursorDot.style.top = e.clientY + "px";
+                if (cursorDot.style.opacity !== "1") {
+                    cursorDot.style.opacity = "1";
+                }
+            });
+
+            // Ink drop ripple on click
+            document.addEventListener("click", function (e) {
+                var drop = document.createElement("div");
+                drop.className = "ink-drop";
+                drop.style.left = e.clientX + "px";
+                drop.style.top = e.clientY + "px";
+                document.body.appendChild(drop);
+                setTimeout(function () {
+                    drop.remove();
+                }, 1000);
+            });
+        </script>
+
+        <script>
+            // Disable full-page snap after the last section so the footer is reachable
+            (function () {
+                var html = document.documentElement;
+                var sections = document.querySelectorAll(
+                    "body > section.hero, body > section.section",
+                );
+                if (!sections.length) return;
+                var last = sections[sections.length - 1];
+                var lastTop = last.offsetTop;
+                var disabled = false;
+
+                window.addEventListener(
+                    "wheel",
+                    function (e) {
+                        if (
+                            e.deltaY > 0 &&
+                            window.scrollY >= lastTop - 5 &&
+                            !disabled
+                        ) {
+                            html.style.scrollSnapType = "none";
+                            disabled = true;
+                        }
+                    },
+                    { passive: true },
+                );
+
+                window.addEventListener(
+                    "scroll",
+                    function () {
+                        if (disabled && window.scrollY < lastTop) {
+                            html.style.scrollSnapType = "";
+                            disabled = false;
+                        }
+                    },
+                    { passive: true },
+                );
+            })();
+        </script>
     </body>
 </html>
