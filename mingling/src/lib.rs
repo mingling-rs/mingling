@@ -133,6 +133,9 @@ pub mod macros {
 }
 
 #[cfg(feature = "macros")]
+pub use mingling_macros::Wrap;
+
+#[cfg(feature = "macros")]
 pub use mingling_macros::EnumTag;
 
 #[cfg(feature = "macros")]
@@ -196,6 +199,8 @@ pub mod prelude {
     pub use crate::RenderResult;
     #[cfg(feature = "core")]
     pub use crate::Routable;
+    #[cfg(feature = "macros")]
+    pub use crate::Wrap;
     #[cfg(feature = "macros")]
     pub use crate::macros::chain;
     #[cfg(all(feature = "extras", feature = "macros"))]

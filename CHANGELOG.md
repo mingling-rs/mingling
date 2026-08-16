@@ -66,7 +66,45 @@ None
 
 #### Features:
 
-None
+1. **[`macros:wrap`]** Added the `#[derive(Wrap)]` derive macro that treats a struct as its inner (wrapped) type. The macro generates:
+
+    - `From<Inner> for Self` — construct the wrapper from the inner value
+    - `From<Self> for Inner` — unwrap back to the inner value (i.e. `Into<Inner>`)
+    - `Deref` / `DerefMut` — delegate all methods to the inner value
+
+    **Inner field selection:**
+
+    - Tuple struct with one field → that field is the inner type
+    - Named struct with one field → that field is the inner type
+    - Named struct with multiple fields → mark exactly one field with `#[wrap]`; the remaining fields are initialized with `Default::default()` when constructing via `From<Inner>`
+
+    **Example:**
+
+    ```rust,ignore
+    use mingling::macros::Wrap;
+
+    #[derive(Wrap)]
+    struct Name(String);
+
+    #[derive(Wrap)]
+    struct Greeting {
+        name: String,
+    }
+
+    #[derive(Wrap)]
+    struct Task {
+        #[wrap]
+        content: String,
+        done: bool,
+    }
+
+    let name = Name::from("Mingling".to_string());
+    // `Deref` forwards methods to the inner `String`
+    assert_eq!(name.len(), 8);
+    let inner: String = name.into();
+    ```
+
+    The macro is re-exported from `mingling::Wrap` and `mingling::prelude::Wrap` (feature-gated behind `macros`).
 
 #### **BREAKING CHANGES** (API CHANGES):
 

@@ -33,7 +33,7 @@ use attr::dispatcher_clap;
 #[cfg(feature = "extras")]
 use attr::program_setup;
 use attr::{chain, help, metadata, renderer};
-use derive::{enum_tag, grouped};
+use derive::{enum_tag, grouped, wrap};
 #[cfg(feature = "extras")]
 use func::entry;
 #[cfg(feature = "extras")]
@@ -1545,6 +1545,51 @@ pub fn r_eprint(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn r_append(input: TokenStream) -> TokenStream {
     func::r_append::r_append(input)
+}
+
+/// Derive macro for treating a struct as its inner (wrapped) type.
+///
+/// The `#[derive(Wrap)]` macro generates:
+/// - `From<Inner> for Self` — construct the wrapper from the inner value
+/// - `From<Self> for Inner` — unwrap back to the inner value (i.e. `Into<Inner>`)
+/// - `Deref` / `DerefMut` — delegate all methods to the inner value
+///
+/// # Inner field selection
+///
+/// - Tuple struct with one field → that field is the inner type
+/// - Named struct with one field → that field is the inner type
+/// - Named struct with multiple fields → mark exactly one field with `#[wrap]`;
+///   the remaining fields are initialized with `Default::default()` when
+///   constructing via `From<Inner>`
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::macros::Wrap;
+///
+/// #[derive(Wrap)]
+/// struct Name(String);
+///
+/// #[derive(Wrap)]
+/// struct Greeting {
+///     name: String,
+/// }
+///
+/// #[derive(Wrap)]
+/// struct Task {
+///     #[wrap]
+///     content: String,
+///     done: bool,
+/// }
+///
+/// let name = Name::from("Mingling".to_string());
+/// // `Deref` forwards methods to the inner `String`
+/// assert_eq!(name.len(), 8);
+/// let inner: String = name.into();
+/// ```
+#[proc_macro_derive(Wrap, attributes(wrap))]
+pub fn derive_wrap(input: TokenStream) -> TokenStream {
+    wrap::derive_wrap(input)
 }
 
 /// Derive macro for automatically implementing the `Grouped` trait on a struct.
