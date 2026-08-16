@@ -49,8 +49,8 @@ fn init_res_large_data() -> ResLargeData {
     ResLargeData { data }
 }
 
-dispatcher!("show", CMDShow => EntryShow);
-dispatcher!("none", CMDNone => EntryNone);
+dispatcher!("show", EntryShow);
+dispatcher!("none", EntryNone);
 
 pack!(ResultShow = BTreeMap<Key, Value>);
 

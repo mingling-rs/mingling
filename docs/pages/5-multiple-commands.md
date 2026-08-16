@@ -12,8 +12,8 @@ Work in the same project:
 ```rust
 @@@use mingling::macros::buffer;
 // Declare two commands
-dispatcher!("greet", CMDGreet => EntryGreet);
-dispatcher!("add",   CMDAdd   => EntryAdd);
+dispatcher!("greet", EntryGreet);
+dispatcher!("add",   EntryAdd);
  
 pack!(ResultGreeting = String);
 pack!(ResultSum = i32);
@@ -62,8 +62,8 @@ Sum: 6
 Multi-level commands work the same way—each dot-separated level is just part of the name:
 
 ```rust
-dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
-dispatcher!("remote.rm",  CMDRemoteRm  => EntryRemoteRm);
+dispatcher!("remote.add", EntryRemoteAdd);
+dispatcher!("remote.rm",  EntryRemoteRm);
 ```
  
 Each subcommand's Entry, Chain, and Renderer are completely independent and don't interfere.

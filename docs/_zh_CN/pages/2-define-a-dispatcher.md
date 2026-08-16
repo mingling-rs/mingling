@@ -19,13 +19,13 @@ Mingling 的管线从 Dispatcher 开始。
 写法是固定的三个部分：
 
 ```rust
-dispatcher!("命令路径", 分发器类型 => 入口类型);
+dispatcher!("命令路径", 入口类型);
 ```
  
 看一个具体的例子：
 
 ```rust
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 ```
  
 > [!NOTE]
@@ -36,8 +36,8 @@ dispatcher!("greet", CMDGreet => EntryGreet);
 如果你的程序有层级结构——比如 `remote add`、`remote rm`——只需要在命令名里加点号分隔：
 
 ```rust
-dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
-dispatcher!("remote.rm",  CMDRemoteRm  => EntryRemoteRm);
+dispatcher!("remote.add", EntryRemoteAdd);
+dispatcher!("remote.rm",  EntryRemoteRm);
 ```
  
 用户在终端输入 `remote add` 时，Mingling 会依次匹配 `remote` 和 `add` 两个层级。
@@ -68,7 +68,7 @@ pub struct EntryGreet {
 // Features: ["extras"]
 // 省略 CMDType 和 EntryType，名字自动推导
    dispatcher!("greet");
-// dispatcher!("greet", CMDGreet => EntryGreet);
+// dispatcher!("greet", EntryGreet);
 ```
  
 这种写法会自动生成 `CMDGreet` 和 `EntryGreet`，效果跟显式声明完全一样。

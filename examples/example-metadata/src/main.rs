@@ -25,13 +25,13 @@ use mingling::{macros::metadata, prelude::*};
 use std::io::Write;
 
 // Define the `greet` subcommand
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 // Define the `desc` subcommand, which queries metadata bound to EntryGreet
-dispatcher!("desc", CMDDescription => EntryDescription);
+dispatcher!("desc", EntryDescription);
 
 // Define the `nodoc` subcommand, which queries metadata for an entry that has none
-dispatcher!("nodoc", CMDNoDescription => EntryNoDescription);
+dispatcher!("nodoc", EntryNoDescription);
 
 fn main() {
     ThisProgram::new().exec_and_exit();

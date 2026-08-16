@@ -40,8 +40,8 @@ fn main() {
     program.exec_and_exit();
 }
 
-dispatcher!("current", CMDCurrent => EntryCurrent);
-dispatcher!("modify-current", CMDModifyCurrent => EntryModifyCurrent);
+dispatcher!("current", EntryCurrent);
+dispatcher!("modify-current", EntryModifyCurrent);
 
 // Define chain for modifying current directory                  _________________ Injected muttable resource
 //                                                              /

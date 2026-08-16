@@ -3,6 +3,6 @@
 
 [verified]
 readme = "./README.md"
-getting_started = "./GETTING_STARTED.md"
+getting_started = "./GETTING-STARTED.md"
 documents_en_us = "./docs/pages/**"
 documents_zh_cn = "./docs/_zh_CN/pages/**"

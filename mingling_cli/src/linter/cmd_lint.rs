@@ -8,7 +8,7 @@ use mingling::picker::{EntryPicker, PickerArg};
 use mingling::{LazyRes, ShellContext, Suggest};
 use tokio::task::JoinSet;
 
-dispatcher!("lint", CMDLint => EntryLint);
+dispatcher!("lint", EntryLint);
 
 const ARG_WITH_CHECKER: PickerArg<Option<String>> = arg![with_checker: Option<String>];
 

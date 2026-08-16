@@ -20,7 +20,7 @@ fn main() {
     program.exec();
 }
 
-dispatcher!("modify", CMDModify => EntryModify);
+dispatcher!("modify", EntryModify);
 
 pack!(DisplayGlobal = ());
 

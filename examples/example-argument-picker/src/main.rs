@@ -42,7 +42,7 @@ use mingling::setup::picker::BasicProgramSetup;
 
 // --------- IMPORTANT ---------
 
-dispatcher!("calc", CMDCalculate => EntryCalculate);
+dispatcher!("calc", EntryCalculate);
 
 pack_err!(ErrorNumberANotProvided);
 pack_err!(ErrorNumberBNotProvided);

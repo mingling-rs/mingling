@@ -14,7 +14,7 @@ Write a help function directly for an Entry:
 ```rust
 @@@use mingling::macros::help;
 @@@use mingling::macros::buffer;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 #[help(buffer)]
 fn help_greet(_entry: EntryGreet) {
     r_println!("Usage: greet [name]");
@@ -51,7 +51,7 @@ For `--help` to work properly, add `BasicProgramSetup` in `main`:
 ```rust
 @@@use mingling::macros::help;
 @@@use mingling::setup::BasicProgramSetup;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(BasicProgramSetup);

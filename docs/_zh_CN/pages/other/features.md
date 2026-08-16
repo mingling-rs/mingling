@@ -151,14 +151,14 @@ build_comp_scripts("myprogram").unwrap();
 
 例如，允许 `dispatcher!("greet")` 的缩写形式，自动生成 `CMDGreet` / `EntryGreet`。
 
-| 宏                                                      | 说明                                          |
-| ------------------------------------------------------- | --------------------------------------------- |
-| `empty_result!()`                                       | 链中提前返回空结果的简写                      |
-| `entry!(Type, ["a", "b"])`                              | 构造入口类型的测试数据                        |
-| `group!(Type)`                                          | 将外部类型注册为组成员，无需修改其定义        |
-| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | 创建带自动 `name` 字段的错误类型              |
-| `#[program_setup]`                                      | 声明程序初始化函数                            |
-| `dispatcher!("cmd.path")` **缩写形式**                  | 省略 `CMDStruct => EntryStruct`，名字自动推导 |
+| 宏                                                      | 说明                                   |
+| ------------------------------------------------------- | -------------------------------------- |
+| `empty_result!()`                                       | 链中提前返回空结果的简写               |
+| `entry!(Type, ["a", "b"])`                              | 构造入口类型的测试数据                 |
+| `group!(Type)`                                          | 将外部类型注册为组成员，无需修改其定义 |
+| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | 创建带自动 `name` 字段的错误类型       |
+| `#[program_setup]`                                      | 声明程序初始化函数                     |
+| `dispatcher!("cmd.path")` **缩写形式**                  | 省略 `EntryStruct`，入口类型名自动推导 |
 
 <details>
 <summary> Details </summary>

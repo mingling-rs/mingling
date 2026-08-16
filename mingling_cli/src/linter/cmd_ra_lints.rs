@@ -8,15 +8,15 @@ use crate::{linter::cmd_lint::EntryLint, metadata::setup::ResUsingJson};
 // Aliases
 
 dispatcher!("ra-lint-clippy",
-    CMDLinterSupportRustAnalyzerWithClippy => EntryLinterSupportRustAnalyzerWithClippy
+    EntryLinterSupportRustAnalyzerWithClippy
 );
 
 dispatcher!("ra-lint-check",
-    CMDLinterSupportRustAnalyzerWithCheck => EntryLinterSupportRustAnalyzerWithCheck
+    EntryLinterSupportRustAnalyzerWithCheck
 );
 
 dispatcher!("ra-lint",
-    CMDLinterSupportRustAnalyzer => EntryLinterSupportRustAnalyzer
+    EntryLinterSupportRustAnalyzer
 );
 
 #[chain]

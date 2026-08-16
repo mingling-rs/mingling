@@ -22,7 +22,7 @@ use mingling::{parser::Picker, setup::StructuralRendererSetup, Grouped, Structur
 use serde::Serialize;
 use std::io::Write;
 
-dispatcher!("render", CMDRender => EntryRender);
+dispatcher!("render", EntryRender);
 
 fn main() {
     let mut program = ThisProgram::new();

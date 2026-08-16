@@ -26,7 +26,7 @@ use std::io::Write;
 // In Mingling, instead of using ? to propagate errors upward,
 // errors are treated as branches that continue execution.
 
-dispatcher!("hello", CMDHello => EntryHello);
+dispatcher!("hello", EntryHello);
 
 // Define error types
 pack!(ErrorNoNameProvided = ());

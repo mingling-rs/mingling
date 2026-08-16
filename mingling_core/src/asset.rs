@@ -7,6 +7,5 @@ pub(crate) mod global_resource;
 pub(crate) mod help;
 pub(crate) mod lazy_resource;
 pub(crate) mod metadata;
-pub(crate) mod node;
 pub(crate) mod renderer;
 pub(crate) mod routable;

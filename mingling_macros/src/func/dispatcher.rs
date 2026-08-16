@@ -6,13 +6,14 @@ use syn::parse::{Parse, ParseStream};
 use syn::{Attribute, Ident, LitStr, Token};
 
 enum DispatcherChainInput {
+    /// `dispatcher!("name", EntryType)` — explicit entry type
     Default {
         cmd_attrs: Vec<Attribute>,
         entry_attrs: Vec<Attribute>,
         command_name: syn::LitStr,
-        command_struct: Ident,
         pack: Ident,
     },
+    /// `dispatcher!("name")` — entry type derived from the command name
     #[cfg(feature = "extras")]
     Auto {
         cmd_attrs: Vec<Attribute>,
@@ -22,106 +23,107 @@ enum DispatcherChainInput {
 
 impl Parse for DispatcherChainInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        // Collect outer attributes for the CMD struct
+        // Collect outer attributes for the hidden dispatcher struct
         let cmd_attrs = input.call(Attribute::parse_outer)?;
 
-        if input.peek(syn::LitStr) {
-            // Parse the command name string first
-            let command_name: LitStr = input.parse()?;
+        let command_name: LitStr = input.parse()?;
 
-            // Check if this is the abbreviated form: just "command_name" without ", CMD => Entry"
-            if input.is_empty() {
-                #[cfg(feature = "extras")]
-                {
-                    return Ok(Self::Auto {
-                        cmd_attrs,
-                        command_name,
-                    });
-                }
-                #[cfg(not(feature = "extras"))]
-                {
-                    return Err(syn::Error::new(
-                        command_name.span(),
-                        "expected `, CommandStruct => EntryStruct` after command name",
-                    ));
-                }
+        if input.is_empty() {
+            // Abbreviated form: just "command_name"
+            #[cfg(feature = "extras")]
+            {
+                return Ok(Self::Auto {
+                    cmd_attrs,
+                    command_name,
+                });
             }
-
-            // Default format: "command_name", CommandStruct => ChainStruct
-            input.parse::<Token![,]>()?;
-            let command_struct = input.parse()?;
-            input.parse::<Token![=>]>()?;
-            let entry_attrs = input.call(Attribute::parse_outer)?;
-            let pack = input.parse()?;
-
-            Ok(Self::Default {
-                cmd_attrs,
-                entry_attrs,
-                command_name,
-                command_struct,
-                pack,
-            })
-        } else {
-            Err(input.lookahead1().error())
+            #[cfg(not(feature = "extras"))]
+            {
+                return Err(syn::Error::new(
+                    command_name.span(),
+                    "expected `, EntryType` after command name",
+                ));
+            }
         }
+
+        // Explicit form: "command_name", EntryType
+        input.parse::<Token![,]>()?;
+        let entry_attrs = input.call(Attribute::parse_outer)?;
+        let pack: Ident = input.parse()?;
+
+        // The old `"name", CMD => Entry` form was removed in 0.5.0.
+        if input.peek(Token![=>]) {
+            return Err(syn::Error::new(
+                pack.span(),
+                "the `dispatcher!(\"name\", CMD => Entry)` form was removed in 0.5.0; \
+                 use `dispatcher!(\"name\", Entry)` — the dispatcher struct is generated internally",
+            ));
+        }
+
+        Ok(Self::Default {
+            cmd_attrs,
+            entry_attrs,
+            command_name,
+            pack,
+        })
     }
 }
 
-// NOTICE: The token stream generation patterns in `dispatcher_chain` and `dispatcher_render`
-// are nearly identical and could benefit from refactoring into common helper functions.
-
-#[allow(clippy::too_many_lines)]
 pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
-    // Parse the input
     let dispatcher_input = syn::parse_macro_input!(input as DispatcherChainInput);
 
     #[cfg(not(feature = "extras"))]
-    let (command_name, command_struct, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
+    let (command_name, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
         DispatcherChainInput::Default {
             cmd_attrs,
             entry_attrs,
             command_name,
-            command_struct,
             pack,
-        } => (command_name, command_struct, pack, cmd_attrs, entry_attrs),
+        } => (command_name, pack, cmd_attrs, entry_attrs),
     };
 
     #[cfg(feature = "extras")]
-    let (command_name, command_struct, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
+    let (command_name, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
         DispatcherChainInput::Default {
             cmd_attrs,
             entry_attrs,
             command_name,
-            command_struct,
             pack,
-        } => (command_name, command_struct, pack, cmd_attrs, entry_attrs),
+        } => (command_name, pack, cmd_attrs, entry_attrs),
         DispatcherChainInput::Auto {
             cmd_attrs,
             command_name,
         } => {
             let command_name_str = command_name.value();
             let pascal = just_fmt::pascal_case!(&command_name_str);
-            let command_struct = Ident::new(&format!("CMD{pascal}"), command_name.span());
             let pack = Ident::new(&format!("Entry{pascal}"), command_name.span());
-            (command_name, command_struct, pack, cmd_attrs, Vec::new())
+            (command_name, pack, cmd_attrs, Vec::new())
         }
     };
 
     let command_name_str = command_name.value();
+    let hidden_dispatcher = Ident::new(
+        &format!("__Dispatcher{}", just_fmt::pascal_case!(&command_name_str)),
+        command_name.span(),
+    );
 
     let comp_entry = get_comp_entry(&pack);
 
     let compile_time_registration =
-        get_compile_time_registration(&command_name_str, &command_struct, &pack);
+        get_compile_time_registration(&command_name_str, &hidden_dispatcher, &pack);
 
     let program_type = crate::default_program_path();
 
     let expanded = quote! {
-        #(#cmd_attrs)*
-        #[derive(Debug, Default)]
-        pub struct #command_struct;
-
         ::mingling::macros::pack!(#(#entry_attrs)* #pack = Vec<String>);
+
+        #(#cmd_attrs)*
+        #[doc(hidden)]
+        #[derive(Debug, Default)]
+        #[allow(nonstandard_style)]
+        pub struct #hidden_dispatcher;
+
+        #compile_time_registration
 
         impl From<#pack> for crate::Entry {
             fn from(value: #pack) -> Self {
@@ -130,18 +132,11 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
         }
 
         #comp_entry
-        #compile_time_registration
 
-        impl ::mingling::Dispatcher<#program_type> for #command_struct {
-            fn node(&self) -> ::mingling::Node {
-                ::mingling::macros::node!(#command_name_str)
-            }
+        impl ::mingling::Dispatcher<#program_type> for #hidden_dispatcher {
             fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
                 use ::mingling::Grouped;
                 ::mingling::Routable::to_chain(#pack::new(args))
-            }
-            fn clone_dispatcher(&self) -> Box<dyn ::mingling::Dispatcher<#program_type>> {
-                Box::new(#command_struct)
             }
         }
     };
@@ -173,11 +168,11 @@ fn get_comp_entry(_entry_name: &Ident) -> TokenStream2 {
 /// (trie vs. linear list) is generated later by `gen_program!`.
 fn get_compile_time_registration(
     command_name_str: &str,
-    command_struct: &Ident,
+    dispatcher_struct: &Ident,
     entry_name: &Ident,
 ) -> TokenStream2 {
     let node_name_lit = syn::LitStr::new(command_name_str, proc_macro2::Span::call_site());
     quote! {
-        ::mingling::macros::register_dispatcher!(#node_name_lit, #command_struct, #entry_name);
+        ::mingling::macros::register_dispatcher!(#node_name_lit, #dispatcher_struct, #entry_name);
     }
 }

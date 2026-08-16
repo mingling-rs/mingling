@@ -1,35 +1,7 @@
 use mingling::Flag;
 use mingling::NextProcess;
-use mingling::Node;
 use mingling::RenderResult;
 use mingling::StringVec;
-
-#[test]
-fn test_node_from_str() {
-    let node = Node::from("a.b.c");
-    assert_eq!(node.to_string(), "a.b.c");
-}
-
-#[test]
-fn test_node_kebab_case() {
-    let node = Node::from("HelloWorld.FooBar");
-    assert_eq!(node.to_string(), "hello-world.foo-bar");
-}
-
-#[test]
-fn test_node_join() {
-    let node = Node::from("base").join("sub");
-    assert_eq!(node.to_string(), "base.sub");
-}
-
-#[test]
-fn test_node_eq() {
-    let a = Node::from("x.y");
-    let b = Node::from("x.y");
-    let c = Node::from("x.z");
-    assert_eq!(a, b);
-    assert_ne!(a, c);
-}
 
 #[test]
 fn test_flag_from_static_str() {

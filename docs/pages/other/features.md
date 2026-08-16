@@ -158,7 +158,7 @@ For example, allows the shorthand form `dispatcher!("greet")`, which auto-genera
 | `group!(Type)`                                          | Register external types as group members without modifying them |
 | `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | Create error types with an automatic `name` field               |
 | `#[program_setup]`                                      | Declare a program initialization function                       |
-| `dispatcher!("cmd.path")` **shorthand**                 | Omit `CMDStruct => EntryStruct`, names are auto-derived         |
+| `dispatcher!("cmd.path")` **shorthand**                 | Omit `EntryStruct`, the entry name is auto-derived              |
 
 <details>
 <summary> Details </summary>

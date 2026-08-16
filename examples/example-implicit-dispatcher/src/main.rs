@@ -4,9 +4,10 @@
 
 use mingling::prelude::*;
 
-// When using implicit syntax, the entry and dispatcher names will be automatically derived
-dispatcher!("remote.add" /*, CMDRemoteAdd    => EntryRemoteAdd */);
-dispatcher!("remote.remove", CMDRemoteRemove => EntryRemoteRemove);
+// When using implicit syntax, the entry name will be automatically derived
+// from the command name (the dispatcher struct is generated internally)
+dispatcher!("remote.add" /* => EntryRemoteAdd */);
+dispatcher!("remote.remove", EntryRemoteRemove);
 
 fn main() {
     ThisProgram::new().exec_and_exit();

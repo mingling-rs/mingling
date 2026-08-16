@@ -35,7 +35,7 @@ Testing a Chain is slightly more complex because its return value is `Next` (act
 
 ```rust
 @@@use mingling::{assert_member_id, assert_render_result, unpack_chain_process};
-@@@dispatcher!("hello", CMDHello => EntryHello);
+@@@dispatcher!("hello", EntryHello);
 @@@pack!(ResultName = String);
 @@@pack!(ErrorNoName = ());
 @@@#[chain]
@@ -77,7 +77,7 @@ If `extras` is enabled, you can use `entry!` to quickly construct an Entry:
  
 @@@use mingling::{assert_member_id, unpack_chain_process};
 @@@use mingling::macros::entry;
-@@@dispatcher!("hello", CMDHello => EntryHello);
+@@@dispatcher!("hello", EntryHello);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_hello(args: EntryHello) -> Next {
@@ -102,7 +102,7 @@ If a Chain uses resources, you need to provide resource instances in the test:
 @@@use mingling::{assert_render_result, unpack_chain_process};
 @@@#[derive(Default, Clone)]
 @@@struct ResPrefix(String);
-@@@dispatcher!("hello", CMDHello => EntryHello);
+@@@dispatcher!("hello", EntryHello);
 @@@pack!(ResultGreeting = String);
 @@@
 #[chain]

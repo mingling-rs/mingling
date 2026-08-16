@@ -22,25 +22,25 @@ pub struct EntryClap4 {
 }
 
 // With CMD type
-#[dispatcher_clap("greet", CMDGreet)]
+#[dispatcher_clap("greet", )]
 struct EntryWithCmd {
     name: String,
 }
 
 // With CMD + error
-#[dispatcher_clap("delete", CMDDelete, error = ErrorDelete)]
+#[dispatcher_clap("delete", error = ErrorDelete)]
 struct EntryWithError {
     id: u64,
 }
 
 // With CMD + help
-#[dispatcher_clap("helpcmd", CMDHelp, help = true)]
+#[dispatcher_clap("helpcmd", help = true)]
 struct EntryWithHelp {
     verbose: bool,
 }
 
 // With CMD + error + help
-#[dispatcher_clap("full", CMDFull, error = ErrorFull, help = true)]
+#[dispatcher_clap("full", error = ErrorFull, help = true)]
 struct EntryFull {
     all: bool,
 }
@@ -56,17 +56,17 @@ pub mod sub {
         value: String,
     }
 
-    #[dispatcher_clap("greet", CMDGreet)]
+    #[dispatcher_clap("greet", )]
     struct EntryWithCmd {
         name: String,
     }
 
-    #[dispatcher_clap("delete", CMDDelete, error = ErrorDelete)]
+    #[dispatcher_clap("delete", error = ErrorDelete)]
     struct EntryWithError {
         id: u64,
     }
 
-    #[dispatcher_clap("helpcmd", CMDHelp, help = true)]
+    #[dispatcher_clap("helpcmd", help = true)]
     struct EntryWithHelp {
         verbose: bool,
     }

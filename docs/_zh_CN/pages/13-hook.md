@@ -54,7 +54,7 @@ Hook 覆盖了管线的完整生命周期：
 @@@use mingling::prelude::*;
 @@@use mingling::hook::ProgramHook;
 @@@
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next {

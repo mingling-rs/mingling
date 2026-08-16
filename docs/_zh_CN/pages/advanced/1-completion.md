@@ -40,7 +40,7 @@ features = [
 @@@use mingling::prelude::*;
 @@@use mingling::{ShellContext, Suggest, SuggestItem};
 @@@use std::collections::BTreeSet;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
  
 #[completion(EntryGreet)]
 fn complete_greet(ctx: &ShellContext) -> Suggest {

@@ -2,7 +2,7 @@ use crate::Next;
 use mingling::prelude::*;
 use std::io::Write;
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 pack!(ResultName = String);
 
 #[chain]

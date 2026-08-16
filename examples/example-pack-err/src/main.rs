@@ -31,8 +31,8 @@ use mingling::setup::StructuralRendererSetup;
 use std::io::Write;
 use std::path::PathBuf;
 
-dispatcher!("find", CMDFind => EntryFind);
-dispatcher!("find-structural", CMDFindStructural => EntryFindStructural);
+dispatcher!("find", EntryFind);
+dispatcher!("find-structural", EntryFindStructural);
 
 // --------- IMPORTANT ---------
 // `pack_err!` is a convenient macro for defining error types.

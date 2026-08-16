@@ -75,7 +75,6 @@ pub use crate::asset::global_resource::*;
 pub use crate::asset::help::*;
 pub use crate::asset::lazy_resource::*;
 pub use crate::asset::metadata::*;
-pub use crate::asset::node::*;
 pub use crate::asset::renderer::*;
 pub use crate::asset::routable::*;
 #[cfg(feature = "comp")]

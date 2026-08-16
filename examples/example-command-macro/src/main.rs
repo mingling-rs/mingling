@@ -26,21 +26,21 @@ pack!(ResultGreeting = String);
 pack!(ResultGoodbye = ());
 
 // --------- IMPORTANT ---------
-// Auto-generates dispatcher!("hello.world", CMDHelloWorld => EntryHelloWorld);
+// Auto-generates dispatcher!("hello.world", EntryHelloWorld);
 #[command]
 fn hello_world() -> ResultGreeting {
     ResultGreeting::new("World".to_string())
 }
 
-// Auto-generates dispatcher!("hello-world", CMDGreetSomeone => EntryGreetSomeone);
+// Auto-generates dispatcher!("hello-world", EntryGreetSomeone);
 #[command(node = "greet-someone")]
 fn greet_someone(args: Vec<String>) -> ResultGreeting {
     let name = args.pick_or(&arg![String], || "World".to_string()).unwrap();
     ResultGreeting::new(name)
 }
 
-// Auto-generates dispatcher!("goodbye", CMDGoodBye => EntryGoodBye);
-#[command(name = CMDGoodBye, entry = EntryGoodBye)]
+// Auto-generates dispatcher!("goodbye", EntryGoodBye);
+#[command(entry = EntryGoodBye)]
 fn goodbye() -> ResultGoodbye {
     ResultGoodbye::default()
 }

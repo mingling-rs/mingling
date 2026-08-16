@@ -19,7 +19,7 @@ use mingling::config::PanicSilence;
 use mingling::{hook::ProgramHook, prelude::*};
 use std::io::Write;
 
-dispatcher!("panic", CMDPanic => EntryPanic);
+dispatcher!("panic", EntryPanic);
 pack!(NotPanic = ());
 
 fn main() {

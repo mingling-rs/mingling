@@ -26,7 +26,7 @@ Now let's see how `Picker` is written:
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
@@ -42,7 +42,7 @@ For the code above:
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
@@ -55,7 +55,7 @@ Its semantics are:
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
@@ -76,7 +76,7 @@ If your program needs to parse flag arguments (e.g. `greet --name Alice`), do th
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
@@ -90,7 +90,7 @@ Its semantics:
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
@@ -113,7 +113,7 @@ For a single pick, `.unpack()` returns the value directly; for multiple picks, i
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("test", CMDTest => EntryTest);
+@@@dispatcher!("test", EntryTest);
 @@@pack!(ResultInfo = (String, u8, u32));
  
 #[chain]
@@ -141,7 +141,7 @@ Here's a simple example:
 // Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@pack!(ErrorNoName = ());
  
@@ -200,7 +200,7 @@ After picking user input with `pick`, you can use `after` to process it immediat
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
@@ -226,7 +226,7 @@ Similarly, you can use `after_or_route` to handle input format errors:
 // Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@pack!(ErrorNameTooLong = usize);
  
@@ -276,7 +276,7 @@ Implicit mode is generally sufficient, but for important confirmations, explicit
 ```rust
 // Features: ["parser"]
 @@@use mingling::parser::Yes;
-@@@dispatcher!("test", CMDTest => EntryTest);
+@@@dispatcher!("test", EntryTest);
 @@@pack!(ResultDone = ());
  
 #[chain]
@@ -329,7 +329,7 @@ impl Pickable for Address {
         Some(Address { ip, port })
     }
 }
-@@@dispatcher!("connect", CMDConnect => EntryConnect);
+@@@dispatcher!("connect", EntryConnect);
 @@@pack!(ResultConnected = Address);
  
 #[chain]
@@ -369,7 +369,7 @@ pub enum Fruits {
 }
  
 impl PickableEnum for Fruits {}
-@@@dispatcher!("eat", CMDEat => EntryEat);
+@@@dispatcher!("eat", EntryEat);
 @@@pack!(ResultFruit = Fruits);
  
 #[chain]

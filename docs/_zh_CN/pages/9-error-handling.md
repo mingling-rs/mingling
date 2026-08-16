@@ -19,7 +19,7 @@
 ## 用独立类型区分错误
 
 ```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 pack!(ResultGreeting = String);
 pack!(ErrorNameEmpty = String);
  
@@ -39,7 +39,7 @@ fn handle_greet(args: EntryGreet) -> Next {
 
 ```rust
 @@@use mingling::macros::buffer;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultGreeting = String);
 @@@pack!(ErrorNameEmpty = String);
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting::new(args.inner.first().cloned().unwrap_or_default()).to_render() }
@@ -61,7 +61,7 @@ fn render_error_name_empty(err: ErrorNameEmpty) {
 
 ```rust
 @@@use mingling::macros::buffer;
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
  
 pack!(ResultGreeting = String);
 pack!(ErrorNameEmpty = String);

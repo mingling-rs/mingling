@@ -14,7 +14,7 @@ Mingling 里用 `#[help]` 宏给命令添加帮助文本。
 ```rust
 @@@use mingling::macros::help;
 @@@use mingling::macros::buffer;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 #[help(buffer)]
 fn help_greet(_entry: EntryGreet) {
     r_println!("Usage: greet [name]");
@@ -51,7 +51,7 @@ fn help_root(entry: EntryFallback) {
 ```rust
 @@@use mingling::macros::help;
 @@@use mingling::setup::BasicProgramSetup;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(BasicProgramSetup);

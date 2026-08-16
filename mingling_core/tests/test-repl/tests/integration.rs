@@ -1,5 +1,4 @@
 use mingling::Flag;
-use mingling::Node;
 use mingling::RenderResult;
 use mingling::core_res::ResREPL;
 
@@ -16,20 +15,6 @@ fn test_res_repl_exit_true() {
     let mut res = ResREPL::default();
     res.exit = true;
     assert!(res.exit);
-}
-
-// Node tests
-
-#[test]
-fn test_node_from_str() {
-    let node = Node::from("a.b.c");
-    assert_eq!(node.to_string(), "a.b.c");
-}
-
-#[test]
-fn test_node_kebab_case() {
-    let node = Node::from("HelloWorld.FooBar");
-    assert_eq!(node.to_string(), "hello-world.foo-bar");
 }
 
 // Flag tests

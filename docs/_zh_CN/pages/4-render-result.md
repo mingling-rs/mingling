@@ -52,7 +52,7 @@ fn render_name(name: ResultName) {
 use mingling::macros::buffer;
  
 // 1. 用 Dispatcher 声明命令
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
  
 // 2. 用 pack! 声明结果数据
 pack!(ResultName = String);

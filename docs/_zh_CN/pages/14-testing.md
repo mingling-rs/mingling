@@ -35,7 +35,7 @@ fn test_render_name() {
 
 ```rust
 @@@use mingling::{assert_member_id, assert_render_result, unpack_chain_process};
-@@@dispatcher!("hello", CMDHello => EntryHello);
+@@@dispatcher!("hello", EntryHello);
 @@@pack!(ResultName = String);
 @@@pack!(ErrorNoName = ());
 @@@#[chain]
@@ -77,7 +77,7 @@ fn test_handle_hello_with_name() {
  
 @@@use mingling::{assert_member_id, unpack_chain_process};
 @@@use mingling::macros::entry;
-@@@dispatcher!("hello", CMDHello => EntryHello);
+@@@dispatcher!("hello", EntryHello);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_hello(args: EntryHello) -> Next {
@@ -102,7 +102,7 @@ fn test_with_entry_macro() {
 @@@use mingling::{assert_render_result, unpack_chain_process};
 @@@#[derive(Default, Clone)]
 @@@struct ResPrefix(String);
-@@@dispatcher!("hello", CMDHello => EntryHello);
+@@@dispatcher!("hello", EntryHello);
 @@@pack!(ResultGreeting = String);
 @@@
 #[chain]

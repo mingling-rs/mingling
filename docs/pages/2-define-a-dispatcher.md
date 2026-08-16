@@ -19,13 +19,13 @@ The `dispatcher!` macro generates two types at once:
 The syntax is a fixed three-part pattern:
 
 ```rust
-dispatcher!("command path", DispatcherType => EntryType);
+dispatcher!("command path", EntryType);
 ```
  
 Here's a concrete example:
 
 ```rust
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 ```
  
 > [!NOTE]
@@ -36,8 +36,8 @@ dispatcher!("greet", CMDGreet => EntryGreet);
 If your program has a hierarchy — e.g., `remote add`, `remote rm` — just separate the command name with dots:
 
 ```rust
-dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
-dispatcher!("remote.rm",  CMDRemoteRm  => EntryRemoteRm);
+dispatcher!("remote.add", EntryRemoteAdd);
+dispatcher!("remote.rm",  EntryRemoteRm);
 ```
  
 When the user types `remote add` in the terminal, Mingling matches `remote` and `add` as two levels in sequence.
@@ -68,7 +68,7 @@ The above is the standard syntax. If you enable the `extras` feature, you can be
 // Features: ["extras"]
 // Omit CMDType and EntryType, names are auto-derived
    dispatcher!("greet");
-// dispatcher!("greet", CMDGreet => EntryGreet);
+// dispatcher!("greet", EntryGreet);
 ```
  
 This syntax auto-generates `CMDGreet` and `EntryGreet`, with the same effect as the explicit declaration.

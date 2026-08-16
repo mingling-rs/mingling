@@ -26,7 +26,7 @@ features = ["parser"]
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
@@ -42,7 +42,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
@@ -55,7 +55,7 @@ let name = prev.pick_or((), "World").unpack();
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
@@ -76,7 +76,7 @@ let name = prev.pick_or((), "World").unpack();
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
@@ -90,7 +90,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
@@ -113,7 +113,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 
 ```rust
 // Features: ["parser"]
-@@@dispatcher!("test", CMDTest => EntryTest);
+@@@dispatcher!("test", EntryTest);
 @@@pack!(ResultInfo = (String, u8, u32));
  
 #[chain]
@@ -141,7 +141,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 // Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@pack!(ErrorNoName = ());
  
@@ -200,7 +200,7 @@ let name = match pick_result {
 
 ````rust
 // Features: ["parser"]
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
  
 #[chain]
@@ -226,7 +226,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 // Features: ["parser", "extras"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@pack!(ErrorNameTooLong = usize);
  
@@ -276,7 +276,7 @@ fn render_name(prev: ResultName) {
 ```rust
 // Features: ["parser"]
 @@@use mingling::parser::Yes;
-@@@dispatcher!("test", CMDTest => EntryTest);
+@@@dispatcher!("test", EntryTest);
 @@@pack!(ResultDone = ());
  
 #[chain]
@@ -329,7 +329,7 @@ impl Pickable for Address {
         Some(Address { ip, port })
     }
 }
-@@@dispatcher!("connect", CMDConnect => EntryConnect);
+@@@dispatcher!("connect", EntryConnect);
 @@@pack!(ResultConnected = Address);
  
 #[chain]
@@ -369,7 +369,7 @@ pub enum Fruits {
 }
  
 impl PickableEnum for Fruits {}
-@@@dispatcher!("eat", CMDEat => EntryEat);
+@@@dispatcher!("eat", EntryEat);
 @@@pack!(ResultFruit = Fruits);
  
 #[chain]

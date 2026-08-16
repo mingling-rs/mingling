@@ -41,7 +41,7 @@ impl Pickable for Address {
 }
 // --------- IMPORTANT ---------
 
-dispatcher!("connect", CMDConnect => EntryConnect);
+dispatcher!("connect", EntryConnect);
 pack!(ErrorParseAddressFailed = ());
 
 #[chain]

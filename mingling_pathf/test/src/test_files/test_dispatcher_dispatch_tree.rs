@@ -1,7 +1,7 @@
-mingling::macros::dispatcher!("greet", CMDGreet => EntryGreet);
-dispatcher!("delete", CMDDelete => EntryDelete);
+mingling::macros::dispatcher!("greet", EntryGreet);
+dispatcher!("delete", EntryDelete);
 
 pub mod sub {
-    mingling::macros::dispatcher!("greet", CMDGreet => EntryGreet);
-    dispatcher!("delete", CMDDelete => EntryDelete);
+    mingling::macros::dispatcher!("greet", EntryGreet);
+    dispatcher!("delete", EntryDelete);
 }

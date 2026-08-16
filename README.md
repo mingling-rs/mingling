@@ -38,7 +38,7 @@ Additionally, the project is currently developed by me alone ([Weicao-CatilGrass
 Mingling abstracts the behavior of a program's lifecycle into three phases: **Dispatch**, **Execution**, and **Rendering**. Each phase is connected by types — the output of the current phase becomes the input of the next phase. For example:
 
 ```rust
-dispatcher!("current", CMDCurrent => EntryCurrent);
+dispatcher!("current", EntryCurrent);
 pack!(StateNext = ());
 
 #[chain]
@@ -65,7 +65,7 @@ You can use this approach to separate computation from result rendering, like th
 use mingling::macros::buffer;
 use mingling::prelude::*;
 
-dispatcher!("calc", CMDCalculate => EntryCalculate);
+dispatcher!("calc", EntryCalculate);
 pack!(StateSumNumbers = Vec<i32>);
 pack!(ResultNumber = i32);
 

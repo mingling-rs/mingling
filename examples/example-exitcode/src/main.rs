@@ -34,7 +34,7 @@ fn main() {
     program.exec_and_exit();
 }
 
-dispatcher!("hello", CMDHello => EntryHello);
+dispatcher!("hello", EntryHello);
 
 pack!(ErrorNoNameProvided = ());
 pack!(ResultName = String);

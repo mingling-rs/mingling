@@ -30,7 +30,13 @@ impl Parse for ClapOptions {
             }
 
             let key: Ident = input.parse()?;
-            input.parse::<Token![=]>()?;
+            if input.parse::<Token![=]>().is_err() {
+                return Err(syn::Error::new(
+                    key.span(),
+                    "expected `key = value`; note: the explicit CMD struct argument \
+                     was removed in 0.5.0, use `dispatcher_clap!(\"name\", help = ..., error = ...)`",
+                ));
+            }
 
             if key == "error" {
                 let value: Ident = input.parse()?;
@@ -63,18 +69,15 @@ impl Parse for ClapOptions {
 
 /// Input for the `dispatcher_clap` attribute
 struct DispatcherClapInput {
-    /// `("cmd", Disp, ...)`
+    /// `("cmd", options...)`
     command_name: LitStr,
-    dispatcher_struct: Ident,
     options: ClapOptions,
 }
 
 impl Parse for DispatcherClapInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        // Format: "cmd", Disp, ...
+        // Format: "cmd", options...
         let command_name: LitStr = input.parse()?;
-        input.parse::<Token![,]>()?;
-        let dispatcher_struct: Ident = input.parse()?;
 
         let options = if input.is_empty() {
             ClapOptions {
@@ -87,13 +90,13 @@ impl Parse for DispatcherClapInput {
 
         Ok(Self {
             command_name,
-            dispatcher_struct,
             options,
         })
     }
 }
 
 #[cfg(feature = "clap")]
+#[allow(clippy::too_many_lines)]
 pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr_input = parse_macro_input!(attr as DispatcherClapInput);
     let input_struct = parse_macro_input!(item as ItemStruct);
@@ -102,7 +105,12 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     let program_path = crate::default_program_path();
 
     let command_name_str = attr_input.command_name.value();
-    let dispatcher_struct = &attr_input.dispatcher_struct;
+
+    // The dispatcher struct is now generated internally.
+    let dispatcher_struct = Ident::new(
+        &format!("__Dispatcher{}", just_fmt::pascal_case!(&command_name_str)),
+        attr_input.command_name.span(),
+    );
     let options = &attr_input.options;
 
     // Generate the `begin` method body
@@ -141,8 +149,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
 
     // Generate the #[help] block if help = true
     let help_gen = if options.help_enabled {
-        let dispatcher_name_str = dispatcher_struct.to_string();
-        let help_fn_name_str = format!("__{}_help", just_fmt::snake_case!(&dispatcher_name_str));
+        let help_fn_name_str = format!("__{}_help", just_fmt::snake_case!(&command_name_str));
         let help_fn_name = Ident::new(&help_fn_name_str, proc_macro2::Span::call_site());
 
         Some(quote! {
@@ -175,7 +182,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     };
 
     let compile_time_registration =
-        get_compile_time_registration(&command_name_str, dispatcher_struct, struct_name);
+        get_compile_time_registration(&command_name_str, &dispatcher_struct, struct_name);
 
     let expanded = quote! {
         // Keep the original struct definition
@@ -196,10 +203,6 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         pub(crate) struct #dispatcher_struct;
 
         impl ::mingling::Dispatcher<#program_path> for #dispatcher_struct {
-            fn node(&self) -> ::mingling::Node {
-                ::mingling::macros::node!(#command_name_str)
-            }
-
             fn begin(
                 &self,
                 args: Vec<String>,
@@ -210,12 +213,6 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
                     .collect::<Vec<_>>();
 
                 #begin_body
-            }
-
-            fn clone_dispatcher(
-                &self,
-            ) -> Box<dyn ::mingling::Dispatcher<#program_path>> {
-                Box::new(#dispatcher_struct)
             }
         }
     };

@@ -16,7 +16,7 @@
 use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
 use std::io::Write;
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 // Define help        _________ When `program.user_context.help` is `true`
 //                   /            the command will not enter `#[chain]` / `#[renderer]`

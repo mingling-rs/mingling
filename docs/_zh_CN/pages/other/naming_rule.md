@@ -40,19 +40,17 @@ Res + 名称
 
 ### 分发器
 
-分发器是命令的入口点，与 `Node` 名称一一对应。节点名用 `.` 分隔层级，分发器名用 `CMD` 前缀加 PascalCase。
+分发器是命令的入口点。命令名用 `.` 分隔层级，与用户输入的命令参数一一对应。
 
 ```
-CMD + 命令层级
+命令名
 ```
  
-| 节点         | 分发器            |
-| ------------ | ----------------- |
-| `greet`      | `CMDGreet`        |
-| `remote.add` | `CMDRemoteAdd`    |
-| `remote.rm`  | `CMDRemoteRemove` |
-
-即使节点是缩写，分发器的名称也要写全名。例如节点是 `remote.rm`，分发器是 `CMDRemoteRemove`，不是 `CMDRemoteRm`。
+| 命令         |
+| ------------ |
+| `greet`      |
+| `remote.add` |
+| `remote.rm`  |
 
 ### 入口
 
@@ -62,11 +60,11 @@ CMD + 命令层级
 Entry + 命令层级
 ```
  
-| 分发器            | 入口                |
-| ----------------- | ------------------- |
-| `CMDGreet`        | `EntryGreet`        |
-| `CMDRemoteAdd`    | `EntryRemoteAdd`    |
-| `CMDRemoteRemove` | `EntryRemoteRemove` |
+| 命令         | 入口                |
+| ------------ | ------------------- |
+| `greet`      | `EntryGreet`        |
+| `remote.add` | `EntryRemoteAdd`    |
+| `remote.rm`  | `EntryRemoteRemove` |
 
 ### 状态
 
@@ -174,7 +172,7 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 @@@ pack!(ResultRemoteAdded = String);
 @@@ pack!(ErrorRepositoryNotFound = String);
 // 分发器
-dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
+dispatcher!("remote.add", EntryRemoteAdd);
  
 // 入口 → 状态
 #[chain]

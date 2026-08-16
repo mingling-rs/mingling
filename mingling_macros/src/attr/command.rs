@@ -12,12 +12,10 @@ use syn::{FnArg, Ident, ItemFn, LitStr, PatType, Token, Type};
 ///
 /// Supports:
 /// - `node = "dot.separated.path"` — explicit command path
-/// - `name = CMDName` — explicit CMD struct name
 /// - `entry = EntryName` — explicit Entry struct name
 /// - bare paths like `routeify`, `::mingling::macros::routeify` — extension attrs for the original fn
 struct CommandArgs {
     node: Option<LitStr>,
-    name: Option<Ident>,
     entry: Option<Ident>,
     exts: Vec<syn::Path>,
 }
@@ -25,7 +23,6 @@ struct CommandArgs {
 impl Parse for CommandArgs {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let mut node = None;
-        let mut name = None;
         let mut entry = None;
         let mut exts = Vec::new();
 
@@ -41,19 +38,18 @@ impl Parse for CommandArgs {
                     }
                     node = Some(input.parse()?);
                 } else if key == "name" {
-                    if name.is_some() {
-                        return Err(input.error("duplicate `name` argument"));
-                    }
-                    name = Some(input.parse()?);
+                    return Err(input.error(
+                        "`name = ...` was removed in 0.5.0; the dispatcher struct is generated internally",
+                    ));
                 } else if key == "entry" {
                     if entry.is_some() {
                         return Err(input.error("duplicate `entry` argument"));
                     }
                     entry = Some(input.parse()?);
                 } else {
-                    return Err(input.error(format!(
-                        "unknown key `{key}`; expected `node`, `name`, or `entry`"
-                    )));
+                    return Err(
+                        input.error(format!("unknown key `{key}`; expected `node` or `entry`"))
+                    );
                 }
             } else {
                 // Extension path (e.g. `routeify` or `::mingling::macros::routeify`)
@@ -67,12 +63,7 @@ impl Parse for CommandArgs {
             }
         }
 
-        Ok(Self {
-            node,
-            name,
-            entry,
-            exts,
-        })
+        Ok(Self { node, entry, exts })
     }
 }
 
@@ -127,17 +118,15 @@ fn handle_async(f: &ItemFn) -> Result<(TokenStream2, TokenStream2), TokenStream2
 struct ResolvedNames {
     /// `node_str` as a string literal token
     node_lit: LitStr,
-    /// Whether the user supplied any explicit override (node/name/entry)
+    /// Whether the user supplied any explicit override (node/entry)
     has_overrides: bool,
-    /// CMD struct name (e.g. `CMDGreet`)
-    cmd_name: Ident,
     /// Entry struct name (e.g. `EntryGreet`)
     entry_type: Ident,
     /// Chain wrapper function name (e.g. `__command_chain_greet`)
     chain_fn_name: Ident,
 }
 
-/// Resolves `node`, `cmd_name`, `entry_type`, and `chain_fn_name` from
+/// Resolves `node`, `entry_type`, and `chain_fn_name` from
 /// the attribute args and the original function name.
 fn resolve_names(fn_name: &Ident, args: &CommandArgs) -> ResolvedNames {
     let fn_name_str = fn_name.to_string();
@@ -148,12 +137,7 @@ fn resolve_names(fn_name: &Ident, args: &CommandArgs) -> ResolvedNames {
         .map_or_else(|| default_node_from_fn(fn_name), syn::LitStr::value);
     let node_lit = syn::LitStr::new(&node_str, fn_name.span());
 
-    let has_overrides = args.node.is_some() || args.name.is_some() || args.entry.is_some();
-
-    let cmd_name = args.name.clone().unwrap_or_else(|| {
-        let pascal = just_fmt::pascal_case!(&node_str);
-        Ident::new(&format!("CMD{pascal}"), fn_name.span())
-    });
+    let has_overrides = args.node.is_some() || args.entry.is_some();
 
     let entry_type = args.entry.clone().unwrap_or_else(|| {
         let pascal = just_fmt::pascal_case!(&node_str);
@@ -165,7 +149,6 @@ fn resolve_names(fn_name: &Ident, args: &CommandArgs) -> ResolvedNames {
     ResolvedNames {
         node_lit,
         has_overrides,
-        cmd_name,
         entry_type,
         chain_fn_name,
     }
@@ -247,13 +230,12 @@ fn build_call_args(sig: &syn::Signature) -> Vec<TokenStream2> {
 /// Generates the `dispatcher!(...)` call.
 ///
 /// - No overrides → abbreviated form: `dispatcher!("node")`
-/// - Any override → explicit form: `dispatcher!("node", CMDName => EntryName)`
+/// - Any override → explicit form: `dispatcher!("node", EntryType)`
 fn build_dispatcher_invoke(names: &ResolvedNames) -> TokenStream2 {
     let node_lit = &names.node_lit;
     if names.has_overrides {
-        let cmd_name = &names.cmd_name;
         let entry_type = &names.entry_type;
-        quote! { ::mingling::macros::dispatcher!(#node_lit, #cmd_name => #entry_type); }
+        quote! { ::mingling::macros::dispatcher!(#node_lit, #entry_type); }
     } else {
         quote! { ::mingling::macros::dispatcher!(#node_lit); }
     }
@@ -271,7 +253,6 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
     let args: CommandArgs = if attr.is_empty() {
         CommandArgs {
             node: None,
-            name: None,
             entry: None,
             exts: Vec::new(),
         }
@@ -332,7 +313,13 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
         quote! { #vis use super::#ident; }
     };
 
-    let cmd_name = &names.cmd_name;
+    // hidden dispatcher struct generated by the internal `dispatcher!` call
+    let hidden_dispatcher = {
+        let node_str = names.node_lit.value();
+        let pascal = just_fmt::pascal_case!(&node_str);
+        Ident::new(&format!("__Dispatcher{pascal}"), fn_name.span())
+    };
+
     let entry_type = &names.entry_type;
 
     // assemble output
@@ -351,7 +338,7 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
         // hidden module gathering all generated types for pathf / external access
         #[doc(hidden)]
         #vis mod #mod_name {
-            #vis use super::#cmd_name;
+            #vis use super::#hidden_dispatcher;
             #vis use super::#entry_type;
             #vis use super::#chain_internal;
             #dispatcher_internal

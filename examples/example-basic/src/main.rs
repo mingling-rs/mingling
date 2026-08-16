@@ -22,7 +22,7 @@ use std::io::Write;
 //           |       /            _________ entry, records raw arguments
 //           |       |           /                         ^^^^^^^^^^^^^
 //           vvvvv   vvvvvvvv    vvvvvvvvvv                \_ equivalent to pack!(EntryGreet = Vec<String>)
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     // Create a new ThisProgram

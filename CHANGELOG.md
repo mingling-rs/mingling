@@ -138,6 +138,70 @@ None
 
     _Behavioral note:_ the runtime behavior of programs is unchanged — all dispatchers registered via `with_dispatcher` are now simply gathered automatically, and the "longest registered prefix wins" matching rule is preserved by both the trie and the linear-list strategies.
 
+3. **[`core`]** **[`macros`]** **[BREAKING REMOVAL]** Removed the `Node` type, the `node!` macro, and the `Dispatcher::node()` / `Dispatcher::clone_dispatcher()` methods. Command path matching is now handled entirely by the compile-time-collected string command names, and dispatchers are identified by a hidden internally-generated `__Dispatcher*` struct.
+
+    ### What changed
+
+    The `Node` struct (in `mingling_core::asset::node`) was a path hierarchy of kebab-cased string segments used by the old dynamic dispatcher to match user input. With dispatchers now always collected at compile time (see **BREAKING CHANGE #2** above), the `Node` type and its supporting machinery became dead code. Command names are now stored and matched as plain string literals during compile-time registration.
+
+    **Removed API:**
+
+    - **`mingling_core::Node`** — Removed the entire `node` module and its public re-export. This includes the struct itself, its `From<&str>` / `From<String>` impls, `join()`, `PartialEq` / `Eq`, `PartialOrd` / `Ord`, `Display`, and `Default`.
+    - **`mingling::macros::node!`** — Removed the `node!` procedural macro. It was only used internally by `dispatcher!` / `dispatcher_clap!` / `#[command]` to construct a `Node` from a dot-separated string; now that `Node` is gone, the macro is obsolete.
+    - **`Dispatcher::node(&self) -> Node`** — Removed from the `Dispatcher` trait. Dispatchers no longer expose a `Node` hierarchy; the command path is embedded in the compile-time registration via `register_dispatcher!("name", ...)`.
+    - **`Dispatcher::clone_dispatcher(&self) -> Box<dyn Dispatcher<C>>`** — Removed from the `Dispatcher` trait, along with the blanket `Clone for Box<dyn Dispatcher<G>>` impl (which relied on `clone_dispatcher`). Dynamic dispatch / boxing of dispatchers is no longer supported.
+    - **`mingling::macros::node` re-export** — Removed from `mingling_macros/src/lib.rs` and `mingling/src/lib.rs`.
+
+    **Dispatcher trait now requires only `begin`:**
+
+    ```rust
+    pub trait Dispatcher<C> {
+        fn begin(&self, args: Vec<String>) -> ChainProcess<C>;
+    }
+    ```
+
+    **Generated dispatcher struct renamed:**
+
+    The `dispatcher!` / `dispatcher_clap!` / `#[command]` macros now generate a **hidden** dispatcher struct named `__Dispatcher{Pascal}` (e.g., `__DispatcherGreet`) instead of the user-facing `CMD*` struct. The struct is marked `#[doc(hidden)]` and `#[allow(nonstandard_style)]`. Users never reference it directly — it is registered at compile time via `register_dispatcher!` and matched purely by its string command name.
+
+    **`Dispatcher` trait example** (from `mingling_core/src/asset/dispatcher.rs` docs):
+
+    ```rust,ignore
+    impl Dispatcher<ThisProgram> for CMDGreet {
+        fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
+            Routable::to_chain(Foo { args })
+        }
+    }
+    ```
+
+    **`dispatcher!` syntax change** (reflected in **BREAKING CHANGE #1**'s rename context):
+
+    - Old: `dispatcher!("greet", CMDGreet => EntryGreet)`
+    - New: `dispatcher!("greet", EntryGreet)`
+
+    The `CMD*` is no longer part of the user-facing syntax — the dispatcher struct is generated internally as `__Dispatcher*`. The old form produces a compile error with a migration hint.
+
+    **`dispatcher_clap!` syntax change:**
+
+    - Old: `#[dispatcher_clap("greet", CMDGreet, help = true, error = ErrorGreet)]`
+    - New: `#[dispatcher_clap("greet", help = true, error = ErrorGreet)]`
+
+    `#[dispatcher_clap("greet")]` (bare, no options) is still valid.
+
+    **`#[command]` syntax change:**
+
+    - The `name = CMDName` attribute argument was removed. `#[command(entry = EntryGreet)]` still works; the dispatcher struct is generated internally as `__DispatcherGreet`.
+
+    ### Migration guide
+    - **Replace all `dispatcher!("name", CMDType => EntryType)` calls** with `dispatcher!("name", EntryType)`. The `CMD*` identifier is no longer generated or referenced.
+    - **Replace all `#[dispatcher_clap("name", CMDType, ...)]` attributes** with `#[dispatcher_clap("name", ...)]` (drop the `CMDType` argument).
+    - **Remove `name = CMDName` from `#[command(...)]`** attributes. If you still reference the old generated `CMDName` type (e.g., in `program.with_dispatcher(...)`), remove that call entirely — dispatchers are auto-collected (see **BREAKING CHANGE #2**).
+    - **Remove any `use mingling::Node;` imports** and any code constructing / manipulating `Node` values. If you had custom `Dispatcher` implementations, they must (a) drop the `node()` and `clone_dispatcher()` methods and (b) rely on the compile-time registration (via `dispatcher!` / `dispatcher_clap!` / `#[command]`) rather than manual `with_dispatcher` dynamic dispatch.
+    - **Remove any `node!("...")` macro invocations.** The `node!` macro no longer exists.
+    - **Any manual `Dispatcher` impls** now only need `begin()`. If you previously implemented `node()` for a custom dispatcher used with `program.with_dispatcher(...)`, that whole registration model is removed — see **BREAKING CHANGE #2** for the compile-time-only registration approach.
+
+    _No behavioral changes to command matching — the semantics of dot-separated command paths, kebab-case normalization, and "longest registered prefix wins" are all preserved by the compiled-in string-based dispatch trie / linear list. The removal is purely an API simplification: the `Node` intermediate abstraction and the dispatcher-boxing machinery are gone._
+
 ---
 
 ## Contents

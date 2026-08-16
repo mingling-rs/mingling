@@ -26,7 +26,7 @@ use mingling::{
 };
 use std::io::Write;
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     let mut program = ThisProgram::new();

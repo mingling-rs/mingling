@@ -73,7 +73,7 @@ pub enum ProgrammingLanguages {
 impl PickableEnum for ProgrammingLanguages {}
 // --------- IMPORTANT ---------
 
-dispatcher!("lang-select", CMDLanguageSelection => EntryLanguageSelection);
+dispatcher!("lang-select", EntryLanguageSelection);
 
 #[chain]
 fn handle_language_selection(args: EntryLanguageSelection) -> Next {

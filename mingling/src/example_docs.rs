@@ -41,8 +41,8 @@
 /// use mingling::{macros::route, prelude::*};
 /// use std::io::Write;
 ///
-/// dispatcher!("transfer", CMDTransfer => EntryTransfer);
-/// dispatcher!("strict-transfer", CMDStrictTransfer => EntryStrictTransfer);
+/// dispatcher!("transfer", EntryTransfer);
+/// dispatcher!("strict-transfer", EntryStrictTransfer);
 ///
 /// pack!(ResultFile = (bool, usize, String)); // (IsDir, Size, Name)
 ///
@@ -184,7 +184,7 @@ pub mod example_argument_parse {}
 ///
 /// // --------- IMPORTANT ---------
 ///
-/// dispatcher!("calc", CMDCalculate => EntryCalculate);
+/// dispatcher!("calc", EntryCalculate);
 ///
 /// pack_err!(ErrorNumberANotProvided);
 /// pack_err!(ErrorNumberBNotProvided);
@@ -430,7 +430,7 @@ pub mod example_argument_picker {}
 ///     // --------- IMPORTANT ---------
 /// }
 ///
-/// dispatcher!("download", CMDDownload => EntryDownload);
+/// dispatcher!("download", EntryDownload);
 ///
 /// pack!(ResultDownloaded = String);
 ///
@@ -499,7 +499,7 @@ pub mod example_async_support {}
 /// //           |       /            _________ entry, records raw arguments
 /// //           |       |           /                         ^^^^^^^^^^^^^
 /// //           vvvvv   vvvvvvvv    vvvvvvvvvv                \_ equivalent to pack!(EntryGreet = Vec<String>)
-/// dispatcher!("greet", CMDGreet => EntryGreet);
+/// dispatcher!("greet", EntryGreet);
 ///
 /// fn main() {
 ///     // Create a new ThisProgram
@@ -648,7 +648,7 @@ pub mod example_basic {}
 /// //       vvvvvvv  vvvvvvvvvvvv  vvvvvvv
 /// #[derive(Default, clap::Parser, Grouped)]
 /// #[dispatcher_clap(
-///     "greet", CMDGreet,        // Bind EntryGreet to "greet" command
+///     "greet",        // Bind EntryGreet to "greet" command
 ///     help = true,              // Generate clap help for EntryGreet
 ///     error = ErrorGreetParsed, // Generate and bind error type for parse failure
 /// //  ^^^^^\__ Using `error` intercepts parse failure information into the specified type,
@@ -871,21 +871,21 @@ pub mod example_combine_pathf_metadata {}
 /// pack!(ResultGoodbye = ());
 ///
 /// // --------- IMPORTANT ---------
-/// // Auto-generates dispatcher!("hello.world", CMDHelloWorld => EntryHelloWorld);
+/// // Auto-generates dispatcher!("hello.world", EntryHelloWorld);
 /// #[command]
 /// fn hello_world() -> ResultGreeting {
 ///     ResultGreeting::new("World".to_string())
 /// }
 ///
-/// // Auto-generates dispatcher!("hello-world", CMDGreetSomeone => EntryGreetSomeone);
+/// // Auto-generates dispatcher!("hello-world", EntryGreetSomeone);
 /// #[command(node = "greet-someone")]
 /// fn greet_someone(args: Vec<String>) -> ResultGreeting {
 ///     let name = args.pick_or(&arg![String], || "World".to_string()).unwrap();
 ///     ResultGreeting::new(name)
 /// }
 ///
-/// // Auto-generates dispatcher!("goodbye", CMDGoodBye => EntryGoodBye);
-/// #[command(name = CMDGoodBye, entry = EntryGoodBye)]
+/// // Auto-generates dispatcher!("goodbye", EntryGoodBye);
+/// #[command(entry = EntryGoodBye)]
 /// fn goodbye() -> ResultGoodbye {
 ///     ResultGoodbye::default()
 /// }
@@ -1035,7 +1035,7 @@ pub mod example_command_macro {}
 /// }
 /// // --------- IMPORTANT ---------
 ///
-/// dispatcher!("greet", CMDGreet => EntryGreet);
+/// dispatcher!("greet", EntryGreet);
 /// pack!(ResultName = (u8, String));
 ///
 /// #[chain]
@@ -1124,7 +1124,7 @@ pub mod example_completion {}
 /// }
 /// // --------- IMPORTANT ---------
 ///
-/// dispatcher!("connect", CMDConnect => EntryConnect);
+/// dispatcher!("connect", EntryConnect);
 /// pack!(ErrorParseAddressFailed = ());
 ///
 /// #[chain]
@@ -1256,20 +1256,20 @@ pub mod example_custom_pickable {}
 ///
 /// // --------- IMPORTANT ---------
 /// // You have a large number of subcommands
-/// dispatcher!("cmd1",         CMD1 => Entry1);
-/// dispatcher!("cmd2.sub1",   CMD2Sub1 => Entry2Sub1);
-/// dispatcher!("cmd2.sub2",   CMD2Sub2 => Entry2Sub2);
-/// dispatcher!("cmd3.sub1.leaf1", CMD3Sub1Leaf1 => Entry3Sub1Leaf1);
-/// dispatcher!("cmd3.sub1.leaf2", CMD3Sub1Leaf2 => Entry3Sub1Leaf2);
-/// dispatcher!("cmd3.sub2",   CMD3Sub2 => Entry3Sub2);
-/// dispatcher!("cmd4.sub1.subsub1.deep", CMD4Deep => Entry4Deep);
-/// dispatcher!("cmd4.sub1.subsub2",      CMD4SubSub2 => Entry4SubSub2);
-/// dispatcher!("cmd5",        CMD5 => Entry5);
-/// dispatcher!("cmd5.extra",  CMD5Extra => Entry5Extra);
-/// dispatcher!("nested.a.b.c", CMDA => EntryA);
-/// dispatcher!("nested.a.b.d", CMDB => EntryB);
-/// dispatcher!("nested.a.e",   CMDC => EntryC);
-/// dispatcher!("nested.f",     CMDD => EntryD);
+/// dispatcher!("cmd1",         Entry1);
+/// dispatcher!("cmd2.sub1",   Entry2Sub1);
+/// dispatcher!("cmd2.sub2",   Entry2Sub2);
+/// dispatcher!("cmd3.sub1.leaf1", Entry3Sub1Leaf1);
+/// dispatcher!("cmd3.sub1.leaf2", Entry3Sub1Leaf2);
+/// dispatcher!("cmd3.sub2",   Entry3Sub2);
+/// dispatcher!("cmd4.sub1.subsub1.deep", Entry4Deep);
+/// dispatcher!("cmd4.sub1.subsub2",      Entry4SubSub2);
+/// dispatcher!("cmd5",        Entry5);
+/// dispatcher!("cmd5.extra",  Entry5Extra);
+/// dispatcher!("nested.a.b.c", EntryA);
+/// dispatcher!("nested.a.b.d", EntryB);
+/// dispatcher!("nested.a.e",   EntryC);
+/// dispatcher!("nested.f",     EntryD);
 /// // --------- IMPORTANT ---------
 ///
 /// fn main() {
@@ -1383,7 +1383,7 @@ pub mod example_dispatch_tree {}
 /// impl PickableEnum for ProgrammingLanguages {}
 /// // --------- IMPORTANT ---------
 ///
-/// dispatcher!("lang-select", CMDLanguageSelection => EntryLanguageSelection);
+/// dispatcher!("lang-select", EntryLanguageSelection);
 ///
 /// #[chain]
 /// fn handle_language_selection(args: EntryLanguageSelection) -> Next {
@@ -1457,7 +1457,7 @@ pub mod example_enum_tag {}
 /// // In Mingling, instead of using ? to propagate errors upward,
 /// // errors are treated as branches that continue execution.
 ///
-/// dispatcher!("hello", CMDHello => EntryHello);
+/// dispatcher!("hello", EntryHello);
 ///
 /// // Define error types
 /// pack!(ErrorNoNameProvided = ());
@@ -1594,7 +1594,7 @@ pub mod example_error_handling {}
 ///     program.exec_and_exit();
 /// }
 ///
-/// dispatcher!("hello", CMDHello => EntryHello);
+/// dispatcher!("hello", EntryHello);
 ///
 /// pack!(ErrorNoNameProvided = ());
 /// pack!(ResultName = String);
@@ -1676,7 +1676,7 @@ pub mod example_exitcode {}
 /// use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
 /// use std::io::Write;
 ///
-/// dispatcher!("greet", CMDGreet => EntryGreet);
+/// dispatcher!("greet", EntryGreet);
 ///
 /// // Define help        _________ When `program.user_context.help` is `true`
 /// //                   /            the command will not enter `#[chain]` / `#[renderer]`
@@ -1745,7 +1745,7 @@ pub mod example_help {}
 /// };
 /// use std::io::Write;
 ///
-/// dispatcher!("greet", CMDGreet => EntryGreet);
+/// dispatcher!("greet", EntryGreet);
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -1819,9 +1819,10 @@ pub mod example_hook {}
 /// ```ignore
 /// use mingling::prelude::*;
 ///
-/// // When using implicit syntax, the entry and dispatcher names will be automatically derived
-/// dispatcher!("remote.add" /*, CMDRemoteAdd    => EntryRemoteAdd */);
-/// dispatcher!("remote.remove", CMDRemoteRemove => EntryRemoteRemove);
+/// // When using implicit syntax, the entry name will be automatically derived
+/// // from the command name (the dispatcher struct is generated internally)
+/// dispatcher!("remote.add" /* => EntryRemoteAdd */);
+/// dispatcher!("remote.remove", EntryRemoteRemove);
 ///
 /// fn main() {
 ///     ThisProgram::new().exec_and_exit();
@@ -1897,8 +1898,8 @@ pub mod example_implicit_dispatcher {}
 ///     ResLargeData { data }
 /// }
 ///
-/// dispatcher!("show", CMDShow => EntryShow);
-/// dispatcher!("none", CMDNone => EntryNone);
+/// dispatcher!("show", EntryShow);
+/// dispatcher!("none", EntryNone);
 ///
 /// pack!(ResultShow = BTreeMap<Key, Value>);
 ///
@@ -1987,13 +1988,13 @@ pub mod example_lazy_resources {}
 /// use std::io::Write;
 ///
 /// // Define the `greet` subcommand
-/// dispatcher!("greet", CMDGreet => EntryGreet);
+/// dispatcher!("greet", EntryGreet);
 ///
 /// // Define the `desc` subcommand, which queries metadata bound to EntryGreet
-/// dispatcher!("desc", CMDDescription => EntryDescription);
+/// dispatcher!("desc", EntryDescription);
 ///
 /// // Define the `nodoc` subcommand, which queries metadata for an entry that has none
-/// dispatcher!("nodoc", CMDNoDescription => EntryNoDescription);
+/// dispatcher!("nodoc", EntryNoDescription);
 ///
 /// fn main() {
 ///     ThisProgram::new().exec_and_exit();
@@ -2249,8 +2250,8 @@ pub mod example_outside_type {}
 /// use std::io::Write;
 /// use std::path::PathBuf;
 ///
-/// dispatcher!("find", CMDFind => EntryFind);
-/// dispatcher!("find-structural", CMDFindStructural => EntryFindStructural);
+/// dispatcher!("find", EntryFind);
+/// dispatcher!("find-structural", EntryFindStructural);
 ///
 /// // --------- IMPORTANT ---------
 /// // `pack_err!` is a convenient macro for defining error types.
@@ -2414,7 +2415,7 @@ pub mod example_pack_err {}
 /// use mingling::{hook::ProgramHook, prelude::*};
 /// use std::io::Write;
 ///
-/// dispatcher!("panic", CMDPanic => EntryPanic);
+/// dispatcher!("panic", EntryPanic);
 /// pack!(NotPanic = ());
 ///
 /// fn main() {
@@ -2611,10 +2612,10 @@ pub mod example_pathfinder {}
 /// pack!(ErrorDirectoryNotExist = PathBuf);
 ///
 /// // Create commands: cd ls exit
-/// dispatcher!("cd", CMDCd => EntryCd);
-/// dispatcher!("ls", CMDLs => EntryLs);
-/// dispatcher!("exit", CMDExit => EntryExit);
-/// dispatcher!("clear", CMDClear => EntryClear);
+/// dispatcher!("cd", EntryCd);
+/// dispatcher!("ls", EntryLs);
+/// dispatcher!("exit", EntryExit);
+/// dispatcher!("clear", EntryClear);
 ///
 /// // Define data needed for the cd command's execution phase
 /// pack!(StateChangeDirectory = String);
@@ -2777,8 +2778,8 @@ pub mod example_repl_basic {}
 ///     program.exec_and_exit();
 /// }
 ///
-/// dispatcher!("current", CMDCurrent => EntryCurrent);
-/// dispatcher!("modify-current", CMDModifyCurrent => EntryModifyCurrent);
+/// dispatcher!("current", EntryCurrent);
+/// dispatcher!("modify-current", EntryModifyCurrent);
 ///
 /// // Define chain for modifying current directory                  _________________ Injected muttable resource
 /// //                                                              /
@@ -2878,7 +2879,7 @@ pub mod example_resources {}
 /// }
 /// // --------- IMPORTANT ---------
 ///
-/// dispatcher!("greet", CMDGreet => EntryGreet);
+/// dispatcher!("greet", EntryGreet);
 ///
 /// pack!(ResultGreeting = String);
 ///
@@ -2952,7 +2953,7 @@ pub mod example_setup {}
 /// use serde::Serialize;
 /// use std::io::Write;
 ///
-/// dispatcher!("render", CMDRender => EntryRender);
+/// dispatcher!("render", EntryRender);
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -3085,7 +3086,7 @@ pub mod example_structural_renderer {}
 ///     // --------- IMPORTANT ---------
 /// }
 ///
-/// dispatcher!("hello", CMDHello => EntryHello);
+/// dispatcher!("hello", EntryHello);
 ///
 /// pack!(ErrorNoNameProvided = ());
 /// pack!(ErrorNameTooLong = u16);

@@ -65,7 +65,7 @@ mod tests {
     // --------- IMPORTANT ---------
 }
 
-dispatcher!("hello", CMDHello => EntryHello);
+dispatcher!("hello", EntryHello);
 
 pack!(ErrorNoNameProvided = ());
 pack!(ErrorNameTooLong = u16);

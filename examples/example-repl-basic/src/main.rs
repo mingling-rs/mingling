@@ -73,10 +73,10 @@ fn main() {
 pack!(ErrorDirectoryNotExist = PathBuf);
 
 // Create commands: cd ls exit
-dispatcher!("cd", CMDCd => EntryCd);
-dispatcher!("ls", CMDLs => EntryLs);
-dispatcher!("exit", CMDExit => EntryExit);
-dispatcher!("clear", CMDClear => EntryClear);
+dispatcher!("cd", EntryCd);
+dispatcher!("ls", EntryLs);
+dispatcher!("exit", EntryExit);
+dispatcher!("clear", EntryClear);
 
 // Define data needed for the cd command's execution phase
 pack!(StateChangeDirectory = String);

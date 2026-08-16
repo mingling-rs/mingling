@@ -96,7 +96,7 @@ fn complete_greet_entry(ctx: &ShellContext) -> Suggest {
 }
 // --------- IMPORTANT ---------
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 pack!(ResultName = (u8, String));
 
 #[chain]

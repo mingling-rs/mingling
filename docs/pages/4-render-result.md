@@ -52,7 +52,7 @@ Putting all three tutorials together, here's your first complete Mingling progra
 use mingling::macros::buffer;
  
 // 1. Declare commands with a Dispatcher
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
  
 // 2. Declare result data with pack!
 pack!(ResultName = String);

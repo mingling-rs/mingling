@@ -29,22 +29,21 @@ The entry point for every subcommand is the `dispatcher!` macro. It generates tw
 ```rust
 use mingling::prelude::*;
 
-//           command.name   Dispatcher  EntryType
-//           │              │           │
-dispatcher!("greet",        CMDGreet => EntryGreet);
+//           command.name   EntryType
+//           │              │
+dispatcher!("greet",        EntryGreet);
 
 // Nested subcommand: `remote add`
-dispatcher!("remote.add",   CMDRemoteAdd => EntryRemoteAdd);
+dispatcher!("remote.add",   EntryRemoteAdd);
 ```
 
 Then in `main()`, register the dispatcher with the program:
 
 ```rust
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 ```
@@ -65,7 +64,7 @@ dispatcher!("greet");
 The `#[chain]` attribute turns a plain function into an execution step. Think of it as "the logic that transforms one typed value into another."
 
 ```rust
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 pack!(ResultGreeting = String);
 
@@ -132,7 +131,7 @@ Mingling provides a **Picker** for argument extraction. You can use `pick()` or 
 
 ```rust
 // Features: ["picker"]
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 pack!(ResultGreeting = String);
 
 #[chain]
@@ -159,7 +158,7 @@ Enable it by adding `BasicProgramSetup`:
 use mingling::{macros::help, prelude::*, setup::BasicProgramSetup};
 use std::io::Write;
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 #[help]
 fn help_greet(_prev: EntryGreet) -> RenderResult {
@@ -172,7 +171,6 @@ fn help_greet(_prev: EntryGreet) -> RenderResult {
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(BasicProgramSetup);  // enables --help / -h
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 
@@ -196,7 +194,7 @@ With the `comp` feature, Mingling provides a fully dynamic completion system. Yo
 
 use mingling::{macros::suggest, ShellContext, Suggest};
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 pack!(ResultName = (u8, String));
 
 #[completion(EntryGreet)]
@@ -230,7 +228,6 @@ You also need to register the built-in completion dispatcher:
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(crate::CMDCompletion);
     program.exec_and_exit();
 }
 ```
@@ -252,7 +249,7 @@ use mingling::{ShellContext, Suggest};
 use mingling::macros::suggest_enum;
 use mingling::EnumTag;
 
-dispatcher!("lang.select", CMDLang => EntryLang);
+dispatcher!("lang.select", EntryLang);
 
 #[derive(EnumTag)]
 pub enum ProgrammingLanguages {
@@ -278,7 +275,7 @@ use mingling::macros::pack;
 use mingling::prelude::*;
 use std::io::Write;
 
-dispatcher!("hello", CMDHello => EntryHello);
+dispatcher!("hello", EntryHello);
 pack!(ResultName = String);
 pack!(ErrorNoNameProvided = ());
 pack!(ErrorNameTooLong = u16);
@@ -327,8 +324,8 @@ Chain and renderer functions can accept **additional parameters** for the progra
 
 use std::path::PathBuf;
 
-dispatcher!("current", CMDCurrent => EntryCurrent);
-dispatcher!("cd", CMDCd => EntryCd);
+dispatcher!("current", EntryCurrent);
+dispatcher!("cd", EntryCd);
 
 #[derive(Default, Clone)]
 struct ResCurrentDir {
@@ -340,8 +337,6 @@ fn main() {
     program.with_resource(ResCurrentDir {
         current_dir: std::env::current_dir().unwrap(),
     });
-    program.with_dispatcher(CMDCurrent);
-    program.with_dispatcher(CMDCd);
     program.exec_and_exit();
 }
 
@@ -367,7 +362,7 @@ Resources can also be injected into `#[renderer]`:
 use mingling::prelude::*;
 use std::io::Write;
 
-dispatcher!("current", CMDCurrent => EntryCurrent);
+dispatcher!("current", EntryCurrent);
 
 #[derive(Default, Clone)]
 struct ResCurrentDir {
@@ -391,11 +386,11 @@ As your program grows to dozens or hundreds of subcommands, linear dispatcher lo
 ```rust
 // Features: ["dispatch_tree"]
 
-dispatcher!("cmd1",              CMD1 => Entry1);
-dispatcher!("cmd2.sub1",         CMD2Sub1 => Entry2Sub1);
-dispatcher!("cmd2.sub2",         CMD2Sub2 => Entry2Sub2);
-dispatcher!("cmd3.sub1.leaf1",   CMD3Sub1Leaf1 => Entry3Sub1Leaf1);
-dispatcher!("cmd3.sub1.leaf2",   CMD3Sub1Leaf2 => Entry3Sub1Leaf2);
+dispatcher!("cmd1",              Entry1);
+dispatcher!("cmd2.sub1",         Entry2Sub1);
+dispatcher!("cmd2.sub2",         Entry2Sub2);
+dispatcher!("cmd3.sub1.leaf1",   Entry3Sub1Leaf1);
+dispatcher!("cmd3.sub1.leaf2",   Entry3Sub1Leaf2);
 // ... dozens more
 
 fn main() {
@@ -429,7 +424,7 @@ use std::io::Write;
 
 #[derive(Default, clap::Parser, Grouped)]
 #[dispatcher_clap(
-    "greet", CMDGreet,
+    "greet",
     help = true,              // auto-generate #[help] from clap
     error = ErrorGreetParsed, // capture parse errors as a renderable type
 )]
@@ -463,13 +458,12 @@ You can control how clap help is displayed:
 ```rust
 // Features: ["clap"]
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.stdout_setting.clap_help_print_behaviour =
-        mingling::ClapHelpPrintBehaviour::WriteToRenderResult;
+        mingling::config::ClapHelpPrintBehaviour::WriteToRenderResult;
     // or: PrintDirectly — writes clap help straight to stdout
     program.exec_and_exit();
 }
@@ -499,14 +493,12 @@ use mingling::{
     setup::{BasicREPLReadlineSetup, BasicREPLOutputSetup, BasicREPLPromptSetup},
 };
 
-dispatcher!("cd", CMDCd => EntryCd);
-dispatcher!("exit", CMDExit => EntryExit);
+dispatcher!("cd", EntryCd);
+dispatcher!("exit", EntryExit);
 
 fn main() {
     let mut program = ThisProgram::new();
 
-    program.with_dispatcher(CMDCd);
-    program.with_dispatcher(CMDExit);
 
     // Enable line reading from stdin
     program.with_setup(BasicREPLReadlineSetup);
@@ -538,7 +530,7 @@ use mingling::{
     hook::{ProgramControlUnit, ProgramHook},
 };
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -560,7 +552,6 @@ fn main() {
             .on_post_render(|_| println!("[DEBUG] Post render")),
     );
 
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 ```
@@ -584,7 +575,7 @@ use mingling::StructuralData;
 use serde::Serialize;
 use std::io::Write;
 
-dispatcher!("render", CMDRender => EntryRender);
+dispatcher!("render", EntryRender);
 
 #[derive(Default, StructuralData, Serialize, Grouped)]
 struct ResultInfo {
@@ -609,7 +600,6 @@ fn render_info_result(info: ResultInfo) {
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(StructuralRendererSetup);  // enables --json / --yaml
-    program.with_dispatcher(CMDRender);
     let _ = program.exec();
 }
 ```
@@ -642,7 +632,7 @@ Enable the `async` feature to use `async fn` inside `#[chain]`:
 use std::io::Write;
 use std::time::Duration;
 
-dispatcher!("download", CMDDownload => EntryDownload);
+dispatcher!("download", EntryDownload);
 pack!(ResultDownloaded = String);
 
 #[chain]
@@ -693,11 +683,10 @@ use mingling::macros::pack;
 use mingling::prelude::*;
 use std::io::Write;
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 

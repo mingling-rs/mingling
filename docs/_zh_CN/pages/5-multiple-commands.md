@@ -12,8 +12,8 @@
 ```rust
 @@@use mingling::macros::buffer;
 // 声明两个命令
-dispatcher!("greet", CMDGreet => EntryGreet);
-dispatcher!("add",   CMDAdd   => EntryAdd);
+dispatcher!("greet", EntryGreet);
+dispatcher!("add",   EntryAdd);
  
 pack!(ResultGreeting = String);
 pack!(ResultSum = i32);
@@ -62,8 +62,8 @@ Sum: 6
 多层级的命令也是同理——每个点号分隔的层级都只是名字的一部分：
 
 ```rust
-dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
-dispatcher!("remote.rm",  CMDRemoteRm  => EntryRemoteRm);
+dispatcher!("remote.add", EntryRemoteAdd);
+dispatcher!("remote.rm",  EntryRemoteRm);
 ```
  
 每个子命令的 Entry、Chain、Renderer 完全独立，互不干扰。

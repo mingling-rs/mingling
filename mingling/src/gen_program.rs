@@ -4,7 +4,6 @@
 use mingling_core::ChainProcess;
 use mingling_core::Dispatcher;
 use mingling_core::Grouped;
-use mingling_core::Node;
 use mingling_core::Program;
 use mingling_core::ProgramCollect;
 
@@ -96,17 +95,9 @@ pub struct CompletionSuggest {
 
 #[cfg(feature = "comp")]
 impl Dispatcher<ThisProgram> for CMDCompletion {
-    fn node(&self) -> mingling_core::Node {
-        Node::default().join(mingling_core::COMPLETION_SUBCOMMAND)
-    }
-
     fn begin(&self, args: Vec<String>) -> ChainProcess<ThisProgram> {
         use mingling_core::AnyOutput;
         AnyOutput::new(CompletionContext { inner: args }).route_chain()
-    }
-
-    fn clone_dispatcher(&self) -> Box<dyn Dispatcher<ThisProgram>> {
-        todo!()
     }
 }
 

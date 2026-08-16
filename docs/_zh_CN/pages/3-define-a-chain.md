@@ -3,7 +3,7 @@
     使用 chain 宏声明链，并承接 Entry 输入
 </p>
 
-上一节我们声明了 `dispatcher!("greet", CMDGreet => EntryGreet)`
+上一节我们声明了 `dispatcher!("greet", EntryGreet)`
 
 现在用户输入 `greet` 时会被匹配并包装成 `EntryGreet`。
 
@@ -16,7 +16,7 @@
 `#[chain]` 用来标记一个处理函数，格式非常直接：
 
 ```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 pack!(ResultName = String);
  
 #[chain]
@@ -77,7 +77,7 @@ pub struct ResultName {
 `EntryGreet` 的 `inner` 是一个 `Vec<String>`，你可以在 Chain 里自由地处理它：
 
 ```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
@@ -100,7 +100,7 @@ fn handle_greet(args: EntryGreet) -> Next {
 
 ```rust
 // 1. 声明命令
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
  
 // 2. 声明管线中的数据类型
 pack!(ResultName = String);

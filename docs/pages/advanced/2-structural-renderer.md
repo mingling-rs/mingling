@@ -29,7 +29,7 @@ After enabling `StructuralRendererSetup`, use `pack_structural!` instead of `pac
 // serde = "1"
 @@@use mingling::macros::buffer;
 @@@use mingling::setup::StructuralRendererSetup;
-@@@dispatcher!("render", CMDRender => EntryRender);
+@@@dispatcher!("render", EntryRender);
  
 // pack_structural! is equivalent to pack! + StructuralData
 pack_structural!(ResultInfo = (String, i32));
@@ -72,7 +72,7 @@ The default output from `pack_structural!` includes an `inner` field. For full c
 @@@use mingling::setup::StructuralRendererSetup;
 @@@use mingling::StructuralData;
 @@@use serde::Serialize;
-@@@dispatcher!("render", CMDRender => EntryRender);
+@@@dispatcher!("render", EntryRender);
  
 #[derive(Serialize, StructuralData, Grouped)]
 struct Info {

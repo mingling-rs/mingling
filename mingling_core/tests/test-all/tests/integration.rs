@@ -1,6 +1,5 @@
 use mingling::Flag;
 use mingling::NextProcess;
-use mingling::Node;
 use mingling::Program;
 use mingling::RenderResult;
 use mingling::StringVec;
@@ -42,20 +41,6 @@ fn test_suggest_creation() {
 fn test_res_repl_default() {
     let res = ResREPL::default();
     assert!(!res.exit);
-}
-
-// Node
-
-#[test]
-fn test_node_creation() {
-    let node = Node::from("a.b.c");
-    assert_eq!(node.to_string(), "a.b.c");
-}
-
-#[test]
-fn test_node_kebab() {
-    let node = Node::from("HelloWorld.FooBar");
-    assert_eq!(node.to_string(), "hello-world.foo-bar");
 }
 
 // Flag

@@ -22,7 +22,7 @@ Here is a basic project written using **Mingling**:
 ```rust
 use mingling::prelude::*;
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 fn main() {
     let program = ThisProgram::new();

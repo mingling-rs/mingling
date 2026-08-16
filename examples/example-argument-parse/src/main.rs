@@ -21,8 +21,8 @@
 use mingling::{macros::route, prelude::*};
 use std::io::Write;
 
-dispatcher!("transfer", CMDTransfer => EntryTransfer);
-dispatcher!("strict-transfer", CMDStrictTransfer => EntryStrictTransfer);
+dispatcher!("transfer", EntryTransfer);
+dispatcher!("strict-transfer", EntryStrictTransfer);
 
 pack!(ResultFile = (bool, usize, String)); // (IsDir, Size, Name)
 

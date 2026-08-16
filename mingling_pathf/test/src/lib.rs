@@ -258,17 +258,17 @@ fn test_dispatcher_analyze() {
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
         "::EntryGreet",
-        "::CMDGreet",
+        "::__DispatcherGreet",
         "::EntryRemoteAdd",
-        "::CMDRemoteAdd",
+        "::__DispatcherRemoteAdd",
         "::EntryDelete",
-        "::CMDDelete",
+        "::__DispatcherDelete",
         "::EntryRemoteRm",
-        "::CMDRemoteRm",
+        "::__DispatcherRemoteRm",
         "::sub::EntryGreet",
-        "::sub::CMDGreet",
+        "::sub::__DispatcherGreet",
         "::sub::EntryDelete",
-        "::sub::CMDDelete",
+        "::sub::__DispatcherDelete",
         // Dispatchers are always collected at compile time:
         "::__internal_dispatcher_greet",
         "::__internal_dispatcher_remote_add",
@@ -293,16 +293,18 @@ fn test_dispatcher_dispatch_tree() {
         .join("src/test_files/test_dispatcher_dispatch_tree.rs");
 
     // Dispatchers are always collected at compile time, so the analyzer
-    // always extracts the `__internal_dispatcher_*` statics too:
-    // 8 (Entry + CMD, root + sub) + 4 __internal (root + sub) = 12
+    // always extracts the hidden dispatcher structs and statics too:
+    // 8 (Entry + __Dispatcher, root + sub) + 4 __internal (root + sub) = 12
     let r = pattern_analyzer::init().analyze_file(&file).unwrap();
     assert_eq!(r.len(), 12);
     assert!(r.contains("::EntryGreet"));
-    assert!(r.contains("::CMDGreet"));
+    assert!(r.contains("::__DispatcherGreet"));
     assert!(r.contains("::EntryDelete"));
-    assert!(r.contains("::CMDDelete"));
+    assert!(r.contains("::__DispatcherDelete"));
     assert!(r.contains("::sub::EntryGreet"));
-    assert!(r.contains("::sub::CMDGreet"));
+    assert!(r.contains("::sub::__DispatcherGreet"));
+    assert!(r.contains("::sub::EntryDelete"));
+    assert!(r.contains("::sub::__DispatcherDelete"));
     assert!(r.contains("::__internal_dispatcher_greet"));
     assert!(r.contains("::__internal_dispatcher_delete"));
     assert!(r.contains("::sub::__internal_dispatcher_greet"));
@@ -323,43 +325,43 @@ fn test_dispatcher_clap_analyze() {
         "::EntryClap2",
         "::EntryClap3",
         "::EntryClap4",
-        // Root: with CMD type
+        // Root: with command name only
         "::EntryWithCmd",
-        "::CMDGreet",
-        // Root: with CMD + error
+        // Root: with error
         "::EntryWithError",
-        "::CMDDelete",
         "::ErrorDelete",
-        // Root: with CMD + help
+        // Root: with help
         "::EntryWithHelp",
-        "::CMDHelp",
-        "::__internal_help_cmdhelp_help",
-        // Root: with CMD + error + help
+        "::__internal_help_helpcmd_help",
+        // Root: with error + help
         "::EntryFull",
-        "::CMDFull",
         "::ErrorFull",
-        "::__internal_help_cmdfull_help",
+        "::__internal_help_full_help",
         // Sub: entry types (bare dispatcher_clap)
         "::sub::EntryClap1",
         "::sub::EntryClap3",
-        // Sub: with CMD type
+        // Sub: with command name only
         "::sub::EntryWithCmd",
-        "::sub::CMDGreet",
-        // Sub: with CMD + error
+        // Sub: with error
         "::sub::EntryWithError",
-        "::sub::CMDDelete",
         "::sub::ErrorDelete",
-        // Sub: with CMD + help
+        // Sub: with help
         "::sub::EntryWithHelp",
-        "::sub::CMDHelp",
-        "::sub::__internal_help_cmdhelp_help",
-        // Dispatchers are always collected at compile time:
+        "::sub::__internal_help_helpcmd_help",
+        // Hidden dispatcher structs + statics are always collected:
+        "::__DispatcherGreet",
         "::__internal_dispatcher_greet",
+        "::__DispatcherDelete",
         "::__internal_dispatcher_delete",
+        "::__DispatcherHelpcmd",
         "::__internal_dispatcher_helpcmd",
+        "::__DispatcherFull",
         "::__internal_dispatcher_full",
+        "::sub::__DispatcherGreet",
         "::sub::__internal_dispatcher_greet",
+        "::sub::__DispatcherDelete",
         "::sub::__internal_dispatcher_delete",
+        "::sub::__DispatcherHelpcmd",
         "::sub::__internal_dispatcher_helpcmd",
     ];
 
@@ -378,15 +380,22 @@ fn test_dispatcher_clap_dispatch_tree() {
         .join("src/test_files/test_dispatcher_clap.rs");
 
     // Dispatchers are always collected at compile time:
-    // 26 (Entry/CMD/error/help items) + 4 __internal (root) + 3 __internal (sub, no "full") = 33
+    // 19 (entry/error/help items) + 14 (hidden structs + statics, root + sub) = 33
     let r = pattern_analyzer::init().analyze_file(&file).unwrap();
     assert_eq!(r.len(), 33);
+    assert!(r.contains("::__DispatcherGreet"));
     assert!(r.contains("::__internal_dispatcher_greet"));
+    assert!(r.contains("::__DispatcherDelete"));
     assert!(r.contains("::__internal_dispatcher_delete"));
+    assert!(r.contains("::__DispatcherHelpcmd"));
     assert!(r.contains("::__internal_dispatcher_helpcmd"));
+    assert!(r.contains("::__DispatcherFull"));
     assert!(r.contains("::__internal_dispatcher_full"));
+    assert!(r.contains("::sub::__DispatcherGreet"));
     assert!(r.contains("::sub::__internal_dispatcher_greet"));
+    assert!(r.contains("::sub::__DispatcherDelete"));
     assert!(r.contains("::sub::__internal_dispatcher_delete"));
+    assert!(r.contains("::sub::__DispatcherHelpcmd"));
     assert!(r.contains("::sub::__internal_dispatcher_helpcmd"));
 }
 

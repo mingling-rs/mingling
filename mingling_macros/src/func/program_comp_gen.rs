@@ -42,13 +42,14 @@ pub(crate) fn program_comp_gen_impl(_input: TokenStream) -> TokenStream {
 
     let internal_dispatcher_comp = quote! {
         use __internal_completion_mod::__internal_dispatcher_comp;
+        use __internal_completion_mod::__DispatcherComp;
     };
 
     let comp_dispatcher = quote! {
         #[doc(hidden)]
         mod __internal_completion_mod {
             use ::mingling::Grouped;
-            ::mingling::macros::dispatcher!("__comp", CMDCompletion => CompletionContext);
+            ::mingling::macros::dispatcher!("__comp", CompletionContext);
             ::mingling::macros::pack!(
                 CompletionSuggest = (::mingling::ShellContext, ::mingling::Suggest)
             );
@@ -56,7 +57,6 @@ pub(crate) fn program_comp_gen_impl(_input: TokenStream) -> TokenStream {
         #internal_dispatcher_comp
         use __internal_completion_mod::CompletionContext;
         use __internal_completion_mod::CompletionSuggest;
-        pub use __internal_completion_mod::CMDCompletion;
 
         #fn_exec_comp
 

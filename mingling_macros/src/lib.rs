@@ -42,7 +42,7 @@ pub(crate) use func::group as group_impl;
 use func::pack_err;
 #[cfg(feature = "comp")]
 use func::suggest;
-use func::{dispatcher, node, pack};
+use func::{dispatcher, pack};
 use systems::res_injection;
 pub(crate) fn default_program_path() -> proc_macro2::TokenStream {
     quote::quote! { crate::ThisProgram }
@@ -181,47 +181,6 @@ pub fn group(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn group_structural(input: TokenStream) -> TokenStream {
     func::group_structural::group_structural(input)
-}
-
-/// Creates a `Node` from a dot-separated path string.
-///
-/// Each segment is converted to kebab-case (unless it starts with `_`).
-/// Segments are joined via `.join()` calls, building a path hierarchy for
-/// command matching.
-///
-/// # Syntax
-///
-/// ```rust,ignore
-/// node!("subcommand")
-/// node!("sub.subsub")
-/// node!("")           // empty → Node::default()
-/// ```
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use mingling::macros::node;
-///
-/// // Creates a single-level node for "hello"
-/// let n = node!("hello");
-///
-/// // Creates a two-level node for "remote control"
-/// let n = node!("remote.control");
-/// ```
-///
-/// # Internals
-///
-/// The generated code is equivalent to:
-/// ```rust,ignore
-/// Node::default().join("hello")
-/// Node::default().join("remote").join("control")
-/// ```
-///
-/// This macro is typically used internally by `dispatcher!` and should rarely
-/// need to be called directly.
-#[proc_macro]
-pub fn node(input: TokenStream) -> TokenStream {
-    node::node(input)
 }
 
 /// Creates a type-safe wrapper struct around an inner type, with automatic
@@ -598,10 +557,8 @@ pub fn empty_result(input: TokenStream) -> TokenStream {
 ///
 /// 1. **Entry struct** — A `pack!`-style wrapper around `Vec<String>` (the raw args).
 ///    Registered in the program enum via `register_type!`.
-/// 2. **Dispatcher struct** — A zero-sized struct implementing [`Dispatcher<Program>`]:
-///    - `node()` returns the [`Node`] hierarchy for the command path.
+/// 2. **Dispatcher struct** — A hidden zero-sized struct implementing [`Dispatcher<Program>`]:
 ///    - `begin(args)` wraps `args` into the entry type and routes to chain.
-///    - `clone_dispatcher()` returns a boxed clone.
 /// 3. **Registration** — Calls `register_dispatcher!` to collect the command
 ///    at compile time (the `dispatch_tree` feature only selects the matching
 ///    strategy generated later by `gen_program!`).
@@ -612,12 +569,10 @@ pub fn empty_result(input: TokenStream) -> TokenStream {
 /// # See also
 ///
 /// - `dispatcher_clap!` — For clap-powered argument parsing.
-/// - `node!` — For building custom [`Node`] paths.
 /// - [`#[chain]`](attr.chain.html) — For processing the dispatched entry.
 ///
 /// [`ChainProcess`]: https://docs.rs/mingling/latest/mingling/enum.ChainProcess.html
 /// [`Dispatcher<Program>`]: https://docs.rs/mingling/latest/mingling/trait.Dispatcher.html
-/// [`Node`]: https://docs.rs/mingling/latest/mingling/struct.Node.html
 #[proc_macro]
 pub fn dispatcher(input: TokenStream) -> TokenStream {
     dispatcher::dispatcher(input)

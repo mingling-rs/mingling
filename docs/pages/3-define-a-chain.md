@@ -3,7 +3,7 @@
     Use the <code>chain</code> macro to declare a chain and handle Entry input
 </p>
 
-In the previous section, we declared `dispatcher!("greet", CMDGreet => EntryGreet)`.
+In the previous section, we declared `dispatcher!("greet", EntryGreet)`.
 
 Now when a user types `greet`, it gets matched and wrapped into `EntryGreet`.
 
@@ -16,7 +16,7 @@ We need a Chain to process it.
 `#[chain]` marks a handler function. The format is straightforward:
 
 ```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 pack!(ResultName = String);
  
 #[chain]
@@ -77,7 +77,7 @@ See [Naming Convention](pages/other/naming_rule) for details, but for now just r
 `EntryGreet`'s `inner` is a `Vec<String>`, which you can freely process inside a Chain:
 
 ```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
@@ -100,7 +100,7 @@ Now let's connect the Dispatcher and Chain:
 
 ```rust
 // 1. Declare the command
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
  
 // 2. Declare the pipeline data type
 pack!(ResultName = String);

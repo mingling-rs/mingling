@@ -30,7 +30,7 @@ In a Chain or Renderer, simply declare the resource in the parameter list:
 @@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResCurrentDir(String);
-@@@dispatcher!("pwd", CMDPrintWorkingDir => EntryPrintWorkingDir);
+@@@dispatcher!("pwd", EntryPrintWorkingDir);
 @@@pack!(ResultPath = String);
 // Inject read-only resource via &T
 #[chain]
@@ -52,7 +52,7 @@ Use `&mut T` to inject a mutable resource:
 @@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResVisitCount(u32);
-@@@dispatcher!("visit", CMDVisit => EntryVisit);
+@@@dispatcher!("visit", EntryVisit);
 @@@pack!(ResultDone = ());
 #[chain]
 fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
@@ -73,7 +73,7 @@ A Chain can inject any number of resources at once — the framework matches the
 ```rust
 @@@#[derive(Default, Clone)] struct ResConfig(String);
 @@@#[derive(Default, Clone)] struct ResCounter(u32);
-@@@dispatcher!("test", CMDTest => EntryTest);
+@@@dispatcher!("test", EntryTest);
 @@@pack!(ResultDone = ());
 // Inject both read-only and mutable resources
 #[chain]

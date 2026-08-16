@@ -19,7 +19,7 @@ Error values can also take either path—you can render the error msg directly, 
 ## Distinguish Errors with Dedicated Types
 
 ```rust
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 pack!(ResultGreeting = String);
 pack!(ErrorNameEmpty = String);
  
@@ -39,7 +39,7 @@ Then write separate Renderers:
 
 ```rust
 @@@use mingling::macros::buffer;
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultGreeting = String);
 @@@pack!(ErrorNameEmpty = String);
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting::new(args.inner.first().cloned().unwrap_or_default()).to_render() }
@@ -61,7 +61,7 @@ Each Renderer does its own job; what the user sees depends on what the Chain ret
 
 ```rust
 @@@use mingling::macros::buffer;
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
  
 pack!(ResultGreeting = String);
 pack!(ErrorNameEmpty = String);

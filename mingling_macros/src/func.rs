@@ -9,7 +9,6 @@ pub(crate) mod gen_program;
 pub(crate) mod group;
 #[cfg(all(feature = "structural_renderer", feature = "extras"))]
 pub(crate) mod group_structural;
-pub(crate) mod node;
 pub(crate) mod pack;
 #[cfg(feature = "extras")]
 pub(crate) mod pack_err;

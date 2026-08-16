@@ -53,7 +53,7 @@ fn custom_setup(program: &mut Program<ThisProgram>) {
 }
 // --------- IMPORTANT ---------
 
-dispatcher!("greet", CMDGreet => EntryGreet);
+dispatcher!("greet", EntryGreet);
 
 pack!(ResultGreeting = String);
 

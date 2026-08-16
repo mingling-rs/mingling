@@ -39,7 +39,7 @@ async fn main() {
     // --------- IMPORTANT ---------
 }
 
-dispatcher!("download", CMDDownload => EntryDownload);
+dispatcher!("download", EntryDownload);
 
 pack!(ResultDownloaded = String);
 

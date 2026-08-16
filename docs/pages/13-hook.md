@@ -54,7 +54,7 @@ Each hook callback receives a corresponding `Hook*Info` struct containing contex
 @@@use mingling::prelude::*;
 @@@use mingling::hook::ProgramHook;
 @@@
-@@@dispatcher!("greet", CMDGreet => EntryGreet);
+@@@dispatcher!("greet", EntryGreet);
 @@@pack!(ResultName = String);
 @@@
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next {

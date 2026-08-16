@@ -40,19 +40,17 @@ Name + Setup
 
 ### Dispatcher
 
-Dispatchers are the entry points of commands, corresponding one-to-one with `Node` names. Node names use `.` to separate levels, dispatcher names use the `CMD` prefix with PascalCase.
+Dispatchers are the entry points of commands. The command name uses `.` to separate hierarchy levels and matches the arguments typed by the user.
 
 ```
-CMD + Command Hierarchy
+command name
 ```
  
-| Node         | Dispatcher        |
-| ------------ | ----------------- |
-| `greet`      | `CMDGreet`        |
-| `remote.add` | `CMDRemoteAdd`    |
-| `remote.rm`  | `CMDRemoteRemove` |
-
-Even if a node is an abbreviation, the dispatcher name should use the full name. For example, the node is `remote.rm`, but the dispatcher is `CMDRemoteRemove`, not `CMDRemoteRm`.
+| Command      |
+| ------------ |
+| `greet`      |
+| `remote.add` |
+| `remote.rm`  |
 
 ### Entry
 
@@ -62,11 +60,11 @@ Entries are the pipeline starting types created by dispatchers, wrapping `Vec<St
 Entry + Command Hierarchy
 ```
  
-| Dispatcher        | Entry               |
-| ----------------- | ------------------- |
-| `CMDGreet`        | `EntryGreet`        |
-| `CMDRemoteAdd`    | `EntryRemoteAdd`    |
-| `CMDRemoteRemove` | `EntryRemoteRemove` |
+| Command      | Entry               |
+| ------------ | ------------------- |
+| `greet`      | `EntryGreet`        |
+| `remote.add` | `EntryRemoteAdd`    |
+| `remote.rm`  | `EntryRemoteRemove` |
 
 ### State
 
@@ -174,7 +172,7 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 @@@ pack!(ResultRemoteAdded = String);
 @@@ pack!(ErrorRepositoryNotFound = String);
 // Dispatcher
-dispatcher!("remote.add", CMDRemoteAdd => EntryRemoteAdd);
+dispatcher!("remote.add", EntryRemoteAdd);
  
 // Entry → State
 #[chain]

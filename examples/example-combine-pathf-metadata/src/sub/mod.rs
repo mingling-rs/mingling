@@ -8,7 +8,7 @@ use std::io::Write;
 // Implicit dispatcher form — creates `CMDHello` / `EntryHello` in this module
 dispatcher!("hello");
 // Creates `CMDDescription` / `EntryDescription` in this module
-dispatcher!("desc", CMDDescription => EntryDescription);
+dispatcher!("desc", EntryDescription);
 
 /// The metadata type attached to an entry (`DataType`).
 #[derive(Debug, PartialEq, Eq)]

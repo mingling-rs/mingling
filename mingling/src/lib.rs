@@ -88,7 +88,6 @@ pub mod macros {
     pub use mingling_macros::help;
     pub use mingling_macros::metadata;
     pub use mingling_macros::mlint;
-    pub use mingling_macros::node;
     pub use mingling_macros::pack;
     #[cfg(feature = "extras")]
     pub use mingling_macros::pack_err;

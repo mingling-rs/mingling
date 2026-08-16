@@ -30,7 +30,7 @@ fn main() {
 @@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResCurrentDir(String);
-@@@dispatcher!("pwd", CMDPrintWorkingDir => EntryPrintWorkingDir);
+@@@dispatcher!("pwd", EntryPrintWorkingDir);
 @@@pack!(ResultPath = String);
 // 通过 &T 注入只读资源
 #[chain]
@@ -52,7 +52,7 @@ fn render_path(result: ResultPath) {
 @@@use mingling::macros::buffer;
 @@@#[derive(Default, Clone)]
 @@@struct ResVisitCount(u32);
-@@@dispatcher!("visit", CMDVisit => EntryVisit);
+@@@dispatcher!("visit", EntryVisit);
 @@@pack!(ResultDone = ());
 #[chain]
 fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
@@ -73,7 +73,7 @@ Chain 可以同时注入任意多个资源，框架按类型自动匹配：
 ```rust
 @@@#[derive(Default, Clone)] struct ResConfig(String);
 @@@#[derive(Default, Clone)] struct ResCounter(u32);
-@@@dispatcher!("test", CMDTest => EntryTest);
+@@@dispatcher!("test", EntryTest);
 @@@pack!(ResultDone = ());
 // 同时注入只读 + 可修改
 #[chain]
