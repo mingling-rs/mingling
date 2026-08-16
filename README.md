@@ -39,13 +39,14 @@ Mingling abstracts the behavior of a program's lifecycle into three phases: **Di
 
 ```rust
 dispatcher!("current", EntryCurrent);
-#[derive(Grouped, Wrap, Default)]
-pub struct StateNext(());
+
+#[derive(Grouped)]
+pub struct StateNext;
 
 #[chain]
 fn handle_current(_: EntryCurrent) -> StateNext {
     // 1. The first phase outputs the StateNext value
-    StateNext::default()  //          ^^^^^^^^^
+    StateNext  //                     ^^^^^^^^^
 }                 //                  |
                   //                  |
                   // 2. The second phase takes StateNext as input
