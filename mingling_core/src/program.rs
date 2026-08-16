@@ -207,12 +207,12 @@ where
 
     /// Use a prefix tree to quickly match arguments and dispatch to an Entry
     #[cfg(feature = "dispatch_tree")]
-    pub fn dispatch_args_trie(
+    pub fn dispatch_args(
         &'static self,
         args: impl Into<StringVec>,
     ) -> Result<AnyOutput<C>, ChainProcessError> {
         let string_vec: Vec<String> = args.into().into();
-        match C::dispatch_args_trie(&string_vec) {
+        match C::dispatch_args(&string_vec) {
             Ok(ok) => Ok(ok),
             Err(e) => Err(e.into()),
         }

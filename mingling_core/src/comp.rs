@@ -198,8 +198,8 @@ impl CompletionHelper {
             None
         };
         #[cfg(feature = "dispatch_tree")]
-        let suggest = if let Ok(any) = P::dispatch_args_trie(&args) {
-            debug!("dispatch_args_trie OK, member_id = {:?}", any.member_id);
+        let suggest = if let Ok(any) = P::dispatch_args(&args) {
+            debug!("dispatch_args OK, member_id = {:?}", any.member_id);
             trace!("entry type: {}", any.member_id);
 
             let entry_fallback = <P::EntryFallback as crate::Grouped<P>>::member_id();
@@ -215,7 +215,7 @@ impl CompletionHelper {
                 Some(result)
             }
         } else {
-            debug!("dispatch_args_trie failed, args = {:?}", args);
+            debug!("dispatch_args failed, args = {:?}", args);
             trace!("no dispatcher matched");
             None
         };
@@ -355,7 +355,7 @@ where
     let words: Vec<String> = node.split(' ').map(str::to_string).collect();
 
     #[cfg(feature = "dispatch_tree")]
-    let lazy_member = P::dispatch_args_trie(&words).ok().map(|any| any.member_id);
+    let lazy_member = P::dispatch_args(&words).ok().map(|any| any.member_id);
 
     #[cfg(not(feature = "dispatch_tree"))]
     let lazy_member = match match_user_input(this::<P>(), &words) {

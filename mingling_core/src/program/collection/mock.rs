@@ -75,7 +75,7 @@ impl ProgramCollect for MockProgramCollect {
     type ResultEmpty = Self;
 
     #[cfg(feature = "dispatch_tree")]
-    fn dispatch_args_trie(
+    fn dispatch_args(
         _raw: &[String],
     ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError> {
         unreachable!()

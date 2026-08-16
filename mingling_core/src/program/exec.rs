@@ -62,7 +62,7 @@ where
     let mut current = if cfg!(not(feature = "dispatch_tree")) {
         dispatch_args_dynamic(program, args)?
     } else {
-        C::dispatch_args_trie(args)?
+        C::dispatch_args(args)?
     };
 
     // Run hook

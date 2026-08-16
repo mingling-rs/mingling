@@ -36,7 +36,7 @@ pub trait ProgramCollect {
 
     /// Use a prefix tree to quickly match arguments and dispatch to an Entry
     #[cfg(feature = "dispatch_tree")]
-    fn dispatch_args_trie(
+    fn dispatch_args(
         raw: &[String],
     ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError>;
 
@@ -46,7 +46,7 @@ pub trait ProgramCollect {
     /// # Errors
     ///
     /// Returns an error if the program fails to execute the given arguments.
-    fn dispatch_args_trie(
+    fn dispatch_args(
         _raw: &[String],
     ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError> {
         unreachable!()

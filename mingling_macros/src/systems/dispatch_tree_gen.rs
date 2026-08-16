@@ -30,7 +30,7 @@ pub(crate) fn gen_get_nodes(entries: &[(String, String, String)]) -> TokenStream
     }
 }
 
-/// Generate the `dispatch_args_trie()` function body for a ProgramCollect impl.
+/// Generate the `dispatch_args()` function body for a ProgramCollect impl.
 ///
 /// Builds a hardcoded match tree: at each depth, group nodes by character.
 /// Single-node groups use `starts_with`; multi-node groups recurse with `nth()` match.
@@ -49,7 +49,7 @@ pub(crate) fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> To
     );
 
     quote! {
-        fn dispatch_args_trie(
+        fn dispatch_args(
             raw: &[String],
         ) -> Result<::mingling::AnyOutput<Self::Enum>, ::mingling::error::ProgramInternalExecuteError>
         {
