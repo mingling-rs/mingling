@@ -270,7 +270,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "arg-picker",
  "mingling",
@@ -283,11 +283,11 @@ dependencies = [
 
 [[package]]
 name = "mingling-workspace"
-version = "0.4.0"
+version = "0.5.0"
 
 [[package]]
 name = "mingling_core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "env_logger",
  "just_fmt 0.2.0",
@@ -305,7 +305,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "just_fmt 0.2.0",
  "proc-macro2",
@@ -315,7 +315,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_pathf"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "just_fmt 0.2.0",
  "proc-macro2",

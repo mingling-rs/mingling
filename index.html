@@ -1346,12 +1346,12 @@ pub fn complete_hello(ctx: &amp;ShellContext) -&gt; Suggest {
 cargo init
 
 # Add Mingling
-cargo add mingling@0.4.0</code></pre>
+cargo add mingling@0.5.0</code></pre>
                         <pre
                             class="carousel-code"
                         ><code class="language-toml"># Add the Mingling dependency
 [dependencies.mingling]
-version = "0.4.0"
+version = "0.5.0"
 features = [
     "extras", # extra macro support
     "picker", # argument picker
@@ -1361,7 +1361,7 @@ features = [
                         ><code class="language-bash"># Download and install mingling-cli
 # https://mingling-rs.github.io/mingling/dist/
 
-mling proj-init 0.4.0@basic
+mling proj-init 0.5.0@basic
 nano checklist.toml # Edit
 
 # Run `proj-init` again to deploy
