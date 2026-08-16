@@ -36,30 +36,30 @@ mod tests {
         let hello_with_valid_name = handle_hello(entry!("Peter")).into();
         assert_render_result!(hello_with_valid_name);
         let result_name = unpack_chain_process!(hello_with_valid_name, ResultName);
-        assert_eq!(result_name.inner, "Peter");
+        assert_eq!(result_name.0, "Peter");
     }
 
     #[test]
     fn test_render_result_name() {
-        let r = render_result_name(ResultName::new("Peter".into()));
+        let r = render_result_name(ResultName("Peter".into()));
         assert_eq!(r.to_string().as_str(), "Hello, Peter!")
     }
 
     #[test]
     fn test_render_error_no_name_provided() {
-        let r = render_error_no_name_provided(ErrorNoNameProvided::default());
+        let r = render_error_no_name_provided(ErrorNoNameProvided);
         assert_eq!(r.to_string().as_str(), "No name provided")
     }
 
     #[test]
     fn test_render_error_name_not_available() {
-        let r = render_error_name_not_available(ErrorNameNotAvailable::default());
+        let r = render_error_name_not_available(ErrorNameNotAvailable);
         assert_eq!(r.to_string().as_str(), "Name not available")
     }
 
     #[test]
     fn test_render_error_name_too_long() {
-        let r = render_error_name_too_long(ErrorNameTooLong::new(17));
+        let r = render_error_name_too_long(ErrorNameTooLong(17));
         assert_eq!(r.to_string().as_str(), "Name too long: 17 > 10")
     }
     // --------- IMPORTANT ---------
@@ -67,29 +67,35 @@ mod tests {
 
 dispatcher!("hello", EntryHello);
 
-pack!(ErrorNoNameProvided = ());
-pack!(ErrorNameTooLong = u16);
-pack!(ErrorNameNotAvailable = ());
+#[derive(Grouped)]
+pub struct ErrorNoNameProvided;
 
-pack!(ResultName = String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameTooLong(u16);
+
+#[derive(Grouped)]
+pub struct ErrorNameNotAvailable;
+
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
 
 static VEC_REGISTERED_NAMES: &[&str] = &["Alice", "Bob", "Charlie", "David", "Eve"];
 
 #[chain]
 fn handle_hello(args: EntryHello) -> Next {
-    let Some(name) = args.inner.first().cloned() else {
-        return ErrorNoNameProvided::default().to_render();
+    let Some(name) = args.0.first().cloned() else {
+        return ErrorNoNameProvided.to_render();
     };
 
     if name.len() > 10 {
-        return ErrorNameTooLong::new(name.len() as u16).to_render();
+        return ErrorNameTooLong(name.len() as u16).to_render();
     }
 
     if VEC_REGISTERED_NAMES.contains(&name.as_str()) {
-        return ErrorNameNotAvailable::default().to_render();
+        return ErrorNameNotAvailable.to_render();
     }
 
-    ResultName::new(name).to_render()
+    ResultName(name).to_render()
 }
 
 /// Renders a successful greeting with the given name.
@@ -128,12 +134,7 @@ fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
 #[renderer]
 fn render_entry_fallback(err: EntryFallback) -> RenderResult {
     let mut render_result = RenderResult::new();
-    writeln!(
-        render_result,
-        "Command not found: \"{}\"",
-        err.inner.join(" ")
-    )
-    .ok();
+    writeln!(render_result, "Command not found: \"{}\"", err.0.join(" ")).ok();
     render_result
 }
 

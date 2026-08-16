@@ -41,7 +41,8 @@ async fn main() {
 
 dispatcher!("download", EntryDownload);
 
-pack!(ResultDownloaded = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultDownloaded(String);
 
 // --------- IMPORTANT ---------
 #[chain]
@@ -65,5 +66,5 @@ gen_program!();
 
 async fn fake_download(file_name: String) -> ResultDownloaded {
     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-    ResultDownloaded::new(file_name)
+    ResultDownloaded(file_name)
 }

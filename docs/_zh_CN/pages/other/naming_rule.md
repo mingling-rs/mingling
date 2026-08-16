@@ -94,7 +94,7 @@ Result + 内容
 | `ResultGreetSomeone` | 问候结果     |
 | `ResultFruitList`    | 水果列表结果 |
 
-结果结构体期望被 Renderer 消费，内部结构应该为了渲染美观而设计。一般用 `#[derive(Grouped)]` 代替 `pack!()` 包装，以获得更灵活的字段控制。
+结果结构体期望被 Renderer 消费，内部结构应该为了渲染美观而设计。一般用 `#[derive(Grouped)]` 标注结构体，以获得更灵活的字段控制。
 
 ### 错误
 
@@ -146,7 +146,8 @@ Error + 描述
 | 资源（可变）   | `counter`、`cache`、`session` 等 |
 
 ```rust
-@@@ pack!(EntryRemoteAdd = Vec<String>);
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct EntryRemoteAdd(Vec<String>);
 @@@ #[derive(Default, Clone)]
 @@@ struct ResDatabase {  }
 @@@ #[derive(Default, Clone)]
@@ -168,9 +169,12 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 @@@ #[derive(Default, Clone)]
 @@@ struct ResDatabase {  }
 @@@ impl ResDatabase { fn has_remote(&self, remote: &String) -> bool { true } }
-@@@ pack!(StateOperationRemotes = String);
-@@@ pack!(ResultRemoteAdded = String);
-@@@ pack!(ErrorRepositoryNotFound = String);
+@@@ #[derive(Grouped, Wrap, Default)]
+@@@ pub struct StateOperationRemotes(String);
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ResultRemoteAdded(String);
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ErrorRepositoryNotFound(String);
 // 分发器
 dispatcher!("remote.add", EntryRemoteAdd);
  
@@ -183,23 +187,24 @@ fn handle_remote_add(args: EntryRemoteAdd) -> Next {
 // 状态 → 错误或结果
 #[chain]
 fn handle_state_operation_remotes(state: StateOperationRemotes, db: &ResDatabase) -> Next {
-    if db.has_remote(&state.inner) {
-        ErrorRepositoryNotFound::new(state.inner).to_render()
+    if db.has_remote(&state.0) {
+        ErrorRepositoryNotFound(state.0).to_render()
     } else {
-        ResultRemoteAdded::new(state.inner).to_render()
+        ResultRemoteAdded(state.0).to_render()
     }
 }
  
 // 结果渲染
+ 
 #[renderer(buffer)]
 fn render_remote_added(result: ResultRemoteAdded) {
-    r_println!("Remote added: {}", result.inner);
+    r_println!("Remote added: {}", result.0);
 }
  
 // 错误渲染
 #[renderer(buffer)]
 fn render_error_repository_not_found(err: ErrorRepositoryNotFound) {
-    r_println!("Error: remote '{}' not found", err.inner);
+    r_println!("Error: remote '{}' not found", err.0);
 }
 ```
  

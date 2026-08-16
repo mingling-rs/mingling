@@ -45,7 +45,7 @@ pub fn complete_global(_ctx: &ShellContext) -> Suggest {
 #[renderer]
 pub fn handle_fallback(args: EntryFallback) -> RenderResult {
     let mut r = RenderResult::new();
-    let args = args.inner;
+    let args = args.0;
     if !args.is_empty() {
         eprintln_cargo!(
             r,

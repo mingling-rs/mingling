@@ -32,7 +32,8 @@ fn main() {
 }
 
 // --------- IMPORTANT ---------
-// For beautiful output structure, do not use `pack!` to wrap the types that need to be output.
+// For beautiful output structure, do not wrap the types that need to be output
+// in a newtype; instead, use a named struct.
 // Instead, manually implement
 //        ____________________________________ Mark as structured data so it can be rendered
 //       /                ____________________ Implement serde::Serialize
@@ -48,7 +49,7 @@ struct Info {
 }
 // This will output: {"member_name":"name","member_age":32} structure
 
-// If using pack!(Info = (String, i32));
+// If wrapping with a tuple newtype (e.g. `#[derive(Grouped, Wrap)] pub struct Info((String, i32));`)
 // Output: {"inner":["name", 32]}
 
 // --------- IMPORTANT ---------

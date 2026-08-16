@@ -66,23 +66,24 @@ The `#[chain]` attribute turns a plain function into an execution step. Think of
 ```rust
 dispatcher!("greet", EntryGreet);
 
-pack!(ResultGreeting = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
 
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let greeting = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultGreeting::new(greeting).into()
+    ResultGreeting(greeting).into()
 }
 ```
 
 Key points:
 
 - The return type is `Next` — a type alias for `ChainProcess<ThisProgram>`.
-- You chain results by calling `.to_chain()` on any `pack!`-ed type.
+- You chain results by calling `.to_chain()` on any type defined with `#[derive(Grouped)]`.
 - You can have **multiple chain functions** for the same command, each transforming the data further.
 - With the `async` feature, chain functions can be `async fn`.
 
@@ -93,11 +94,11 @@ Key points:
 The `#[renderer]` attribute turns a function into an output handler. It receives the final result of a chain and returns a `RenderResult`.
 
 ```rust
-use mingling::macros::pack;
 use mingling::prelude::*;
 use std::io::Write;
 
-pack!(ResultGreeting = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
 
 #[renderer]
 fn render_greeting(greeting: ResultGreeting) -> RenderResult {
@@ -132,7 +133,8 @@ Mingling provides a **Picker** for argument extraction. You can use `pick()` or 
 ```rust
 // Features: ["picker"]
 dispatcher!("greet", EntryGreet);
-pack!(ResultGreeting = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
 
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
@@ -140,7 +142,7 @@ fn handle_greet(args: EntryGreet) -> Next {
         .pick(&arg![String])                   // positional argument: first string
         .pick_or(&arg![repeat: u8, 'r'], || 1) // optional flag with default value
         .unwrap();
-    ResultGreeting::new(format!("{} x{}", name, count)).into()
+    ResultGreeting(format!("{} x{}", name, count)).into()
 }
 ```
 
@@ -195,7 +197,8 @@ With the `comp` feature, Mingling provides a fully dynamic completion system. Yo
 use mingling::{macros::suggest, ShellContext, Suggest};
 
 dispatcher!("greet", EntryGreet);
-pack!(ResultName = (u8, String));
+#[derive(Grouped, Wrap)]
+pub struct ResultName((u8, String));
 
 #[completion(EntryGreet)]
 fn complete_greet(ctx: &ShellContext) -> Suggest {
@@ -268,29 +271,34 @@ fn complete_lang(_: &ShellContext) -> Suggest {
 
 ## 7. Error Handling
 
-Mingling doesn't use `?` operator propagation. Instead, errors are just **alternative results** that flow through the same chain/render pipeline. Create error types with `pack!` and route to them with `.to_render()`:
+Mingling doesn't use `?` operator propagation. Instead, errors are just **alternative results** that flow through the same chain/render pipeline. Create error types with `#[derive(Grouped)]` / `#[derive(Grouped, Wrap)]` and route to them with `.to_render()`:
 
 ```rust
-use mingling::macros::pack;
 use mingling::prelude::*;
 use std::io::Write;
 
 dispatcher!("hello", EntryHello);
-pack!(ResultName = String);
-pack!(ErrorNoNameProvided = ());
-pack!(ErrorNameTooLong = u16);
+
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
+
+#[derive(Grouped)]
+pub struct ErrorNoNameProvided;
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameTooLong(u16);
 
 #[chain]
 fn handle(args: EntryHello) -> Next {
-    let Some(name) = args.inner.first().cloned() else {
-        return ErrorNoNameProvided::default().to_render();  // ← early return to error renderer
+    let Some(name) = args.0.first().cloned() else {
+        return ErrorNoNameProvided.to_render();  // ← early return to error renderer
     };
 
     if name.len() > 10 {
-        return ErrorNameTooLong::new(name.len() as u16).to_render();
+        return ErrorNameTooLong(name.len() as u16).to_render();
     }
 
-    ResultName::new(name).to_render()  // ← success path
+    ResultName(name).to_render()  // ← success path
 }
 
 #[renderer]
@@ -633,7 +641,9 @@ use std::io::Write;
 use std::time::Duration;
 
 dispatcher!("download", EntryDownload);
-pack!(ResultDownloaded = String);
+
+#[derive(Grouped, Wrap)]
+pub struct ResultDownloaded(String);
 
 #[chain]
 pub async fn handle_download(args: EntryDownload) -> Next {
@@ -643,7 +653,7 @@ pub async fn handle_download(args: EntryDownload) -> Next {
 
 async fn download_file(name: String) -> ResultDownloaded {
     tokio::time::sleep(Duration::from_secs(1)).await;
-    ResultDownloaded::new(name)
+    ResultDownloaded(name)
 }
 
 #[renderer]
@@ -670,7 +680,7 @@ use mingling::macros::gen_program;
 gen_program!();
 ```
 
-It must be placed **after** all your `dispatcher!`, `pack!`, `#[chain]`, `#[renderer]`, and `#[help]` declarations.
+It must be placed **after** all your `dispatcher!` calls, `#[derive(Grouped, Wrap)]` type definitions, and `#[chain]`, `#[renderer]`, and `#[help]` declarations.
 
 ---
 
@@ -679,7 +689,6 @@ It must be placed **after** all your `dispatcher!`, `pack!`, `#[chain]`, `#[rend
 Here's a complete, runnable program:
 
 ```rust
-use mingling::macros::pack;
 use mingling::prelude::*;
 use std::io::Write;
 
@@ -690,16 +699,17 @@ fn main() {
     program.exec_and_exit();
 }
 
-pack!(ResultGreeting = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
 
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let greeting = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultGreeting::new(greeting).into()
+    ResultGreeting(greeting).into()
 }
 
 #[renderer]

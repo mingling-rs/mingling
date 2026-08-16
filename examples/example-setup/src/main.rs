@@ -55,13 +55,14 @@ fn custom_setup(program: &mut Program<ThisProgram>) {
 
 dispatcher!("greet", EntryGreet);
 
-pack!(ResultGreeting = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
 
 /// Chain: reads the `ResAppName` and `ResAppVersion` resources.
 #[chain]
 fn handle_greet(args: EntryGreet, app: &ResAppName, version: &ResAppVersion) -> Next {
     let who = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());

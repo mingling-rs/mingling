@@ -21,7 +21,7 @@ features = ["structural_renderer"]
 
 ## 基本用法
 
-启用 `StructuralRendererSetup` 后，用 `pack_structural!` 替代 `pack!` 来声明支持结构化输出的类型：
+启用 `StructuralRendererSetup` 后，用 `#[derive(StructuralData)]`（搭配 `serde::Serialize`、`Grouped` 和 `Wrap`）来声明支持结构化输出的类型：
 
 ```rust
 // Features: ["structural_renderer"]
@@ -29,16 +29,18 @@ features = ["structural_renderer"]
 // serde = "1"
 @@@use mingling::macros::buffer;
 @@@use mingling::setup::StructuralRendererSetup;
+@@@use mingling::StructuralData;
 @@@dispatcher!("render", EntryRender);
  
-// pack_structural! 等价于 pack! + StructuralData
-pack_structural!(ResultInfo = (String, i32));
+// #[derive(Grouped, Wrap)] + StructuralData + serde::Serialize 等价于旧版的 pack_structural!
+#[derive(serde::Serialize, StructuralData, Grouped, Wrap)]
+pub struct ResultInfo((String, i32));
  
 #[chain]
 fn handle_render(args: EntryRender) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
-    let age = args.inner.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
-    ResultInfo::new((name, age)).into()
+    let name = args.0.first().cloned().unwrap_or_default();
+    let age = args.0.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+    ResultInfo((name, age)).into()
 }
  
 #[renderer(buffer)]
@@ -61,7 +63,7 @@ fn render_info(r: ResultInfo) {
 
 ## 自定义输出结构
 
-`pack_structural!` 的默认输出包含 `inner` 字段。要完全控制输出结构，可以用 `#[derive(StructuralData, Serialize, Grouped)]` 手动定义类型：
+用 `#[derive(Grouped, Wrap)]` 包装的元组结构体默认输出包含 `inner` 字段。要完全控制输出结构，可以用 `#[derive(StructuralData, Serialize, Grouped)]` 手动定义类型：
 
 ```rust
 // Features: ["structural_renderer"]
@@ -82,8 +84,8 @@ struct Info {
  
 #[chain]
 fn handle_render(args: EntryRender) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
-    let age = args.inner.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+    let name = args.0.first().cloned().unwrap_or_default();
+    let age = args.0.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
     Info { name, age }.to_render()
 }
  

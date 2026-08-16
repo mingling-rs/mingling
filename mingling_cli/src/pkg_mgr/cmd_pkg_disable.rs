@@ -1,8 +1,8 @@
 use std::{fs, io};
 
 use mingling::{
-    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
+    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
+    macros::{arg, chain, command, completion, metadata, renderer, routeify},
     metadata::Description,
     picker::{EntryPicker, PickerArg},
 };
@@ -18,10 +18,12 @@ use crate::{
 /// Positional argument: package name
 pub static ARG_NAME: PickerArg<String> = arg![String];
 
-pack_err!(ErrorPackageNotEnabled = String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorPackageNotEnabled(String);
 
 // The name of the package to disable
-pack!(StatePkgDisable = String);
+#[derive(Grouped, Wrap)]
+pub struct StatePkgDisable(String);
 
 #[derive(Debug, Default, Grouped)]
 pub struct ResultPkgDisable {
@@ -37,30 +39,30 @@ pub fn desc_pkg_disable() -> Description {
 #[command(node = "pkg-disable", routeify)]
 pub fn package_disable(args: EntryPkgDisable, packages_dir: &ResPackagesDir) -> Next {
     let name = args
-        .pick_or_route(&ARG_NAME, || ErrorPackageNameRequired::default().to_chain())
+        .pick_or_route(&ARG_NAME, || ErrorPackageNameRequired.to_chain())
         .to_result()?;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
     if name.contains('/') || name.contains('\\') || name.contains("..") || name.contains('@') {
-        return ErrorPackageSpecInvalid::new(name).to_chain();
+        return ErrorPackageSpecInvalid(name).to_chain();
     }
 
-    StatePkgDisable::new(name).to_chain()
+    StatePkgDisable(name).to_chain()
 }
 
 #[chain(routeify)]
 pub fn handle_state_pkg_disable(p: StatePkgDisable, packages_dir: &ResPackagesDir) -> Next {
-    let name = p.inner;
+    let name = p.0;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
 
     let file = packages_dir.join(&name);
     if !file.is_file() {
-        return ErrorPackageNotEnabled::new(name).to_chain();
+        return ErrorPackageNotEnabled(name).to_chain();
     }
     fs::remove_file(&file).map_err(|e| {
         io::Error::new(
@@ -86,7 +88,7 @@ pub fn render_result_pkg_disable(result: ResultPkgDisable) -> RenderResult {
 #[renderer]
 pub fn render_error_package_not_enabled(err: ErrorPackageNotEnabled) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "package is not enabled: {}", err.info);
+    eprintln_cargo!(r, "package is not enabled: {}", err.0);
     r
 }
 

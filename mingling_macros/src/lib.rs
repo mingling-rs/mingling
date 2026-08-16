@@ -34,15 +34,13 @@ use attr::dispatcher_clap;
 use attr::program_setup;
 use attr::{chain, help, metadata, renderer};
 use derive::{enum_tag, grouped, wrap};
+use func::dispatcher;
 #[cfg(feature = "extras")]
 use func::entry;
 #[cfg(feature = "extras")]
 pub(crate) use func::group as group_impl;
-#[cfg(feature = "extras")]
-use func::pack_err;
 #[cfg(feature = "comp")]
 use func::suggest;
-use func::{dispatcher, pack};
 use systems::res_injection;
 pub(crate) fn default_program_path() -> proc_macro2::TokenStream {
     quote::quote! { crate::ThisProgram }
@@ -60,7 +58,7 @@ pub(crate) type Registry = OnceLock<Mutex<BTreeSet<String>>>;
 pub(crate) static STRUCTURAL_RENDERERS: Registry = OnceLock::new();
 
 /// Types explicitly marked with `#[derive(StructuralData)]` or created via
-/// `pack_structural!` / `group_structural!`.
+/// `group_structural!`.
 #[cfg(feature = "structural_renderer")]
 pub(crate) static STRUCTURED_TYPES: Registry = OnceLock::new();
 
@@ -181,163 +179,6 @@ pub fn group(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn group_structural(input: TokenStream) -> TokenStream {
     func::group_structural::group_structural(input)
-}
-
-/// Creates a type-safe wrapper struct around an inner type, with automatic
-/// trait implementations for use in the Mingling chain/render pipeline.
-///
-/// The generated struct implements: `From`/`Into`, `AsRef`/`AsMut`, `Deref`/`DerefMut`,
-/// `Default` (conditional on inner type), and conversion into `AnyOutput` /
-/// `ChainProcess` for routing.
-///
-/// # Syntax
-///
-/// ```rust,ignore
-/// // Default program name (uses `ThisProgram`):
-/// pack!(TypeName = InnerType);
-///
-/// // Explicit program name:
-/// pack!(MyProgram, TypeName = InnerType);
-/// ```
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use mingling::macros::pack;
-///
-/// // Creates `Hello` wrapping `String`, registered under `ThisProgram`:
-/// pack!(Hello = String);
-///
-/// // Creates `Greeting` wrapping `String`, registered under `MyApp`:
-/// pack!(MyApp, Greeting = String);
-/// ```
-///
-/// After expansion, `Hello` has:
-/// - `Hello::new(String)` — constructor
-/// - `Hello::to_chain()` — routes to the next chain processor
-/// - `Hello::to_render()` — routes to a renderer
-/// - `From<String> for Hello`, `From<Hello> for String`
-/// - `Deref<Target = String>`, `DerefMut`
-/// - `AsRef<String>`, `AsMut<String>`
-/// - `Default` if `String: Default`
-/// - `Into<AnyOutput<ThisProgram>>`, `Into<ChainProcess<ThisProgram>>`
-/// - Implements `Grouped<ThisProgram>` with `member_id()` returning the enum variant
-///
-/// The struct is also registered via `register_type!` so that `gen_program!`
-/// can include it in the program enum.
-///
-/// When the `structural_renderer` feature is enabled, the struct also gets
-/// `#[derive(serde::Serialize)]`.
-#[proc_macro]
-pub fn pack(input: TokenStream) -> TokenStream {
-    pack::pack(input)
-}
-
-/// Like `pack!` but also marks the type as supporting structured output
-/// (JSON / YAML / TOML / RON) via `StructuralData`.
-///
-/// # Syntax
-///
-/// ```rust,ignore
-/// pack_structural!(Info = (String, i32));
-/// ```
-///
-/// This is equivalent to:
-/// ```rust,ignore
-/// pack!(Info = (String, i32));
-/// impl ::mingling::StructuralData for Info {}
-/// ```
-///
-/// Requires the `structural_renderer` feature.
-#[cfg(feature = "structural_renderer")]
-#[proc_macro]
-pub fn pack_structural(input: TokenStream) -> TokenStream {
-    func::pack_structural::pack_structural(input)
-}
-
-/// Creates an error struct with a `name: String` field and optional `info: Type` field.
-///
-/// This macro provides a concise way to define error types that implement `Grouped`
-/// and are registered for inclusion in the program enum.
-///
-/// The `name` field is automatically set to the `snake_case` version of the struct name
-/// at compile time.
-///
-/// # Syntax
-///
-/// Two forms are supported:
-///
-/// ```rust,ignore
-/// // Simple form — generates a struct with only `name: String` and a `Default` impl:
-/// pack_err!(ErrorNotFound);
-///
-/// // Typed form — generates a struct with `name: String` + `info: Type` and a `new(info)` constructor:
-/// pack_err!(ErrorNotDir = PathBuf);
-/// ```
-///
-/// # Generated code
-///
-/// For `pack_err!(ErrorNotFound)`:
-///
-/// ```rust,ignore
-/// #[derive(::mingling::Grouped)]
-/// pub struct ErrorNotFound {
-///     name: String,
-/// }
-///
-/// impl Default for ErrorNotFound {
-///     fn default() -> Self {
-///         Self {
-///             name: "error_not_found".into(),
-///         }
-///     }
-/// }
-/// ```
-///
-/// For `pack_err!(ErrorNotDir = PathBuf)`:
-///
-/// ```rust,ignore
-/// #[derive(::mingling::Grouped)]
-/// pub struct ErrorNotDir {
-///     name: String,
-///     info: PathBuf,
-/// }
-///
-/// impl ErrorNotDir {
-///     pub fn new(info: PathBuf) -> Self {
-///         Self {
-///             name: "error_not_dir".into(),
-///             info,
-///         }
-///     }
-/// }
-/// ```
-///
-/// When the `structural_renderer` feature is enabled, the struct also gets
-/// `#[derive(serde::Serialize)]`.
-///
-/// This macro is only available with the `extras` feature.
-#[cfg(feature = "extras")]
-#[proc_macro]
-pub fn pack_err(input: TokenStream) -> TokenStream {
-    pack_err::pack_err(input)
-}
-
-/// Like `pack_err!` but also marks the type for structured output
-/// (JSON / YAML / TOML / RON) via `StructuralData`.
-///
-/// # Syntax
-///
-/// ```rust,ignore
-/// pack_err_structural!(ErrorNotFound);
-/// pack_err_structural!(ErrorNotDir = PathBuf);
-/// ```
-///
-/// Requires the `structural_renderer` and `extras` features.
-#[cfg(all(feature = "structural_renderer", feature = "extras"))]
-#[proc_macro]
-pub fn pack_err_structural(input: TokenStream) -> TokenStream {
-    func::pack_err_structural::pack_err_structural(input)
 }
 
 /// Early-returns the error from a `Result`, converting the `Ok` branch to the
@@ -555,7 +396,7 @@ pub fn empty_result(input: TokenStream) -> TokenStream {
 ///
 /// The macro generates:
 ///
-/// 1. **Entry struct** — A `pack!`-style wrapper around `Vec<String>` (the raw args).
+/// 1. **Entry struct** — A newtype wrapper around `Vec<String>` (the raw args).
 ///    Registered in the program enum via `register_type!`.
 /// 2. **Dispatcher struct** — A hidden zero-sized struct implementing [`Dispatcher<Program>`]:
 ///    - `begin(args)` wraps `args` into the entry type and routes to chain.
@@ -664,78 +505,89 @@ pub fn dispatcher(input: TokenStream) -> TokenStream {
 /// # Sync Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{chain, pack, gen_program};
+/// use mingling::macros::{chain, gen_program};
+/// use mingling::{Grouped, Wrap};
 ///
-/// pack!(MyOutput = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct MyOutput(String);
 ///
 /// #[chain]
 /// fn greet(prev: HelloEntry) -> Next {
 ///     let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
-///     MyOutput::new(name)
+///     MyOutput(name)
 /// }
 /// ```
 ///
 /// # Sync Example with Resource Injection
 ///
 /// ```rust,ignore
-/// use mingling::macros::{chain, pack, gen_program};
+/// use mingling::macros::{chain, gen_program};
+/// use mingling::{Grouped, Wrap};
 ///
 /// #[derive(Default, Clone)]
 /// struct UserName(String);
 ///
-/// pack!(Greeting = String);
-/// pack!(DisplayCount = ());
+/// #[derive(Grouped, Wrap)]
+/// pub struct Greeting(String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct DisplayCount(());
 ///
 /// #[chain]
 /// fn greet(prev: HelloEntry, user_name: &UserName, count: &mut u64) -> Next {
 ///     *count += 1;
-///     Greeting::new(format!("Hello, {}!", user_name.0))
+///     Greeting(format!("Hello, {}!", user_name.0))
 /// }
 /// ```
 ///
 /// # Async Example (with `async` feature)
 ///
 /// ```rust,ignore
-/// use mingling::macros::{chain, pack, gen_program};
+/// use mingling::macros::{chain, gen_program};
+/// use mingling::{Grouped, Wrap};
 ///
-/// pack!(MyOutput = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct MyOutput(String);
 ///
 /// #[chain]
 /// async fn greet(prev: HelloEntry) -> Next {
 ///     let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
 ///     some_async_fn(&name).await;
-///     MyOutput::new(name)
+///     MyOutput(name)
 /// }
 /// ```
 ///
 /// # Async Example with Immutable Resource Injection
 ///
 /// ```rust,ignore
-/// use mingling::macros::{chain, pack, gen_program};
+/// use mingling::macros::{chain, gen_program};
+/// use mingling::{Grouped, Wrap};
 ///
-/// pack!(MyOutput = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct MyOutput(String);
 ///
 /// #[chain]
 /// async fn greet(prev: HelloEntry, prefix: &Prefix) -> Next {
 ///     let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
 ///     some_async_fn(&name).await;
-///     MyOutput::new(format!("{}{}", prefix.0, name))
+///     MyOutput(format!("{}{}", prefix.0, name))
 /// }
 /// ```
 ///
 /// # Async Example with Mutable Resource Injection
 ///
 /// ```rust,ignore
-/// use mingling::macros::{chain, pack, gen_program};
+/// use mingling::macros::{chain, gen_program};
+/// use mingling::{Grouped, Wrap};
 ///
-/// pack!(MyOutput = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct MyOutput(String);
 ///
 /// #[chain]
 /// async fn greet(prev: HelloEntry, ec: &mut ResExitCode) -> Next {
 ///     let name = prev.first().cloned().unwrap_or_else(|| "World".to_string());
 ///     ec.exit_code = 42;
 ///     some_async_fn(&name).await;
-///     MyOutput::new(name)
+///     MyOutput(name)
 /// }
 /// ```
 ///
@@ -777,10 +629,12 @@ pub fn chain(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{renderer, pack, gen_program};
+/// use mingling::macros::{renderer, gen_program};
+/// use mingling::{Grouped, Wrap};
 /// use std::io::Write;
 ///
-/// pack!(Greeting = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct Greeting(String);
 ///
 /// #[renderer]
 /// fn render_greeting(prev: Greeting) -> RenderResult {
@@ -1063,7 +917,7 @@ pub fn dispatcher_clap(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// Creates a packed entry value from a list of string literals.
 ///
 /// This is a convenience macro for constructing entry wrapper types (created
-/// via `pack!` or `dispatcher!`) with test data, typically used in unit tests
+/// via `dispatcher!`) with test data, typically used in unit tests
 /// or quick prototypes.
 ///
 /// # Syntax
@@ -1071,9 +925,9 @@ pub fn dispatcher_clap(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// Two forms:
 ///
 /// ```rust,ignore
-/// // Named form — wraps into a specific pack type:
+/// // Named form — wraps into a specific entry type:
 /// entry!(MyEntry, ["a", "b", "c"])
-/// // Expands to: MyEntry::new(vec!["a".to_string(), "b".to_string(), "c".to_string()])
+/// // Expands to: MyEntry(vec!["a".to_string(), "b".to_string(), "c".to_string()])
 ///
 /// // Bracket form — returns Vec<String>.into() for type inference:
 /// entry!["a", "b", "c"]
@@ -1085,7 +939,7 @@ pub fn dispatcher_clap(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// ```rust,ignore
 /// use mingling::macros::entry;
 ///
-/// // Named form (with a specific pack type):
+/// // Named form (with a specific entry type):
 /// let args = entry!(MyEntry, ["--name", "Alice", "--count", "5"]);
 ///
 /// // Bracket form (type inference):
@@ -1094,8 +948,7 @@ pub fn dispatcher_clap(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # See also
 ///
-/// - `pack!` — For creating the wrapper types used with `entry!`.
-/// - `dispatcher!` — Which implicitly creates entry types via `pack!`.
+/// - `dispatcher!` — Which implicitly creates entry types.
 #[cfg(feature = "extras")]
 #[proc_macro]
 pub fn entry(input: TokenStream) -> TokenStream {
@@ -1204,11 +1057,12 @@ pub fn register_dispatcher(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{help, pack, gen_program};
+/// use mingling::macros::{help, gen_program};
 /// use mingling::{prelude::*, setup::BasicProgramSetup, RenderResult};
 /// use std::io::Write;
 ///
-/// pack!(MyEntry = Vec<String>);
+/// #[derive(Grouped, Wrap)]
+/// pub struct MyEntry(Vec<String>);
 ///
 /// #[help]
 /// fn help_my_entry(prev: MyEntry) -> RenderResult {
@@ -1620,8 +1474,8 @@ pub fn derive_wrap(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 ///
-/// This is equivalent to using `pack!` but works with custom structs that
-/// have named fields. For simple wrappers, prefer `pack!`.
+/// This is equivalent to using `#[derive(Grouped)]` but works with custom structs that
+/// have named fields.
 #[proc_macro_derive(Grouped, attributes(group))]
 pub fn derive_grouped(input: TokenStream) -> TokenStream {
     grouped::derive_grouped(input)
@@ -1813,7 +1667,7 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
 /// Registers a type into the global packed types registry for inclusion in
 /// the program enum generated by `gen_program!`.
 ///
-/// This macro is called internally by `pack!` and `#[derive(Grouped)]`(`macro.derive_grouped.html`)
+/// This macro is called internally by `#[derive(Grouped)]` (`macro.derive_grouped.html`)
 /// and is generally not needed in user code. However, it can be used for manual
 /// registration if you are implementing custom type registration outside of
 /// the standard macros.
@@ -1885,7 +1739,7 @@ pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
 /// and its `ProgramCollect` implementation.
 ///
 /// This is the core code generation macro that:
-/// 1. Collects all registered types (from `pack!`, `#[derive(Grouped)]`, etc.) and
+/// 1. Collects all registered types (from `#[derive(Grouped)]`, etc.) and
 ///    creates an enum with each type as a variant.
 /// 2. Generates the `Display` implementation for the enum.
 /// 3. Generates the `ProgramCollect` implementation that dispatches to all

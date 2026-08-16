@@ -3,7 +3,7 @@
     Declare a renderer using the <code>#[renderer]</code> macro to output results.
 </p>
 
-Now we've created a Dispatcher and a Chain, and produced a Result type via `pack!`. The final step: **present the result to the user**.
+Now we've created a Dispatcher and a Chain, and produced a Result type via `#[derive(Grouped, Wrap)]`. The final step: **present the result to the user**.
 
 ## The `#[renderer]` Macro
 
@@ -11,7 +11,8 @@ Similar to `#[chain]`, `#[renderer]` marks a function that produces output:
 
 ```rust
 @@@use mingling::macros::buffer;
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 #[renderer(buffer)]
 fn render_name(name: ResultName) {
     r_println!("Hello, {}!", *name);
@@ -27,7 +28,8 @@ If you find explicitly creating and returning a `RenderResult` too verbose, you 
 ```rust
 use mingling::macros::buffer;
  
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 #[renderer(buffer)]
 fn render_name(name: ResultName) {
     r_println!("Hello, {}!", *name);
@@ -54,17 +56,18 @@ use mingling::macros::buffer;
 // 1. Declare commands with a Dispatcher
 dispatcher!("greet", EntryGreet);
  
-// 2. Declare result data with pack!
-pack!(ResultName = String);
+// 2. Declare result data with #[derive(Grouped, Wrap)]
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
  
 // 3. Handle logic with a Chain
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner
+    let name = args.0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
  
 // 4. Output results with a Renderer
@@ -122,10 +125,10 @@ use mingling::macros::buffer;
  
 #[renderer(buffer)]
 fn render_entry_fallback(err: EntryFallback) {
-    if err.inner.is_empty() {
+    if err.0.is_empty() {
         r_println!("Unknown command");
     } else {
-        r_println!("Command not found: \"{}\"", err.inner.join(" "));
+        r_println!("Command not found: \"{}\"", err.0.join(" "));
     }
 }
 ```
@@ -144,13 +147,13 @@ Command not found: "great"
 
 You've completed your first full Mingling program! Let's recap what you've learned:
 
-| Concept        | Macro / Function | One-liner                               |
-| -------------- | ---------------- | --------------------------------------- |
-| Declare cmds   | `dispatcher!`    | Tell the program what the user can type |
-| Handle logic   | `#[chain]`       | What to do when args are received       |
-| Output results | `#[renderer]`    | How to present results to the user      |
-| Type wrapping  | `pack!`          | Give your data a meaningful name        |
-| Program entry  | `gen_program!()` | Auto-generate the pipeline wiring       |
+| Concept        | Macro / Function           | One-liner                               |
+| -------------- | -------------------------- | --------------------------------------- |
+| Declare cmds   | `dispatcher!`              | Tell the program what the user can type |
+| Handle logic   | `#[chain]`                 | What to do when args are received       |
+| Output results | `#[renderer]`              | How to present results to the user      |
+| Type wrapping  | `#[derive(Grouped, Wrap)]` | Give your data a meaningful name        |
+| Program entry  | `gen_program!()`           | Auto-generate the pipeline wiring       |
 
 In real projects you'll also use advanced features like resource injection, hooks, completions, REPL, etc., but the core skeleton stays the same: **Dispatcher → Chain → Renderer**.
 

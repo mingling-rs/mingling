@@ -4,7 +4,7 @@
 //!
 //! It provides a pluggable architecture via the `AnalyzePattern` trait, allowing different
 //! syntactic patterns to be registered and applied. Built-in patterns cover common structures
-//! such as basic structs, packs, groups, derives, chains, renderers, help, completion, and
+//! such as basic structs, groups, derives, chains, renderers, help, completion, and
 //! dispatch patterns (both standard and clap-based).
 //!
 //! The entry points are:
@@ -18,14 +18,13 @@ use std::path::Path;
 use crate::error::MinglingPathfinderError;
 use crate::patterns::{
     ChainPattern, CommandPattern, CompletionPattern, DispatcherClapPattern, DispatcherPattern,
-    GroupPattern, GroupedDerivePattern, HelpPattern, MetadataPattern, PackPattern, RendererPattern,
+    GroupPattern, GroupedDerivePattern, HelpPattern, MetadataPattern, RendererPattern,
 };
 
 /// Creates a default `PatternAnalyzer` with all built-in patterns pre-registered.
 #[must_use]
 pub fn init() -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
-    analyzer.add_pattern(PackPattern);
     analyzer.add_pattern(GroupPattern);
     analyzer.add_pattern(GroupedDerivePattern);
     analyzer.add_pattern(ChainPattern);

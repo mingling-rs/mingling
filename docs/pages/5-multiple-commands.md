@@ -15,19 +15,21 @@ Work in the same project:
 dispatcher!("greet", EntryGreet);
 dispatcher!("add",   EntryAdd);
  
-pack!(ResultGreeting = String);
-pack!(ResultSum = i32);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
+#[derive(Grouped, Wrap)]
+pub struct ResultSum(i32);
  
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_else(|| "World".to_string());
-    ResultGreeting::new(name).into()
+    let name = args.0.first().cloned().unwrap_or_else(|| "World".to_string());
+    ResultGreeting(name).into()
 }
  
 #[chain]
 fn handle_add(args: EntryAdd) -> Next {
-    let sum: i32 = args.inner.iter().filter_map(|s| s.parse::<i32>().ok()).sum();
-    ResultSum::new(sum).into()
+    let sum: i32 = args.0.iter().filter_map(|s| s.parse::<i32>().ok()).sum();
+    ResultSum(sum).into()
 }
  
 #[renderer(buffer)]
@@ -70,10 +72,10 @@ Each subcommand's Entry, Chain, and Renderer are completely independent and don'
 
 ## Type Independence
 
-Notice we used two different `pack!` macros:
+Notice we used two different `#[derive(Grouped, Wrap)]` structs:
 
-- `pack!(ResultGreeting = String)`
-- `pack!(ResultSum = i32)`
+- `#[derive(Grouped, Wrap)] pub struct ResultGreeting(String);`
+- `#[derive(Grouped, Wrap)] pub struct ResultSum(i32);`
 
 They are independent types, and `gen_program!()` assigns them different enum variants.
 

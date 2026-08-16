@@ -9,13 +9,6 @@ pub(crate) mod gen_program;
 pub(crate) mod group;
 #[cfg(all(feature = "structural_renderer", feature = "extras"))]
 pub(crate) mod group_structural;
-pub(crate) mod pack;
-#[cfg(feature = "extras")]
-pub(crate) mod pack_err;
-#[cfg(all(feature = "structural_renderer", feature = "extras"))]
-pub(crate) mod pack_err_structural;
-#[cfg(feature = "structural_renderer")]
-pub(crate) mod pack_structural;
 #[cfg(feature = "comp")]
 pub(crate) mod program_comp_gen;
 pub(crate) mod program_fallback_gen;

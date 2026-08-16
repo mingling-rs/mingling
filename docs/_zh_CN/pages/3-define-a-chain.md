@@ -17,14 +17,15 @@
 
 ```rust
 @@@dispatcher!("greet", EntryGreet);
-pack!(ResultName = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
  
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     // args 就是用户输入经过匹配后剩下的参数
-    let name = args.inner.first().cloned().unwrap_or_else(|| "World".to_string());
+    let name = args.0.first().cloned().unwrap_or_else(|| "World".to_string());
     // 把结果包装成 Next，告诉调度器下一步去哪
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
 ```
  
@@ -32,7 +33,7 @@ fn handle_greet(args: EntryGreet) -> Next {
 
 Chain 函数签名里写着它需要什么——`args: EntryGreet`
 
-然后用 `ResultName::new(name)` 返回一个新类型。
+然后用 `ResultName(name)` 返回一个新类型。
 
 这个返回的 `Next` 会展开成 `impl Into<ChainProcess<ThisProgram>>`。
 
@@ -41,17 +42,30 @@ Chain 函数签名里写着它需要什么——`args: EntryGreet`
 >
 > 可以去 [任意输出机制](pages/concepts/3-any-output) 章节了解 `ChainProcess`。
 
-## `pack!` 宏
+## 用 `#[derive]` 定义管线类型
 
-你大概猜到了，`pack!(ResultName = String)` 定义了一个管线中传递的类型：
+你大概猜到了，`#[derive(Grouped, Wrap)] pub struct ResultName(String);` 定义了一个管线中传递的类型：
 
 ```rust
-// pack!(ResultName = String) 大概生成了这样的代码
+// 实际写代码时只需一行 #[derive(Grouped, Wrap)]，它大概展开成下面这些实现：
  
-#[derive(Grouped)]
-pub struct ResultName {
-    pub inner: String,
+pub struct ResultName(String);
+ 
+impl From<String> for ResultName {
+    fn from(inner: String) -> Self {
+        ResultName(inner)
+    }
 }
+ 
+impl std::ops::Deref for ResultName {
+    type Target = String;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+ 
+// Grouped 生成 member_id() → ThisProgram::ResultName，
+// 赋予类型路由身份和 Into<ChainProcess> 转换。
 ```
  
 你可以把它理解为一个 打了标签的 `String`。
@@ -59,7 +73,7 @@ pub struct ResultName {
 调度器通过这个标签来精确路由，确保数据不会混淆 —— 比如发给 `RenderGreet` 的数据不会被误传给 `RenderError`。
 
 > [!NOTE]
-> 与简单的类型别名 (`type`) 不同，`pack!` 会生成一个全新的类型，拥有独立的 `TypeId`。
+> 与简单的类型别名 (`type`) 不同，`#[derive(Grouped, Wrap)]` 会定义一个全新的类型，拥有独立的 `TypeId`。
 
 命名上推荐这样的习惯：
 
@@ -70,25 +84,26 @@ pub struct ResultName {
 | 最终结果 | `Result` + 描述  | `ResultGreetSomeone` |
 | 错误     | `Error` + 描述   | `ErrorUserNotFound`  |
 
-详见 [命名规范](pages/other/naming_rule)，不过现在你只需要记住：**用 `pack!` 给你的数据取一个有意义的名字**。
+详见 [命名规范](pages/other/naming_rule)，不过现在你只需要记住：**用 `#[derive(Grouped)]`（可搭配 `Wrap`）给你的数据取一个有意义的名字**。
 
 ## 从 Entry 中提取参数
 
-`EntryGreet` 的 `inner` 是一个 `Vec<String>`，你可以在 Chain 里自由地处理它：
+`EntryGreet` 包裹的 `Vec<String>`（即字段 `0`）你可以在 Chain 里自由地处理它：
 
 ```rust
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     // 取第一个参数，没有就用默认值
     let name = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
  
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
 ```
  
@@ -103,16 +118,17 @@ fn handle_greet(args: EntryGreet) -> Next {
 dispatcher!("greet", EntryGreet);
  
 // 2. 声明管线中的数据类型
-pack!(ResultName = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
  
 // 3. 处理逻辑
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner
+    let name = args.0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
  
 fn main() {

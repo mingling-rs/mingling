@@ -80,11 +80,12 @@ features = ["build_full"]
 ```rust
 // Features: ["async"]
  
-pack!(StateFoo = ());
+#[derive(Grouped, Wrap)]
+pub struct StateFoo(());
  
 #[chain]
 async fn handle_state_foo(foo: StateFoo) -> Next {
-    StateFoo::new(()).into()
+    StateFoo(()).into()
 }
 ```
  
@@ -151,14 +152,13 @@ build_comp_scripts("myprogram").unwrap();
 
 例如，允许 `dispatcher!("greet")` 的缩写形式，自动生成 `CMDGreet` / `EntryGreet`。
 
-| 宏                                                      | 说明                                   |
-| ------------------------------------------------------- | -------------------------------------- |
-| `empty_result!()`                                       | 链中提前返回空结果的简写               |
-| `entry!(Type, ["a", "b"])`                              | 构造入口类型的测试数据                 |
-| `group!(Type)`                                          | 将外部类型注册为组成员，无需修改其定义 |
-| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | 创建带自动 `name` 字段的错误类型       |
-| `#[program_setup]`                                      | 声明程序初始化函数                     |
-| `dispatcher!("cmd.path")` **缩写形式**                  | 省略 `EntryStruct`，入口类型名自动推导 |
+| 宏                                     | 说明                                   |
+| -------------------------------------- | -------------------------------------- |
+| `empty_result!()`                      | 链中提前返回空结果的简写               |
+| `entry!(Type, ["a", "b"])`             | 构造入口类型的测试数据                 |
+| `group!(Type)`                         | 将外部类型注册为组成员，无需修改其定义 |
+| `#[program_setup]`                     | 声明程序初始化函数                     |
+| `dispatcher!("cmd.path")` **缩写形式** | 省略 `EntryStruct`，入口类型名自动推导 |
 
 <details>
 <summary> Details </summary>
@@ -168,10 +168,13 @@ build_comp_scripts("myprogram").unwrap();
 ```rust
 // Features: ["extras"]
  
-pack!(StatePrev1 = ());
-pack!(StatePrev2 = ());
+#[derive(Grouped, Wrap)]
+pub struct StatePrev1(());
+#[derive(Grouped, Wrap)]
+pub struct StatePrev2(());
  
-pack!(StateNext = ());
+#[derive(Grouped, Wrap)]
+pub struct StateNext(());
  
 #[chain]
 fn handle_state_prev2(_p: StatePrev2) {
@@ -186,7 +189,7 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
         // 当需要 Next 且不需要返回值，便可以使用它
         empty_result!()
     } else {
-        StateNext::new(()).into()
+        StateNext(()).into()
     }
 }
 ```
@@ -217,7 +220,8 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
 // Features: ["extras"]
 use mingling::macros::entry;
  
-pack!(EntryHello = Vec<String>);
+#[derive(Grouped, Wrap)]
+pub struct EntryHello(Vec<String>);
  
 fn main() {
     let result: Next = handle_hello(entry!("--name", "Bob")).into();
@@ -231,7 +235,7 @@ fn handle_hello(args: EntryHello) {}
 ### `group!`
 
 将外部类型注册为程序组成员，无需修改原始类型的定义。
-类型名会直接作为枚举变体，与 `pack!` 或 `#[derive(Grouped)]` 一致。
+类型名会直接作为枚举变体，与 `#[derive(Grouped)]` 一致。
 
 ```rust
 // Features: ["extras"]
@@ -243,26 +247,23 @@ use std::num::ParseIntError;
 group!(std::num::ParseIntError);
 ```
  
-### `pack_err!`
+### 定义错误类型
 
-创建带自动 `name: String` 字段的错误结构体，字段值自动设为结构体名的蛇形命名。
-可选择包裹一个内部类型以携带额外上下文。
+0.5.0 起 `pack_err!` 已移除，错误类型直接用 derive 声明：
+不携带额外上下文时用 `#[derive(Grouped, Default)]`（仅作标记），或
+用 `#[derive(Grouped, Wrap)]` 包裹一个内部类型以携带上下文。
 
 ```rust
 // Features: ["extras"]
 use std::path::PathBuf;
  
-// 简单形式——仅包含 name 字段：
-pack_err!(ErrorNotFound);
-// 生成：
-//   struct ErrorNotFound { pub name: String }
-//   impl Default for ErrorNotFound { ... }
+// 简单形式——只作为标记使用：
+#[derive(Grouped, Default)]
+pub struct ErrorNotFound;
  
-// 带类型的形式——包含额外的 info 字段：
-pack_err!(ErrorNotDir = PathBuf);
-// 生成：
-//   struct ErrorNotDir { pub name: String, pub info: PathBuf }
-//   impl ErrorNotDir { pub fn new(info: PathBuf) -> Self { ... } }
+// 带类型的形式——包裹一个内部类型以携带上下文：
+#[derive(Grouped, Wrap)]
+pub struct ErrorNotDir(PathBuf);
 ```
  
 </details>

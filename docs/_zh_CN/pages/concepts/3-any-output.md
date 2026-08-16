@@ -20,7 +20,7 @@ AnyOutput<G>
  
 这里的 `G` 就是 `gen_program!()` 生成的程序枚举（也就是你熟知的 `ThisProgram`）。
 
-每个被 `pack!` 或 `#[derive(Grouped)]` 标记的类型都被分配到这个枚举的一个变体。
+每个被 `#[derive(Grouped)]`（可搭配 `Wrap`）标记的类型都被分配到这个枚举的一个变体。
 
 ## ChainProcess：数据 + 路由
 
@@ -48,7 +48,7 @@ trait Grouped<G> {
 }
 ```
  
-当你用 `pack!(ResultName = String)` 时，宏自动为 `ResultName` 实现 `Grouped`，`member_id()` 返回枚举中对应的变体。调度器一看 `member_id`，就去找对应的 Chain 或 Renderer。
+当你用 `#[derive(Grouped, Wrap)] pub struct ResultName(String);` 时，派生宏自动为 `ResultName` 实现 `Grouped`，`member_id()` 返回枚举中对应的变体。调度器一看 `member_id`，就去找对应的 Chain 或 Renderer。
 
 `to_chain()` 和 `to_render()` 本质上是 `AnyOutput` 的快捷方法，分别构造 `ChainProcess::Ok(any, Chain)` 和 `ChainProcess::Ok(any, Renderer)`。
 
@@ -66,7 +66,7 @@ trait Grouped<G> {
 > [!TIP]
 > 日常开发中你不需要手动操作 `AnyOutput` 或 `ChainProcess`。
 >
-> `pack!`、`#[chain]`、`#[renderer]` 这些宏帮你处理了所有的包装和解包。
+> `#[derive(Grouped)]`、`#[chain]`、`#[renderer]` 这些宏帮你处理了所有的包装和解包。
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass

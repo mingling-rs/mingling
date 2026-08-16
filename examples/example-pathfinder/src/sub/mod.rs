@@ -3,12 +3,14 @@ use mingling::prelude::*;
 use std::io::Write;
 
 dispatcher!("greet", EntryGreet);
-pack!(ResultName = String);
+
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
 
 #[chain]
 pub fn handle_greet(args: EntryGreet) -> Next {
     let name: ResultName = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string())

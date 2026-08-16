@@ -48,17 +48,15 @@ dispatcher!("remote.rm",  EntryRemoteRm);
 
 ```rust
 // 示意，dispatcher! 宏实际生成的代码
-pub struct EntryGreet {
-    pub inner: Vec<String>,
-}
+pub struct EntryGreet(pub Vec<String>);
 ```
  
-用户在命令行输入 `greet Alice Bob`，`EntryGreet.inner` 就是 `vec!["Alice", "Bob"]`。
+用户在命令行输入 `greet Alice Bob`，`EntryGreet` 包裹的 `Vec<String>`（即字段 `0`）就是 `vec!["Alice", "Bob"]`。
 
 > [!IMPORTANT]
-> Entry 的 `inner` 只包含 **匹配后剩余的参数**。
+> Entry 包裹的参数只包含 **匹配后剩余的参数**。
 >
-> 以 `remote add origin` 为例，`remote` 和 `add` 用于匹配命令路径，只有 `origin` 会进入 `EntryRemoteAdd.inner`。
+> 以 `remote add origin` 为例，`remote` 和 `add` 用于匹配命令路径，只有 `origin` 会进入 `EntryRemoteAdd`（即字段 `0`）。
 
 ## 进阶：隐式声明
 

@@ -376,10 +376,10 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
             type ResultEmpty = ResultEmpty;
 
             fn build_renderer_not_found(member_id: Self::Enum) -> ::mingling::AnyOutput<Self::Enum> {
-                ::mingling::AnyOutput::new(ErrorRendererNotFound::new(member_id.to_string()))
+                ::mingling::AnyOutput::new(ErrorRendererNotFound(member_id.to_string()))
             }
             fn build_entry_fallback(args: Vec<String>) -> ::mingling::AnyOutput<Self::Enum> {
-                ::mingling::AnyOutput::new(EntryFallback::new(args))
+                ::mingling::AnyOutput::new(EntryFallback(args))
             }
             fn build_empty_result() -> ::mingling::AnyOutput<Self::Enum> {
                 ::mingling::AnyOutput::new(ResultEmpty)

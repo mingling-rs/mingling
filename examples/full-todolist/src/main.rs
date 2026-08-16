@@ -36,15 +36,25 @@ dispatcher!("clean");
 
 // Define states
 
-pack!(StateAddTodo = String);
-pack!(StateCompleteTodo = i32);
-pack!(StateListTodo = bool);
+#[derive(Grouped, Wrap)]
+pub struct StateAddTodo(String);
+
+#[derive(Grouped, Wrap)]
+pub struct StateCompleteTodo(i32);
+
+#[derive(Grouped, Wrap)]
+pub struct StateListTodo(bool);
 
 // Define errors
 
-pack!(ErrorNoTaskDescriptionProvided = ());
-pack!(ErrorNoIndexProvided = ());
-pack!(ErrorIndexOutOfBounds = ());
+#[derive(Grouped)]
+pub struct ErrorNoTaskDescriptionProvided;
+
+#[derive(Grouped)]
+pub struct ErrorNoIndexProvided;
+
+#[derive(Grouped)]
+pub struct ErrorIndexOutOfBounds;
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -76,11 +86,11 @@ fn main() {
 fn handle_add(args: EntryAdd) -> Next {
     let task: String = route! {
         args.pick_or_route(&arg![String], || {
-            ErrorNoTaskDescriptionProvided::new(()).to_chain()
+            ErrorNoTaskDescriptionProvided.to_chain()
         })
         .to_result()
     };
-    StateAddTodo::new(task).to_chain()
+    StateAddTodo(task).to_chain()
 }
 
 #[chain]
@@ -92,7 +102,7 @@ fn handle_state_add_todo(
     let todolist = todolist.get_mut();
 
     // Unpack state and read description
-    let description = state.inner;
+    let description = state.0;
 
     todolist.items.push(Todo {
         item: description,
@@ -117,10 +127,10 @@ fn handle_list(_args: EntryList, todolist: &mut LazyRes<ResTodoList>) -> Next {
 #[chain]
 fn handle_complete(args: EntryComplete) -> Next {
     let index: i32 = route! {
-        args.pick_or_route(&arg![i32], || ErrorNoIndexProvided::new(()).to_chain())
+        args.pick_or_route(&arg![i32], || ErrorNoIndexProvided.to_chain())
             .to_result()
     };
-    StateCompleteTodo::new(index).to_chain()
+    StateCompleteTodo(index).to_chain()
 }
 
 #[chain]
@@ -129,12 +139,12 @@ fn handle_state_complete_todo(
     todolist: &mut LazyRes<ResTodoList>,
 ) -> Next {
     let todolist = todolist.get_mut();
-    let index = state.inner as usize;
+    let index = state.0 as usize;
     if index < todolist.items.len() {
         todolist.items[index].completed = true;
         todolist.clone().to_render()
     } else {
-        ErrorIndexOutOfBounds::new(()).to_render()
+        ErrorIndexOutOfBounds.to_render()
     }
 }
 

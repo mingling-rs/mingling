@@ -9,8 +9,8 @@ use cargo_metadata::{Message, PackageId};
 
 use annotate_snippets::level::{ERROR, HELP, NOTE, WARNING};
 use annotate_snippets::{AnnotationKind, Group, Patch, Renderer, Snippet};
-use mingling::macros::{buffer, chain, pack, r_append, r_eprintln, renderer};
-use mingling::{RendererInvoker, Routable};
+use mingling::macros::{buffer, chain, r_append, r_eprintln, renderer};
+use mingling::{Grouped, RendererInvoker, Routable, Wrap};
 
 use crate::Next;
 use crate::metadata::setup::ResUsingJson;
@@ -416,22 +416,25 @@ impl MlintReport {
     }
 }
 
-pack!(StateLintReports = Vec<MlintReport>);
-pack!(ResultLintReportsAnnotateSnippet = Vec<MlintReport>);
-pack!(ResultLintReportsJson = Vec<MlintReport>);
+#[derive(Grouped, Wrap)]
+pub struct StateLintReports(pub Vec<MlintReport>);
+#[derive(Grouped, Wrap)]
+pub struct ResultLintReportsAnnotateSnippet(Vec<MlintReport>);
+#[derive(Grouped, Wrap)]
+pub struct ResultLintReportsJson(Vec<MlintReport>);
 
 #[chain]
 pub fn handle_state_lint_reports(reports: StateLintReports, using_json: &ResUsingJson) -> Next {
     if using_json.using {
-        ResultLintReportsJson::new(reports.inner).to_render()
+        ResultLintReportsJson(reports.0).to_render()
     } else {
-        ResultLintReportsAnnotateSnippet::new(reports.inner).to_render()
+        ResultLintReportsAnnotateSnippet(reports.0).to_render()
     }
 }
 
 #[renderer(buffer)]
 pub fn render_lint_reports(reports: ResultLintReportsAnnotateSnippet) {
-    for report in reports.inner {
+    for report in reports.0 {
         r_eprintln!("{}", report.to_annotate_snippet_render());
     }
 }
@@ -441,7 +444,7 @@ pub fn render_lint_reports_json(
     reports: ResultLintReportsJson,
     message_renderer: &RendererInvoker<Message>,
 ) {
-    for report in reports.inner {
+    for report in reports.0 {
         let message = report.to_compiler_message();
         let result = message_renderer.invoke(message);
         r_append!(result);

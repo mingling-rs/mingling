@@ -3,7 +3,7 @@
     使用 renderer 宏声明渲染器，将结果输出
 </p>
 
-现在，我们创建了 Dispatcher 和 Chain，也通过 `pack!` 产出了一个 Result 类型。最后一步：**把结果展示给用户**。
+现在，我们创建了 Dispatcher 和 Chain，也通过 `#[derive(Grouped, Wrap)]` 产出了一个 Result 类型。最后一步：**把结果展示给用户**。
 
 ## `#[renderer]` 宏
 
@@ -11,7 +11,8 @@
 
 ```rust
 @@@use mingling::macros::buffer;
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 #[renderer(buffer)]
 fn render_name(name: ResultName) {
     r_println!("Hello, {}!", *name);
@@ -27,7 +28,8 @@ Renderer 接收 Chain 产出的结果，然后返回一个 `RenderResult`。在�
 ```rust
 use mingling::macros::buffer;
  
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 #[renderer(buffer)]
 fn render_name(name: ResultName) {
     r_println!("Hello, {}!", *name);
@@ -54,17 +56,18 @@ use mingling::macros::buffer;
 // 1. 用 Dispatcher 声明命令
 dispatcher!("greet", EntryGreet);
  
-// 2. 用 pack! 声明结果数据
-pack!(ResultName = String);
+// 2. 用 #[derive(Grouped, Wrap)] 声明结果数据
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
  
 // 3. 用 Chain 处理逻辑
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner
+    let name = args.0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string());
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
  
 // 4. 用 Renderer 输出结果
@@ -122,10 +125,10 @@ use mingling::macros::buffer;
  
 #[renderer(buffer)]
 fn render_entry_fallback(err: EntryFallback) {
-    if err.inner.is_empty() {
+    if err.0.is_empty() {
         r_println!("Unknown command");
     } else {
-        r_println!("Command not found: \"{}\"", err.inner.join(" "));
+        r_println!("Command not found: \"{}\"", err.0.join(" "));
     }
 }
 ```
@@ -144,13 +147,13 @@ Command not found: "great"
 
 你完成了第一个完整的 Mingling 程序！来回顾一下学到的东西：
 
-| 概念     | 对应宏/函数      | 一句话                     |
-| -------- | ---------------- | -------------------------- |
-| 声明命令 | `dispatcher!`    | 告诉程序用户能输入什么     |
-| 处理逻辑 | `#[chain]`       | 收到参数后做什么           |
-| 输出结果 | `#[renderer]`    | 怎么把结果告诉用户         |
-| 类型包装 | `pack!`          | 给你的数据取个有意义的名字 |
-| 程序入口 | `gen_program!()` | 自动生成管线的接线图       |
+| 概念     | 对应宏/函数                | 一句话                     |
+| -------- | -------------------------- | -------------------------- |
+| 声明命令 | `dispatcher!`              | 告诉程序用户能输入什么     |
+| 处理逻辑 | `#[chain]`                 | 收到参数后做什么           |
+| 输出结果 | `#[renderer]`              | 怎么把结果告诉用户         |
+| 类型包装 | `#[derive(Grouped, Wrap)]` | 给你的数据取个有意义的名字 |
+| 程序入口 | `gen_program!()`           | 自动生成管线的接线图       |
 
 在真实项目中你还会用到资源注入、hook、补全、REPL 等高级功能，不过核心骨架永远不变：**Dispatcher → Chain → Renderer**。
 

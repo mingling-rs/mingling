@@ -22,11 +22,12 @@ fn main() {
 
 dispatcher!("modify", EntryModify);
 
-pack!(DisplayGlobal = ());
+#[derive(Grouped, Wrap)]
+pub struct DisplayGlobal(());
 
 #[chain]
 fn modify(prev: EntryModify) {
-    let (name, age) = Picker::<()>::new(prev.inner)
+    let (name, age) = Picker::<()>::new(prev.0)
         .pick::<String>("--name")
         .pick::<i32>("--age")
         .unpack_directly();

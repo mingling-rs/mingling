@@ -55,10 +55,11 @@ Each hook callback receives a corresponding `Hook*Info` struct containing contex
 @@@use mingling::hook::ProgramHook;
 @@@
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 @@@
 @@@#[chain] fn handle_greet(args: EntryGreet) -> Next {
-@@@    ResultName::new(args.inner.first().cloned().unwrap_or_default()).to_render()
+@@@    ResultName(args.0.first().cloned().unwrap_or_default()).to_render()
 @@@}
 @@@#[renderer] fn render_name(r: ResultName) -> RenderResult { RenderResult::new() }
 fn main() {

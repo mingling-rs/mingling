@@ -94,7 +94,7 @@ Result + Content
 | `ResultGreetSomeone` | Greeting result   |
 | `ResultFruitList`    | Fruit list result |
 
-Result structs are expected to be consumed by the Renderer, and their internal structure should be designed for rendering aesthetics. Generally use `#[derive(Grouped)]` instead of `pack!()` wrapping for more flexible field control.
+Result structs are expected to be consumed by the Renderer, and their internal structure should be designed for rendering aesthetics. Generally prefer a named-field struct with `#[derive(Grouped)]` over a single-field tuple wrapper (`#[derive(Grouped, Wrap)]`) for more flexible field control.
 
 ### Error
 
@@ -146,7 +146,8 @@ Error + Description
 | Resource (mutable)   | `counter`, `cache`, `session`, etc.     |
 
 ```rust
-@@@ pack!(EntryRemoteAdd = Vec<String>);
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct EntryRemoteAdd(Vec<String>);
 @@@ #[derive(Default, Clone)]
 @@@ struct ResDatabase {  }
 @@@ #[derive(Default, Clone)]
@@ -168,9 +169,12 @@ fn handle_remote_add(args: EntryRemoteAdd, cwd: &ResCurrentDir, db: &mut ResData
 @@@ #[derive(Default, Clone)]
 @@@ struct ResDatabase {  }
 @@@ impl ResDatabase { fn has_remote(&self, remote: &String) -> bool { true } }
-@@@ pack!(StateOperationRemotes = String);
-@@@ pack!(ResultRemoteAdded = String);
-@@@ pack!(ErrorRepositoryNotFound = String);
+@@@ #[derive(Grouped, Wrap, Default)]
+@@@ pub struct StateOperationRemotes(String);
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ResultRemoteAdded(String);
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ErrorRepositoryNotFound(String);
 // Dispatcher
 dispatcher!("remote.add", EntryRemoteAdd);
  
@@ -183,10 +187,10 @@ fn handle_remote_add(args: EntryRemoteAdd) -> Next {
 // State → Error or Result
 #[chain]
 fn handle_state_operation_remotes(state: StateOperationRemotes, db: &ResDatabase) -> Next {
-    if db.has_remote(&state.inner) {
-        ErrorRepositoryNotFound::new(state.inner).to_render()
+    if db.has_remote(&state.0) {
+        ErrorRepositoryNotFound(state.0).to_render()
     } else {
-        ResultRemoteAdded::new(state.inner).to_render()
+        ResultRemoteAdded(state.0).to_render()
     }
 }
  
@@ -194,13 +198,13 @@ fn handle_state_operation_remotes(state: StateOperationRemotes, db: &ResDatabase
  
 #[renderer(buffer)]
 fn render_remote_added(result: ResultRemoteAdded) {
-    r_println!("Remote added: {}", result.inner);
+    r_println!("Remote added: {}", result.0);
 }
  
 // Error rendering
 #[renderer(buffer)]
 fn render_error_repository_not_found(err: ErrorRepositoryNotFound) {
-    r_println!("Error: remote '{}' not found", err.inner);
+    r_println!("Error: remote '{}' not found", err.0);
 }
 ```
  

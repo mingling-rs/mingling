@@ -2,8 +2,8 @@ use std::{env, fs, io, path::PathBuf, process::Command};
 
 use cargo_metadata::TargetKind;
 use mingling::{
-    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest,
-    macros::{arg, chain, command, completion, metadata, pack_err, renderer, routeify, suggest},
+    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest, Wrap,
+    macros::{arg, chain, command, completion, metadata, renderer, routeify, suggest},
     metadata::Description,
     picker::{EntryPicker, PickerArg, value::Flag},
 };
@@ -15,9 +15,14 @@ use crate::{
     println_cargo,
 };
 
-pack_err!(ErrorBuildFailed = String);
-pack_err!(ErrorBinaryNotFound = String);
-pack_err!(ErrorPkgEnableFailed = String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorBuildFailed(String);
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorBinaryNotFound(String);
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorPkgEnableFailed(String);
 
 /// Flag: `--enable` — run `mling pkg-enable` after a successful install
 /// to enable the package being installed.
@@ -75,13 +80,13 @@ pub fn install(
     let metadata = metadata.get_ref().data();
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
 
     let root_package = metadata
         .root_package()
         .or_else(|| metadata.workspace_packages().first().copied())
-        .ok_or(ErrorRootPackageNotFound::default())?;
+        .ok_or(ErrorRootPackageNotFound)?;
 
     StateInstallBuild {
         workspace_root: metadata.workspace_root.clone().into_std_path_buf(),
@@ -103,11 +108,9 @@ pub fn handle_state_install_build(state: StateInstallBuild) -> Next {
         .args(["build", "--release"])
         .current_dir(&state.workspace_root)
         .status()
-        .map_err(|e| {
-            ErrorBuildFailed::new(format!("failed to run `cargo build --release`: {e}"))
-        })?;
+        .map_err(|e| ErrorBuildFailed(format!("failed to run `cargo build --release`: {e}")))?;
     if !status.success() {
-        return ErrorBuildFailed::new(format!("`cargo build --release` failed with {status}"))
+        return ErrorBuildFailed(format!("`cargo build --release` failed with {status}"))
             .to_chain();
     }
 
@@ -146,7 +149,7 @@ pub fn handle_state_install_copy(
             let bin_file = format!("{}{}", target.name, state.exe_suffix);
             let src = state.release_dir.join(&bin_file);
             if !src.is_file() {
-                return ErrorBinaryNotFound::new(bin_file).to_chain();
+                return ErrorBinaryNotFound(bin_file).to_chain();
             }
             let dst = state.install_dir.join(&bin_file);
             fs::copy(&src, &dst).map_err(|e| {
@@ -181,7 +184,7 @@ pub fn handle_state_install_copy(
         let root_package = metadata
             .root_package()
             .or_else(|| metadata.workspace_packages().first().copied())
-            .ok_or(ErrorRootPackageNotFound::default())?;
+            .ok_or(ErrorRootPackageNotFound)?;
         return StateInstallEnable {
             install_dir: state.install_dir,
             installed: state.installed,
@@ -207,13 +210,11 @@ pub fn handle_state_install_enable(state: StateInstallEnable) -> Next {
         .args(["pkg-enable", &spec])
         .status()
         .map_err(|e| {
-            ErrorPkgEnableFailed::new(format!("failed to run `mling pkg-enable {spec}`: {e}"))
+            ErrorPkgEnableFailed(format!("failed to run `mling pkg-enable {spec}`: {e}"))
         })?;
     if !status.success() {
-        return ErrorPkgEnableFailed::new(format!(
-            "`mling pkg-enable {spec}` failed with {status}"
-        ))
-        .to_chain();
+        return ErrorPkgEnableFailed(format!("`mling pkg-enable {spec}` failed with {status}"))
+            .to_chain();
     }
 
     ResultInstall {
@@ -236,21 +237,21 @@ pub fn render_result_install(result: ResultInstall) -> RenderResult {
 #[renderer]
 pub fn render_error_build_failed(err: ErrorBuildFailed) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "{}", err.info);
+    eprintln_cargo!(r, "{}", err.0);
     r
 }
 
 #[renderer]
 pub fn render_error_binary_not_found(err: ErrorBinaryNotFound) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "binary not found: {}", err.info);
+    eprintln_cargo!(r, "binary not found: {}", err.0);
     r
 }
 
 #[renderer]
 pub fn render_error_pkg_enable_failed(err: ErrorPkgEnableFailed) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "{}", err.info);
+    eprintln_cargo!(r, "{}", err.0);
     r
 }
 

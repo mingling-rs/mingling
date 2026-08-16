@@ -1,8 +1,6 @@
 use mingling::{
-    LazyRes, Routable, ShellContext, Suggest,
-    macros::{
-        arg, buffer, chain, command, completion, metadata, pack, r_println, renderer, suggest,
-    },
+    Grouped, LazyRes, Routable, ShellContext, Suggest, Wrap,
+    macros::{arg, buffer, chain, command, completion, metadata, r_println, renderer, suggest},
     metadata::Description,
     picker::{EntryPicker, PickerArg, value::Flag},
 };
@@ -11,10 +9,17 @@ use crate::{Entry, Next, config::ResMlingConfig};
 
 const FLAG_PAIR: PickerArg<Flag> = arg![pair: Flag];
 
-pack!(StateConfigEdit = (String, String));
-pack!(ResultConfigKeyValuePair = String);
-pack!(ResultConfigValue = String);
-pack!(ResultConfig = ());
+#[derive(Grouped, Wrap)]
+pub struct StateConfigEdit((String, String));
+
+#[derive(Grouped, Wrap)]
+pub struct ResultConfigKeyValuePair(String);
+
+#[derive(Grouped, Wrap)]
+pub struct ResultConfigValue(String);
+
+#[derive(Grouped)]
+pub struct ResultConfig;
 
 #[command]
 pub fn cfg(args: Entry) -> Next {
@@ -27,19 +32,19 @@ pub fn cfg(args: Entry) -> Next {
     match (key, value) {
         (Some(k), Some(v)) => {
             // Edit
-            StateConfigEdit::new((k, v)).into()
+            StateConfigEdit((k, v)).into()
         }
         (Some(k), None) => {
             // Display
             if *show_pair {
-                ResultConfigKeyValuePair::new(k).to_render()
+                ResultConfigKeyValuePair(k).to_render()
             } else {
-                ResultConfigValue::new(k).to_render()
+                ResultConfigValue(k).to_render()
             }
         }
         (None, None) => {
             // List
-            ResultConfig::new(()).to_render()
+            ResultConfig.to_render()
         }
         _ => {
             unreachable!("This path is unreachable given the positional parsing done by arg-picker")
@@ -50,13 +55,13 @@ pub fn cfg(args: Entry) -> Next {
 #[chain]
 pub fn handle_state_config_edit(kv: StateConfigEdit, config: &mut LazyRes<ResMlingConfig>) {
     let config = config.get_mut();
-    config.edit(&kv.0, &kv.1);
+    config.edit(&kv.0.0, &kv.0.1);
 }
 
 #[renderer(buffer)]
 pub fn render_config_kvp(r: ResultConfigKeyValuePair, config: &mut LazyRes<ResMlingConfig>) {
     let config = config.get_ref();
-    let key = r.inner;
+    let key = r.0;
     let value = config.get(&key);
     r_println!(
         "\"{}\" = \"{}\"",
@@ -68,7 +73,7 @@ pub fn render_config_kvp(r: ResultConfigKeyValuePair, config: &mut LazyRes<ResMl
 #[renderer(buffer)]
 pub fn render_config_value(r: ResultConfigValue, config: &mut LazyRes<ResMlingConfig>) {
     let config = config.get_ref();
-    let key = r.inner;
+    let key = r.0;
     let value = config.get(&key);
     r_println!("{}", value)
 }

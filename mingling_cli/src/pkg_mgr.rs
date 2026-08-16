@@ -8,16 +8,23 @@ pub mod cmd_uninstall;
 use std::path::PathBuf;
 
 use mingling::{
-    Program, RenderResult,
-    macros::{pack_err, program_setup, r_println, renderer},
+    Grouped, Program, RenderResult, Wrap,
+    macros::{program_setup, r_println, renderer},
 };
 
 use crate::{ThisProgram, eprintln_cargo, hprintln_cargo};
 
-pack_err!(ErrorRootPackageNotFound);
-pack_err!(ErrorNoDataDirectory);
-pack_err!(ErrorPackageSpecInvalid = String);
-pack_err!(ErrorPackageNameRequired);
+#[derive(Grouped, Default)]
+pub struct ErrorRootPackageNotFound;
+
+#[derive(Grouped, Default)]
+pub struct ErrorNoDataDirectory;
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorPackageSpecInvalid(String);
+
+#[derive(Grouped, Default)]
+pub struct ErrorPackageNameRequired;
 
 /// The `mingling/packages` packages directory under the user's data directory.
 #[derive(Debug, Default, Clone)]
@@ -55,7 +62,7 @@ pub fn render_error_no_data_directory(_: ErrorNoDataDirectory) -> RenderResult {
 #[renderer]
 pub fn render_error_package_spec_invalid(err: ErrorPackageSpecInvalid) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "invalid package spec: {}", err.info);
+    eprintln_cargo!(r, "invalid package spec: {}", err.0);
     r
 }
 

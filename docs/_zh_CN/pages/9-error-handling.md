@@ -20,17 +20,19 @@
 
 ```rust
 @@@dispatcher!("greet", EntryGreet);
-pack!(ResultGreeting = String);
-pack!(ErrorNameEmpty = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameEmpty(String);
  
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
+    let name = args.0.first().cloned().unwrap_or_default();
  
     if name.is_empty() {
-        ErrorNameEmpty::new("name is required".to_string()).to_render()
+        ErrorNameEmpty("name is required".to_string()).to_render()
     } else {
-        ResultGreeting::new(name).to_render()
+        ResultGreeting(name).to_render()
     }
 }
 ```
@@ -40,9 +42,11 @@ fn handle_greet(args: EntryGreet) -> Next {
 ```rust
 @@@use mingling::macros::buffer;
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultGreeting = String);
-@@@pack!(ErrorNameEmpty = String);
-@@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting::new(args.inner.first().cloned().unwrap_or_default()).to_render() }
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultGreeting(String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ErrorNameEmpty(String);
+@@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting(args.0.first().cloned().unwrap_or_default()).to_render() }
  
 #[renderer(buffer)]
 fn render_greet(result: ResultGreeting) {
@@ -63,16 +67,18 @@ fn render_error_name_empty(err: ErrorNameEmpty) {
 @@@use mingling::macros::buffer;
 dispatcher!("greet", EntryGreet);
  
-pack!(ResultGreeting = String);
-pack!(ErrorNameEmpty = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameEmpty(String);
  
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
+    let name = args.0.first().cloned().unwrap_or_default();
     if name.is_empty() {
-        ErrorNameEmpty::new("name is required".to_string()).to_render()
+        ErrorNameEmpty("name is required".to_string()).to_render()
     } else {
-        ResultGreeting::new(name).to_render()
+        ResultGreeting(name).to_render()
     }
 }
  
@@ -104,14 +110,14 @@ Hello, Alice!
 Error: name is required
 ```
  
-## 关于 `pack_err!`
+## 关于错误类型
 
-如果你启用了 `extras`，还可以用 `pack_err!` 快速声明带有自动 `name` 字段的错误类型：
+不需要额外上下文、只起“标记”作用的错误类型，可以直接用 `#[derive(Grouped, Default)]` 声明：
 
 ```rust
 // Features: ["extras"]
-pack_err!(ErrorNotFound);
-// 生成: struct ErrorNotFound { pub name: String }
+#[derive(Grouped, Default)]
+pub struct ErrorNotFound;
 ```
  
 详见 [特性列表](pages/other/features)。

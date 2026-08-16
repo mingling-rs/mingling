@@ -51,7 +51,7 @@ pub mod consts {
 ///
 /// This module re-exports all macros provided by the `mingling_macros` crate,
 /// including `dispatcher!`, `chain!`, `renderer!`,
-/// `gen_program!`, `pack!`, and many others. These macros form the core
+/// `gen_program!`, and many others. These macros form the core
 /// building blocks of the Mingling framework.
 ///
 /// For detailed documentation, usage examples, and the full list of available
@@ -84,13 +84,6 @@ pub mod macros {
     pub use mingling_macros::help;
     pub use mingling_macros::metadata;
     pub use mingling_macros::mlint;
-    pub use mingling_macros::pack;
-    #[cfg(feature = "extras")]
-    pub use mingling_macros::pack_err;
-    #[cfg(all(feature = "structural_renderer", feature = "extras"))]
-    pub use mingling_macros::pack_err_structural;
-    #[cfg(feature = "structural_renderer")]
-    pub use mingling_macros::pack_structural;
     #[cfg(feature = "comp")]
     #[doc(hidden)]
     pub use mingling_macros::program_comp_gen;
@@ -212,19 +205,7 @@ pub mod prelude {
     #[cfg(feature = "macros")]
     pub use crate::macros::gen_program;
     #[cfg(feature = "macros")]
-    pub use crate::macros::pack;
-    #[cfg(all(feature = "extras", feature = "macros"))]
-    pub use crate::macros::pack_err;
-    #[cfg(feature = "macros")]
     pub use crate::macros::renderer;
-    #[cfg(all(
-        feature = "macros",
-        feature = "structural_renderer",
-        feature = "extras"
-    ))]
-    pub use mingling_macros::pack_err_structural;
-    #[cfg(all(feature = "macros", feature = "structural_renderer"))]
-    pub use mingling_macros::pack_structural;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;
     pub use mingling_macros::r_eprintln;

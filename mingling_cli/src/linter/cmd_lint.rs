@@ -1,10 +1,11 @@
 use crate::linter::mlint_report::{MlintReport, StateLintReports};
 use cargo_metadata::Metadata;
 use mingling::consts::REMAINS;
-use mingling::macros::{arg, chain, completion, dispatcher, metadata, pack, suggest};
+use mingling::macros::{arg, chain, completion, dispatcher, metadata, suggest};
 use mingling::metadata::Description;
 use mingling::picker::parselib::ParserStyle;
 use mingling::picker::{EntryPicker, PickerArg};
+use mingling::{Grouped, Wrap};
 use mingling::{LazyRes, ShellContext, Suggest};
 use tokio::task::JoinSet;
 
@@ -77,7 +78,8 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
     all_reports
 }
 
-pack!(StateBeginLinter = ());
+#[derive(Grouped, Wrap)]
+pub struct StateBeginLinter(());
 
 #[chain]
 pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
@@ -88,7 +90,7 @@ pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
 
     // If with_checker is not set, proceed directly to the mingling lint phase
     let Some(with_checker) = with_checker else {
-        return StateBeginLinter::new(());
+        return StateBeginLinter(());
     };
 
     let with_checker: Vec<&str> = with_checker.split(',').collect();
@@ -97,7 +99,7 @@ pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
     // Run the outer checker (e.g. cargo check) with output passed through directly
     execute_checker(&with_checker, checker_args.as_slice());
 
-    StateBeginLinter::new(())
+    StateBeginLinter(())
 }
 
 /// Run the outer checker (e.g. cargo check) with output passed through directly.
@@ -135,7 +137,7 @@ pub async fn handle_state_begin_linter(
 ) -> StateLintReports {
     let metadata = metadata.get_ref().data();
     let reports = linter_main(metadata).await;
-    StateLintReports::new(reports)
+    StateLintReports(reports)
 }
 
 #[completion(EntryLint)]

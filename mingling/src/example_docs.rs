@@ -64,17 +64,32 @@
 ///
 /// dispatcher!("calc", EntryCalculate);
 ///
-/// pack_err!(ErrorNumberANotProvided);
-/// pack_err!(ErrorNumberBNotProvided);
-/// pack_err!(ErrorNumberOperatorNotProvided);
-/// pack_err!(ErrorDivisionByZero);
+/// #[derive(Grouped, Default)]
+/// pub struct ErrorNumberANotProvided;
 ///
-/// pack!(StateAdd = (f32, f32));
-/// pack!(StateSubtract = (f32, f32));
-/// pack!(StateMultiply = (f32, f32));
-/// pack!(StateDivide = (f32, f32));
+/// #[derive(Grouped, Default)]
+/// pub struct ErrorNumberBNotProvided;
 ///
-/// pack!(ResultNumber = f32);
+/// #[derive(Grouped, Default)]
+/// pub struct ErrorNumberOperatorNotProvided;
+///
+/// #[derive(Grouped, Default)]
+/// pub struct ErrorDivisionByZero;
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct StateAdd((f32, f32));
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct StateSubtract((f32, f32));
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct StateMultiply((f32, f32));
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct StateDivide((f32, f32));
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultNumber(f32);
 ///
 /// #[derive(Grouped)]
 /// struct StateCalculate {
@@ -155,13 +170,13 @@
 ///         //                 Use the arg! macro to define a positional argument of type f32
 ///         //                 |
 ///         //                 vvvvvvvvvv
-///         args.pick_or_route(&arg![f32], || ErrorNumberANotProvided::default().to_chain())
+///         args.pick_or_route(&arg![f32], || ErrorNumberANotProvided.to_chain())
 ///             .pick_or_route(&arg![Operator], || {
-///                 ErrorNumberOperatorNotProvided::default().to_chain()
+///                 ErrorNumberOperatorNotProvided.to_chain()
 ///             }) //                         Returns a routable type when not found or fails to parse
 ///             //                            |
-///             //                            vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-///             .pick_or_route(&arg![f32], || ErrorNumberBNotProvided::default().to_chain())
+///             //                            vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+///             .pick_or_route(&arg![f32], || ErrorNumberBNotProvided.to_chain())
 ///             // Use `to_result` to parse arguments
 ///             //   and convert to Result<(Tuple, ...), Route> type
 ///             .to_result()
@@ -169,7 +184,7 @@
 ///     // --------- IMPORTANT ---------
 ///
 ///     if operator == Operator::Slash && number_b == 0. {
-///         return ErrorDivisionByZero::default().to_chain();
+///         return ErrorDivisionByZero.to_chain();
 ///     }
 ///
 ///     StateCalculate {
@@ -183,41 +198,41 @@
 /// #[chain]
 /// fn handle_state_calculate(state: StateCalculate) -> Next {
 ///     match (state.operator, state.number_a, state.number_b) {
-///         (Operator::Plus, a, b) => StateAdd::new((a, b)).to_chain(),
-///         (Operator::Dash, a, b) => StateSubtract::new((a, b)).to_chain(),
-///         (Operator::Slash, a, b) => StateDivide::new((a, b)).to_chain(),
-///         (Operator::Star, a, b) => StateMultiply::new((a, b)).to_chain(),
+///         (Operator::Plus, a, b) => StateAdd((a, b)).to_chain(),
+///         (Operator::Dash, a, b) => StateSubtract((a, b)).to_chain(),
+///         (Operator::Slash, a, b) => StateDivide((a, b)).to_chain(),
+///         (Operator::Star, a, b) => StateMultiply((a, b)).to_chain(),
 ///     }
 /// }
 ///
 /// #[chain]
 /// fn handle_state_add(state_add: StateAdd) -> ResultNumber {
-///     let (a, b) = state_add.inner;
-///     ResultNumber::new(a + b)
+///     let (a, b) = state_add.0;
+///     ResultNumber(a + b)
 /// }
 ///
 /// #[chain]
 /// fn handle_state_subtract(state_subtract: StateSubtract) -> ResultNumber {
-///     let (a, b) = state_subtract.inner;
-///     ResultNumber::new(a - b)
+///     let (a, b) = state_subtract.0;
+///     ResultNumber(a - b)
 /// }
 ///
 /// #[chain]
 /// fn handle_state_multiply(state_multiply: StateMultiply) -> ResultNumber {
-///     let (a, b) = state_multiply.inner;
-///     ResultNumber::new(a * b)
+///     let (a, b) = state_multiply.0;
+///     ResultNumber(a * b)
 /// }
 ///
 /// #[chain]
 /// fn handle_state_divide(state_divide: StateDivide) -> ResultNumber {
-///     let (a, b) = state_divide.inner;
-///     ResultNumber::new(a / b)
+///     let (a, b) = state_divide.0;
+///     ResultNumber(a / b)
 /// }
 ///
 /// #[renderer]
 /// fn render_result_number(result: ResultNumber, setting: &ResNumberDisplaySetting) -> String {
 ///     let round = setting.round;
-///     let result = if round { result.round() } else { result.inner };
+///     let result = if round { result.round() } else { result.0 };
 ///     format!("Result: {}", result)
 /// }
 ///
@@ -310,7 +325,8 @@ pub mod example_argument_picker {}
 ///
 /// dispatcher!("download", EntryDownload);
 ///
-/// pack!(ResultDownloaded = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultDownloaded(String);
 ///
 /// // --------- IMPORTANT ---------
 /// #[chain]
@@ -334,7 +350,7 @@ pub mod example_argument_picker {}
 ///
 /// async fn fake_download(file_name: String) -> ResultDownloaded {
 ///     tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-///     ResultDownloaded::new(file_name)
+///     ResultDownloaded(file_name)
 /// }
 /// ```
 pub mod example_async_support {}
@@ -372,11 +388,11 @@ pub mod example_async_support {}
 /// use std::io::Write;
 ///
 /// // Define the `greet` subcommand
-/// //            _____________________________ subcmd name, can be nested (e.g. "remote.add" "remote.rm")
-/// //           /        _____________________ dispatcher name
-/// //           |       /            _________ entry, records raw arguments
-/// //           |       |           /                         ^^^^^^^^^^^^^
-/// //           vvvvv   vvvvvvvv    vvvvvvvvvv                \_ equivalent to pack!(EntryGreet = Vec<String>)
+/// //            _________________ subcmd name, can be nested (e.g. "remote.add" "remote.rm")
+/// //           /
+/// //           |        _________ entry, records raw arguments
+/// //           |       /                         ^^^^^^^^^^^^^
+/// //           vvvvv   vvvvvvvvvv                \_ a newtype wrapper around Vec<String>
 /// dispatcher!("greet", EntryGreet);
 ///
 /// fn main() {
@@ -388,21 +404,22 @@ pub mod example_async_support {}
 /// }
 ///
 /// // Quickly wrap a type into a type recognizable by the current program
-/// //     ____________________ Wrapped type name
-/// //    /             _______ Wrapped type inner value
-/// //    |            /
-/// //    vvvvvvvvvv   vvvvvv
-/// pack!(ResultName = String);
+/// //     ___________________  Registers this type into ThisProgram
+/// //    /            _______  Adds DerefMut, Deref, Into, From wrappers
+/// //    |           /
+/// //    vvvvvvvvvv  vvvvv
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName(String);
 ///
 /// // Define the `handle_greet` chain for parsing input text
 /// //                     ____________________ Previous type:
 /// //                    /                       Mingling deduces types at runtime and routes them to this function
 /// //                    |               _____ will be expanded to:
-/// //                    |              /        impl Into<mingling::ChainProcess<ThisProgram>>
+/// //                    |              /        ChainProcess<ThisProgram>
 /// #[chain] //           vvvvvvvvvv     vvvv
 /// fn handle_greet(args: EntryGreet) -> Next {
 ///     let name: ResultName = args
-///         .inner
+///         .0
 ///         .first()
 ///         .cloned()
 ///         .unwrap_or_else(|| "World".to_string())
@@ -745,27 +762,30 @@ pub mod example_combine_pathf_metadata {}
 ///     ThisProgram::new().exec_and_exit();
 /// }
 ///
-/// pack!(ResultGreeting = String);
-/// pack!(ResultGoodbye = ());
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultGreeting(String);
+///
+/// #[derive(Grouped)]
+/// pub struct ResultGoodbye;
 ///
 /// // --------- IMPORTANT ---------
 /// // Auto-generates dispatcher!("hello.world", EntryHelloWorld);
 /// #[command]
 /// fn hello_world() -> ResultGreeting {
-///     ResultGreeting::new("World".to_string())
+///     ResultGreeting("World".to_string())
 /// }
 ///
 /// // Auto-generates dispatcher!("hello-world", EntryGreetSomeone);
 /// #[command(node = "greet-someone")]
 /// fn greet_someone(args: Vec<String>) -> ResultGreeting {
 ///     let name = args.pick_or(&arg![String], || "World".to_string()).unwrap();
-///     ResultGreeting::new(name)
+///     ResultGreeting(name)
 /// }
 ///
 /// // Auto-generates dispatcher!("goodbye", EntryGoodBye);
 /// #[command(entry = EntryGoodBye)]
 /// fn goodbye() -> ResultGoodbye {
-///     ResultGoodbye::default()
+///     ResultGoodbye
 /// }
 /// // --------- IMPORTANT ---------
 ///
@@ -918,7 +938,8 @@ pub mod example_command_macro {}
 /// // --------- IMPORTANT ---------
 ///
 /// dispatcher!("greet", EntryGreet);
-/// pack!(ResultName = (u8, String));
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName((u8, String));
 ///
 /// #[chain]
 /// fn handle_greet(args: EntryGreet) -> Next {
@@ -933,7 +954,7 @@ pub mod example_command_macro {}
 /// /// Renders the greeting with the result name and repeat count.
 /// #[renderer]
 /// fn render_name(result: ResultName) -> RenderResult {
-///     let (repeat, name) = result.inner;
+///     let (repeat, name) = result.0;
 ///     let mut render_result = RenderResult::new();
 ///     let mut parts = Vec::with_capacity(repeat as usize);
 ///     for _ in 0..repeat {
@@ -1215,35 +1236,41 @@ pub mod example_enum_tag {}
 /// dispatcher!("hello", EntryHello);
 ///
 /// // Define error types
-/// pack!(ErrorNoNameProvided = ());
-/// pack!(ErrorNameTooLong = u16);
-/// pack!(ErrorNameNotAvailable = ());
+/// #[derive(Grouped)]
+/// pub struct ErrorNoNameProvided;
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct ErrorNameTooLong(u16);
+///
+/// #[derive(Grouped)]
+/// pub struct ErrorNameNotAvailable;
 ///
 /// // Define success type
-/// pack!(ResultName = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName(String);
 ///
 /// // Pre-registered names
 /// static VEC_REGISTERED_NAMES: &[&str] = &["Alice", "Bob", "Charlie", "David", "Eve"];
 ///
 /// #[chain]
 /// fn handle_hello(args: EntryHello) -> Next {
-///     let Some(name) = args.inner.first().cloned() else {
+///     let Some(name) = args.0.first().cloned() else {
 ///         // If no name is provided, pass ErrorNoNameProvided
-///         return ErrorNoNameProvided::default().to_render();
+///         return ErrorNoNameProvided.to_render();
 ///     };
 ///
 ///     if name.len() > 10 {
 ///         // If the name is too long, pass ErrorNameTooLong
-///         return ErrorNameTooLong::new(name.len() as u16).to_render();
+///         return ErrorNameTooLong(name.len() as u16).to_render();
 ///     }
 ///
 ///     if VEC_REGISTERED_NAMES.contains(&name.as_str()) {
 ///         // If the name already exists, pass ErrorNameNotAvailable
-///         return ErrorNameNotAvailable::default().to_render();
+///         return ErrorNameNotAvailable.to_render();
 ///     }
 ///
 ///     // If the name is valid, pass ResultName
-///     ResultName::new(name).to_render()
+///     ResultName(name).to_render()
 /// }
 ///
 /// /// Renders a successful greeting with the given name.
@@ -1282,12 +1309,7 @@ pub mod example_enum_tag {}
 /// #[renderer]
 /// fn render_entry_fallback(err: EntryFallback) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
-///     writeln!(
-///         render_result,
-///         "Command not found: \"{}\"",
-///         err.inner.join(" ")
-///     )
-///     .ok();
+///     writeln!(render_result, "Command not found: \"{}\"", err.0.join(" ")).ok();
 ///     render_result
 /// }
 ///
@@ -1351,18 +1373,21 @@ pub mod example_error_handling {}
 ///
 /// dispatcher!("hello", EntryHello);
 ///
-/// pack!(ErrorNoNameProvided = ());
-/// pack!(ResultName = String);
+/// #[derive(Grouped)]
+/// pub struct ErrorNoNameProvided;
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName(String);
 ///
 /// #[chain]
 /// fn handle_hello(args: EntryHello) -> Next {
-///     let Some(name) = args.inner.first().cloned() else {
+///     let Some(name) = args.0.first().cloned() else {
 ///         // If no name is provided, pass ErrorNoNameProvided
-///         return ErrorNoNameProvided::default().to_render();
+///         return ErrorNoNameProvided.to_render();
 ///     };
 ///
 ///     // If the name is valid, pass ResultName
-///     ResultName::new(name).to_render()
+///     ResultName(name).to_render()
 /// }
 ///
 /// /// Renders a successful greeting with the given name.
@@ -1527,12 +1552,13 @@ pub mod example_help {}
 ///     program.exec_and_exit();
 /// }
 ///
-/// pack!(ResultName = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName(String);
 ///
 /// #[chain]
 /// fn handle_greet(args: EntryGreet) -> Next {
 ///     let name: ResultName = args
-///         .inner
+///         .0
 ///         .first()
 ///         .cloned()
 ///         .unwrap_or_else(|| "World".to_string())
@@ -1656,7 +1682,8 @@ pub mod example_implicit_dispatcher {}
 /// dispatcher!("show", EntryShow);
 /// dispatcher!("none", EntryNone);
 ///
-/// pack!(ResultShow = BTreeMap<Key, Value>);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultShow(BTreeMap<Key, Value>);
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -1774,14 +1801,17 @@ pub mod example_lazy_resources {}
 /// }
 /// // --------- IMPORTANT ---------
 ///
-/// pack!(ResultName = String);
-/// pack!(DescResult = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName(String);
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct DescResult(String);
 ///
 /// /// Chain for `greet` — reads the name and produces a `ResultName`.
 /// #[chain]
 /// fn handle_greet(args: EntryGreet) -> Next {
 ///     let name: ResultName = args
-///         .inner
+///         .0
 ///         .first()
 ///         .cloned()
 ///         .unwrap_or_else(|| "World".to_string())
@@ -1799,7 +1829,7 @@ pub mod example_lazy_resources {}
 ///         None => "EntryGreet has no description".to_string(),
 ///     };
 ///     // --------- IMPORTANT ---------
-///     DescResult::new(msg).to_render()
+///     DescResult(msg).to_render()
 /// }
 ///
 /// /// Chain for `nodoc` — asks for metadata on an entry that has none.
@@ -1812,7 +1842,7 @@ pub mod example_lazy_resources {}
 ///         None => "EntryDescription has no description".to_string(),
 ///     };
 ///     // --------- IMPORTANT ---------
-///     DescResult::new(msg).to_render()
+///     DescResult(msg).to_render()
 /// }
 ///
 /// /// Renders the greeting message with the provided name.
@@ -1897,7 +1927,8 @@ pub mod example_metadata {}
 /// //                      you can use this syntax to create an alias simultaneously
 /// // --------- IMPORTANT ---------
 ///
-/// pack!(ParsedNumber = i32);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ParsedNumber(i32);
 ///
 /// /// Parse the first argument as an `i32`
 /// ///
@@ -1905,9 +1936,9 @@ pub mod example_metadata {}
 /// /// On failure, routes to `render_parse_error` via the registered outside type.
 /// #[chain]
 /// fn parse_number(args: EntryParse) -> Next {
-///     let input = args.inner.first().cloned().unwrap_or_default();
+///     let input = args.0.first().cloned().unwrap_or_default();
 ///     match input.parse::<i32>() {
-///         Ok(num) => ParsedNumber::new(num).to_chain(),
+///         Ok(num) => ParsedNumber(num).to_chain(),
 ///         Err(e) => e.to_chain(),
 ///     }
 /// }
@@ -1950,181 +1981,6 @@ pub mod example_metadata {}
 /// gen_program!();
 /// ```
 pub mod example_outside_type {}
-/// Example `pack_err!`
-///
-///  > This example demonstrates how to use the `pack_err!` macro to define error types
-///  > with automatic `name` field (set to snake_case at compile time) and optional `info` field.
-///  > Also demonstrates `--json` serialization when `structural_renderer` is enabled.
-///
-///  Run:
-///  ```bash
-///  cargo run --manifest-path examples/example-pack-err/Cargo.toml --quiet -- find
-///  cargo run --manifest-path examples/example-pack-err/Cargo.toml --quiet -- find Cargo.toml
-///  cargo run --manifest-path examples/example-pack-err/Cargo.toml --quiet -- find src
-///  cargo run --manifest-path examples/example-pack-err/Cargo.toml --quiet -- find-structural --json
-///  cargo run --manifest-path examples/example-pack-err/Cargo.toml --quiet -- find-structural Cargo.toml --json
-///  cargo run --manifest-path examples/example-pack-err/Cargo.toml --quiet -- find-structural src --json
-///  ```
-///
-///  Output:
-///  ```plaintext
-///  Search path not provided
-///  Not a directory: Cargo.toml
-///  Found directory: src
-///  {"name":"error_not_found"}
-///  {"name":"error_not_dir","info":"Cargo.toml"}
-///  {"inner":"src"}
-///  {"name":"error_not_found_structural"}
-///  {"name":"error_not_dir_structural","info":"Cargo.toml"}
-///  ```
-///
-/// Source code (./Cargo.toml)
-/// ```toml
-/// [package]
-/// name = "example-pack-err"
-/// version = "0.1.0"
-/// edition = "2024"
-///
-/// [dependencies]
-/// serde = { version = "1.0.228", features = ["derive"] }
-///
-/// [dependencies.mingling]
-/// path = "../../mingling"
-/// features = [
-///     "structural_renderer",
-///     "extras",
-/// ]
-///
-/// [workspace]
-/// ```
-///
-/// Source code (./src/main.rs)
-/// ```ignore
-/// use mingling::prelude::*;
-/// use mingling::setup::StructuralRendererSetup;
-/// use std::io::Write;
-/// use std::path::PathBuf;
-///
-/// dispatcher!("find", EntryFind);
-/// dispatcher!("find-structural", EntryFindStructural);
-///
-/// // --------- IMPORTANT ---------
-/// // `pack_err!` is a convenient macro for defining error types.
-/// //
-/// //     Simple form:         pack_err!(ErrorNotFound);
-/// //     Typed form:          pack_err!(ErrorNotDir = PathBuf);
-/// //
-/// // The simple form generates a struct with `name: String` and `impl Default`.
-/// //   name = "error_not_found"  (automatically snake_cased at compile time)
-/// //
-/// // The typed form additionally generates `pub fn new(info)`.
-/// //   name = "error_not_dir"
-/// //
-/// // When `structural_renderer` is enabled, the struct also gets
-/// // `#[derive(serde::Serialize)]` for --json / --yaml output.
-/// // --------- IMPORTANT ---------
-///
-/// // Simple form — name = "error_not_found"
-/// pack_err!(ErrorNotFound);
-///
-/// // Typed form — name = "error_not_dir"
-/// pack_err!(ErrorNotDir = PathBuf);
-///
-/// // Simple form — with StructuralData support for --json / --yaml
-/// pack_err_structural!(ErrorNotFoundStructural);
-///
-/// // Typed form — with StructuralData support for --json / --yaml
-/// pack_err_structural!(ErrorNotDirStructural = PathBuf);
-///
-/// // Success type with StructuralData support
-/// pack_structural!(ResultPath = PathBuf);
-///
-/// #[chain]
-/// fn handle_find(args: EntryFind) -> Next {
-///     let Some(path_str) = args.inner.first().cloned() else {
-///         // No path provided → use the simple error form (Default)
-///         return ErrorNotFound::default().to_render();
-///     };
-///
-///     let path = PathBuf::from(&path_str);
-///     if path.is_dir() {
-///         // Is a directory → success
-///         ResultPath::new(path).to_render()
-///     } else {
-///         // Not a directory (or doesn't exist) → use the typed error form
-///         ErrorNotDir::new(path).to_render()
-///     }
-/// }
-///
-/// #[chain]
-/// fn handle_find_structural(args: EntryFindStructural) -> Next {
-///     let Some(path_str) = args.inner.first().cloned() else {
-///         // No path provided → use the simple error form (Default)
-///         return ErrorNotFoundStructural::default().to_render();
-///     };
-///
-///     let path = PathBuf::from(&path_str);
-///     if path.is_dir() {
-///         // Is a directory → success
-///         ResultPath::new(path).to_render()
-///     } else {
-///         // Not a directory (or doesn't exist) → use the typed error form
-///         ErrorNotDirStructural::new(path).to_render()
-///     }
-/// }
-///
-/// /// Renders the successful result with the found directory path.
-/// #[renderer]
-/// fn render_result_path(path: ResultPath) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     writeln!(render_result, "Found directory: {}", path.display()).ok();
-///     render_result
-/// }
-///
-/// /// Renders the error when no search path is provided.
-/// #[renderer]
-/// fn render_error_not_found(_: ErrorNotFound) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     writeln!(render_result, "Search path not provided").ok();
-///     render_result
-/// }
-///
-/// /// Renders the error when the given path is not a directory.
-/// #[renderer]
-/// fn render_error_not_dir(err: ErrorNotDir) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     writeln!(render_result, "Not a directory: {}", err.info.display()).ok();
-///     render_result
-/// }
-///
-/// /// Renders the structural error when no search path is provided.
-/// #[renderer]
-/// fn render_error_not_found_structural(_: ErrorNotFoundStructural) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     writeln!(render_result, "Search path not provided").ok();
-///     render_result
-/// }
-///
-/// /// Renders the structural error when the given path is not a directory.
-/// #[renderer]
-/// fn render_error_not_dir_structural(err: ErrorNotDirStructural) -> RenderResult {
-///     let mut render_result = RenderResult::new();
-///     writeln!(render_result, "Not a directory: {}", err.info.display()).ok();
-///     render_result
-/// }
-///
-/// gen_program!();
-///
-/// fn main() {
-///     let mut program = ThisProgram::new();
-///
-///     // Add StructuralRendererSetup to support --json / --yaml flags
-///     program.with_setup(StructuralRendererSetup);
-///
-///     let _ = program.exec();
-/// }
-/// ```
-pub mod example_pack_err {}
 /// Example Panic Unwind
 ///
 ///  > This example introduces how to catch Panic in the Mingling program loop
@@ -2171,7 +2027,9 @@ pub mod example_pack_err {}
 /// use std::io::Write;
 ///
 /// dispatcher!("panic", EntryPanic);
-/// pack!(NotPanic = ());
+///
+/// #[derive(Grouped)]
+/// pub struct NotPanic;
 ///
 /// fn main() {
 ///     let mut program = ThisProgram::new();
@@ -2198,7 +2056,7 @@ pub mod example_pack_err {}
 ///             // Panic happens here, will be caught
 ///             panic!("{}", s)
 ///         }
-///         None => NotPanic::default().into(),
+///         None => NotPanic.into(),
 ///     }
 /// }
 ///
@@ -2364,7 +2222,8 @@ pub mod example_pathfinder {}
 /// }
 ///
 /// // Create error route
-/// pack!(ErrorDirectoryNotExist = PathBuf);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ErrorDirectoryNotExist(PathBuf);
 ///
 /// // Create commands: cd ls exit
 /// dispatcher!("cd", EntryCd);
@@ -2373,16 +2232,18 @@ pub mod example_pathfinder {}
 /// dispatcher!("clear", EntryClear);
 ///
 /// // Define data needed for the cd command's execution phase
-/// pack!(StateChangeDirectory = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct StateChangeDirectory(String);
 ///
 /// // Define data needed for the ls command's rendering phase
-/// pack!(ResultList = Vec<String>);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultList(Vec<String>);
 ///
 /// // Parse cd command arguments
 /// #[chain]
 /// fn parse_cd_args(prev: EntryCd) -> Next {
 ///     let join = prev.pick_or_default(&arg![String]).unwrap();
-///     StateChangeDirectory::new(join).into()
+///     StateChangeDirectory(join).into()
 /// }
 ///
 /// // Execute directory change
@@ -2390,12 +2251,12 @@ pub mod example_pathfinder {}
 /// fn handle_cd(prev: StateChangeDirectory, current_dir: &mut ResCurrentDir) -> Next {
 ///     use just_fmt::fmt_path::fmt_path;
 ///
-///     let join = prev.inner;
+///     let join = prev.0;
 ///     let new_dir = fmt_path(current_dir.dir.join(join)).unwrap_or_default();
 ///
 ///     // If the path is not found, route to error handling
 ///     if !new_dir.exists() {
-///         return ErrorDirectoryNotExist::new(new_dir).to_render();
+///         return ErrorDirectoryNotExist(new_dir).to_render();
 ///     }
 ///
 ///     current_dir.dir = new_dir;
@@ -2420,14 +2281,14 @@ pub mod example_pathfinder {}
 ///         .collect();
 ///
 ///     // Render ResultList
-///     ResultList::new(entries).to_render()
+///     ResultList(entries).to_render()
 /// }
 ///
 /// /// Render ResultList data
 /// #[renderer]
 /// fn render_list(list: ResultList) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
-///     for item in list.inner {
+///     for item in list.0 {
 ///         writeln!(render_result, "{}", item).ok();
 ///     }
 ///     render_result
@@ -2454,12 +2315,7 @@ pub mod example_pathfinder {}
 /// #[renderer]
 /// fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
-///     writeln!(
-///         render_result,
-///         "Directory not found: {}",
-///         err.inner.display()
-///     )
-///     .ok();
+///     writeln!(render_result, "Directory not found: {}", err.0.display()).ok();
 ///     render_result
 /// }
 ///
@@ -2636,13 +2492,14 @@ pub mod example_resources {}
 ///
 /// dispatcher!("greet", EntryGreet);
 ///
-/// pack!(ResultGreeting = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultGreeting(String);
 ///
 /// /// Chain: reads the `ResAppName` and `ResAppVersion` resources.
 /// #[chain]
 /// fn handle_greet(args: EntryGreet, app: &ResAppName, version: &ResAppVersion) -> Next {
 ///     let who = args
-///         .inner
+///         .0
 ///         .first()
 ///         .cloned()
 ///         .unwrap_or_else(|| "World".to_string());
@@ -2718,7 +2575,8 @@ pub mod example_setup {}
 /// }
 ///
 /// // --------- IMPORTANT ---------
-/// // For beautiful output structure, do not use `pack!` to wrap the types that need to be output.
+/// // For beautiful output structure, do not wrap the types that need to be output
+/// // in a newtype; instead, use a named struct.
 /// // Instead, manually implement
 /// //        ____________________________________ Mark as structured data so it can be rendered
 /// //       /                ____________________ Implement serde::Serialize
@@ -2734,7 +2592,7 @@ pub mod example_setup {}
 /// }
 /// // This will output: {"member_name":"name","member_age":32} structure
 ///
-/// // If using pack!(Info = (String, i32));
+/// // If wrapping with a tuple newtype (e.g. `#[derive(Grouped, Wrap)] pub struct Info((String, i32));`)
 /// // Output: {"inner":["name", 32]}
 ///
 /// // --------- IMPORTANT ---------
@@ -2812,30 +2670,30 @@ pub mod example_structural_renderer {}
 ///         let hello_with_valid_name = handle_hello(entry!("Peter")).into();
 ///         assert_render_result!(hello_with_valid_name);
 ///         let result_name = unpack_chain_process!(hello_with_valid_name, ResultName);
-///         assert_eq!(result_name.inner, "Peter");
+///         assert_eq!(result_name.0, "Peter");
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_result_name() {
-///         let r = render_result_name(ResultName::new("Peter".into()));
+///         let r = render_result_name(ResultName("Peter".into()));
 ///         assert_eq!(r.to_string().as_str(), "Hello, Peter!")
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_error_no_name_provided() {
-///         let r = render_error_no_name_provided(ErrorNoNameProvided::default());
+///         let r = render_error_no_name_provided(ErrorNoNameProvided);
 ///         assert_eq!(r.to_string().as_str(), "No name provided")
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_error_name_not_available() {
-///         let r = render_error_name_not_available(ErrorNameNotAvailable::default());
+///         let r = render_error_name_not_available(ErrorNameNotAvailable);
 ///         assert_eq!(r.to_string().as_str(), "Name not available")
 ///     }
 ///
 ///     #[test]
 ///     fn test_render_error_name_too_long() {
-///         let r = render_error_name_too_long(ErrorNameTooLong::new(17));
+///         let r = render_error_name_too_long(ErrorNameTooLong(17));
 ///         assert_eq!(r.to_string().as_str(), "Name too long: 17 > 10")
 ///     }
 ///     // --------- IMPORTANT ---------
@@ -2843,29 +2701,35 @@ pub mod example_structural_renderer {}
 ///
 /// dispatcher!("hello", EntryHello);
 ///
-/// pack!(ErrorNoNameProvided = ());
-/// pack!(ErrorNameTooLong = u16);
-/// pack!(ErrorNameNotAvailable = ());
+/// #[derive(Grouped)]
+/// pub struct ErrorNoNameProvided;
 ///
-/// pack!(ResultName = String);
+/// #[derive(Grouped, Wrap)]
+/// pub struct ErrorNameTooLong(u16);
+///
+/// #[derive(Grouped)]
+/// pub struct ErrorNameNotAvailable;
+///
+/// #[derive(Grouped, Wrap)]
+/// pub struct ResultName(String);
 ///
 /// static VEC_REGISTERED_NAMES: &[&str] = &["Alice", "Bob", "Charlie", "David", "Eve"];
 ///
 /// #[chain]
 /// fn handle_hello(args: EntryHello) -> Next {
-///     let Some(name) = args.inner.first().cloned() else {
-///         return ErrorNoNameProvided::default().to_render();
+///     let Some(name) = args.0.first().cloned() else {
+///         return ErrorNoNameProvided.to_render();
 ///     };
 ///
 ///     if name.len() > 10 {
-///         return ErrorNameTooLong::new(name.len() as u16).to_render();
+///         return ErrorNameTooLong(name.len() as u16).to_render();
 ///     }
 ///
 ///     if VEC_REGISTERED_NAMES.contains(&name.as_str()) {
-///         return ErrorNameNotAvailable::default().to_render();
+///         return ErrorNameNotAvailable.to_render();
 ///     }
 ///
-///     ResultName::new(name).to_render()
+///     ResultName(name).to_render()
 /// }
 ///
 /// /// Renders a successful greeting with the given name.
@@ -2904,12 +2768,7 @@ pub mod example_structural_renderer {}
 /// #[renderer]
 /// fn render_entry_fallback(err: EntryFallback) -> RenderResult {
 ///     let mut render_result = RenderResult::new();
-///     writeln!(
-///         render_result,
-///         "Command not found: \"{}\"",
-///         err.inner.join(" ")
-///     )
-///     .ok();
+///     writeln!(render_result, "Command not found: \"{}\"", err.0.join(" ")).ok();
 ///     render_result
 /// }
 ///

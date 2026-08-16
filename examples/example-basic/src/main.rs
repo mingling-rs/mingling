@@ -17,11 +17,11 @@ use mingling::prelude::*;
 use std::io::Write;
 
 // Define the `greet` subcommand
-//            _____________________________ subcmd name, can be nested (e.g. "remote.add" "remote.rm")
-//           /        _____________________ dispatcher name
-//           |       /            _________ entry, records raw arguments
-//           |       |           /                         ^^^^^^^^^^^^^
-//           vvvvv   vvvvvvvv    vvvvvvvvvv                \_ equivalent to pack!(EntryGreet = Vec<String>)
+//            _________________ subcmd name, can be nested (e.g. "remote.add" "remote.rm")
+//           /
+//           |        _________ entry, records raw arguments
+//           |       /                         ^^^^^^^^^^^^^
+//           vvvvv   vvvvvvvvvv                \_ a newtype wrapper around Vec<String>
 dispatcher!("greet", EntryGreet);
 
 fn main() {
@@ -33,21 +33,22 @@ fn main() {
 }
 
 // Quickly wrap a type into a type recognizable by the current program
-//     ____________________ Wrapped type name
-//    /             _______ Wrapped type inner value
-//    |            /
-//    vvvvvvvvvv   vvvvvv
-pack!(ResultName = String);
+//     ___________________  Registers this type into ThisProgram
+//    /            _______  Adds DerefMut, Deref, Into, From wrappers
+//    |           /
+//    vvvvvvvvvv  vvvvv
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
 
 // Define the `handle_greet` chain for parsing input text
 //                     ____________________ Previous type:
 //                    /                       Mingling deduces types at runtime and routes them to this function
 //                    |               _____ will be expanded to:
-//                    |              /        impl Into<mingling::ChainProcess<ThisProgram>>
+//                    |              /        ChainProcess<ThisProgram>
 #[chain] //           vvvvvvvvvv     vvvv
 fn handle_greet(args: EntryGreet) -> Next {
     let name: ResultName = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string())

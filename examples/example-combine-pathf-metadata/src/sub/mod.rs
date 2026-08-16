@@ -7,6 +7,7 @@ use std::io::Write;
 
 // Implicit dispatcher form — creates `CMDHello` / `EntryHello` in this module
 dispatcher!("hello");
+
 // Creates `CMDDescription` / `EntryDescription` in this module
 dispatcher!("desc", EntryDescription);
 
@@ -27,14 +28,17 @@ pub fn hello_desc() -> Description {
     }
 }
 
-pack!(ResultName = String);
-pack!(DescResult = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
+
+#[derive(Grouped, Wrap)]
+pub struct DescResult(String);
 
 /// Chain for `hello` — reads the name and produces a `ResultName`.
 #[chain]
 pub fn handle_hello(args: EntryHello) -> Next {
     let name: ResultName = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string())
@@ -51,7 +55,7 @@ pub fn handle_desc(_args: EntryDescription) -> Next {
         None => "EntryHello has no description".to_string(),
     };
     // --------- IMPORTANT ---------
-    DescResult::new(msg).to_render()
+    DescResult(msg).to_render()
 }
 
 /// Renders the greeting message with the provided name.

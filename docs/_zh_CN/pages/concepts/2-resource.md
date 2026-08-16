@@ -34,7 +34,8 @@
 
 ```rust
 @@@ use mingling::res::ResExitCode;
-@@@ pack!(ErrorFileNotFound = ());
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ErrorFileNotFound(());
 #[chain]
 fn handle_error_file_not_found(
     error: ErrorFileNotFound,

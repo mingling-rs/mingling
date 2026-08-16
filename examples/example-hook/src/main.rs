@@ -53,12 +53,13 @@ fn main() {
     program.exec_and_exit();
 }
 
-pack!(ResultName = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
 
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let name: ResultName = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string())

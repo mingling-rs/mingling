@@ -80,11 +80,12 @@ Enables async runtime support, allowing `#[chain]` to bind `async` functions, e.
 ```rust
 // Features: ["async"]
  
-pack!(StateFoo = ());
+#[derive(Grouped, Wrap)]
+pub struct StateFoo(());
  
 #[chain]
 async fn handle_state_foo(foo: StateFoo) -> Next {
-    StateFoo::new(()).into()
+    StateFoo(()).into()
 }
 ```
  
@@ -151,14 +152,13 @@ Enables an additional set of macros, providing more convenient syntactic sugar a
 
 For example, allows the shorthand form `dispatcher!("greet")`, which auto-generates `CMDGreet` / `EntryGreet`.
 
-| Macro                                                   | Description                                                     |
-| ------------------------------------------------------- | --------------------------------------------------------------- |
-| `empty_result!()`                                       | Shorthand for returning an empty result early in a chain        |
-| `entry!(Type, ["a", "b"])`                              | Construct test data for an entry type                           |
-| `group!(Type)`                                          | Register external types as group members without modifying them |
-| `pack_err!(ErrorType)` / `pack_err!(ErrorType = Inner)` | Create error types with an automatic `name` field               |
-| `#[program_setup]`                                      | Declare a program initialization function                       |
-| `dispatcher!("cmd.path")` **shorthand**                 | Omit `EntryStruct`, the entry name is auto-derived              |
+| Macro                                   | Description                                                     |
+| --------------------------------------- | --------------------------------------------------------------- |
+| `empty_result!()`                       | Shorthand for returning an empty result early in a chain        |
+| `entry!(Type, ["a", "b"])`              | Construct test data for an entry type                           |
+| `group!(Type)`                          | Register external types as group members without modifying them |
+| `#[program_setup]`                      | Declare a program initialization function                       |
+| `dispatcher!("cmd.path")` **shorthand** | Omit `EntryStruct`, the entry name is auto-derived              |
 
 <details>
 <summary> Details </summary>
@@ -168,10 +168,13 @@ For example, allows the shorthand form `dispatcher!("greet")`, which auto-genera
 ```rust
 // Features: ["extras"]
  
-pack!(StatePrev1 = ());
-pack!(StatePrev2 = ());
+#[derive(Grouped, Wrap)]
+pub struct StatePrev1(());
+#[derive(Grouped, Wrap)]
+pub struct StatePrev2(());
  
-pack!(StateNext = ());
+#[derive(Grouped, Wrap)]
+pub struct StateNext(());
  
 #[chain]
 fn handle_state_prev2(_p: StatePrev2) {
@@ -186,7 +189,7 @@ fn handle_state_prev1(_p: StatePrev1) -> Next {
         // When Next is needed but no return value is required, use this
         empty_result!()
     } else {
-        StateNext::new(()).into()
+        StateNext(()).into()
     }
 }
 ```
@@ -217,7 +220,8 @@ fn no_error_setup(program: &mut Program<ThisProgram>) {
 // Features: ["extras"]
 use mingling::macros::entry;
  
-pack!(EntryHello = Vec<String>);
+#[derive(Grouped, Wrap)]
+pub struct EntryHello(Vec<String>);
  
 fn main() {
     let result: Next = handle_hello(entry!("--name", "Bob")).into();
@@ -231,7 +235,7 @@ fn handle_hello(args: EntryHello) {}
 ### `group!`
 
 Registers an external type as a member of the program group without modifying its definition.
-The type's simple name is used as the enum variant, just like `pack!` or `#[derive(Grouped)]`.
+The type's simple name is used as the enum variant, just like `#[derive(Grouped)]`.
 
 ```rust
 // Features: ["extras"]
@@ -243,26 +247,23 @@ use std::num::ParseIntError;
 group!(std::num::ParseIntError);
 ```
  
-### `pack_err!`
+### Declaring Error Types
 
-Creates an error struct with an automatic `name: String` field set to the snake_case
-of the struct name. Optionally wraps an inner type for additional context.
+Error types are declared with derives — the old `pack_err!` macro was removed in 0.5.0.
+Use `#[derive(Grouped, Default)]` for a unit error (no payload), or
+`#[derive(Grouped, Wrap)]` to wrap an inner type for additional context.
 
 ```rust
 // Features: ["extras"]
 use std::path::PathBuf;
  
-// Simple form — only a name field:
-pack_err!(ErrorNotFound);
-// Generates:
-//   struct ErrorNotFound { pub name: String }
-//   impl Default for ErrorNotFound { ... }
+// Unit form — no payload:
+#[derive(Grouped, Default)]
+pub struct ErrorNotFound;
  
-// Typed form — with additional info field:
-pack_err!(ErrorNotDir = PathBuf);
-// Generates:
-//   struct ErrorNotDir { pub name: String, pub info: PathBuf }
-//   impl ErrorNotDir { pub fn new(info: PathBuf) -> Self { ... } }
+// Typed form — wraps an inner type:
+#[derive(Grouped, Wrap)]
+pub struct ErrorNotDir(PathBuf);
 ```
  
 </details>

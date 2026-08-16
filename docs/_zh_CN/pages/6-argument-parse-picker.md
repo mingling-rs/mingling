@@ -3,7 +3,7 @@
     用 Picker 完成基本的参数解析
 </p>
 
-前面教程中我们都是手动从 `EntryGreet.inner`（`Vec<String>`）中提取参数。
+前面教程中我们都是手动从 `EntryGreet.0`（`Vec<String>`）中提取参数。
 
 ```rust
 @@@ fn main() {
@@ -27,14 +27,15 @@ features = ["picker"]
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
         .pick_or(&arg![String], || "World".to_string())
         .unwrap();
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
 ```
  
@@ -45,13 +46,14 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
 let name = prev
     .pick_or(&arg![String], || "World".to_string())
     .unwrap();
-@@@ResultName::new(name).into()
+@@@ResultName(name).into()
 @@@}
 ```
  
@@ -60,7 +62,8 @@ let name = prev
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
 @@@let name: String =
@@ -81,14 +84,15 @@ let name = prev
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
         .pick_or(&arg![name: String, 'n'], || "World".to_string())
         .unwrap();
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
 ```
  
@@ -99,7 +103,8 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
 @@@let name: String =
@@ -122,7 +127,8 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("test", EntryTest);
-@@@pack!(ResultInfo = (String, u8, u32));
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultInfo((String, u8, u32));
  
 #[chain]
 fn handle_test_entry(prev: EntryTest) -> Next {
@@ -132,7 +138,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
         .pick_or_default(&arg![id: u32, 'I'])
         .unwrap();
  
-    ResultInfo::new((name, age, id)).into()
+    ResultInfo((name, age, id)).into()
 }
 ```
  
@@ -150,8 +156,10 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
-@@@pack!(ErrorNoName = ());
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ErrorNoName(());
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
@@ -162,7 +170,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
         })
         .to_result()
     );
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
  
 #[renderer(buffer)]
@@ -177,12 +185,13 @@ fn render_greet(result: ResultName) {
 
 ```rust
 // Features: ["picker", "extras"]
-@@@ pack!(ErrorFail = ());
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ErrorFail(());
 @@@ use mingling::macros::route;
 @@@ use mingling::picker::IntoPicker;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
-let name = route!(args.pick_or_route(&arg![String], || ErrorFail::new(()).to_chain()).to_result());
+let name = route!(args.pick_or_route(&arg![String], || ErrorFail(()).to_chain()).to_result());
 @@@ mingling::macros::empty_result!()
 @@@ }
 ```
@@ -191,11 +200,12 @@ let name = route!(args.pick_or_route(&arg![String], || ErrorFail::new(()).to_cha
 
 ```rust
 // Features: ["picker", "extras"]
-@@@ pack!(ErrorFail = ());
+@@@ #[derive(Grouped, Wrap)]
+@@@ pub struct ErrorFail(());
 @@@ use mingling::picker::IntoPicker;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
-let name = match args.pick_or_route(&arg![String], || ErrorFail::new(()).to_chain()).to_result() {
+let name = match args.pick_or_route(&arg![String], || ErrorFail(()).to_chain()).to_result() {
     Ok(r) => r,
     Err(e) => return e,
 };
@@ -210,7 +220,8 @@ let name = match args.pick_or_route(&arg![String], || ErrorFail::new(()).to_chai
 ```rust
 // Features: ["picker"]
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
  
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
@@ -225,7 +236,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
         })
         .unwrap();
  
-    ResultName::new(name).into()
+    ResultName(name).into()
 }
 ```
  
@@ -237,7 +248,8 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 // Features: ["picker"]
 @@@use mingling::picker::value::Flag;
 @@@dispatcher!("test", EntryTest);
-@@@pack!(ResultDone = ());
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ResultDone(());
  
 #[chain]
 fn handle_entry(prev: EntryTest) -> Next {
@@ -280,12 +292,13 @@ impl SinglePickable for Address {
     }
 }
 @@@dispatcher!("connect", EntryConnect);
-@@@pack!(ResultConnected = Address);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultConnected(Address);
  
 #[chain]
 fn handle_connect_entry(prev: EntryConnect) -> Next {
     let address: Address = prev.pick_or_default(&arg![Address]).unwrap();
-    ResultConnected::new(address).into()
+    ResultConnected(address).into()
 }
  
 #[renderer(buffer)]
@@ -333,12 +346,13 @@ impl SinglePickable for Fruits {
     }
 }
 @@@dispatcher!("eat", EntryEat);
-@@@pack!(ResultFruit = Fruits);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultFruit(Fruits);
  
 #[chain]
 fn handle_eat_entry(prev: EntryEat) -> Next {
     let fruit: Fruits = prev.pick_or_default(&arg![Fruits]).unwrap();
-    ResultFruit::new(fruit).into()
+    ResultFruit(fruit).into()
 }
  
 #[renderer(buffer)]

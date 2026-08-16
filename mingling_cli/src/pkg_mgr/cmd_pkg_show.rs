@@ -3,7 +3,7 @@ use std::{collections::BTreeMap, fs, io};
 use colored::Colorize;
 use mingling::{
     Grouped, RenderResult, Routable,
-    macros::{buffer, command, metadata, pack_err, r_println, renderer, routeify},
+    macros::{buffer, command, metadata, r_println, renderer, routeify},
     metadata::Description,
 };
 
@@ -15,8 +15,10 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PkgShowEntry {
     pub name: String,
+
     /// Enabled version, from the content of the enable file.
     pub enabled: Option<String>,
+
     /// Installed versions, newest first.
     pub versions: Vec<String>,
 }
@@ -31,13 +33,14 @@ pub fn desc_pkg_show() -> Description {
     "Show locally installed packages".into()
 }
 
-pack_err!(ErrorNoPackagesInstalled);
+#[derive(Grouped, Default)]
+pub struct ErrorNoPackagesInstalled;
 
 #[command(node = "pkg-show", routeify)]
 pub fn package_show(packages_dir: &ResPackagesDir) -> Next {
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
 
     let mut entries: BTreeMap<String, PkgShowEntry> = BTreeMap::new();
@@ -84,7 +87,7 @@ pub fn package_show(packages_dir: &ResPackagesDir) -> Next {
     let packages: Vec<PkgShowEntry> = entries.into_values().collect();
 
     if packages.is_empty() {
-        return ErrorNoPackagesInstalled::default().into();
+        return ErrorNoPackagesInstalled.into();
     }
 
     ResultPkgShow { packages }.to_chain()

@@ -16,8 +16,12 @@ pub(crate) fn program_fallback_gen_impl(_input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        ::mingling::macros::pack!(ErrorRendererNotFound = String);
-        ::mingling::macros::pack!(EntryFallback = Vec<String>);
+        #[derive(::mingling::Grouped, ::mingling::Wrap, Default)]
+        pub struct ErrorRendererNotFound(pub ::std::string::String);
+
+        #[derive(::mingling::Grouped, ::mingling::Wrap, Default)]
+        pub struct EntryFallback(pub ::std::vec::Vec<::std::string::String>);
+
         #pack_empty
     };
     TokenStream::from(expanded)

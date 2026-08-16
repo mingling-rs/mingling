@@ -1,7 +1,7 @@
 use cargo_metadata::Metadata;
 use mingling::{
-    LazyRes,
-    macros::{chain, dispatcher, metadata, pack},
+    Grouped, LazyRes, Wrap,
+    macros::{chain, dispatcher, metadata},
     metadata::Description,
 };
 
@@ -16,7 +16,8 @@ pub fn desc_metadata() -> Description {
         .into()
 }
 
-pack!(ResultMetadata = ResMetadata);
+#[derive(Grouped, Wrap)]
+pub struct ResultMetadata(ResMetadata);
 
 #[chain]
 pub fn handle_metadata(_: EntryMetadata, metadata: &mut LazyRes<ResMetadata>) -> Metadata {

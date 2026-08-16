@@ -133,7 +133,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
                 match <#struct_name as ::clap::Parser>::try_parse_from(clap_args) {
                     Ok(parsed) => ::mingling::Routable::<#program_path>::to_chain(parsed),
                     Err(e) => {
-                        return ::mingling::Routable::<#program_path>::to_render(#error_struct::new(format!("{}", e.render().ansi())))
+                        return ::mingling::Routable::<#program_path>::to_render(#error_struct(format!("{}", e.render().ansi())))
                     },
                 }
             }
@@ -143,7 +143,8 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     // Generate the error pack type
     let error_pack = options.error_struct.as_ref().map(|error_struct| {
         quote! {
-            ::mingling::macros::pack!(#error_struct = String);
+            #[derive(::mingling::Grouped, ::mingling::Wrap, Default)]
+            pub struct #error_struct(pub ::std::string::String);
         }
     });
 
@@ -188,7 +189,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         // Keep the original struct definition
         #input_struct
 
-        // Generate the error wrapper type via pack!
+        // Generate the error wrapper type
         #error_pack
 
         // Generate the help block if enabled

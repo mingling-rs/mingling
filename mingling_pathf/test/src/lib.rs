@@ -174,33 +174,6 @@ fn test_completion_analyze() {
 }
 
 #[test]
-fn test_pack_analyze() {
-    let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_pack.rs");
-
-    let r = analyzer.analyze_file(file).unwrap();
-    let required: Vec<&str> = vec![
-        "::ResultPack1",
-        "::ErrorPack1",
-        "::ErrorPack2",
-        "::ResultPack2",
-        "::ErrorPack3",
-        "::ErrorPack4",
-        "::sub::ResultPack1",
-        "::sub::ErrorPack1",
-        "::sub::ErrorPack2",
-        "::sub::ResultPack2",
-        "::sub::ErrorPack3",
-        "::sub::ErrorPack4",
-    ];
-
-    assert_eq!(r.len(), required.len());
-    for entry in &required {
-        assert!(r.contains(*entry), "Result should contain: {}", entry);
-    }
-}
-
-#[test]
 fn test_group_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
     let file = current_dir().unwrap().join("src/test_files/test_group.rs");

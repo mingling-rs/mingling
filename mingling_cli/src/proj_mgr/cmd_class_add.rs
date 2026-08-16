@@ -6,8 +6,8 @@ use std::{
 use just_fmt::{camel_case, kebab_case, pascal_case, snake_case};
 use just_template::Template;
 use mingling::{
-    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
+    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
+    macros::{arg, chain, command, completion, metadata, renderer, routeify},
     metadata::Description,
     picker::EntryPicker,
     res::ResCurrentDir,
@@ -29,7 +29,8 @@ pub struct ClassEntry {
     pub description: String,
 }
 
-pack!(StateClassAdd = (String, String));
+#[derive(Grouped, Wrap)]
+pub struct StateClassAdd((String, String));
 
 /// Result of adding a class: the generated file path.
 #[derive(Debug, Default, Grouped)]
@@ -37,19 +38,28 @@ pub struct ResultClassAdd {
     pub output: PathBuf,
 }
 
-pack_err!(ErrorClassNameRequired = ());
-pack_err!(ErrorClassConfigMissing = String);
-pack_err!(ErrorClassNotFound = String);
-pack_err!(ErrorClassTemplateMissing = String);
-pack_err!(ErrorClassWriteFailed = String);
+#[derive(Grouped)]
+pub struct ErrorClassNameRequired;
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorClassConfigMissing(String);
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorClassNotFound(String);
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorClassTemplateMissing(String);
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorClassWriteFailed(String);
 
 #[command(node = "class-add", routeify)]
 pub fn class_add(args: EntryClassAdd) -> Next {
     let (class_name, name) = args
-        .pick_or_route(&arg![String], || ErrorClassNameRequired::new(()).to_chain())
-        .pick_or_route(&arg![String], || ErrorClassNameRequired::new(()).to_chain())
+        .pick_or_route(&arg![String], || ErrorClassNameRequired.to_chain())
+        .pick_or_route(&arg![String], || ErrorClassNameRequired.to_chain())
         .to_result()?;
-    StateClassAdd::new((class_name, name)).to_chain()
+    StateClassAdd((class_name, name)).to_chain()
 }
 
 /// Walk upward from `start` to find the first directory containing `.mling`.
@@ -91,11 +101,11 @@ fn deverbatim(path: &Path) -> PathBuf {
 /// name-derived parameters into `<output-dir>/<snake_case>.rs`.
 #[chain(routeify)]
 pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next {
-    let (class_name, name) = state.inner;
+    let (class_name, name) = state.0;
 
     // Resolve the project root: the nearest ancestor directory with `.mling`.
     let Some(project_root) = find_project_root(cwd) else {
-        return ErrorClassConfigMissing::new(format!(
+        return ErrorClassConfigMissing(format!(
             "no `.mling` directory found from {} upward; run this inside a mingling project",
             cwd.display()
         ))
@@ -105,14 +115,14 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     // Read `.mling/classes.toml` (the class registry).
     let classes_path = project_root.join(".mling").join("classes.toml");
     let content = fs::read_to_string(&classes_path).map_err(|e| {
-        ErrorClassConfigMissing::new(format!("failed to read {}: {e}", classes_path.display()))
+        ErrorClassConfigMissing(format!("failed to read {}: {e}", classes_path.display()))
     })?;
     let classes = parse_classes(&content)
-        .map_err(|e| ErrorClassConfigMissing::new(format!("invalid classes.toml: {e}")))?;
+        .map_err(|e| ErrorClassConfigMissing(format!("invalid classes.toml: {e}")))?;
 
     // Find the requested class type.
     let Some(entry) = classes.iter().find(|c| c.name == class_name) else {
-        return ErrorClassNotFound::new(format!(
+        return ErrorClassNotFound(format!(
             "class `{class_name}` not found in {}",
             classes_path.display()
         ))
@@ -122,7 +132,7 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     // Read the class template (relative to `.mling/`).
     let template_path = project_root.join(".mling").join(&entry.template);
     let template_content = fs::read_to_string(&template_path).map_err(|e| {
-        ErrorClassTemplateMissing::new(format!("failed to read {}: {e}", template_path.display()))
+        ErrorClassTemplateMissing(format!("failed to read {}: {e}", template_path.display()))
     })?;
 
     // Derive the name variants used by the template placeholders.
@@ -139,7 +149,7 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     tmpl.insert_param("upper_snake_case".to_string(), upper_snake);
     tmpl.insert_param("camel_case".to_string(), camel);
     let expanded = tmpl.expand().ok_or_else(|| {
-        ErrorClassWriteFailed::new(format!(
+        ErrorClassWriteFailed(format!(
             "failed to expand class template: {}",
             template_path.display()
         ))
@@ -149,11 +159,10 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     let output_dir = project_root.join(&entry.output_dir);
     let output = output_dir.join(format!("{snake}.rs"));
     fs::create_dir_all(&output_dir).map_err(|e| {
-        ErrorClassWriteFailed::new(format!("failed to create {}: {e}", output_dir.display()))
+        ErrorClassWriteFailed(format!("failed to create {}: {e}", output_dir.display()))
     })?;
-    fs::write(&output, expanded).map_err(|e| {
-        ErrorClassWriteFailed::new(format!("failed to write {}: {e}", output.display()))
-    })?;
+    fs::write(&output, expanded)
+        .map_err(|e| ErrorClassWriteFailed(format!("failed to write {}: {e}", output.display())))?;
 
     ResultClassAdd { output }.to_chain()
 }
@@ -215,28 +224,28 @@ pub fn render_error_class_name_required(_err: ErrorClassNameRequired) -> RenderR
 #[renderer]
 pub fn render_error_class_config_missing(err: ErrorClassConfigMissing) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "{}", err.info);
+    eprintln_cargo!(r, "{}", err.0);
     r
 }
 
 #[renderer]
 pub fn render_error_class_not_found(err: ErrorClassNotFound) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "{}", err.info);
+    eprintln_cargo!(r, "{}", err.0);
     r
 }
 
 #[renderer]
 pub fn render_error_class_template_missing(err: ErrorClassTemplateMissing) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "{}", err.info);
+    eprintln_cargo!(r, "{}", err.0);
     r
 }
 
 #[renderer]
 pub fn render_error_class_write_failed(err: ErrorClassWriteFailed) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "{}", err.info);
+    eprintln_cargo!(r, "{}", err.0);
     r
 }
 

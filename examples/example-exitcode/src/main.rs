@@ -36,18 +36,21 @@ fn main() {
 
 dispatcher!("hello", EntryHello);
 
-pack!(ErrorNoNameProvided = ());
-pack!(ResultName = String);
+#[derive(Grouped)]
+pub struct ErrorNoNameProvided;
+
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
 
 #[chain]
 fn handle_hello(args: EntryHello) -> Next {
-    let Some(name) = args.inner.first().cloned() else {
+    let Some(name) = args.0.first().cloned() else {
         // If no name is provided, pass ErrorNoNameProvided
-        return ErrorNoNameProvided::default().to_render();
+        return ErrorNoNameProvided.to_render();
     };
 
     // If the name is valid, pass ResultName
-    ResultName::new(name).to_render()
+    ResultName(name).to_render()
 }
 
 /// Renders a successful greeting with the given name.

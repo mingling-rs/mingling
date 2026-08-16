@@ -21,7 +21,7 @@ For more formats, enable `structural_renderer_full` (includes JSON, YAML, TOML, 
 
 ## Basic Usage
 
-After enabling `StructuralRendererSetup`, use `pack_structural!` instead of `pack!` to declare types that support structured output:
+After enabling `StructuralRendererSetup`, use `#[derive(StructuralData, Grouped, Wrap)]` to declare types that support structured output:
 
 ```rust
 // Features: ["structural_renderer"]
@@ -29,16 +29,18 @@ After enabling `StructuralRendererSetup`, use `pack_structural!` instead of `pac
 // serde = "1"
 @@@use mingling::macros::buffer;
 @@@use mingling::setup::StructuralRendererSetup;
+@@@use mingling::StructuralData;
 @@@dispatcher!("render", EntryRender);
  
-// pack_structural! is equivalent to pack! + StructuralData
-pack_structural!(ResultInfo = (String, i32));
+// StructuralData + Grouped + Wrap gives the type structured output support
+#[derive(serde::Serialize, StructuralData, Grouped, Wrap)]
+pub struct ResultInfo((String, i32));
  
 #[chain]
 fn handle_render(args: EntryRender) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
-    let age = args.inner.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
-    ResultInfo::new((name, age)).into()
+    let name = args.0.first().cloned().unwrap_or_default();
+    let age = args.0.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+    ResultInfo((name, age)).into()
 }
  
 #[renderer(buffer)]
@@ -61,7 +63,7 @@ When the user passes `--json`, the framework automatically serializes the render
 
 ## Customizing Output Structure
 
-The default output from `pack_structural!` includes an `inner` field. For full control over the output structure, define the type manually with `#[derive(StructuralData, Serialize, Grouped)]`:
+The default output from a tuple newtype (e.g. `#[derive(StructuralData, Grouped, Wrap)]`) wraps the value under an `inner` key. For full control over the output structure, define the type manually with `#[derive(StructuralData, Serialize, Grouped)]`:
 
 ```rust
 // Features: ["structural_renderer"]
@@ -82,8 +84,8 @@ struct Info {
  
 #[chain]
 fn handle_render(args: EntryRender) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
-    let age = args.inner.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+    let name = args.0.first().cloned().unwrap_or_default();
+    let age = args.0.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
     Info { name, age }.to_render()
 }
  

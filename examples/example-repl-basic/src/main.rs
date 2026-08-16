@@ -70,7 +70,8 @@ fn main() {
 }
 
 // Create error route
-pack!(ErrorDirectoryNotExist = PathBuf);
+#[derive(Grouped, Wrap)]
+pub struct ErrorDirectoryNotExist(PathBuf);
 
 // Create commands: cd ls exit
 dispatcher!("cd", EntryCd);
@@ -79,16 +80,18 @@ dispatcher!("exit", EntryExit);
 dispatcher!("clear", EntryClear);
 
 // Define data needed for the cd command's execution phase
-pack!(StateChangeDirectory = String);
+#[derive(Grouped, Wrap)]
+pub struct StateChangeDirectory(String);
 
 // Define data needed for the ls command's rendering phase
-pack!(ResultList = Vec<String>);
+#[derive(Grouped, Wrap)]
+pub struct ResultList(Vec<String>);
 
 // Parse cd command arguments
 #[chain]
 fn parse_cd_args(prev: EntryCd) -> Next {
     let join = prev.pick_or_default(&arg![String]).unwrap();
-    StateChangeDirectory::new(join).into()
+    StateChangeDirectory(join).into()
 }
 
 // Execute directory change
@@ -96,12 +99,12 @@ fn parse_cd_args(prev: EntryCd) -> Next {
 fn handle_cd(prev: StateChangeDirectory, current_dir: &mut ResCurrentDir) -> Next {
     use just_fmt::fmt_path::fmt_path;
 
-    let join = prev.inner;
+    let join = prev.0;
     let new_dir = fmt_path(current_dir.dir.join(join)).unwrap_or_default();
 
     // If the path is not found, route to error handling
     if !new_dir.exists() {
-        return ErrorDirectoryNotExist::new(new_dir).to_render();
+        return ErrorDirectoryNotExist(new_dir).to_render();
     }
 
     current_dir.dir = new_dir;
@@ -126,14 +129,14 @@ fn handle_ls(_prev: EntryLs, current_dir: &ResCurrentDir) -> Next {
         .collect();
 
     // Render ResultList
-    ResultList::new(entries).to_render()
+    ResultList(entries).to_render()
 }
 
 /// Render ResultList data
 #[renderer]
 fn render_list(list: ResultList) -> RenderResult {
     let mut render_result = RenderResult::new();
-    for item in list.inner {
+    for item in list.0 {
         writeln!(render_result, "{}", item).ok();
     }
     render_result
@@ -160,12 +163,7 @@ fn handle_clear(_prev: EntryClear) {
 #[renderer]
 fn render_error_directory_not_exist(err: ErrorDirectoryNotExist) -> RenderResult {
     let mut render_result = RenderResult::new();
-    writeln!(
-        render_result,
-        "Directory not found: {}",
-        err.inner.display()
-    )
-    .ok();
+    writeln!(render_result, "Directory not found: {}", err.0.display()).ok();
     render_result
 }
 

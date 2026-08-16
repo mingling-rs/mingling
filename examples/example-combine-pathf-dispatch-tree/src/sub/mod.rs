@@ -4,12 +4,13 @@ use std::io::Write;
 
 dispatcher!("hello");
 
-pack!(ResultMessage = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultMessage(String);
 
 #[chain]
 pub fn handle_my(args: EntryHello) -> Next {
     let name: ResultMessage = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string())

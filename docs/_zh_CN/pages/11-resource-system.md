@@ -31,11 +31,12 @@ fn main() {
 @@@#[derive(Default, Clone)]
 @@@struct ResCurrentDir(String);
 @@@dispatcher!("pwd", EntryPrintWorkingDir);
-@@@pack!(ResultPath = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultPath(String);
 // 通过 &T 注入只读资源
 #[chain]
 fn handle_pwd(_args: EntryPrintWorkingDir, cwd: &ResCurrentDir) -> Next {
-    ResultPath::new(cwd.0.clone()).to_render()
+    ResultPath(cwd.0.clone()).to_render()
 }
  
 #[renderer(buffer)]
@@ -53,7 +54,8 @@ fn render_path(result: ResultPath) {
 @@@#[derive(Default, Clone)]
 @@@struct ResVisitCount(u32);
 @@@dispatcher!("visit", EntryVisit);
-@@@pack!(ResultDone = ());
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ResultDone(());
 #[chain]
 fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
     counter.0 += 1;
@@ -74,7 +76,8 @@ Chain 可以同时注入任意多个资源，框架按类型自动匹配：
 @@@#[derive(Default, Clone)] struct ResConfig(String);
 @@@#[derive(Default, Clone)] struct ResCounter(u32);
 @@@dispatcher!("test", EntryTest);
-@@@pack!(ResultDone = ());
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ResultDone(());
 // 同时注入只读 + 可修改
 #[chain]
 fn handle_test(_args: EntryTest, config: &ResConfig, counter: &mut ResCounter) -> Next {

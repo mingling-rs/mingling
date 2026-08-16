@@ -39,7 +39,8 @@ Mingling abstracts the behavior of a program's lifecycle into three phases: **Di
 
 ```rust
 dispatcher!("current", EntryCurrent);
-pack!(StateNext = ());
+#[derive(Grouped, Wrap, Default)]
+pub struct StateNext(());
 
 #[chain]
 fn handle_current(_: EntryCurrent) -> StateNext {
@@ -66,22 +67,26 @@ use mingling::macros::buffer;
 use mingling::prelude::*;
 
 dispatcher!("calc", EntryCalculate);
-pack!(StateSumNumbers = Vec<i32>);
-pack!(ResultNumber = i32);
+
+#[derive(Grouped, Wrap)]
+pub struct StateSumNumbers(Vec<i32>);
+
+#[derive(Grouped, Wrap)]
+pub struct ResultNumber(i32);
 
 // Entry: parse arguments and pass state to the calculation step
 #[chain]
 fn handle_calc(args: EntryCalculate) -> StateSumNumbers {
     let numbers = args.pick(&arg![Vec<i32>]).unwrap();
-    StateSumNumbers::new(numbers)
+    StateSumNumbers(numbers)
 }
 
 // Calculate: pass the result to the rendering step
 #[chain]
 fn handle_state_sum_numbers(sum: StateSumNumbers) -> ResultNumber {
-    let numbers = sum.inner;
+    let numbers = sum.0;
     let total: i32 = numbers.iter().sum();
-    ResultNumber::new(total)
+    ResultNumber(total)
 }
 
 // Renderer: return the render result and let the framework handle output

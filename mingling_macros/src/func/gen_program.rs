@@ -57,7 +57,8 @@ pub(crate) fn gen_program_impl(_input: TokenStream) -> TokenStream {
             /// Alias for the current program type `ThisProgram`
             pub type Next = ::mingling::ChainProcess<ThisProgram>;
 
-            ::mingling::macros::pack!(Entry = Vec<String>);
+            #[derive(::mingling::Grouped, ::mingling::Wrap, Default)]
+            pub struct Entry(pub ::std::vec::Vec<::std::string::String>);
 
             impl ::mingling::Routable<ThisProgram> for ::mingling::ChainProcess<ThisProgram>
             {

@@ -20,7 +20,9 @@ use mingling::{hook::ProgramHook, prelude::*};
 use std::io::Write;
 
 dispatcher!("panic", EntryPanic);
-pack!(NotPanic = ());
+
+#[derive(Grouped)]
+pub struct NotPanic;
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -47,7 +49,7 @@ fn handle_panic(prev: EntryPanic) -> Next {
             // Panic happens here, will be caught
             panic!("{}", s)
         }
-        None => NotPanic::default().into(),
+        None => NotPanic.into(),
     }
 }
 

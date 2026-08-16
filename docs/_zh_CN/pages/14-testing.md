@@ -12,7 +12,8 @@ Chain 只是一个接收输入、返回输出的函数，Renderer 也只是接�
 Renderer 是最容易测试的——调用函数，断言返回结果：
 
 ```rust
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 #[renderer]
 fn render_greet(result: ResultName) -> RenderResult {
     let mut r = RenderResult::new();
@@ -22,7 +23,7 @@ fn render_greet(result: ResultName) -> RenderResult {
  
 #[test]
 fn test_render_name() {
-    let result = render_name(ResultName::new("Alice".to_string()));
+    let result = render_name(ResultName("Alice".to_string()));
     assert_eq!(result.to_string().as_str(), "Hello, Alice!\n");
 }
 ```
@@ -36,27 +37,29 @@ fn test_render_name() {
 ```rust
 @@@use mingling::{assert_member_id, assert_render_result, unpack_chain_process};
 @@@dispatcher!("hello", EntryHello);
-@@@pack!(ResultName = String);
-@@@pack!(ErrorNoName = ());
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ErrorNoName(());
 @@@#[chain]
 @@@fn handle_hello(args: EntryHello) -> Next {
-@@@    let name = args.inner.first().cloned().unwrap_or_default();
+@@@    let name = args.0.first().cloned().unwrap_or_default();
 @@@    if name.is_empty() {
 @@@        ErrorNoName::default().to_render()
 @@@    } else {
-@@@        ResultName::new(name).to_render()
+@@@        ResultName(name).to_render()
 @@@    }
 @@@}
 #[test]
 fn test_handle_hello_with_name() {
-    let chain_process = handle_hello(EntryGreet::new(vec!["Alice".to_string()])).into();
+    let chain_process = handle_hello(EntryHello(vec!["Alice".to_string()])).into();
     // 断言这是一个渲染结果（不是继续 chain）
     assert_render_result!(chain_process);
     // 断言 member_id 是 ResultName
     assert_member_id!(chain_process, ResultName);
     // 解包出内部值
     let result_name = unpack_chain_process!(chain_process, ResultName);
-    assert_eq!(result_name.inner, "Alice");
+    assert_eq!(result_name.0, "Alice");
 }
 ```
  
@@ -78,11 +81,12 @@ fn test_handle_hello_with_name() {
 @@@use mingling::{assert_member_id, unpack_chain_process};
 @@@use mingling::macros::entry;
 @@@dispatcher!("hello", EntryHello);
-@@@pack!(ResultName = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultName(String);
 @@@#[chain]
 @@@fn handle_hello(args: EntryHello) -> Next {
-@@@    let name = args.inner.first().cloned().unwrap_or_default();
-@@@    ResultName::new(name).to_render()
+@@@    let name = args.0.first().cloned().unwrap_or_default();
+@@@    ResultName(name).to_render()
 @@@}
 #[test]
 fn test_with_entry_macro() {
@@ -90,7 +94,7 @@ fn test_with_entry_macro() {
     let entry = entry!("--name", "Alice");
     let chain_process = handle_hello(entry).into();
     let result_name = unpack_chain_process!(chain_process, ResultName);
-    assert_eq!(result_name.inner, "Alice");
+    assert_eq!(result_name.0, "Alice");
 }
 ```
  
@@ -103,23 +107,24 @@ fn test_with_entry_macro() {
 @@@#[derive(Default, Clone)]
 @@@struct ResPrefix(String);
 @@@dispatcher!("hello", EntryHello);
-@@@pack!(ResultGreeting = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultGreeting(String);
 @@@
 #[chain]
 fn handle_hello(args: EntryHello, prefix: &ResPrefix) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
-    ResultGreeting::new(format!("{}, {}", prefix.0, name)).to_render()
+    let name = args.0.first().cloned().unwrap_or_default();
+    ResultGreeting(format!("{}, {}", prefix.0, name)).to_render()
 }
  
 #[test]
 fn test_handle_with_resource() {
     // 资源需要在测试中手动传入
     let result = handle_hello(
-        EntryHello::new(vec!["World".to_string()]),
+        EntryHello(vec!["World".to_string()]),
         &ResPrefix("Hello".to_string()),
     );
     let greeting = unpack_chain_process!(result, ResultGreeting, ThisProgram);
-    assert_eq!(greeting.inner, "Hello, World");
+    assert_eq!(greeting.0, "Hello, World");
 }
 ```
  

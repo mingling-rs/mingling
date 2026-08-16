@@ -44,17 +44,32 @@ use mingling::setup::picker::BasicProgramSetup;
 
 dispatcher!("calc", EntryCalculate);
 
-pack_err!(ErrorNumberANotProvided);
-pack_err!(ErrorNumberBNotProvided);
-pack_err!(ErrorNumberOperatorNotProvided);
-pack_err!(ErrorDivisionByZero);
+#[derive(Grouped, Default)]
+pub struct ErrorNumberANotProvided;
 
-pack!(StateAdd = (f32, f32));
-pack!(StateSubtract = (f32, f32));
-pack!(StateMultiply = (f32, f32));
-pack!(StateDivide = (f32, f32));
+#[derive(Grouped, Default)]
+pub struct ErrorNumberBNotProvided;
 
-pack!(ResultNumber = f32);
+#[derive(Grouped, Default)]
+pub struct ErrorNumberOperatorNotProvided;
+
+#[derive(Grouped, Default)]
+pub struct ErrorDivisionByZero;
+
+#[derive(Grouped, Wrap)]
+pub struct StateAdd((f32, f32));
+
+#[derive(Grouped, Wrap)]
+pub struct StateSubtract((f32, f32));
+
+#[derive(Grouped, Wrap)]
+pub struct StateMultiply((f32, f32));
+
+#[derive(Grouped, Wrap)]
+pub struct StateDivide((f32, f32));
+
+#[derive(Grouped, Wrap)]
+pub struct ResultNumber(f32);
 
 #[derive(Grouped)]
 struct StateCalculate {
@@ -135,13 +150,13 @@ fn handle_calc(args: EntryCalculate) -> Next {
         //                 Use the arg! macro to define a positional argument of type f32
         //                 |
         //                 vvvvvvvvvv
-        args.pick_or_route(&arg![f32], || ErrorNumberANotProvided::default().to_chain())
+        args.pick_or_route(&arg![f32], || ErrorNumberANotProvided.to_chain())
             .pick_or_route(&arg![Operator], || {
-                ErrorNumberOperatorNotProvided::default().to_chain()
+                ErrorNumberOperatorNotProvided.to_chain()
             }) //                         Returns a routable type when not found or fails to parse
             //                            |
-            //                            vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-            .pick_or_route(&arg![f32], || ErrorNumberBNotProvided::default().to_chain())
+            //                            vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+            .pick_or_route(&arg![f32], || ErrorNumberBNotProvided.to_chain())
             // Use `to_result` to parse arguments
             //   and convert to Result<(Tuple, ...), Route> type
             .to_result()
@@ -149,7 +164,7 @@ fn handle_calc(args: EntryCalculate) -> Next {
     // --------- IMPORTANT ---------
 
     if operator == Operator::Slash && number_b == 0. {
-        return ErrorDivisionByZero::default().to_chain();
+        return ErrorDivisionByZero.to_chain();
     }
 
     StateCalculate {
@@ -163,41 +178,41 @@ fn handle_calc(args: EntryCalculate) -> Next {
 #[chain]
 fn handle_state_calculate(state: StateCalculate) -> Next {
     match (state.operator, state.number_a, state.number_b) {
-        (Operator::Plus, a, b) => StateAdd::new((a, b)).to_chain(),
-        (Operator::Dash, a, b) => StateSubtract::new((a, b)).to_chain(),
-        (Operator::Slash, a, b) => StateDivide::new((a, b)).to_chain(),
-        (Operator::Star, a, b) => StateMultiply::new((a, b)).to_chain(),
+        (Operator::Plus, a, b) => StateAdd((a, b)).to_chain(),
+        (Operator::Dash, a, b) => StateSubtract((a, b)).to_chain(),
+        (Operator::Slash, a, b) => StateDivide((a, b)).to_chain(),
+        (Operator::Star, a, b) => StateMultiply((a, b)).to_chain(),
     }
 }
 
 #[chain]
 fn handle_state_add(state_add: StateAdd) -> ResultNumber {
-    let (a, b) = state_add.inner;
-    ResultNumber::new(a + b)
+    let (a, b) = state_add.0;
+    ResultNumber(a + b)
 }
 
 #[chain]
 fn handle_state_subtract(state_subtract: StateSubtract) -> ResultNumber {
-    let (a, b) = state_subtract.inner;
-    ResultNumber::new(a - b)
+    let (a, b) = state_subtract.0;
+    ResultNumber(a - b)
 }
 
 #[chain]
 fn handle_state_multiply(state_multiply: StateMultiply) -> ResultNumber {
-    let (a, b) = state_multiply.inner;
-    ResultNumber::new(a * b)
+    let (a, b) = state_multiply.0;
+    ResultNumber(a * b)
 }
 
 #[chain]
 fn handle_state_divide(state_divide: StateDivide) -> ResultNumber {
-    let (a, b) = state_divide.inner;
-    ResultNumber::new(a / b)
+    let (a, b) = state_divide.0;
+    ResultNumber(a / b)
 }
 
 #[renderer]
 fn render_result_number(result: ResultNumber, setting: &ResNumberDisplaySetting) -> String {
     let round = setting.round;
-    let result = if round { result.round() } else { result.inner };
+    let result = if round { result.round() } else { result.0 };
     format!("Result: {}", result)
 }
 

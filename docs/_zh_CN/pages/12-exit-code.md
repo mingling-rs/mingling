@@ -3,9 +3,7 @@
     如何使用资源系统管理程序退出码
 </p>
 
-程序退出时给 shell 一个正确的退出码是 CLI 的基本素养
-
-。Mingling 提供了开箱即用的 `ExitCodeSetup`，配合 `ResExitCode` 资源，让退出码控制变得极其简单。
+程序退出时给 shell 一个正确的退出码是 CLI 的基本素养。Mingling 提供了开箱即用的 `ExitCodeSetup`，配合 `ResExitCode` 资源，让退出码控制变得极其简单。
 
 ## 启用 ExitCodeSetup
 
@@ -31,7 +29,8 @@ fn main() {
 ```rust
 @@@use mingling::res::ResExitCode;
 @@@use mingling::setup::ExitCodeSetup;
-@@@pack!(EntryCheck = Vec<String>);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct EntryCheck(Vec<String>);
 #[chain]
 fn handle_check(_args: EntryCheck, ec: &mut ResExitCode) {
     // 检查失败的时候修改退出码资源

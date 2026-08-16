@@ -56,14 +56,17 @@ pub fn greet_desc() -> Description {
 }
 // --------- IMPORTANT ---------
 
-pack!(ResultName = String);
-pack!(DescResult = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
+
+#[derive(Grouped, Wrap)]
+pub struct DescResult(String);
 
 /// Chain for `greet` — reads the name and produces a `ResultName`.
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let name: ResultName = args
-        .inner
+        .0
         .first()
         .cloned()
         .unwrap_or_else(|| "World".to_string())
@@ -81,7 +84,7 @@ fn handle_desc(_args: EntryDescription) -> Next {
         None => "EntryGreet has no description".to_string(),
     };
     // --------- IMPORTANT ---------
-    DescResult::new(msg).to_render()
+    DescResult(msg).to_render()
 }
 
 /// Chain for `nodoc` — asks for metadata on an entry that has none.
@@ -94,7 +97,7 @@ fn handle_nodoc(_args: EntryNoDescription) -> Next {
         None => "EntryDescription has no description".to_string(),
     };
     // --------- IMPORTANT ---------
-    DescResult::new(msg).to_render()
+    DescResult(msg).to_render()
 }
 
 /// Renders the greeting message with the provided name.

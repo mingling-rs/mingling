@@ -4,8 +4,8 @@ use std::{
 };
 
 use mingling::{
-    Routable,
-    macros::{buffer, command, pack, r_println, renderer, routeify},
+    Grouped, Routable, Wrap,
+    macros::{buffer, command, r_println, renderer, routeify},
 };
 
 use crate::{
@@ -14,16 +14,18 @@ use crate::{
 };
 
 // Version directory paths of every enabled package.
-pack!(ResultLoadPkgsPaths = Vec<PathBuf>);
+#[derive(Grouped, Wrap)]
+pub struct ResultLoadPkgsPaths(Vec<PathBuf>);
 
 // Completion script paths of every enabled package.
-pack!(ResultLoadPkgsComps = Vec<PathBuf>);
+#[derive(Grouped, Wrap)]
+pub struct ResultLoadPkgsComps(Vec<PathBuf>);
 
 #[command(node = "__loadpkgs_path", routeify)]
 pub fn load_packages_paths(packages_dir: &ResPackagesDir) -> Next {
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
     let paths = enabled_version_dirs(packages_dir).map_err(|e| {
         io::Error::new(
@@ -31,14 +33,14 @@ pub fn load_packages_paths(packages_dir: &ResPackagesDir) -> Next {
             format!("failed to read {}: {e}", packages_dir.display()),
         )
     })?;
-    ResultLoadPkgsPaths::new(paths).to_chain()
+    ResultLoadPkgsPaths(paths).to_chain()
 }
 
 #[command(node = "__loadpkgs_comp_scripts", routeify)]
 pub fn load_packages_comp_scripts(packages_dir: &ResPackagesDir) -> Next {
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
     let scripts = comp_scripts(packages_dir).map_err(|e| {
         io::Error::new(
@@ -46,19 +48,19 @@ pub fn load_packages_comp_scripts(packages_dir: &ResPackagesDir) -> Next {
             format!("failed to read {}: {e}", packages_dir.display()),
         )
     })?;
-    ResultLoadPkgsComps::new(scripts).to_chain()
+    ResultLoadPkgsComps(scripts).to_chain()
 }
 
 #[renderer(buffer)]
 pub fn render_result_load_pkgs_paths(r: ResultLoadPkgsPaths) {
-    for path in r.inner {
+    for path in r.0 {
         r_println!("{}", path.display());
     }
 }
 
 #[renderer(buffer)]
 pub fn render_result_load_pkgs_comps(r: ResultLoadPkgsComps) {
-    for path in r.inner {
+    for path in r.0 {
         r_println!("{}", path.display());
     }
 }

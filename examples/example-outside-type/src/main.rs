@@ -43,7 +43,8 @@ group!(ErrorIo = std::io::Error);
 //                      you can use this syntax to create an alias simultaneously
 // --------- IMPORTANT ---------
 
-pack!(ParsedNumber = i32);
+#[derive(Grouped, Wrap)]
+pub struct ParsedNumber(i32);
 
 /// Parse the first argument as an `i32`
 ///
@@ -51,9 +52,9 @@ pack!(ParsedNumber = i32);
 /// On failure, routes to `render_parse_error` via the registered outside type.
 #[chain]
 fn parse_number(args: EntryParse) -> Next {
-    let input = args.inner.first().cloned().unwrap_or_default();
+    let input = args.0.first().cloned().unwrap_or_default();
     match input.parse::<i32>() {
-        Ok(num) => ParsedNumber::new(num).to_chain(),
+        Ok(num) => ParsedNumber(num).to_chain(),
         Err(e) => e.to_chain(),
     }
 }

@@ -1,10 +1,7 @@
 use crate::{Next, eprintln_cargo, linter::registry::ResLintRegistry};
 use mingling::{
-    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{
-        arg, buffer, chain, completion, dispatcher, metadata, pack, pack_err, r_println, renderer,
-        routeify,
-    },
+    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
+    macros::{arg, buffer, chain, completion, dispatcher, metadata, r_println, renderer, routeify},
     metadata::Description,
     picker::EntryPicker,
 };
@@ -16,9 +13,14 @@ pub fn desc_explain() -> Description {
     "Explain the meaning of the specified Lint".into()
 }
 
-pack!(StateExplainLint = String);
-pack_err!(ErrorNoExplainLintProvided);
-pack_err!(ErrorNoSuchLint = String);
+#[derive(Grouped, Wrap)]
+pub struct StateExplainLint(String);
+
+#[derive(Grouped, Default)]
+pub struct ErrorNoExplainLintProvided;
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorNoSuchLint(String);
 
 #[derive(Debug, Default, Grouped)]
 pub struct ResultExplainLint {
@@ -33,11 +35,9 @@ pub struct ResultExplainLint {
 #[chain(routeify)]
 pub fn handle_explain(args: EntryExplain) -> Next {
     let lint_name = args
-        .pick_or_route(&arg![String], || {
-            ErrorNoExplainLintProvided::default().to_chain()
-        })
+        .pick_or_route(&arg![String], || ErrorNoExplainLintProvided.to_chain())
         .to_result()?;
-    StateExplainLint::new(lint_name).into()
+    StateExplainLint(lint_name).into()
 }
 
 #[chain]
@@ -46,9 +46,9 @@ pub fn handle_state_explain_lint(
     registry: &mut LazyRes<ResLintRegistry>,
 ) -> Next {
     let registry = registry.get_ref();
-    let lint_name = p.inner;
+    let lint_name = p.0;
     let Some(entry) = registry.lints.iter().find(|l| l.name == lint_name) else {
-        return ErrorNoSuchLint::new(lint_name).to_chain();
+        return ErrorNoSuchLint(lint_name).to_chain();
     };
     ResultExplainLint {
         lint_name: entry.name.clone(),
@@ -87,7 +87,7 @@ pub fn render_error_no_such_lint(
 ) -> RenderResult {
     let mut r = RenderResult::new();
     let registry = registry.get_ref();
-    eprintln_cargo!(r, "No such lint: \"{}\"", err.info);
+    eprintln_cargo!(r, "No such lint: \"{}\"", err.0);
     r_println!(r, "");
     r_println!(r, "Available lints:");
     for entry in registry.lints.iter() {

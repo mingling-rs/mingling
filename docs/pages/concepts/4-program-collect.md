@@ -9,7 +9,7 @@ Every Mingling program ends with a `gen_program!()` call. Behind the scenes, it 
 
 ### 1. Generate an enum
 
-Scans the current module for all types marked with `pack!`, `#[chain]`, `#[renderer]` and similar macros, then generates an enum variant for each type.
+Scans the current module for all types marked with `#[derive(Grouped)]`, `#[chain]`, `#[renderer]` and similar macros, then generates an enum variant for each type.
 
 This enum is the type of `G` in `AnyOutput<G>` — the scheduler uses enum variants to distinguish different data flowing through the pipeline.
 

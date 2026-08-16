@@ -20,17 +20,19 @@ Error values can also take either path—you can render the error msg directly, 
 
 ```rust
 @@@dispatcher!("greet", EntryGreet);
-pack!(ResultGreeting = String);
-pack!(ErrorNameEmpty = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameEmpty(String);
  
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
+    let name = args.0.first().cloned().unwrap_or_default();
  
     if name.is_empty() {
-        ErrorNameEmpty::new("name is required".to_string()).to_render()
+        ErrorNameEmpty("name is required".to_string()).to_render()
     } else {
-        ResultGreeting::new(name).to_render()
+        ResultGreeting(name).to_render()
     }
 }
 ```
@@ -40,9 +42,11 @@ Then write separate Renderers:
 ```rust
 @@@use mingling::macros::buffer;
 @@@dispatcher!("greet", EntryGreet);
-@@@pack!(ResultGreeting = String);
-@@@pack!(ErrorNameEmpty = String);
-@@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting::new(args.inner.first().cloned().unwrap_or_default()).to_render() }
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultGreeting(String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ErrorNameEmpty(String);
+@@@#[chain] fn handle_greet(args: EntryGreet) -> Next { ResultGreeting(args.0.first().cloned().unwrap_or_default()).to_render() }
  
 #[renderer(buffer)]
 fn render_greet(result: ResultGreeting) {
@@ -63,16 +67,18 @@ Each Renderer does its own job; what the user sees depends on what the Chain ret
 @@@use mingling::macros::buffer;
 dispatcher!("greet", EntryGreet);
  
-pack!(ResultGreeting = String);
-pack!(ErrorNameEmpty = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameEmpty(String);
  
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
-    let name = args.inner.first().cloned().unwrap_or_default();
+    let name = args.0.first().cloned().unwrap_or_default();
     if name.is_empty() {
-        ErrorNameEmpty::new("name is required".to_string()).to_render()
+        ErrorNameEmpty("name is required".to_string()).to_render()
     } else {
-        ResultGreeting::new(name).to_render()
+        ResultGreeting(name).to_render()
     }
 }
  
@@ -104,14 +110,14 @@ Hello, Alice!
 Error: name is required
 ```
  
-## About `pack_err!`
+## Declaring Error Types
 
-If you've enabled `extras`, you can use `pack_err!` to quickly declare an error type with an auto-generated `name` field:
+You can use `#[derive(Grouped, Default)]` to quickly declare an error type with no payload:
 
 ```rust
 // Features: ["extras"]
-pack_err!(ErrorNotFound);
-// Generates: struct ErrorNotFound { pub name: String }
+#[derive(Grouped, Default)]
+pub struct ErrorNotFound;
 ```
  
 See [Feature List](pages/other/features) for details.

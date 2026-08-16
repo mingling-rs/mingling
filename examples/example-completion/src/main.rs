@@ -101,7 +101,8 @@ fn complete_greet_entry(ctx: &ShellContext) -> Suggest {
 // --------- IMPORTANT ---------
 
 dispatcher!("greet", EntryGreet);
-pack!(ResultName = (u8, String));
+#[derive(Grouped, Wrap)]
+pub struct ResultName((u8, String));
 
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
@@ -116,7 +117,7 @@ fn handle_greet(args: EntryGreet) -> Next {
 /// Renders the greeting with the result name and repeat count.
 #[renderer]
 fn render_name(result: ResultName) -> RenderResult {
-    let (repeat, name) = result.inner;
+    let (repeat, name) = result.0;
     let mut render_result = RenderResult::new();
     let mut parts = Vec::with_capacity(repeat as usize);
     for _ in 0..repeat {

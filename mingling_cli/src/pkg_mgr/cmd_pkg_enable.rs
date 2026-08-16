@@ -1,8 +1,8 @@
 use std::{fs, io};
 
 use mingling::{
-    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
+    Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
+    macros::{arg, chain, command, completion, metadata, renderer, routeify},
     metadata::Description,
     picker::{EntryPicker, PickerArg},
 };
@@ -18,8 +18,11 @@ use crate::{
 /// Positional argument: package spec (`foo`, `foo@0`, `foo@0.1`, `foo@0.1.2`)
 pub static ARG_SPEC: PickerArg<String> = arg![String];
 
-pack_err!(ErrorNoMatchingVersion = String);
-pack!(StatePkgEnable = (String, String));
+#[derive(Grouped, Wrap)]
+pub struct ErrorNoMatchingVersion(String);
+
+#[derive(Grouped, Wrap)]
+pub struct StatePkgEnable((String, String));
 
 #[derive(Debug, Default, Grouped)]
 pub struct ResultPkgEnable {
@@ -35,14 +38,14 @@ pub fn desc_pkg_enable() -> Description {
 #[command(node = "pkg-enable", routeify)]
 pub fn package_enable(args: EntryPkgEnable, packages_dir: &ResPackagesDir) -> Next {
     let spec = args
-        .pick_or_route(&ARG_SPEC, || ErrorPackageNameRequired::default().to_chain())
+        .pick_or_route(&ARG_SPEC, || ErrorPackageNameRequired.to_chain())
         .to_result()?;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
     if spec.contains('/') || spec.contains('\\') || spec.contains("..") {
-        return ErrorPackageSpecInvalid::new(spec).to_chain();
+        return ErrorPackageSpecInvalid(spec).to_chain();
     }
 
     let (name, version_part) = match spec.split_once('@') {
@@ -78,18 +81,18 @@ pub fn package_enable(args: EntryPkgEnable, packages_dir: &ResPackagesDir) -> Ne
     }
 
     let Some((_, version)) = candidates.into_iter().max_by(|a, b| a.1.cmp(&b.1)) else {
-        return ErrorNoMatchingVersion::new(spec).to_chain();
+        return ErrorNoMatchingVersion(spec).to_chain();
     };
 
-    StatePkgEnable::new((name, version.to_string())).to_chain()
+    StatePkgEnable((name, version.to_string())).to_chain()
 }
 
 #[chain(routeify)]
 pub fn handle_state_pkg_enable(p: StatePkgEnable, packages_dir: &ResPackagesDir) -> Next {
-    let (name, version) = p.inner;
+    let (name, version) = p.0;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
 
     let file = packages_dir.join(&name);
@@ -110,7 +113,7 @@ pub fn render_result_pkg_enable(result: ResultPkgEnable) -> RenderResult {
 #[renderer]
 pub fn render_error_no_matching_version(err: ErrorNoMatchingVersion) -> RenderResult {
     let mut r = RenderResult::new();
-    eprintln_cargo!(r, "no matching version for: {}", err.info);
+    eprintln_cargo!(r, "no matching version for: {}", err.0);
     r
 }
 

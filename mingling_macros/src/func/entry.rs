@@ -57,7 +57,7 @@ pub(crate) fn entry(input: TokenStream) -> TokenStream {
     let expanded = match parsed {
         EntryInput::Typed { ident, .. } => {
             quote! {
-                #ident::new(vec![#(#string_exprs),*])
+                #ident(vec![#(#string_exprs),*])
             }
         }
         EntryInput::Untyped { .. } => {

@@ -52,7 +52,8 @@ fn init_res_large_data() -> ResLargeData {
 dispatcher!("show", EntryShow);
 dispatcher!("none", EntryNone);
 
-pack!(ResultShow = BTreeMap<Key, Value>);
+#[derive(Grouped, Wrap)]
+pub struct ResultShow(BTreeMap<Key, Value>);
 
 fn main() {
     let mut program = ThisProgram::new();

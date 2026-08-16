@@ -1,8 +1,8 @@
 use std::{fs, io, path::PathBuf};
 
 use mingling::{
-    LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem,
-    macros::{arg, chain, command, completion, metadata, pack, pack_err, renderer, routeify},
+    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
+    macros::{arg, chain, command, completion, metadata, renderer, routeify},
     metadata::Description,
     picker::{EntryPicker, PickerArg},
 };
@@ -20,16 +20,20 @@ use crate::{
 pub static ARG_PACKAGE: PickerArg<Option<String>> = arg![Option<String>];
 
 // Directory names to remove, e.g. `["omg@0.1.0", "omg@0.1.1"]`
-pack!(StateUninstallPackages = Vec<String>);
+#[derive(Grouped, Wrap)]
+pub struct StateUninstallPackages(Vec<String>);
 
 // Directories that were successfully removed.
-pack!(ResultPackageUninstalled = Vec<PathBuf>);
+#[derive(Grouped, Wrap)]
+pub struct ResultPackageUninstalled(Vec<PathBuf>);
 
 // Directories that were not installed.
-pack_err!(ErrorPackageNotInstall = Vec<PathBuf>);
+#[derive(Grouped, Wrap)]
+pub struct ErrorPackageNotInstall(Vec<PathBuf>);
 
 // No installed package matched the given spec.
-pack_err!(ErrorNoMatchingPackages);
+#[derive(Grouped, Default)]
+pub struct ErrorNoMatchingPackages;
 
 /// `{data_dir}/mingling/packages`
 #[metadata(EntryUninstall)]
@@ -46,7 +50,7 @@ pub fn uninstall(
     let spec = args.pick(&ARG_PACKAGE).to_result()?;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
 
     let targets = match spec {
@@ -56,13 +60,13 @@ pub fn uninstall(
             let root_package = metadata
                 .root_package()
                 .or_else(|| metadata.workspace_packages().first().copied())
-                .ok_or(ErrorRootPackageNotFound::default())?;
+                .ok_or(ErrorRootPackageNotFound)?;
             vec![format!("{}@{}", root_package.name, root_package.version)]
         }
         // `name` matches every installed version, `name@version` matches exactly
         Some(spec) => {
             if spec.contains('/') || spec.contains('\\') || spec.contains("..") {
-                return ErrorPackageSpecInvalid::new(spec).to_chain();
+                return ErrorPackageSpecInvalid(spec).to_chain();
             }
             if spec.contains('@') {
                 vec![spec]
@@ -87,7 +91,7 @@ pub fn uninstall(
         }
     };
 
-    StateUninstallPackages::new(targets).to_chain()
+    StateUninstallPackages(targets).to_chain()
 }
 
 #[chain(routeify)]
@@ -97,13 +101,13 @@ pub fn handle_state_uninstall_packages(
 ) -> Next {
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
-        return ErrorNoDataDirectory::default().to_chain();
+        return ErrorNoDataDirectory.to_chain();
     }
 
     let mut removed = Vec::new();
     let mut not_installed = Vec::new();
 
-    for name in p.inner {
+    for name in p.0 {
         let dir = packages_dir.join(&name);
         if !dir.exists() {
             not_installed.push(dir);
@@ -116,18 +120,18 @@ pub fn handle_state_uninstall_packages(
     }
 
     if removed.is_empty() && not_installed.is_empty() {
-        return ErrorNoMatchingPackages::default().to_chain();
+        return ErrorNoMatchingPackages.to_chain();
     }
     if !removed.is_empty() {
-        return ResultPackageUninstalled::new(removed).to_chain();
+        return ResultPackageUninstalled(removed).to_chain();
     }
-    ErrorPackageNotInstall::new(not_installed).to_chain()
+    ErrorPackageNotInstall(not_installed).to_chain()
 }
 
 #[renderer]
 pub fn render_result_package_uninstalled(r: ResultPackageUninstalled) -> RenderResult {
     let mut result = RenderResult::new();
-    for dir in r.inner {
+    for dir in r.0 {
         println_cargo!(result, "Uninstalled: {}", dir.display());
     }
     result
@@ -136,7 +140,7 @@ pub fn render_result_package_uninstalled(r: ResultPackageUninstalled) -> RenderR
 #[renderer]
 pub fn render_error_package_not_install(err: ErrorPackageNotInstall) -> RenderResult {
     let mut result = RenderResult::new();
-    for dir in err.info {
+    for dir in err.0 {
         eprintln_cargo!(result, "not installed: {}", dir.display());
     }
     result

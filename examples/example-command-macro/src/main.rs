@@ -22,27 +22,30 @@ fn main() {
     ThisProgram::new().exec_and_exit();
 }
 
-pack!(ResultGreeting = String);
-pack!(ResultGoodbye = ());
+#[derive(Grouped, Wrap)]
+pub struct ResultGreeting(String);
+
+#[derive(Grouped)]
+pub struct ResultGoodbye;
 
 // --------- IMPORTANT ---------
 // Auto-generates dispatcher!("hello.world", EntryHelloWorld);
 #[command]
 fn hello_world() -> ResultGreeting {
-    ResultGreeting::new("World".to_string())
+    ResultGreeting("World".to_string())
 }
 
 // Auto-generates dispatcher!("hello-world", EntryGreetSomeone);
 #[command(node = "greet-someone")]
 fn greet_someone(args: Vec<String>) -> ResultGreeting {
     let name = args.pick_or(&arg![String], || "World".to_string()).unwrap();
-    ResultGreeting::new(name)
+    ResultGreeting(name)
 }
 
 // Auto-generates dispatcher!("goodbye", EntryGoodBye);
 #[command(entry = EntryGoodBye)]
 fn goodbye() -> ResultGoodbye {
-    ResultGoodbye::default()
+    ResultGoodbye
 }
 // --------- IMPORTANT ---------
 

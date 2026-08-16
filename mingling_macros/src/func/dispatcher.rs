@@ -115,7 +115,9 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
     let program_type = crate::default_program_path();
 
     let expanded = quote! {
-        ::mingling::macros::pack!(#(#entry_attrs)* #pack = Vec<String>);
+        #[derive(::mingling::Grouped, ::mingling::Wrap, Default)]
+        #(#entry_attrs)*
+        pub struct #pack(pub ::std::vec::Vec<::std::string::String>);
 
         #(#cmd_attrs)*
         #[doc(hidden)]
@@ -127,7 +129,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
 
         impl From<#pack> for crate::Entry {
             fn from(value: #pack) -> Self {
-                crate::Entry::new(value.inner)
+                crate::Entry(value.0)
             }
         }
 
@@ -136,7 +138,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
         impl ::mingling::Dispatcher<#program_type> for #hidden_dispatcher {
             fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
                 use ::mingling::Grouped;
-                ::mingling::Routable::to_chain(#pack::new(args))
+                ::mingling::Routable::to_chain(#pack(args))
             }
         }
     };
@@ -149,7 +151,7 @@ fn get_comp_entry(entry_name: &Ident) -> TokenStream2 {
     let comp_entry = quote! {
         impl ::mingling::CompletionEntry for #entry_name {
             fn get_input(self) -> Vec<String> {
-                self.inner.clone()
+                self.0.clone()
             }
         }
     };

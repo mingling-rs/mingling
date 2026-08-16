@@ -29,7 +29,8 @@ In a Chain or Renderer, inject `ResExitCode` to modify the exit code:
 ```rust
 @@@use mingling::res::ResExitCode;
 @@@use mingling::setup::ExitCodeSetup;
-@@@pack!(EntryCheck = Vec<String>);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct EntryCheck(Vec<String>);
 #[chain]
 fn handle_check(_args: EntryCheck, ec: &mut ResExitCode) {
     // Modify exit code when check fails

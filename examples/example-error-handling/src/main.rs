@@ -29,35 +29,41 @@ use std::io::Write;
 dispatcher!("hello", EntryHello);
 
 // Define error types
-pack!(ErrorNoNameProvided = ());
-pack!(ErrorNameTooLong = u16);
-pack!(ErrorNameNotAvailable = ());
+#[derive(Grouped)]
+pub struct ErrorNoNameProvided;
+
+#[derive(Grouped, Wrap)]
+pub struct ErrorNameTooLong(u16);
+
+#[derive(Grouped)]
+pub struct ErrorNameNotAvailable;
 
 // Define success type
-pack!(ResultName = String);
+#[derive(Grouped, Wrap)]
+pub struct ResultName(String);
 
 // Pre-registered names
 static VEC_REGISTERED_NAMES: &[&str] = &["Alice", "Bob", "Charlie", "David", "Eve"];
 
 #[chain]
 fn handle_hello(args: EntryHello) -> Next {
-    let Some(name) = args.inner.first().cloned() else {
+    let Some(name) = args.0.first().cloned() else {
         // If no name is provided, pass ErrorNoNameProvided
-        return ErrorNoNameProvided::default().to_render();
+        return ErrorNoNameProvided.to_render();
     };
 
     if name.len() > 10 {
         // If the name is too long, pass ErrorNameTooLong
-        return ErrorNameTooLong::new(name.len() as u16).to_render();
+        return ErrorNameTooLong(name.len() as u16).to_render();
     }
 
     if VEC_REGISTERED_NAMES.contains(&name.as_str()) {
         // If the name already exists, pass ErrorNameNotAvailable
-        return ErrorNameNotAvailable::default().to_render();
+        return ErrorNameNotAvailable.to_render();
     }
 
     // If the name is valid, pass ResultName
-    ResultName::new(name).to_render()
+    ResultName(name).to_render()
 }
 
 /// Renders a successful greeting with the given name.
@@ -96,12 +102,7 @@ fn render_error_name_too_long(len: ErrorNameTooLong) -> RenderResult {
 #[renderer]
 fn render_entry_fallback(err: EntryFallback) -> RenderResult {
     let mut render_result = RenderResult::new();
-    writeln!(
-        render_result,
-        "Command not found: \"{}\"",
-        err.inner.join(" ")
-    )
-    .ok();
+    writeln!(render_result, "Command not found: \"{}\"", err.0.join(" ")).ok();
     render_result
 }
 

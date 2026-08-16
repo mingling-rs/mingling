@@ -31,11 +31,12 @@ In a Chain or Renderer, simply declare the resource in the parameter list:
 @@@#[derive(Default, Clone)]
 @@@struct ResCurrentDir(String);
 @@@dispatcher!("pwd", EntryPrintWorkingDir);
-@@@pack!(ResultPath = String);
+@@@#[derive(Grouped, Wrap)]
+@@@pub struct ResultPath(String);
 // Inject read-only resource via &T
 #[chain]
 fn handle_pwd(_args: EntryPrintWorkingDir, cwd: &ResCurrentDir) -> Next {
-    ResultPath::new(cwd.0.clone()).to_render()
+    ResultPath(cwd.0.clone()).to_render()
 }
  
 #[renderer(buffer)]
@@ -53,7 +54,8 @@ Use `&mut T` to inject a mutable resource:
 @@@#[derive(Default, Clone)]
 @@@struct ResVisitCount(u32);
 @@@dispatcher!("visit", EntryVisit);
-@@@pack!(ResultDone = ());
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ResultDone(());
 #[chain]
 fn handle_visit(_args: EntryVisit, counter: &mut ResVisitCount) -> Next {
     counter.0 += 1;
@@ -74,7 +76,8 @@ A Chain can inject any number of resources at once — the framework matches the
 @@@#[derive(Default, Clone)] struct ResConfig(String);
 @@@#[derive(Default, Clone)] struct ResCounter(u32);
 @@@dispatcher!("test", EntryTest);
-@@@pack!(ResultDone = ());
+@@@#[derive(Grouped, Wrap, Default)]
+@@@pub struct ResultDone(());
 // Inject both read-only and mutable resources
 #[chain]
 fn handle_test(_args: EntryTest, config: &ResConfig, counter: &mut ResCounter) -> Next {
