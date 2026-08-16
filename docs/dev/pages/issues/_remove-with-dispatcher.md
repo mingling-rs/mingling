@@ -19,16 +19,16 @@ Make `Dispatcher` registration also compile-time collected in non-`dispatcher_tr
 
 ## Tasks
 
-- [ ] Design how dispatchers are collected at compile time when `dispatcher_tree` is disabled (consistent with how `chain` / `renderer` / `completion` / `metadata` are collected)
-- [ ] Remove `with_dispatcher` and `with_dispatchers` from the `Program` API
-- [ ] Update `gen_program!` and the macros so registration happens automatically
-- [ ] Migrate examples, tests, and docs that call `with_dispatcher` / `with_dispatchers`
-- [ ] Verify both `dispatcher_tree`-enabled and disabled modes behave identically
+- [x] Design how dispatchers are collected at compile time when `dispatcher_tree` is disabled (consistent with how `chain` / `renderer` / `completion` / `metadata` are collected)
+- [x] Remove `with_dispatcher` and `with_dispatchers` from the `Program` API
+- [x] Update `gen_program!` and the macros so registration happens automatically
+- [x] Migrate examples, tests, and docs that call `with_dispatcher` / `with_dispatchers`
+- [x] Verify both `dispatcher_tree`-enabled and disabled modes behave identically
 
 ## 🕘 Progress
 
-- [ ] In Progress
-- [ ] Complete
+- [x] In Progress
+- [x] Complete
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass

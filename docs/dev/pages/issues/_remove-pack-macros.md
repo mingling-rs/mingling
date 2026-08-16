@@ -32,17 +32,17 @@ pub struct ResultNames {
  
 ## Tasks
 
-- [ ] Identify all usages of `pack!` / `pack_structural!` / `pack_err_structural!` across the codebase, examples, and docs
-- [ ] Migrate internal usages to `#[derive(Grouped)]`
-- [ ] Remove the macro definitions and their re-exports
-- [ ] Update the docs / helpdoc examples that reference `pack!`
-- [ ] Update downstream feature docs (`structural_renderer` etc.) where `pack_structural!` was involved
-- [ ] Verify all tests pass
+- [x] Identify all usages of `pack!` / `pack_structural!` / `pack_err_structural!` across the codebase, examples, and docs
+- [x] Migrate internal usages to `#[derive(Grouped)]`
+- [x] Remove the macro definitions and their re-exports
+- [x] Update the docs / helpdoc examples that reference `pack!`
+- [x] Update downstream feature docs (`structural_renderer` etc.) where `pack_structural!` was involved
+- [x] Verify all tests pass
 
 ## 🕘 Progress
 
-- [ ] In Progress
-- [ ] Complete
+- [x] In Progress
+- [x] Complete
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass

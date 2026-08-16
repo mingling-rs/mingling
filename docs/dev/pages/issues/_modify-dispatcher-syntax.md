@@ -27,17 +27,17 @@ dispatcher!("command", EntryCommand);
  
 ## Tasks
 
-- [ ] Update `dispatcher!` to accept the simplified explicit form (`"name", EntryType`)
-- [ ] Decide whether the old `CMDType => EntryType` form should error with a helpful message or be removed outright
-- [ ] Remove the generated `CMD*` struct machinery
-- [ ] Update `#[command]` macro internals that depend on `CMD*`
-- [ ] Migrate examples, tests, and docs
-- [ ] Keep the implicit mode (`dispatcher!("name")`) working unchanged
+- [x] Update `dispatcher!` to accept the simplified explicit form (`"name", EntryType`)
+- [x] Decide whether the old `CMDType => EntryType` form should error with a helpful message or be removed outright
+- [x] Remove the generated `CMD*` struct machinery
+- [x] Update `#[command]` macro internals that depend on `CMD*`
+- [x] Migrate examples, tests, and docs
+- [x] Keep the implicit mode (`dispatcher!("name")`) working unchanged
 
 ## 🕘 Progress
 
-- [ ] In Progress
-- [ ] Complete
+- [x] In Progress
+- [x] Complete
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass

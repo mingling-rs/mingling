@@ -19,17 +19,17 @@ Completely remove the `parser` feature in 0.5.0. This will directly affect downs
 
 ## Tasks
 
-- [ ] Identify all usages of the `parser` feature across the codebase, examples, and docs
-- [ ] Migrate internal usages (tests, examples, dev-dependencies) to `picker`
-- [ ] Remove the `parser` feature from `mingling` and its dependency (`size`)
-- [ ] Remove parser-related modules and public API
-- [ ] Update docs and helpdoc examples
-- [ ] Note the downstream migration path in the changelog
+- [x] Identify all usages of the `parser` feature across the codebase, examples, and docs
+- [x] Migrate internal usages (tests, examples, dev-dependencies) to `picker`
+- [x] Remove the `parser` feature from `mingling` and its dependency (`size`)
+- [x] Remove parser-related modules and public API
+- [x] Update docs and helpdoc examples
+- [x] Note the downstream migration path in the changelog
 
 ## 🕘 Progress
 
-- [ ] In Progress
-- [ ] Complete
+- [x] In Progress
+- [x] Complete
 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass
