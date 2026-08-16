@@ -33,6 +33,37 @@
                 -webkit-font-smoothing: antialiased;
                 -moz-osx-font-smoothing: grayscale;
                 overflow-x: hidden;
+                background-image:
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.03) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to right,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        to bottom,
+                        rgba(212, 168, 75, 0.015) 1px,
+                        transparent 1px
+                    );
+                background-size:
+                    40px 40px,
+                    40px 40px,
+                    20px 20px,
+                    20px 20px;
+                background-position:
+                    calc(50% - 550px + 20px) 0,
+                    calc(50% - 550px) 0,
+                    calc(50% - 550px + 10px) 0,
+                    calc(50% - 550px + 10px) 0;
             }
 
             a {
@@ -53,6 +84,86 @@
                 max-width: 1100px;
                 margin: 0 auto;
                 padding: 0 1.5rem;
+            }
+
+            /* Dashed side lines along the container edges */
+            html::before,
+            html::after {
+                content: "";
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                width: 1px;
+                background: repeating-linear-gradient(
+                    to bottom,
+                    rgba(212, 168, 75, 0.25) 0,
+                    rgba(212, 168, 75, 0.25) 4px,
+                    transparent 4px,
+                    transparent 9px
+                );
+                z-index: 49;
+                pointer-events: none;
+            }
+
+            html::before {
+                left: max(0px, calc(50% - 550px));
+            }
+
+            html::after {
+                right: max(0px, calc(50% - 550px));
+            }
+
+            /* Cursor glow dot */
+            .cursor-dot {
+                position: fixed;
+                pointer-events: none;
+                border-radius: 50%;
+                width: 400px;
+                height: 400px;
+                background: radial-gradient(
+                    circle,
+                    rgba(212, 168, 75, 0.06) 0%,
+                    rgba(212, 168, 75, 0.02) 45%,
+                    transparent 70%
+                );
+                transform: translate(-50%, -50%);
+                z-index: 10000;
+                opacity: 0;
+                transition:
+                    opacity 0.3s ease,
+                    left 0.12s ease-out,
+                    top 0.12s ease-out;
+            }
+
+            /* Ink drop effect */
+            .ink-drop {
+                position: fixed;
+                pointer-events: none;
+                border-radius: 50%;
+                background: radial-gradient(
+                    circle,
+                    rgba(212, 168, 75, 0.15) 0%,
+                    rgba(196, 57, 49, 0.06) 50%,
+                    transparent 100%
+                );
+                width: 0;
+                height: 0;
+                transform: translate(-50%, -50%);
+                animation: inkSpread 0.9s ease-out forwards;
+                z-index: 9999;
+            }
+
+            @keyframes inkSpread {
+                0% {
+                    width: 0;
+                    height: 0;
+                    opacity: 1;
+                }
+                100% {
+                    width: 500px;
+                    height: 500px;
+                    opacity: 0;
+                }
             }
 
             /* ── Nav ── */
@@ -107,7 +218,7 @@
                 display: inline-block;
                 padding: 0.35rem 1rem;
                 border: 1px solid #d4a84b;
-                border-radius: 2px;
+                border-radius: 20px;
                 color: #d4a84b;
                 font-weight: 600;
                 font-size: 0.85rem;
@@ -485,6 +596,33 @@
                     .replace(/>/g, "&gt;")
                     .replace(/"/g, "&quot;");
             }
+        </script>
+
+        <script>
+            // Persistent glow dot following the mouse
+            var cursorDot = document.createElement("div");
+            cursorDot.className = "cursor-dot";
+            document.body.appendChild(cursorDot);
+
+            document.addEventListener("mousemove", function (e) {
+                cursorDot.style.left = e.clientX + "px";
+                cursorDot.style.top = e.clientY + "px";
+                if (cursorDot.style.opacity !== "1") {
+                    cursorDot.style.opacity = "1";
+                }
+            });
+
+            // Ink drop ripple on click
+            document.addEventListener("click", function (e) {
+                var drop = document.createElement("div");
+                drop.className = "ink-drop";
+                drop.style.left = e.clientX + "px";
+                drop.style.top = e.clientY + "px";
+                document.body.appendChild(drop);
+                setTimeout(function () {
+                    drop.remove();
+                }, 1000);
+            });
         </script>
     </body>
 </html>
