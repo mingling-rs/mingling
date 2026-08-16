@@ -118,7 +118,7 @@ pub fn render_error_no_matching_version(err: ErrorNoMatchingVersion) -> RenderRe
 }
 
 #[completion(EntryPkgEnable)]
-pub fn complete_pkg_enable(ctx: &ShellContext, packages_dir: &ResPackagesDir) -> Suggest {
+pub fn complete_pkg_enable(ctx: ShellContext, packages_dir: &ResPackagesDir) -> Suggest {
     if ctx.previous_word != "pkg-enable" {
         return Suggest::FileCompletion;
     }

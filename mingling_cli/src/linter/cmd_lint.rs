@@ -141,7 +141,7 @@ pub async fn handle_state_begin_linter(
 }
 
 #[completion(EntryLint)]
-pub fn complete_lint(ctx: &ShellContext) -> Suggest {
+pub fn complete_lint(ctx: ShellContext) -> Suggest {
     if mingling::picker::parselib::build_possible_flags(
         ParserStyle::global_style(),
         &ARG_WITH_CHECKER.into_info(),

@@ -30,7 +30,7 @@ pub fn help_global(_: EntryFallback) -> String {
 }
 
 #[completion(EntryFallback)]
-pub fn complete_global(_ctx: &ShellContext) -> Suggest {
+pub fn complete_global(_ctx: ShellContext) -> Suggest {
     suggest! {
         HELP_FLAG: "Show help messages",
         ARG_FEATURES.clone(): "List of features to enable",

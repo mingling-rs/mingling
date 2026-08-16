@@ -56,12 +56,12 @@ fn main() {
 }
 
 // --------- IMPORTANT ---------
-//            __________________________________________ Entry point bound to completion behavior
-//           /                 _________________________ Shell context for obtaining user input state
-//           |                /                 ________ Suggest, used to return completion results
-//           vvvvvvvvvv       |                /
-#[completion(EntryGreet)] //  vvvvvvvvvvvv     vvvvvvv
-fn complete_greet_entry(ctx: &ShellContext) -> Suggest {
+//            _________________________________________ Entry point bound to completion behavior
+//           /                _________________________ Shell context for obtaining user input state
+//           |               /                 ________ Suggest, used to return completion results
+//           vvvvvvvvvv      |                /
+#[completion(EntryGreet)] // vvvvvvvvvvvv     vvvvvvv
+fn complete_greet_entry(ctx: ShellContext) -> Suggest {
     // When the previous word is `greet` (the current command being typed)
     if ctx.previous_word == "greet" {
         // Return suggestions

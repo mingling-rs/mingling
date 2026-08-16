@@ -93,7 +93,7 @@ pub fn render_error_package_not_enabled(err: ErrorPackageNotEnabled) -> RenderRe
 }
 
 #[completion(EntryPkgDisable)]
-pub fn complete_pkg_disable(ctx: &ShellContext, packages_dir: &ResPackagesDir) -> Suggest {
+pub fn complete_pkg_disable(ctx: ShellContext, packages_dir: &ResPackagesDir) -> Suggest {
     if ctx.previous_word != "pkg-disable" {
         return Suggest::FileCompletion;
     }

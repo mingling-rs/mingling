@@ -256,7 +256,7 @@ pub fn render_error_pkg_enable_failed(err: ErrorPkgEnableFailed) -> RenderResult
 }
 
 #[completion(EntryInstall)]
-pub fn complete_install(ctx: &ShellContext) -> Suggest {
+pub fn complete_install(ctx: ShellContext) -> Suggest {
     if ctx.previous_word != "install" {
         return Suggest::FileCompletion;
     }

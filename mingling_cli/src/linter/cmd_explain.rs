@@ -97,7 +97,7 @@ pub fn render_error_no_such_lint(
 }
 
 #[completion(EntryExplain)]
-pub fn complete_explain(ctx: &ShellContext, registry: &mut LazyRes<ResLintRegistry>) -> Suggest {
+pub fn complete_explain(ctx: ShellContext, registry: &mut LazyRes<ResLintRegistry>) -> Suggest {
     let registry = registry.get_ref();
     if ctx.previous_word != "explain" {
         return Suggest::FileCompletion;

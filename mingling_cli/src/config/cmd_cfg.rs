@@ -109,7 +109,7 @@ pub fn escape_config_value(input: &str) -> String {
 }
 
 #[completion(EntryCfg)]
-pub fn complete_config(_ctx: &ShellContext, config: &mut LazyRes<ResMlingConfig>) -> Suggest {
+pub fn complete_config(_ctx: ShellContext, config: &mut LazyRes<ResMlingConfig>) -> Suggest {
     let config = config.get_ref();
     let keys = config.get_hash_map().keys().cloned().collect::<Vec<_>>();
     Suggest::from(keys).combine(suggest! {

@@ -689,31 +689,32 @@ pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// 2. Registering the completion mapping for the specified entry type.
 /// 3. Keeping the original function for direct calls.
 ///
-/// # Syntax
+/// # Signature rules
 ///
-/// The completion function accepts a relaxed signature:
-///
-/// - **Context parameter (optional):** the first parameter may be `&ShellContext`,
-///   an owned `ShellContext`, or any type implementing `From<&ShellContext>`.
-///   With no parameters at all, the shell context is ignored.
-/// - **Return type:** anything implementing `Into<Suggest>`, e.g. `Suggest`,
-///   `Vec<String>`, `Vec<(String, String)>` (suggestion + description), or a
-///   set of [`SuggestItem`](https://docs.rs/mingling/latest/mingling/struct.SuggestItem.html)s.
-/// - **Resource injection:** remaining parameters are injected resources
-///   (only when a context parameter is present).
+/// - **Owned (non-reference) parameters** are *shell sources*: each one is derived
+///   from `&ShellContext` via `From<&ShellContext>`. This covers `ShellContext`
+///   itself (via its `Clone`-based `From` impl), framework state types, and any
+///   user-defined state derived from the shell context.
+/// - **`&T` / `&mut T` parameters** are resource injections (same as `#[chain]`).
+/// - **`&ShellContext` is rejected** — use the owned `ShellContext` instead, since
+///   reference parameters are reserved for resources.
+/// - The return type can be anything implementing `Into<Suggest>`: `Suggest`,
+///   `Vec<String>`, `Vec<&str>`, `Vec<(String, String)>` (suggestion + description),
+///   a set of [`SuggestItem`](https://docs.rs/mingling/latest/mingling/struct.SuggestItem.html)s,
+///   or `()` / no return type for "no suggestions".
 ///
 /// ```rust,ignore
 /// // No context, return simple suggestions
 /// #[completion(EntryType)]
-/// fn complete_static() -> Vec<String> { vec!["a", "b"].into_iter().map(str::to_string).collect() }
+/// fn complete_static() -> Vec<&str> { vec!["a", "b"] }
 ///
-/// // Owned context (via `From<&ShellContext>`), suggestions with descriptions
+/// // Multiple shell-derived states + resource injection
 /// #[completion(EntryType)]
-/// fn complete_owned(ctx: ShellContext) -> Vec<(String, String)> { /* ... */ }
+/// fn complete_mixed(pos: PositionState, flags: FlagState, db: &ResDb) -> Vec<(String, String)> { /* ... */ }
 ///
-/// // Borrowed context (classic form)
+/// // Empty function: this command needs no completion
 /// #[completion(EntryType)]
-/// fn complete_borrowed(ctx: &ShellContext) -> Suggest { /* ... */ }
+/// fn complete_nothing() {}
 /// ```
 ///
 /// # Example
@@ -723,7 +724,7 @@ pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// use mingling::{ShellContext, Suggest};
 ///
 /// #[completion(MyEntry)]
-/// fn complete_my_command(ctx: &ShellContext) -> Suggest {
+/// fn complete_my_command(ctx: ShellContext) -> Suggest {
 ///     if ctx.previous_word == "--type" {
 ///         return suggest!();
 ///     }
@@ -740,8 +741,9 @@ pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Requirements
 ///
 /// - The `comp` feature must be enabled.
-/// - The first parameter (if any) must implement `From<&ShellContext>`.
-/// - The return type must implement `Into<Suggest>`.
+/// - Owned parameters must implement `From<&ShellContext>`.
+/// - Reference parameters are resource injections; `&ShellContext` is not allowed.
+/// - The return type must implement `Into<Suggest>` (or be `()`).
 /// - The function cannot be async.
 #[cfg(feature = "comp")]
 #[proc_macro_attribute]

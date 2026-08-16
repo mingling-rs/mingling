@@ -154,7 +154,7 @@ pub fn render_error_no_matching_packages(_: ErrorNoMatchingPackages) -> RenderRe
 }
 
 #[completion(EntryUninstall)]
-pub fn complete_uninstall(ctx: &ShellContext, packages_dir: &ResPackagesDir) -> Suggest {
+pub fn complete_uninstall(ctx: ShellContext, packages_dir: &ResPackagesDir) -> Suggest {
     if ctx.previous_word != "uninstall" {
         return Suggest::FileCompletion;
     }

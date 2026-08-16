@@ -43,7 +43,7 @@ Use `#[completion(EntryType)]` to define completion logic for an Entry:
 @@@dispatcher!("greet", EntryGreet);
  
 #[completion(EntryGreet)]
-fn complete_greet(ctx: &ShellContext) -> Suggest {
+fn complete_greet(ctx: ShellContext) -> Suggest {
     if ctx.previous_word == "greet" {
         let mut items = BTreeSet::new();
         items.insert(SuggestItem::new_with_desc("Alice".into(), "Likes to receive messages".into()));

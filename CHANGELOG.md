@@ -367,6 +367,34 @@ None
 
     _Behavioral note:_ the runtime semantics of pipeline types are unchanged — `#[derive(Grouped, Wrap)]` produces types with the same `Grouped` identity, `Into<AnyOutput>`/`Into<ChainProcess>` routing, `Deref`/`DerefMut`, and `From`/`Into` conversions that `pack!` provided. The removal is purely an API move from magic macros to standard Rust derives, reducing macro surface area and making pipeline types inspectable and composable like any other struct.
 
+6. **[`macros:completion`]** **[BREAKING]** Changed the `#[completion]` attribute macro's context-parameter semantics: completion functions now take the **owned** `ShellContext` (or any `From<&ShellContext>` type) by value, and `&ShellContext` is no longer accepted.
+
+    ### What changed
+
+    Previously, the completion function's context parameter could be `&ShellContext` (the classic form) or an owned `ShellContext` / any `From<&ShellContext>` type. Now the reference form is rejected: reference parameters (`&T` / `&mut T`) are reserved exclusively for **resource injection**, matching `#[chain]` semantics, so the parser in `mingling_macros/src/attr/completion.rs` was reworked to classify each parameter as either:
+
+    - **Owned (non-reference) parameter** — a _shell source_: derived from `&ShellContext` via `<#ty as From<&ShellContext>>::from(ctx)`. This covers `ShellContext` itself (via its new `Clone`-based `From` impl), framework state types, and any user-defined type derived from the shell context. Multiple owned parameters are allowed; each gets its own derived binding (`__ctx_derived_{idx}`).
+    - **`&T` / `&mut T` reference parameter** — a _resource injection_, identical to the parameter position used by `#[chain]`. Requires a simple-identifier binding. `&ShellContext` specifically is rejected with a compile error: "`&ShellContext` is not supported; use the owned `ShellContext` (or any other type implementing `From<&ShellContext>`) as a value parameter".
+
+    A helper `is_shell_context_path(ty)` detects a path whose last segment is `ShellContext` (covering `ShellContext` and `mingling::ShellContext` alike).
+
+    Previously, resource injection only started _after_ the first (context) parameter, and a completion function with no context parameter could not inject resources (compile error). Now, ownership of the parameter — not its position — determines its role: owned parameters are shell sources, references are resources, and they may be freely interleaved. The "no context → no resources" restriction is gone entirely.
+
+    The generated `Completion::comp` body now emits:
+
+    1. A derived-binding statement for each owned parameter.
+    2. The immut-resource binding statements (for `&T` injections).
+    3. The mut-resource wrapper / call (for `&mut T` injections).
+    4. The return statement applying the `Into<Suggest>` conversion (`()` → empty `Suggest`).
+
+    **Migration guide:**
+
+    - Change every `ctx: &ShellContext` parameter to `ctx: ShellContext`. The owned type behaves identically for reads; only the declared parameter type changes.
+    - Code that previously relied on `&ShellContext` in the _middle_ of the signature no longer needs special treatment: owned parameters anywhere are treated as shell sources.
+    - `_ctx: &ShellContext` (unused parameter) becomes `_ctx: ShellContext`.
+
+    _All internal call sites, examples, docs, and tests updated_ (e.g., `mingling_cli` completion handlers, `example-completion`, `example-enum-tag`, `GETTING-STARTED.md`, `docs/pages/advanced/1-completion.md`, `docs/_zh_CN/pages/advanced/1-completion.md`, and `mingling/src/example_docs.rs`).
+
 ---
 
 ## Contents

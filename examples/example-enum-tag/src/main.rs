@@ -114,7 +114,7 @@ pub fn render_programming_language(lang: ProgrammingLanguages) -> RenderResult {
 }
 
 #[completion(EntryLanguageSelection)]
-fn complete_language_selection(_: &ShellContext) -> Suggest {
+fn complete_language_selection(_: ShellContext) -> Suggest {
     // Use `suggest_enum!` directly to generate enum suggestions
     suggest_enum!(ProgrammingLanguages)
 }

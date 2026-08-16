@@ -250,7 +250,7 @@ pub fn render_error_class_write_failed(err: ErrorClassWriteFailed) -> RenderResu
 }
 
 #[completion(EntryClassAdd)]
-pub fn complete_class_add(ctx: &ShellContext, cwd: &ResCurrentDir) -> Suggest {
+pub fn complete_class_add(ctx: ShellContext, cwd: &ResCurrentDir) -> Suggest {
     if ctx.previous_word != "class-add" {
         return Suggest::file_comp();
     }

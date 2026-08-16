@@ -201,7 +201,7 @@ dispatcher!("greet", EntryGreet);
 pub struct ResultName((u8, String));
 
 #[completion(EntryGreet)]
-fn complete_greet(ctx: &ShellContext) -> Suggest {
+fn complete_greet(ctx: ShellContext) -> Suggest {
     // Suggest positional arguments
     if ctx.previous_word == "greet" {
         return suggest! {
@@ -212,12 +212,11 @@ fn complete_greet(ctx: &ShellContext) -> Suggest {
     }
 
     // Suggest flag arguments
-    if ctx.typing_argument() {
+    if ctx.current_word.starts_with('-') {
         return suggest! {
             "-r":        "Number of repetitions",
             "--repeat":  "Number of repetitions",
-        }
-        .strip_typed_argument(ctx);
+        };
     }
 
     suggest!()  // no suggestions
@@ -262,7 +261,7 @@ pub enum ProgrammingLanguages {
 }
 
 #[completion(EntryLang)]
-fn complete_lang(_: &ShellContext) -> Suggest {
+fn complete_lang(_: ShellContext) -> Suggest {
     suggest_enum!(ProgrammingLanguages)
 }
 ```
