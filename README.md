@@ -46,7 +46,7 @@ pub struct StateNext;
 #[chain]
 fn handle_current(_: EntryCurrent) -> StateNext {
     // 1. The first phase outputs the StateNext value
-    StateNext  //                     ^^^^^^^^^
+    StateNext     //                  ^^^^^^^^^
 }                 //                  |
                   //                  |
                   // 2. The second phase takes StateNext as input
