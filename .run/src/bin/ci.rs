@@ -20,6 +20,7 @@ struct Checks {
     markdown_code: bool,
     examples: bool,
     docs_refresh: bool,
+    docs_structure: bool,
     api_docs: bool,
 }
 
@@ -32,6 +33,7 @@ impl Checks {
             || self.markdown_code
             || self.examples
             || self.docs_refresh
+            || self.docs_structure
             || self.api_docs
     }
 }
@@ -41,17 +43,18 @@ fn print_help() {
         r"
 Usage: ci [options]
 Options:
-   -h, --help                Print this help message
-   -y                        Auto-confirm temporary commits
-       --dirty               Run CI on dirty workspace (skip temp commit & clean check)
-       --check-build         Build all crates
-       --check-clippy        Run clippy on all crates (-D warnings)
-       --check-test          Run unit tests for all crates
-       --check-arg-picker    Test the arg-picker crate
-       --check-markdown-code Verify all *.md code blocks compile
-       --check-examples      Test all examples
-       --check-docs-refresh  Refresh docs and fail if the tree is contaminated
-       --check-api-docs      Build API docs with docs.rs features
+   -h, --help                 Print this help message
+   -y                         Auto-confirm temporary commits
+       --dirty                Run CI on dirty workspace (skip temp commit & clean check)
+       --check-build          Build all crates
+       --check-clippy         Run clippy on all crates (-D warnings)
+       --check-test           Run unit tests for all crates
+       --check-arg-picker     Test the arg-picker crate
+       --check-markdown-code  Verify all *.md code blocks compile
+       --check-examples       Test all examples
+       --check-docs-refresh   Refresh docs and fail if the tree is contaminated
+       --check-docs-structure Verify translated docs mirror the English structure
+       --check-api-docs       Build API docs with docs.rs features
 
 If no specific options are given, all checks are run.
     "
@@ -73,6 +76,7 @@ fn main() {
         check_markdown_code,
         check_examples,
         check_docs_refresh,
+        check_docs_structure,
         check_api_docs,
         help,
     ) = Picker::from_args()
@@ -85,6 +89,7 @@ fn main() {
         .pick_or_default(&arg![check_markdown_code: bool])
         .pick_or_default(&arg![check_examples: bool])
         .pick_or_default(&arg![check_docs_refresh: bool])
+        .pick_or_default(&arg![check_docs_structure: bool])
         .pick_or_default(&arg![check_api_docs: bool])
         .pick_or_default(&arg![help: bool, 'h'])
         .unwrap();
@@ -102,6 +107,7 @@ fn main() {
         markdown_code: check_markdown_code,
         examples: check_examples,
         docs_refresh: check_docs_refresh,
+        docs_structure: check_docs_structure,
         api_docs: check_api_docs,
     };
     let run_all = !checks.any();
@@ -239,6 +245,14 @@ fn ci(checks: &Checks, run_all: bool) -> Result<(), i32> {
             &mut exit_code,
             "Phase: Check all documentation is up to date",
             docs_refresh,
+            run_all,
+        )?;
+    }
+    if run_all || checks.docs_structure {
+        run_step(
+            &mut exit_code,
+            "Phase: Check translated docs structure consistency",
+            docs_structure,
             run_all,
         )?;
     }
@@ -441,4 +455,10 @@ fn docs_refresh() -> Result<(), i32> {
     run_cmd!("cargo fmt")?;
 
     Ok(())
+}
+
+fn docs_structure() -> Result<(), i32> {
+    println_cargo_style!("Check: docs structure consistency across languages");
+
+    run_cmd!("cargo run --manifest-path .run/Cargo.toml --bin check-docs-structure")
 }
