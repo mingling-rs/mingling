@@ -9,8 +9,12 @@
 //!
 //! - `--object <PATH>`: include arbitrary binaries in the report
 //!   (upstream issue taiki-e/cargo-llvm-cov#367)
-//! - `--include-tests-examples-benches`: stop filtering those source dirs
-//!   (upstream issue taiki-e/cargo-llvm-cov#503)
+//! - `--include-examples`: stop filtering source files under the
+//!   `examples` directory (upstream issue taiki-e/cargo-llvm-cov#503)
+//!
+//! The script itself does not use `--include-examples`; it passes
+//! `--no-default-ignore-filename-regex` and supplies its own filter so that
+//! `tests`/`benches` directories stay in the report too.
 //!
 //! Install it with:
 //!
