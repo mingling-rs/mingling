@@ -2,9 +2,10 @@ use std::{env, fs, io, path::PathBuf, process::Command};
 
 use cargo_metadata::TargetKind;
 use mingling::{
-    Grouped, LazyRes, RenderResult, Routable,
-    macros::{chain, command, metadata, pack_err, renderer, routeify},
+    Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest,
+    macros::{arg, chain, command, completion, metadata, pack_err, renderer, routeify, suggest},
     metadata::Description,
+    picker::{EntryPicker, PickerArg, value::Flag},
 };
 
 use crate::{
@@ -16,6 +17,11 @@ use crate::{
 
 pack_err!(ErrorBuildFailed = String);
 pack_err!(ErrorBinaryNotFound = String);
+pack_err!(ErrorPkgEnableFailed = String);
+
+/// Flag: `--enable` — run `mling pkg-enable` after a successful install
+/// to enable the package being installed.
+pub static ARG_ENABLE: PickerArg<Flag> = arg![enable: Flag];
 
 /// Resolved install paths, used by the build step.
 #[derive(Debug, Default, Grouped)]
@@ -24,6 +30,7 @@ pub struct StateInstallBuild {
     pub install_dir: PathBuf,
     pub release_dir: PathBuf,
     pub exe_suffix: &'static str,
+    pub enable: bool,
 }
 
 /// State after `cargo build --release`, used by the copy step.
@@ -33,6 +40,16 @@ pub struct StateInstallCopy {
     pub release_dir: PathBuf,
     pub exe_suffix: &'static str,
     pub installed: Vec<PathBuf>,
+    pub enable: bool,
+}
+
+/// State after the copy step when `--enable` was given: run `mling pkg-enable`.
+#[derive(Debug, Default, Grouped)]
+pub struct StateInstallEnable {
+    pub install_dir: PathBuf,
+    pub installed: Vec<PathBuf>,
+    pub name: String,
+    pub version: String,
 }
 
 #[derive(Debug, Default, Grouped)]
@@ -49,7 +66,12 @@ pub fn desc_install() -> Description {
 }
 
 #[command(routeify)]
-pub fn install(packages_dir: &ResPackagesDir, metadata: &mut LazyRes<ResMetadata>) -> Next {
+pub fn install(
+    args: EntryInstall,
+    packages_dir: &ResPackagesDir,
+    metadata: &mut LazyRes<ResMetadata>,
+) -> Next {
+    let enable = args.pick(&ARG_ENABLE).to_result()?;
     let metadata = metadata.get_ref().data();
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
@@ -69,6 +91,7 @@ pub fn install(packages_dir: &ResPackagesDir, metadata: &mut LazyRes<ResMetadata
             .join("release")
             .into_std_path_buf(),
         exe_suffix: env::consts::EXE_SUFFIX,
+        enable: enable.bool(),
     }
     .to_chain()
 }
@@ -93,6 +116,7 @@ pub fn handle_state_install_build(state: StateInstallBuild) -> Next {
         release_dir: state.release_dir,
         exe_suffix: state.exe_suffix,
         installed: vec![],
+        enable: state.enable,
     }
     .to_chain()
 }
@@ -153,6 +177,45 @@ pub fn handle_state_install_copy(
         }
     }
 
+    if state.enable {
+        let root_package = metadata
+            .root_package()
+            .or_else(|| metadata.workspace_packages().first().copied())
+            .ok_or(ErrorRootPackageNotFound::default())?;
+        return StateInstallEnable {
+            install_dir: state.install_dir,
+            installed: state.installed,
+            name: root_package.name.to_string(),
+            version: root_package.version.to_string(),
+        }
+        .to_chain();
+    }
+
+    ResultInstall {
+        install_dir: state.install_dir,
+        installed: state.installed,
+    }
+    .to_chain()
+}
+
+/// Step 3 (optional): enable the installed package via `mling pkg-enable`
+/// when `--enable` was given.
+#[chain(routeify)]
+pub fn handle_state_install_enable(state: StateInstallEnable) -> Next {
+    let spec = format!("{}@{}", state.name, state.version);
+    let status = Command::new("mling")
+        .args(["pkg-enable", &spec])
+        .status()
+        .map_err(|e| {
+            ErrorPkgEnableFailed::new(format!("failed to run `mling pkg-enable {spec}`: {e}"))
+        })?;
+    if !status.success() {
+        return ErrorPkgEnableFailed::new(format!(
+            "`mling pkg-enable {spec}` failed with {status}"
+        ))
+        .to_chain();
+    }
+
     ResultInstall {
         install_dir: state.install_dir,
         installed: state.installed,
@@ -182,4 +245,21 @@ pub fn render_error_binary_not_found(err: ErrorBinaryNotFound) -> RenderResult {
     let mut r = RenderResult::new();
     eprintln_cargo!(r, "binary not found: {}", err.info);
     r
+}
+
+#[renderer]
+pub fn render_error_pkg_enable_failed(err: ErrorPkgEnableFailed) -> RenderResult {
+    let mut r = RenderResult::new();
+    eprintln_cargo!(r, "{}", err.info);
+    r
+}
+
+#[completion(EntryInstall)]
+pub fn complete_install(ctx: &ShellContext) -> Suggest {
+    if ctx.previous_word != "install" {
+        return Suggest::FileCompletion;
+    }
+    suggest! {
+        ARG_ENABLE: "Enable the package after installing (runs `mling pkg-enable`)"
+    }
 }
