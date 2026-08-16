@@ -691,32 +691,47 @@ pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///
 /// # Syntax
 ///
+/// The completion function accepts a relaxed signature:
+///
+/// - **Context parameter (optional):** the first parameter may be `&ShellContext`,
+///   an owned `ShellContext`, or any type implementing `From<&ShellContext>`.
+///   With no parameters at all, the shell context is ignored.
+/// - **Return type:** anything implementing `Into<Suggest>`, e.g. `Suggest`,
+///   `Vec<String>`, `Vec<(String, String)>` (suggestion + description), or a
+///   set of [`SuggestItem`](https://docs.rs/mingling/latest/mingling/struct.SuggestItem.html)s.
+/// - **Resource injection:** remaining parameters are injected resources
+///   (only when a context parameter is present).
+///
 /// ```rust,ignore
+/// // No context, return simple suggestions
 /// #[completion(EntryType)]
-/// fn complete_my_entry(ctx: &ShellContext) -> Suggest {
-///     // Return suggestions based on current input state...
-/// }
+/// fn complete_static() -> Vec<String> { vec!["a", "b"].into_iter().map(str::to_string).collect() }
+///
+/// // Owned context (via `From<&ShellContext>`), suggestions with descriptions
+/// #[completion(EntryType)]
+/// fn complete_owned(ctx: ShellContext) -> Vec<(String, String)> { /* ... */ }
+///
+/// // Borrowed context (classic form)
+/// #[completion(EntryType)]
+/// fn complete_borrowed(ctx: &ShellContext) -> Suggest { /* ... */ }
 /// ```
 ///
 /// # Example
 ///
 /// ```rust,ignore
-/// use mingling::macros::{completion, suggest, suggest_enum};
+/// use mingling::macros::{completion, suggest};
 /// use mingling::{ShellContext, Suggest};
 ///
 /// #[completion(MyEntry)]
 /// fn complete_my_command(ctx: &ShellContext) -> Suggest {
-///     if ctx.filling_argument_first("--name") {
+///     if ctx.previous_word == "--type" {
 ///         return suggest!();
 ///     }
-///     if ctx.filling_argument_first("--type") {
-///         return suggest_enum!(MyEnum);
-///     }
-///     if ctx.typing_argument() {
+///     if ctx.current_word.starts_with('-') {
 ///         return suggest! {
 ///             "--name": "Provide a name",
-///             "--type": "Select a type"
-///         }.strip_typed_argument(ctx);
+///             "--type": "Select a type",
+///         };
 ///     }
 ///     suggest!()
 /// }
@@ -725,8 +740,8 @@ pub fn renderer(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # Requirements
 ///
 /// - The `comp` feature must be enabled.
-/// - The function must have exactly one parameter of type `&ShellContext`.
-/// - The function must return `Suggest`.
+/// - The first parameter (if any) must implement `From<&ShellContext>`.
+/// - The return type must implement `Into<Suggest>`.
 /// - The function cannot be async.
 #[cfg(feature = "comp")]
 #[proc_macro_attribute]

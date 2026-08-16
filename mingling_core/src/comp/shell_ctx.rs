@@ -96,7 +96,7 @@ use std::collections::HashSet;
 /// If the `-F` flag is present without a value, `shell_flag` becomes
 /// `ShellFlag::Other(String::new())`. If `-F` is absent, it defaults to
 /// `ShellFlag::Other("unknown".to_string())`.
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 #[cfg_attr(feature = "structural_renderer", derive(serde::Serialize))]
 pub struct ShellContext {
     /// The full command line
@@ -179,6 +179,12 @@ impl TryFrom<Vec<String>> for ShellContext {
             all_words,
             shell_flag,
         })
+    }
+}
+
+impl From<&Self> for ShellContext {
+    fn from(ctx: &Self) -> Self {
+        ctx.clone()
     }
 }
 

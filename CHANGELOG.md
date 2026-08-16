@@ -106,6 +106,24 @@ None
 
     The macro is re-exported from `mingling::Wrap` and `mingling::prelude::Wrap` (feature-gated behind `macros`).
 
+2. **[`macros:completion`]** Reworked the `#[completion]` attribute macro to accept a relaxed signature and fixed several code-generation details:
+
+    **Relaxed function signature:**
+    - **Context parameter is now optional.** Previously, the completion function was required to have exactly one parameter of type `&ShellContext`. Now the first parameter (if present) may be `&ShellContext`, an owned `ShellContext`, or **any type implementing `From<&ShellContext>`**. The macro binds the shell context to the declared parameter type via `<#ty as From<&ShellContext>>::from(ctx)`, so identity `From` covers `&ShellContext` itself and `From<&Self>` covers owned `ShellContext` (a new `impl From<&Self> for ShellContext` added in `mingling_core/src/comp/shell_ctx.rs`). With **no parameters at all**, the completion function simply ignores the shell context.
+    - **Resource injection after the context.** `extract_resources_from_args` now starts after the context parameter (index 0 when present, index 0 when absent). A completion function with no context parameter cannot inject resources — the macro emits a compile error in that case.
+    - **Return type is now `Into<Suggest>`.** Previously the function had to return `Suggest` exactly. Now any type implementing `Into<Suggest>` is valid — `Suggest` itself, `Vec<String>`, `Vec<(String, String)>` (suggestion + description), `&[&str]`, or a set of `SuggestItem`s. A `()` return (or no return type) is also accepted and mapped to an empty `Suggest`.
+    - **`SuggestItem` gains `From<&str>`** (in `mingling_core/src/comp/suggest.rs`), and the blanket `From<T> for Suggest where T: IntoIterator` was widened from `T::Item: Into<String>` to `T::Item: Into<SuggestItem>`, so iterators of `&str`, `String`, or `SuggestItem` all convert to `Suggest` uniformly.
+
+    **Generated `Completion::comp` signature:** The generated `fn comp` now always returns `::mingling::Suggest` and always binds the ambient `ctx: &ShellContext` parameter (which the caller passes via `Completion::comp(&ctx)`), ignoring it when the user function takes no context. The generated body:
+
+    - Declares `let _ = ctx;` when the function takes no context parameter (keeps the parameter used).
+    - Declares `let __ctx: #ty = <#ty as From<&ShellContext>>::from(ctx);` when a context parameter is present, then passes `__ctx` as the first argument.
+    - Wraps the user body; for `()` returns, evaluates the body then returns `Suggest::new()`; otherwise evaluates the body and converts the result via `Into::into`.
+
+    **`ShellContext` is now `Clone`** (derive added in `mingling_core/src/comp/shell_ctx.rs`) and implements `From<&Self> for ShellContext`, enabling owned-context completion signatures.
+
+    _No behavioral change for existing code that already used the classic `fn(ctx: &ShellContext) -> Suggest` form — the identity `From` and `Into` impls preserve that path exactly.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`core:comp`]** **[`macros:dispatch_tree`]** **[BREAKING RENAME]** Renamed the prefix-tree dispatch method `dispatch_args_trie` to `dispatch_args` across the codebase.

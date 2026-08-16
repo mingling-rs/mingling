@@ -34,33 +34,52 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     let inputs = &sig.inputs;
     let output = &sig.output;
 
-    if inputs.is_empty() {
-        return syn::Error::new(
-            inputs.span(),
-            "Completion function must have at least one parameter: `ctx: &ShellContext`",
-        )
-        .to_compile_error()
-        .into();
-    }
-
-    let first_arg = &inputs[0];
-    let _ctx_type = match first_arg {
-        FnArg::Typed(PatType { ty, .. }) => (**ty).clone(),
-        FnArg::Receiver(_) => {
+    // The first parameter (if any) is the completion context. It may be
+    // `&ShellContext`, an owned `ShellContext`, or any other type that
+    // implements `From<&ShellContext>`. With no parameters, the completion
+    // function simply ignores the shell context.
+    let ctx_ty: Option<Type> = match inputs.first() {
+        None => None,
+        Some(FnArg::Typed(PatType { ty, .. })) => Some((**ty).clone()),
+        Some(FnArg::Receiver(_)) => {
             return syn::Error::new(
-                first_arg.span(),
+                inputs.span(),
                 "Completion function cannot have self parameter",
             )
             .to_compile_error()
             .into();
         }
     };
-    let fixed_ctx: Pat = syn::parse_quote!(ctx);
 
-    let resources = match extract_resources_from_args(sig, 1) {
+    // Resource injection starts after the context parameter.
+    let resource_skip = usize::from(ctx_ty.is_some());
+    let resources = match extract_resources_from_args(sig, resource_skip) {
         Ok(r) => r,
         Err(e) => return e.to_compile_error().into(),
     };
+    if ctx_ty.is_none() && !resources.is_empty() {
+        return syn::Error::new(
+            inputs.span(),
+            "A completion function without a context parameter cannot inject resources",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    // Bind the shell context to the declared parameter type (identity `From`
+    // covers `&ShellContext` itself).
+    let (ctx_bind_stmt, ctx_call_arg) = ctx_ty.as_ref().map_or_else(
+        || (quote! { let _ = ctx; }, quote! {}),
+        |ty| {
+            (
+                quote! {
+                    let __ctx: #ty =
+                        <#ty as ::std::convert::From<&::mingling::ShellContext>>::from(ctx);
+                },
+                quote! { __ctx },
+            )
+        },
+    );
 
     let fn_body = &input_fn.block;
 
@@ -91,9 +110,11 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         .collect();
 
     let fn_call = if has_resources {
-        quote! { #fn_name(#fixed_ctx, #(#resource_args),*) }
+        quote! { #fn_name(#ctx_call_arg, #(#resource_args),*) }
+    } else if ctx_ty.is_some() {
+        quote! { #fn_name(#ctx_call_arg) }
     } else {
-        quote! { #fn_name(#fixed_ctx) }
+        quote! { #fn_name() }
     };
 
     let inner_call = if mut_resources.is_empty() {
@@ -121,6 +142,26 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         quote! { #inner_call }
     };
 
+    // A `()` return (or no return type) means "no suggestions": map it to an
+    // empty `Suggest` instead of requiring `Into<Suggest>`.
+    let returns_unit = match &sig.output {
+        syn::ReturnType::Default => true,
+        syn::ReturnType::Type(_, ty) => {
+            matches!(ty.as_ref(), syn::Type::Tuple(t) if t.elems.is_empty())
+        }
+    };
+    let return_stmt = if returns_unit {
+        quote! {
+            { #comp_body };
+            ::mingling::Suggest::new()
+        }
+    } else {
+        quote! {
+            let __completion_result = { #comp_body };
+            ::std::convert::Into::into(__completion_result)
+        }
+    };
+
     let expanded: proc_macro2::TokenStream = quote! {
         #(#fn_attrs)*
         #[doc(hidden)]
@@ -130,8 +171,9 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
         impl ::mingling::Completion for #struct_name {
             type Previous = #previous_type_path;
 
-            fn comp(#fixed_ctx: &::mingling::ShellContext) #output {
-                #comp_body
+            fn comp(ctx: &::mingling::ShellContext) -> ::mingling::Suggest {
+                #ctx_bind_stmt
+                #return_stmt
             }
         }
 

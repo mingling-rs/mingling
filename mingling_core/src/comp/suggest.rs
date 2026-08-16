@@ -321,13 +321,10 @@ impl Suggest {
 impl<T> From<T> for Suggest
 where
     T: IntoIterator,
-    T::Item: Into<String>,
+    T::Item: Into<SuggestItem>,
 {
     fn from(items: T) -> Self {
-        let suggests = items
-            .into_iter()
-            .map(|item| SuggestItem::new(item.into()))
-            .collect();
+        let suggests = items.into_iter().map(Into::into).collect();
         Self::Suggest(suggests)
     }
 }
@@ -698,6 +695,12 @@ impl SuggestItem {
 impl From<String> for SuggestItem {
     fn from(suggest: String) -> Self {
         Self::new(suggest)
+    }
+}
+
+impl From<&str> for SuggestItem {
+    fn from(suggest: &str) -> Self {
+        Self::new(suggest.to_string())
     }
 }
 
