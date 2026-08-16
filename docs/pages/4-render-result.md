@@ -76,7 +76,6 @@ fn render_name(name: ResultName) {
 // 5. Assemble and run the program in main
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
  

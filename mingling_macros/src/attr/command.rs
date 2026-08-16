@@ -321,19 +321,16 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
         fn_name.span(),
     );
 
-    // dispatcher internal static (only exists with dispatch_tree feature)
-    #[cfg(feature = "dispatch_tree")]
+    // dispatcher internal static (always exists now that dispatchers are
+    // collected at compile time regardless of the `dispatch_tree` feature)
     let snaked_node = just_fmt::snake_case!(names.node_lit.value());
-    #[cfg(feature = "dispatch_tree")]
     let dispatcher_internal = {
         let ident = Ident::new(
-            &format!("__internal_dispatcher_{}", snaked_node),
+            &format!("__internal_dispatcher_{snaked_node}"),
             fn_name.span(),
         );
         quote! { #vis use super::#ident; }
     };
-    #[cfg(not(feature = "dispatch_tree"))]
-    let dispatcher_internal = quote! {};
 
     let cmd_name = &names.cmd_name;
     let entry_type = &names.entry_type;

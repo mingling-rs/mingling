@@ -111,7 +111,8 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
 
     let comp_entry = get_comp_entry(&pack);
 
-    let dispatch_tree_entry = get_dispatch_tree_entry(&command_name_str, &command_struct, &pack);
+    let compile_time_registration =
+        get_compile_time_registration(&command_name_str, &command_struct, &pack);
 
     let program_type = crate::default_program_path();
 
@@ -129,7 +130,7 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
         }
 
         #comp_entry
-        #dispatch_tree_entry
+        #compile_time_registration
 
         impl ::mingling::Dispatcher<#program_type> for #command_struct {
             fn node(&self) -> ::mingling::Node {
@@ -165,8 +166,12 @@ fn get_comp_entry(_entry_name: &Ident) -> TokenStream2 {
     quote! {}
 }
 
-#[cfg(feature = "dispatch_tree")]
-fn get_dispatch_tree_entry(
+/// Registers the dispatcher at compile time (collects its node into the
+/// global `COMPILE_TIME_DISPATCHERS` registry and emits the
+/// `__internal_dispatcher_*` static), regardless of the `dispatch_tree`
+/// feature. The feature only selects which matching strategy
+/// (trie vs. linear list) is generated later by `gen_program!`.
+fn get_compile_time_registration(
     command_name_str: &str,
     command_struct: &Ident,
     entry_name: &Ident,
@@ -175,13 +180,4 @@ fn get_dispatch_tree_entry(
     quote! {
         ::mingling::macros::register_dispatcher!(#node_name_lit, #command_struct, #entry_name);
     }
-}
-
-#[cfg(not(feature = "dispatch_tree"))]
-fn get_dispatch_tree_entry(
-    _command_name_str: &str,
-    _command_struct: &Ident,
-    _entry_name: &Ident,
-) -> TokenStream2 {
-    quote! {}
 }

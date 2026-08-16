@@ -5,7 +5,7 @@
 //! - The dispatcher command struct (`CMD*`, always)
 //! - The error type, if `error = ErrorType` is specified
 //! - The help internal struct, if `help = true` is specified
-//! - The `__internal_dispatcher_*` dispatch tree static, if `use_dispatch_tree` is enabled
+//! - The `__internal_dispatcher_*` compile-time collected static (always)
 //!
 //! Supported forms:
 //! - `#[dispatcher_clap("greet", CMDGreet)] struct EntryGreet { ... }`
@@ -22,27 +22,21 @@ use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 /// - The dispatcher struct (`CMD*`, always)
 /// - The error type, if `error = ErrorType` is specified
 /// - The help internal struct, if `help = true` is specified
-/// - `__internal_dispatcher_*` — dispatch tree static (when `use_dispatch_tree` is true)
+/// - `__internal_dispatcher_*` — compile-time collected static (always)
 ///
 /// Covers forms:
 /// - `#[dispatcher_clap("greet", CMDGreet)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, help = true)] struct EntryGreet { ... }`
 /// - `#[dispatcher_clap("greet", CMDGreet, error = ErrorGreet, help = true)] struct EntryGreet { ... }`
-pub struct DispatcherClapPattern {
-    /// Whether to include the `__internal_dispatcher_*` dispatch tree static in the analysis.
-    pub use_dispatch_tree: bool,
-}
+#[derive(Default)]
+pub struct DispatcherClapPattern;
 
 impl DispatcherClapPattern {
-    /// Creates a new `DispatcherClapPattern` with the given configuration.
-    ///
-    /// # Parameters
-    /// - `use_dispatch_tree`: When `true`, enables analysis of the `__internal_dispatcher_*`
-    ///   static dispatch tree for each matched command.
+    /// Creates a new `DispatcherClapPattern`.
     #[must_use]
-    pub const fn new(use_dispatch_tree: bool) -> Self {
-        Self { use_dispatch_tree }
+    pub const fn new() -> Self {
+        Self
     }
 }
 
@@ -61,7 +55,7 @@ impl AnalyzePattern for DispatcherClapPattern {
         for item in &syntax.items {
             match item {
                 Item::Struct(s) if has_attr(&s.attrs, "dispatcher_clap") => {
-                    items.extend(self.analyze_struct(s, ""));
+                    items.extend(Self::analyze_struct(s, ""));
                 }
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
@@ -69,7 +63,7 @@ impl AnalyzePattern for DispatcherClapPattern {
                             if let Item::Struct(s) = n
                                 && has_attr(&s.attrs, "dispatcher_clap")
                             {
-                                items.extend(self.analyze_struct(s, &item_mod.ident.to_string()));
+                                items.extend(Self::analyze_struct(s, &item_mod.ident.to_string()));
                             }
                         }
                     }
@@ -83,7 +77,7 @@ impl AnalyzePattern for DispatcherClapPattern {
 }
 
 impl DispatcherClapPattern {
-    fn analyze_struct(&self, s: &syn::ItemStruct, module: &str) -> Vec<AnalyzeItem> {
+    fn analyze_struct(s: &syn::ItemStruct, module: &str) -> Vec<AnalyzeItem> {
         let mut items = Vec::new();
 
         // Entry type (struct name) — always
@@ -120,10 +114,8 @@ impl DispatcherClapPattern {
                 items.push(AnalyzeItem::local(module.to_string(), help_struct));
             }
 
-            // __internal_dispatcher_* — when configured
-            if self.use_dispatch_tree
-                && let Some(ref cmd_name) = parsed.cmd_name
-            {
+            // __internal_dispatcher_* — the compile-time collected static
+            if let Some(ref cmd_name) = parsed.cmd_name {
                 let internal_name =
                     format!("__internal_dispatcher_{}", just_fmt::snake_case!(cmd_name));
                 items.push(AnalyzeItem::local(module.to_string(), internal_name));

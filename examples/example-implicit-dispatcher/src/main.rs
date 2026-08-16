@@ -9,15 +9,7 @@ dispatcher!("remote.add" /*, CMDRemoteAdd    => EntryRemoteAdd */);
 dispatcher!("remote.remove", CMDRemoteRemove => EntryRemoteRemove);
 
 fn main() {
-    let mut program = ThisProgram::new();
-
-    // --------- IMPORTANT ---------
-    program.with_dispatcher(CMDRemoteAdd);
-    //                      ^^^^^^^^^^^^\_ CMDRemoteAdd is implicitly created
-    // --------- IMPORTANT ---------
-
-    program.with_dispatcher(CMDRemoteRemove);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }
 
 gen_program!();

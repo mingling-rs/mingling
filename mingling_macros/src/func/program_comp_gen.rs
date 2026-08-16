@@ -40,13 +40,9 @@ pub(crate) fn program_comp_gen_impl(_input: TokenStream) -> TokenStream {
         }
     };
 
-    #[cfg(feature = "dispatch_tree")]
     let internal_dispatcher_comp = quote! {
         use __internal_completion_mod::__internal_dispatcher_comp;
     };
-
-    #[cfg(not(feature = "dispatch_tree"))]
-    let internal_dispatcher_comp = quote! {};
 
     let comp_dispatcher = quote! {
         #[doc(hidden)]

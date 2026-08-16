@@ -31,7 +31,6 @@ fn main() {
     program.with_setup(ExitCodeSetup::default());
     // --------- IMPORTANT ---------
 
-    program.with_dispatcher(CMDHello);
     program.exec_and_exit();
 }
 

@@ -65,12 +65,7 @@ fn main() {
     );
     program.with_resource(ResProgramFlags { all });
 
-    // Dispatchers
-    program.with_dispatcher(CMDAdd);
-    program.with_dispatcher(CMDComplete);
-    program.with_dispatcher(CMDList);
-    program.with_dispatcher(CMDClean);
-
+    // Execute
     program.exec_and_exit();
 }
 

@@ -28,7 +28,6 @@ fn main() {
     let mut program = ThisProgram::new();
     // Add `StructuralRendererSetup` to receive user input `--json` `--yaml` parameters
     program.with_setup(StructuralRendererSetup);
-    program.with_dispatcher(CMDRender);
     let _ = program.exec();
 }
 

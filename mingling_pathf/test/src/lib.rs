@@ -269,6 +269,13 @@ fn test_dispatcher_analyze() {
         "::sub::CMDGreet",
         "::sub::EntryDelete",
         "::sub::CMDDelete",
+        // Dispatchers are always collected at compile time:
+        "::__internal_dispatcher_greet",
+        "::__internal_dispatcher_remote_add",
+        "::__internal_dispatcher_delete",
+        "::__internal_dispatcher_remote_rm",
+        "::sub::__internal_dispatcher_greet",
+        "::sub::__internal_dispatcher_delete",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -279,36 +286,27 @@ fn test_dispatcher_analyze() {
 
 #[test]
 fn test_dispatcher_dispatch_tree() {
-    use mingling_pathf::config::PathfinderConfig;
     use mingling_pathf::pattern_analyzer;
 
     let file = current_dir()
         .unwrap()
         .join("src/test_files/test_dispatcher_dispatch_tree.rs");
 
-    // Without dispatch_tree: only Entry + CMD types
-    let r1 = pattern_analyzer::init().analyze_file(&file).unwrap();
-    // 4 root (EntryGreet, CMDGreet, EntryDelete, CMDDelete)
-    // + 4 sub (sub::EntryGreet, sub::CMDGreet, sub::EntryDelete, sub::CMDDelete)
-    // = 8
-    assert_eq!(r1.len(), 8);
-    assert!(r1.contains("::EntryGreet"));
-    assert!(r1.contains("::CMDGreet"));
-    assert!(r1.contains("::EntryDelete"));
-    assert!(r1.contains("::CMDDelete"));
-    assert!(r1.contains("::sub::EntryGreet"));
-    assert!(r1.contains("::sub::CMDGreet"));
-
-    // With dispatch_tree: Entry + CMD + __internal_dispatcher
-    let r2 = pattern_analyzer::init_with_config(&PathfinderConfig::with_dispatch_tree())
-        .analyze_file(&file)
-        .unwrap();
-    // 8 (from above) + 2 __internal (root) + 2 __internal (sub) = 12
-    assert_eq!(r2.len(), 12);
-    assert!(r2.contains("::__internal_dispatcher_greet"));
-    assert!(r2.contains("::__internal_dispatcher_delete"));
-    assert!(r2.contains("::sub::__internal_dispatcher_greet"));
-    assert!(r2.contains("::sub::__internal_dispatcher_delete"));
+    // Dispatchers are always collected at compile time, so the analyzer
+    // always extracts the `__internal_dispatcher_*` statics too:
+    // 8 (Entry + CMD, root + sub) + 4 __internal (root + sub) = 12
+    let r = pattern_analyzer::init().analyze_file(&file).unwrap();
+    assert_eq!(r.len(), 12);
+    assert!(r.contains("::EntryGreet"));
+    assert!(r.contains("::CMDGreet"));
+    assert!(r.contains("::EntryDelete"));
+    assert!(r.contains("::CMDDelete"));
+    assert!(r.contains("::sub::EntryGreet"));
+    assert!(r.contains("::sub::CMDGreet"));
+    assert!(r.contains("::__internal_dispatcher_greet"));
+    assert!(r.contains("::__internal_dispatcher_delete"));
+    assert!(r.contains("::sub::__internal_dispatcher_greet"));
+    assert!(r.contains("::sub::__internal_dispatcher_delete"));
 }
 
 #[test]
@@ -355,6 +353,14 @@ fn test_dispatcher_clap_analyze() {
         "::sub::EntryWithHelp",
         "::sub::CMDHelp",
         "::sub::__internal_help_cmdhelp_help",
+        // Dispatchers are always collected at compile time:
+        "::__internal_dispatcher_greet",
+        "::__internal_dispatcher_delete",
+        "::__internal_dispatcher_helpcmd",
+        "::__internal_dispatcher_full",
+        "::sub::__internal_dispatcher_greet",
+        "::sub::__internal_dispatcher_delete",
+        "::sub::__internal_dispatcher_helpcmd",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -365,29 +371,23 @@ fn test_dispatcher_clap_analyze() {
 
 #[test]
 fn test_dispatcher_clap_dispatch_tree() {
-    use mingling_pathf::config::PathfinderConfig;
     use mingling_pathf::pattern_analyzer;
 
     let file = current_dir()
         .unwrap()
         .join("src/test_files/test_dispatcher_clap.rs");
 
-    // Without dispatch_tree: 26 items (same set as test_dispatcher_clap_analyze)
-    let r1 = pattern_analyzer::init().analyze_file(&file).unwrap();
-    assert_eq!(r1.len(), 26);
-
-    // With dispatch_tree: 26 + 4 __internal (root) + 3 __internal (sub, no "full") = 33
-    let r2 = pattern_analyzer::init_with_config(&PathfinderConfig::with_dispatch_tree())
-        .analyze_file(&file)
-        .unwrap();
-    assert_eq!(r2.len(), 33);
-    assert!(r2.contains("::__internal_dispatcher_greet"));
-    assert!(r2.contains("::__internal_dispatcher_delete"));
-    assert!(r2.contains("::__internal_dispatcher_helpcmd"));
-    assert!(r2.contains("::__internal_dispatcher_full"));
-    assert!(r2.contains("::sub::__internal_dispatcher_greet"));
-    assert!(r2.contains("::sub::__internal_dispatcher_delete"));
-    assert!(r2.contains("::sub::__internal_dispatcher_helpcmd"));
+    // Dispatchers are always collected at compile time:
+    // 26 (Entry/CMD/error/help items) + 4 __internal (root) + 3 __internal (sub, no "full") = 33
+    let r = pattern_analyzer::init().analyze_file(&file).unwrap();
+    assert_eq!(r.len(), 33);
+    assert!(r.contains("::__internal_dispatcher_greet"));
+    assert!(r.contains("::__internal_dispatcher_delete"));
+    assert!(r.contains("::__internal_dispatcher_helpcmd"));
+    assert!(r.contains("::__internal_dispatcher_full"));
+    assert!(r.contains("::sub::__internal_dispatcher_greet"));
+    assert!(r.contains("::sub::__internal_dispatcher_delete"));
+    assert!(r.contains("::sub::__internal_dispatcher_helpcmd"));
 }
 
 #[test]

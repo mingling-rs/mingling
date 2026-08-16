@@ -3,11 +3,9 @@
 //! > This example will introduce how to use `dispatch_tree`
 //! > to optimize your command line lookup efficiency
 //!
-//! When the number of commands in your project increases, you can use `dispatch_tree` to complete command registration at compile time.
-//! It will generate a trie for quickly finding related commands by prefix.
-//!
-//! Therefore, after enabling this feature,
-//! `Program` will no longer store a Dispatcher list internally, and the `with_dispatcher` function will not be compiled.
+//! When the number of commands in your project increases, you can enable
+//! `dispatch_tree` to switch command matching from a linear scan to a
+//! character-level trie.
 //!
 //! Run:
 //! ```bash
@@ -43,12 +41,6 @@ dispatcher!("nested.f",     CMDD => EntryD);
 
 fn main() {
     let program = ThisProgram::new();
-
-    // --------- IMPORTANT ---------
-    // // You no longer need to use `with_dispatcher` anymore;
-    // // it'll be collected automatically once the `dispatch_tree` feature is enabled
-    // program.with_dispatcher(...);
-
     program.exec_and_exit();
 }
 

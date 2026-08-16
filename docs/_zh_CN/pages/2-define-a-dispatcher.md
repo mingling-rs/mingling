@@ -31,23 +31,6 @@ dispatcher!("greet", CMDGreet => EntryGreet);
 > [!NOTE]
 > 命令名（`"greet"`）会自动转换为 kebab-case。即使你写 `"GreetUser"`，匹配时也会变成 `greet-user`。
 
-## 注册到 Program
-
-有了分发器之后，需要告诉 Program 它的存在：
-
-```rust
-@@@ dispatcher!("greet", CMDGreet => EntryGreet);
-@@@ fn main() {
-@@@ let mut program = ThisProgram::new();
-// 注册分发器
-program.with_dispatcher(CMDGreet);
-@@@ }
-@@@ gen_program!();
-```
- 
-> [!TIP]
-> 如果命令多了，可以用 `with_dispatchers` 一次注册多个：`program.with_dispatchers((CMDGreet, CMDAdd, CMDRemoteRm))`。
-
 ## 多级命令
 
 如果你的程序有层级结构——比如 `remote add`、`remote rm`——只需要在命令名里加点号分隔：

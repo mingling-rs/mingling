@@ -143,9 +143,9 @@ gen_program!();
 
 fn main() {
     let mut program = ThisProgram::new();
+    
     // Add StructuralRendererSetup to support --json / --yaml flags
     program.with_setup(StructuralRendererSetup);
-    program.with_dispatcher(CMDFind);
-    program.with_dispatcher(CMDFindStructural);
+    
     let _ = program.exec();
 }

@@ -19,12 +19,9 @@
 mod sub;
 
 use mingling::macros::gen_program;
-use crate::sub::CMDGreet;
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }
 
 gen_program!();

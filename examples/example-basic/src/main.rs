@@ -26,10 +26,7 @@ dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
     // Create a new ThisProgram
-    let mut program = ThisProgram::new();
-
-    // Add the CMDGreet dispatcher
-    program.with_dispatcher(CMDGreet);
+    let program = ThisProgram::new();
 
     // Run the program, then exit the process
     program.exec_and_exit();

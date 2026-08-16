@@ -44,19 +44,11 @@
 //! Hello, Alice, Alice, Alice!
 //! ```
 
-use mingling::{macros::suggest, prelude::*, ShellContext, Suggest};
+use mingling::{ShellContext, Suggest, macros::suggest, prelude::*};
 use std::io::Write;
 
 fn main() {
-    let mut program = ThisProgram::new();
-
-    program.with_dispatcher(CMDGreet);
-
-    // --------- IMPORTANT ---------
-    // The `comp` feature makes `gen_program!()` generate a CMDCompletion automatically
-    // It adds a hidden `__comp` subcommand for communication with the completion script
-    program.with_dispatcher(crate::CMDCompletion);
-    // --------- IMPORTANT ---------
+    let program = ThisProgram::new();
 
     // TIP: Note that the completion script reads stdout,
     // so make sure no output is produced before the CMDCompletion is dispatched.

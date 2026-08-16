@@ -42,8 +42,6 @@ fn render_sum(result: ResultSum) {
  
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
-    program.with_dispatcher(CMDAdd);
     program.exec_and_exit();
 }
  

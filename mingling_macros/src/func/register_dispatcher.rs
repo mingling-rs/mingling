@@ -1,26 +1,19 @@
 // Doc Not Optimize
-#[cfg(feature = "dispatch_tree")]
 use just_fmt::snake_case;
 use proc_macro::TokenStream;
 use quote::quote;
-#[cfg(feature = "dispatch_tree")]
 use syn::parse::{Parse, ParseStream};
-#[cfg(feature = "dispatch_tree")]
 use syn::{Ident, LitStr, Result as SynResult, Token};
 
-#[cfg(feature = "dispatch_tree")]
 use crate::COMPILE_TIME_DISPATCHERS;
-#[cfg(feature = "dispatch_tree")]
 use crate::get_global_set;
 
-#[cfg(feature = "dispatch_tree")]
 struct RegisterDispatcherInput {
     node_name: LitStr,
     dispatcher_type: Ident,
     entry_name: Ident,
 }
 
-#[cfg(feature = "dispatch_tree")]
 impl Parse for RegisterDispatcherInput {
     fn parse(input: ParseStream) -> SynResult<Self> {
         let node_name: LitStr = input.parse()?;
@@ -28,7 +21,7 @@ impl Parse for RegisterDispatcherInput {
         let dispatcher_type: Ident = input.parse()?;
         input.parse::<Token![,]>()?;
         let entry_name: Ident = input.parse()?;
-        Ok(RegisterDispatcherInput {
+        Ok(Self {
             node_name,
             dispatcher_type,
             entry_name,
@@ -36,7 +29,6 @@ impl Parse for RegisterDispatcherInput {
     }
 }
 
-#[cfg(feature = "dispatch_tree")]
 pub(crate) fn register_dispatcher(input: TokenStream) -> TokenStream {
     let RegisterDispatcherInput {
         node_name,
@@ -56,10 +48,7 @@ pub(crate) fn register_dispatcher(input: TokenStream) -> TokenStream {
     get_global_set(&COMPILE_TIME_DISPATCHERS)
         .lock()
         .unwrap()
-        .insert(format!(
-            "{}:{}:{}",
-            node_name_str, dispatcher_type, entry_name
-        ));
+        .insert(format!("{node_name_str}:{dispatcher_type}:{entry_name}"));
 
     let expanded = quote! {
         #[doc(hidden)]
@@ -68,9 +57,4 @@ pub(crate) fn register_dispatcher(input: TokenStream) -> TokenStream {
     };
 
     expanded.into()
-}
-
-#[cfg(not(feature = "dispatch_tree"))]
-pub(crate) fn register_dispatcher(_input: TokenStream) -> TokenStream {
-    quote! {}.into()
 }

@@ -5,7 +5,6 @@
 #![deny(clippy::pedantic)]
 #![deny(clippy::nursery)]
 
-pub mod config;
 pub mod error;
 pub mod module_pathf;
 pub mod pattern_analyzer;

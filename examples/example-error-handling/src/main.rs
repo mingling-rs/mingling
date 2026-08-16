@@ -108,7 +108,5 @@ fn render_entry_fallback(err: EntryFallback) -> RenderResult {
 gen_program!();
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDHello);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }

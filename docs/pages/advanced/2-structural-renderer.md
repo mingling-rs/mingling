@@ -95,7 +95,6 @@ fn render_info(info: Info) {
 @@@fn main() {
 @@@    let mut program = ThisProgram::new();
 @@@    program.with_setup(StructuralRendererSetup);
-@@@    program.with_dispatcher(CMDRender);
 @@@    program.exec();
 @@@}
 @@@gen_program!();

@@ -37,9 +37,6 @@ fn main() {
     });
     // --------- IMPORTANT ---------
 
-    program
-        .with_dispatcher(CMDCurrent)
-        .with_dispatcher(CMDModifyCurrent);
     program.exec_and_exit();
 }
 

@@ -722,6 +722,16 @@ mod tests {
         type ErrorRendererNotFound = Self;
         type ResultEmpty = Self;
 
+        fn dispatch_args(
+            _raw: &[String],
+        ) -> Result<crate::AnyOutput<Self>, crate::error::ProgramInternalExecuteError> {
+            unreachable!()
+        }
+
+        fn get_nodes() -> Vec<(String, &'static (dyn crate::Dispatcher<Self> + Send + Sync))> {
+            unreachable!()
+        }
+
         fn build_renderer_not_found(_member_id: Self) -> crate::AnyOutput<Self> {
             unreachable!()
         }

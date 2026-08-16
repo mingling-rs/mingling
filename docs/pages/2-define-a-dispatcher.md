@@ -31,23 +31,6 @@ dispatcher!("greet", CMDGreet => EntryGreet);
 > [!NOTE]
 > The command name (`"greet"`) is auto-converted to kebab-case. Even if you write `"GreetUser"`, matching will use `greet-user`.
 
-## Registering with Program
-
-Once you have a dispatcher, you need to tell Program about it:
-
-```rust
-@@@ dispatcher!("greet", CMDGreet => EntryGreet);
-@@@ fn main() {
-@@@ let mut program = ThisProgram::new();
-// Register the dispatcher
-program.with_dispatcher(CMDGreet);
-@@@ }
-@@@ gen_program!();
-```
- 
-> [!TIP]
-> If you have many commands, use `with_dispatchers` to register multiple at once: `program.with_dispatchers((CMDGreet, CMDAdd, CMDRemoteRm))`.
-
 ## Multi-level Commands
 
 If your program has a hierarchy — e.g., `remote add`, `remote rm` — just separate the command name with dots:

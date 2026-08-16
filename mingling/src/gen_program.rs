@@ -193,6 +193,19 @@ impl ProgramCollect for ThisProgram {
 
     type ResultEmpty = ResultEmpty;
 
+    fn dispatch_args(
+        _raw: &[String],
+    ) -> Result<
+        mingling_core::AnyOutput<Self::Enum>,
+        mingling_core::error::ProgramInternalExecuteError,
+    > {
+        todo!()
+    }
+
+    fn get_nodes() -> Vec<(String, &'static (dyn Dispatcher<Self::Enum> + Send + Sync))> {
+        todo!()
+    }
+
     fn build_renderer_not_found(_member_id: Self::Enum) -> mingling_core::AnyOutput<Self::Enum> {
         todo!()
     }

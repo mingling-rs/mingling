@@ -117,7 +117,6 @@ fn handle_greet(args: EntryGreet) -> Next {
  
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
  

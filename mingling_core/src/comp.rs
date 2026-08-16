@@ -37,12 +37,6 @@ pub const COMPLETION_SUBCOMMAND: &str = "__comp";
 #[cfg(feature = "debug")]
 use crate::debug::init_env_logger;
 
-#[cfg(not(feature = "dispatch_tree"))]
-use crate::ChainProcess;
-
-#[cfg(not(feature = "dispatch_tree"))]
-use crate::exec::match_user_input;
-
 /// Mingling Completion Entry Point
 ///
 /// Defines the custom completion logic entry point for the program's shell
@@ -174,30 +168,6 @@ impl CompletionHelper {
         let args = first_cmd_match.map_or_else(Vec::new, |start| all_args[start..].to_vec());
         trace!("arguments=\"{}\"", args.join(", "));
 
-        #[cfg(not(feature = "dispatch_tree"))]
-        let program = this::<P>();
-
-        #[cfg(not(feature = "dispatch_tree"))]
-        let suggest = if let Ok((dispatcher, args)) = match_user_input(program, &args) {
-            trace!(
-                "dispatcher matched, dispatcher=\"{}\"",
-                dispatcher.node().to_string(),
-            );
-            let begin = dispatcher.begin(args);
-            if let crate::ChainProcess::Ok((any, _)) = begin {
-                trace!("entry type: {}", any.member_id);
-                let result = P::do_comp(&any, ctx);
-                trace!("do_comp result: {:?}", result);
-                Some(result)
-            } else {
-                trace!("begin not Ok");
-                None
-            }
-        } else {
-            trace!("no dispatcher matched");
-            None
-        };
-        #[cfg(feature = "dispatch_tree")]
         let suggest = if let Ok(any) = P::dispatch_args(&args) {
             debug!("dispatch_args OK, member_id = {:?}", any.member_id);
             trace!("entry type: {}", any.member_id);
@@ -354,17 +324,7 @@ where
 {
     let words: Vec<String> = node.split(' ').map(str::to_string).collect();
 
-    #[cfg(feature = "dispatch_tree")]
     let lazy_member = P::dispatch_args(&words).ok().map(|any| any.member_id);
-
-    #[cfg(not(feature = "dispatch_tree"))]
-    let lazy_member = match match_user_input(this::<P>(), &words) {
-        Ok((dispatcher, args)) => match dispatcher.begin(args) {
-            ChainProcess::Ok((any, _)) => Some(any.member_id),
-            ChainProcess::Err(_) => None,
-        },
-        Err(_) => None,
-    };
 
     let member_id = lazy_member?;
     P::get_metadata::<Description>(member_id).map(String::from)

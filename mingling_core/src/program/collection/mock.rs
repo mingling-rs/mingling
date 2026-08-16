@@ -3,7 +3,6 @@ use crate::{AnyOutput, ChainProcess, Grouped, ProgramCollect, RenderResult};
 #[cfg(feature = "async")]
 use std::pin::Pin;
 
-#[cfg(feature = "dispatch_tree")]
 use crate::Dispatcher;
 
 #[cfg(feature = "comp")]
@@ -74,14 +73,12 @@ impl ProgramCollect for MockProgramCollect {
     type ErrorRendererNotFound = Self;
     type ResultEmpty = Self;
 
-    #[cfg(feature = "dispatch_tree")]
     fn dispatch_args(
         _raw: &[String],
     ) -> Result<AnyOutput<Self::Enum>, crate::error::ProgramInternalExecuteError> {
         unreachable!()
     }
 
-    #[cfg(feature = "dispatch_tree")]
     fn get_nodes() -> Vec<(String, &'static (dyn Dispatcher<Self::Enum> + Send + Sync))> {
         unreachable!()
     }

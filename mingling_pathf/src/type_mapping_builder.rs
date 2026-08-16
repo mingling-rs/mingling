@@ -7,7 +7,6 @@ use std::collections::HashSet;
 use std::fmt::Write as FmtWrite;
 use std::path::Path;
 
-use crate::config::PathfinderConfig;
 use crate::error::MinglingPathfinderError;
 use crate::module_pathf;
 use crate::pattern_analyzer;
@@ -16,7 +15,6 @@ use crate::pattern_analyzer;
 ///
 /// `crate_dir` — crate root directory (i.e., the directory containing Cargo.toml)
 /// `output_dir` — directory where mapping files will be written
-/// `config` — pathfinder configuration (e.g., [`dispatch_tree`] detection)
 ///
 /// Mapping file format per line: `TypeName = crate::module::path::TypeName`
 ///
@@ -27,10 +25,9 @@ use crate::pattern_analyzer;
 pub fn analyze_and_build_type_mapping_for(
     crate_dir: &Path,
     output_dir: &Path,
-    config: &PathfinderConfig,
 ) -> Result<(), MinglingPathfinderError> {
     let module_mapping = module_pathf::analyze(crate_dir)?;
-    let analyzer = pattern_analyzer::init_with_config(config);
+    let analyzer = pattern_analyzer::init();
 
     let mut type_mappings: Vec<(String, String, bool)> = Vec::new();
 
@@ -118,7 +115,7 @@ pub fn analyze_and_build_type_mapping() -> Result<(), MinglingPathfinderError> {
     let crate_dir = std::env::current_dir()?;
     let output_dir = Path::new(&out_dir).join(&crate_name);
 
-    analyze_and_build_type_mapping_for(&crate_dir, &output_dir, &PathfinderConfig::default())?;
+    analyze_and_build_type_mapping_for(&crate_dir, &output_dir)?;
 
     // Notify Cargo to re-run build.rs when source files change
     println!("cargo:rerun-if-changed=src/");

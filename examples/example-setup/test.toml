@@ -1,29 +1,11 @@
 [[runs]]
-input = [ "1" ]
+input = [ "greet" ]
 
 expect.exit-code = 0
-expect.result = ""
+expect.result = "Hello, World from mingling v0.5.0!"
 
 [[runs]]
-input = [ "2" ]
+input = [ "greet", "Alice" ]
 
 expect.exit-code = 0
-expect.result = ""
-
-[[runs]]
-input = [ "3" ]
-
-expect.exit-code = 0
-expect.result = ""
-
-[[runs]]
-input = [ "4" ]
-
-expect.exit-code = 0
-expect.result = ""
-
-[[runs]]
-input = [ "5" ]
-
-expect.exit-code = 0
-expect.result = ""
+expect.result = "Hello, Alice from mingling v0.5.0!"

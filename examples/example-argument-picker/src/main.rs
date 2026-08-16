@@ -125,7 +125,6 @@ fn main() {
     program.with_resource(ResNumberDisplaySetting { round: *round });
     // --------- IMPORTANT ---------
 
-    program.with_dispatcher(CMDCalculate);
     program.exec_and_exit();
 }
 

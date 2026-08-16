@@ -55,7 +55,6 @@ fn help_root(entry: EntryFallback) {
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(BasicProgramSetup);
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 ```

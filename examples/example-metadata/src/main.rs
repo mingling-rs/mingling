@@ -34,11 +34,7 @@ dispatcher!("desc", CMDDescription => EntryDescription);
 dispatcher!("nodoc", CMDNoDescription => EntryNoDescription);
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
-    program.with_dispatcher(CMDDescription);
-    program.with_dispatcher(CMDNoDescription);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }
 
 /// The metadata type attached to an entry.

@@ -97,8 +97,6 @@ fn render_error_no_name_provided(_: ErrorNoNameProvided) -> RenderResult {
 gen_program!();
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDTransfer);
-    program.with_dispatcher(CMDStrictTransfer);
+    let program = ThisProgram::new();
     program.exec_and_exit();
 }

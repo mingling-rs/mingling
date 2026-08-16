@@ -24,7 +24,6 @@ pack!(NotPanic = ());
 
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDPanic);
 
     // --------- IMPORTANT ---------
     // Enable silence_panic to suppress automatic Panic output

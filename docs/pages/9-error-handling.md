@@ -88,7 +88,6 @@ fn render_error_name_empty(err: ErrorNameEmpty) {
  
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
  

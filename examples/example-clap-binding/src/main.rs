@@ -60,7 +60,6 @@ fn main() {
     //   Capture Clap's help information and write to RenderResult
     // --------- IMPORTANT ---------
 
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 

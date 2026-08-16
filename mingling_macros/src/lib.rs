@@ -1,146 +1,9 @@
-// Doc Not Optimize
 //! Proc-macro engine of the Mingling CLI framework.
 //!
 //! This crate is the **macro layer** of Mingling. Each `#[attribute]` or `!`-callable
 //! macro collects metadata into **compile-time global registries** (`OnceLock<Mutex<BTreeSet>>`).
 //! At the end, `gen_program!` reads all registries and generates the final program struct
 //! with all dispatchers, chains, renderers, and completions wired together.
-//!
-//! # How Macros Work Together
-//!
-//! The Mingling macro pipeline has three phases:
-//!
-//! ```text
-//! ┌──────────────────────────────────────────────────────────────────┐
-//! │  Phase 1: Declaration                                            │
-//! │                                                                  │
-//! │  dispatcher!  pack!     node!       #[derive(Grouped)]           │
-//! │  │            │         │           │                            │
-//! │  V            V         V           V                            │
-//! │  Declares     Wraps a   Builds      Makes a type                 │
-//! │  a command    type in   a command   recognizable                 │
-//! │  entry        a new     path Node   by the                       │
-//! │               type                  framework                    │
-//! ├──────────────────────────────────────────────────────────────────┤
-//! │  Phase 2: Registration (at compile time, in statics)             │
-//! │                                                                  │
-//! │  #[chain]       #[renderer]     #[help]     #[completion]        │
-//! │  │              │               │           │                    │
-//! │  V              V               V           V                    │
-//! │  Registers      Registers       Registers   Registers            │
-//! │  type → chain   type → renderer type → help completion logic     │
-//! ├──────────────────────────────────────────────────────────────────┤
-//! │  Phase 3: Code Generation                                        │
-//! │                                                                  │
-//! │  gen_program!()                                                  │
-//! │  │                                                               │
-//! │  V                                                               │
-//! │  Reads all registries → generates ThisProgram with:              │
-//! │    • ProgramCollect impl (dispatch/render/chain dispatch tree)   │
-//! │    • Fallback types (EntryFallback, etc.)              │
-//! │    • Completion logic (if `comp` feature enabled)                │
-//! └──────────────────────────────────────────────────────────────────┘
-//! ```
-//!
-//! # Macro Categories
-//!
-//! ## Phase 1: Command & Type Declaration
-//!
-//! | Macro | What it does |
-//! |-------|-------------|
-//! | `dispatcher!` | Declares a command entry point and its argument type |
-//! | `dispatcher_clap!` | Like `dispatcher!` but powered by `clap::Parser` |
-//! | `node!` | Builds a [`Node`](https://docs.rs/mingling/latest/mingling/struct.Node.html) from a dot-separated path string |
-//! | `pack!` | Creates a newtype wrapper around an inner type for use in Chain/Renderer |
-//! | `pack_structural!` | Like `pack!` but also derives `StructuralData` for structured output |
-//! | `pack_err!` | Creates an error struct with automatic `name` field |
-//! | `pack_err_structural!` | Like `pack_err!` but also derives `StructuralData` for structured output |
-//! | `entry!` | Creates a packed entry from string literals |
-//! | [`#[derive(Grouped)]`](derive@Grouped) | Makes a type recognizable by the framework's type registry |
-//! | `#[derive(StructuralData)]` | Marks a type as eligible for structured output (JSON/YAML/etc.) |
-//! | [`#[derive(EnumTag)]`](derive@EnumTag) | Adds enum variant metadata (name, description) |
-//!
-//! ## Phase 2: Processing & Rendering Registration
-//!
-//! | Macro | What it does |
-//! |-------|-------------|
-//! | [`#[chain]`](attr.chain.html) | Transforms a function into a chain processing step |
-//! | [`#[renderer]`](attr.renderer.html) | Transforms a function into a renderer for a type |
-//! | [`#[help]`](attr.help.html) | Defines help output for a command entry type |
-//! | `route!` | Routes execution depending on a condition |
-//! | `empty_result!` | Returns an empty result for early termination |
-//! | [`#[completion]`](attr.completion.html) | Registers a shell completion handler |
-//!
-//! ## Phase 3: Program Generation
-//!
-//! | Macro | What it does |
-//! |-------|-------------|
-//! | `gen_program!` | **Final step**: reads all registries and generates the full program |
-//! | `suggest!` | Generates suggestion logic for a dispatcher |
-//! | `suggest_enum!` | Generates suggestion logic for an enum dispatcher |
-//!
-//! ## Internal (used by the macros above)
-//!
-//! | Macro | What it does |
-//! |-------|-------------|
-//! | `register_type!` | Registers a type in the packed-type registry |
-//! | `register_chain!` | Registers a chain mapping in the chain registry |
-//! | `register_renderer!` | Registers a renderer mapping in the renderer registry |
-//! | `register_dispatcher!` | Registers a dispatcher for the `dispatch_tree` feature |
-//! | `register_help!` | Registers a help request handler |
-//! | `program_fallback_gen!` | Generates fallback error types |
-//! | `program_final_gen!` | Generates the `ProgramCollect` impl and `ThisProgram` struct |
-//! | `program_comp_gen!` | Generates completion logic |
-//! | [`#[program_setup]`](attr.program_setup.html) | Declares a custom program setup step |
-//!
-//! # Feature Gates
-//!
-//! Some macros are only available when certain Cargo features are enabled:
-//!
-//! | Feature | Macros enabled |
-//! |---------|---------------|
-//! | `clap` | `dispatcher_clap!` |
-//! | `comp` | [`#[completion]`](attr.completion.html), `suggest!`, `suggest_enum!` |
-//! | `extras` | `entry!`, `empty_result!`, `route!`, [`#[program_setup]`](attr.program_setup.html), `group!` |
-//! | `dispatch_tree` | `register_dispatcher!` (enables trie-based command dispatch) |
-//! | `structural_renderer` | `#[derive(StructuralData)]`, `pack_structural!`, `pack_err_structural!`, `group_structural!` |
-//! | `structural_renderer` + `extras` | `group_structural!`, `pack_err_structural!` |
-//! | `async` | Enables async `#[chain]` functions |
-//! | `repl` | Enables REPL execution loop |
-//!
-//! # The Compile-Time Registry System
-//!
-//! Macros in this crate do **not** generate all code immediately. Instead, they
-//! store entries into `OnceLock<Mutex<BTreeSet<String>>>` statics. These string
-//! entries contain the **token-stream representation** of match arms, type mappings,
-//! and struct definitions.
-//!
-//! When `gen_program!` is called, it reads all registries, concatenates their
-//! entries, and emits the complete program:
-//!
-//! ```rust,ignore
-//! // Example of what gen_program! generates (simplified):
-//! impl ProgramCollect for ThisProgram {
-//!     fn build_entry_fallback(args: Vec<String>) -> AnyOutput {
-//!         AnyOutput::new(EntryFallback::new(args))
-//!     }
-//!     fn has_chain(any: &AnyOutput) -> bool {
-//!         match any.member_id() {
-//!             MyType => true,  // ← collected from #[chain] macros
-//!             _ => false,
-//!         }
-//!     }
-//!     fn has_renderer(any: &AnyOutput) -> bool {
-//!         match any.member_id() {
-//!             MyType => true,  // ← collected from #[renderer] macros
-//!             // When `structural_renderer` is enabled, ALL registered types
-//!             // return true — non-structural types fall through to render
-//!             // a `ResultEmpty` value (via structural_render fallback).
-//!             _ => false,
-//!         }
-//!     }
-//! }
-//! ```
 
 #![deny(missing_docs)]
 #![deny(clippy::pedantic)]
@@ -204,7 +67,6 @@ pub(crate) static STRUCTURED_TYPES: Registry = OnceLock::new();
 #[cfg(feature = "comp")]
 pub(crate) static COMPLETIONS: Registry = OnceLock::new();
 
-#[cfg(feature = "dispatch_tree")]
 pub(crate) static COMPILE_TIME_DISPATCHERS: Registry = OnceLock::new();
 
 pub(crate) static PACKED_TYPES: Registry = OnceLock::new();
@@ -740,8 +602,9 @@ pub fn empty_result(input: TokenStream) -> TokenStream {
 ///    - `node()` returns the [`Node`] hierarchy for the command path.
 ///    - `begin(args)` wraps `args` into the entry type and routes to chain.
 ///    - `clone_dispatcher()` returns a boxed clone.
-/// 3. **Registration** — If the `dispatch_tree` feature is enabled, also calls
-///    `register_dispatcher!` for compile-time trie construction.
+/// 3. **Registration** — Calls `register_dispatcher!` to collect the command
+///    at compile time (the `dispatch_tree` feature only selects the matching
+///    strategy generated later by `gen_program!`).
 ///
 /// With the `comp` feature, the entry type also implements `CompletionEntry`
 /// for providing shell completion suggestions.
@@ -1322,13 +1185,14 @@ pub fn register_metadata(input: TokenStream) -> TokenStream {
     func::register_metadata::register_metadata_impl(input)
 }
 
-/// Registers a dispatcher at compile time for the `dispatch_tree` feature.
+/// Registers a dispatcher at compile time.
 ///
-/// This macro is called internally by `dispatcher!` when the `dispatch_tree`
-/// feature is enabled. Each call stores the node name into the global
-/// `COMPILE_TIME_DISPATCHERS` registry and generates a static variable for the
-/// dispatcher instance. This data is later consumed by `gen_program!` to
-/// generate a character-level **Trie** for efficient command dispatch.
+/// This macro is called internally by `dispatcher!` and `dispatcher_clap!`.
+/// Each call stores the node name into the global `COMPILE_TIME_DISPATCHERS`
+/// registry and generates a static variable for the dispatcher instance. This
+/// data is later consumed by `gen_program!` to generate command matching: a
+/// character-level **trie** when the `dispatch_tree` feature is enabled, or a
+/// linear longest-prefix list otherwise.
 ///
 /// The trie dispatch works by grouping commands by their character prefix,
 /// enabling O(n) lookup (where n is input length) instead of linear iteration
@@ -1345,7 +1209,7 @@ pub fn register_metadata(input: TokenStream) -> TokenStream {
 /// # See also
 ///
 /// - `dispatcher!` — The primary way to declare dispatchers (calls this internally).
-/// - `dispatch_tree_gen` module — The trie generation logic.
+/// - `dispatch_tree_gen` / `dispatch_list_gen` modules — The matching-strategy generators.
 #[proc_macro]
 pub fn register_dispatcher(input: TokenStream) -> TokenStream {
     func::register_dispatcher::register_dispatcher(input)
@@ -1935,8 +1799,8 @@ pub fn gen_program(input: TokenStream) -> TokenStream {
 /// 3. An internal renderer `__render_completion` that renders the suggestions via
 ///    `CompletionHelper::render_suggest`.
 ///
-/// When the `dispatch_tree` feature is enabled, it also imports the internal dispatcher
-/// from the generated module into the parent scope for trie-based dispatch.
+/// It also imports the internal dispatcher from the generated module into the
+/// parent scope for compile-time collection.
 ///
 /// This macro is called automatically by `gen_program!` and should not be called
 /// directly by user code.

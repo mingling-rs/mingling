@@ -3,7 +3,7 @@
 #![allow(clippy::too_many_lines)]
 
 use crate::{
-    AnyOutput, ChainProcess, Dispatcher, NextProcess, Program, ProgramCollect, RenderResult,
+    AnyOutput, ChainProcess, NextProcess, Program, ProgramCollect, RenderResult,
     error::ProgramInternalExecuteError, hook::ProgramControls,
 };
 
@@ -58,12 +58,8 @@ where
         current
     );
 
-    // Dispatch args - either via dynamic dispatch or trie dispatch based on feature flag
-    let mut current = if cfg!(not(feature = "dispatch_tree")) {
-        dispatch_args_dynamic(program, args)?
-    } else {
-        C::dispatch_args(args)?
-    };
+    // Dispatch args
+    let mut current = C::dispatch_args(args)?;
 
     // Run hook
     control!(
@@ -178,76 +174,6 @@ where
     );
     render_result.exit_code = exit_code;
     Ok(render_result)
-}
-
-/// Dynamically dispatch input arguments to registered entry types
-pub(crate) fn dispatch_args_dynamic<C>(
-    program: &'static Program<C>,
-    args: &[String],
-) -> Result<AnyOutput<C>, ProgramInternalExecuteError>
-where
-    C: ProgramCollect<Enum = C>,
-{
-    let next = match match_user_input(program, args) {
-        Ok((dispatcher, args)) => {
-            // Entry point
-            match dispatcher.begin(args) {
-                ChainProcess::Ok((any, _)) => any,
-                ChainProcess::Err(e) => return Err(e.into()),
-            }
-        }
-        Err(ProgramInternalExecuteError::DispatcherNotFound) => {
-            // No matching Dispatcher is found
-            C::build_entry_fallback(args.to_vec())
-        }
-        Err(e) => return Err(e),
-    };
-    Ok(next)
-}
-
-/// Match user input against registered dispatchers and return the matched dispatcher and remaining arguments.
-#[allow(clippy::type_complexity)]
-pub(crate) fn match_user_input<C>(
-    program: &'static Program<C>,
-    args: &[String],
-) -> Result<(&'static (dyn Dispatcher<C> + Send + Sync), Vec<String>), ProgramInternalExecuteError>
-where
-    C: ProgramCollect<Enum = C>,
-{
-    let nodes = program.get_nodes();
-    let command = format!("{} ", args.join(" "));
-
-    // Find all nodes that match the command prefix
-    let matching_nodes: Vec<&(String, &(dyn Dispatcher<C> + Send + Sync))> = nodes
-        .iter()
-        // Also add a space to the node string to ensure consistent matching logic
-        .filter(|(node_str, _)| command.starts_with(&format!("{node_str} ")))
-        .collect();
-
-    match matching_nodes.len() {
-        0 => {
-            // No matching node found
-            Err(ProgramInternalExecuteError::DispatcherNotFound)
-        }
-        1 => {
-            let matched_prefix = matching_nodes[0];
-            let prefix_len = matched_prefix.0.split_whitespace().count();
-            let trimmed_args: Vec<String> = args.iter().skip(prefix_len).cloned().collect();
-            Ok((matched_prefix.1, trimmed_args))
-        }
-        _ => {
-            // Multiple matching nodes found
-            // Find the node with the longest length (most specific match)
-            let matched_prefix = matching_nodes
-                .iter()
-                .max_by_key(|node| node.0.len())
-                .unwrap();
-
-            let prefix_len = matched_prefix.0.split_whitespace().count();
-            let trimmed_args: Vec<String> = args.iter().skip(prefix_len).cloned().collect();
-            Ok((matched_prefix.1, trimmed_args))
-        }
-    }
 }
 
 #[inline]

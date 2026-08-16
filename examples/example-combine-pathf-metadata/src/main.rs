@@ -24,10 +24,7 @@ mod sub;
 use mingling::prelude::*;
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(sub::CMDHello);
-    program.with_dispatcher(sub::CMDDescription);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }
 
 gen_program!();

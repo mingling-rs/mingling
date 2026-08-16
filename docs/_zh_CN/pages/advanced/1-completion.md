@@ -24,8 +24,6 @@ features = [
 
 当用户按下 `TAB` 时，补全脚本会调用程序的隐藏子命令 `__comp`，它会根据输入的 `ShellContext` 动态地查询最合适的建议。
 
-这个隐藏子命令由 `gen_program!()` 在启用 `comp` 特性时自动生成，对应的分发器是 `CMDCompletion`，你需要使用 `with_dispatcher` 添加到程序中。
-
 补全流程：
 
 1. 二次匹配用户当前输入的 `Dispatcher`

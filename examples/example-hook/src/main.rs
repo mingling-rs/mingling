@@ -50,7 +50,6 @@ fn main() {
     );
     // --------- IMPORTANT ---------
 
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 

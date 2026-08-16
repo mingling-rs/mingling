@@ -1,8 +1,28 @@
 //! Example Setup
 //!
-//! > This example demonstrates how to build a custom Setup for modular management of project components
+//! > This example demonstrates how to build a custom Setup that encapsulates a
+//! > group of related resources and registers them with `with_resource`.
 
 use mingling::{Program, macros::program_setup, prelude::*};
+use std::io::Write;
+
+// A group of related resources — here, the demo app's identity.
+// Resource types are plain structs: any `Default + Clone + Send + Sync` type
+// can be used as a resource, and it is identified by its type.
+#[derive(Default, Clone)]
+struct ResAppName {
+    name: String,
+}
+
+#[derive(Default, Clone)]
+struct ResAppVersion {
+    version: String,
+}
+
+#[derive(Default, Clone)]
+struct ResGreetingPrefix {
+    prefix: String,
+}
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -17,21 +37,44 @@ fn main() {
 
 // --------- IMPORTANT ---------
 // Define `CustomSetup` (inferred from `custom_setup`)
-// Package part of the program construction logic into this type for modular management
+// Package part of the program construction logic into this type for modular
+// management — e.g. register a group of related resources here.
 #[program_setup]
 fn custom_setup(program: &mut Program<ThisProgram>) {
-    program.with_dispatcher(CMD1);
-    program.with_dispatcher(CMD2);
-    program.with_dispatcher(CMD3);
-    program.with_dispatcher(CMD4);
-    program.with_dispatcher(CMD5);
+    program.with_resource(ResAppName {
+        name: "mingling".to_string(),
+    });
+    program.with_resource(ResAppVersion {
+        version: "0.5.0".to_string(),
+    });
+    program.with_resource(ResGreetingPrefix {
+        prefix: "Hello".to_string(),
+    });
 }
 // --------- IMPORTANT ---------
 
-dispatcher!("1", CMD1 => Entry1);
-dispatcher!("2", CMD2 => Entry2);
-dispatcher!("3", CMD3 => Entry3);
-dispatcher!("4", CMD4 => Entry4);
-dispatcher!("5", CMD5 => Entry5);
+dispatcher!("greet", CMDGreet => EntryGreet);
+
+pack!(ResultGreeting = String);
+
+/// Chain: reads the `ResAppName` and `ResAppVersion` resources.
+#[chain]
+fn handle_greet(args: EntryGreet, app: &ResAppName, version: &ResAppVersion) -> Next {
+    let who = args
+        .inner
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "World".to_string());
+    let greeting: ResultGreeting = format!("{} from {} v{}", who, app.name, version.version).into();
+    greeting.into()
+}
+
+/// Renderer: injects the `ResGreetingPrefix` resource to decorate the output.
+#[renderer]
+fn render_greet(greeting: ResultGreeting, prefix: &ResGreetingPrefix) -> RenderResult {
+    let mut render_result = RenderResult::new();
+    writeln!(render_result, "{}, {}!", prefix.prefix, *greeting).ok();
+    render_result
+}
 
 gen_program!();

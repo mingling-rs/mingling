@@ -100,8 +100,5 @@ fn complete_language_selection(_: &ShellContext) -> Suggest {
 gen_program!();
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDCompletion);
-    program.with_dispatcher(CMDLanguageSelection);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }

@@ -1,36 +1,10 @@
 // Doc Not Optimize
 use std::collections::BTreeMap;
 
-use just_fmt::snake_case;
 use proc_macro2::TokenStream;
 use quote::quote;
 
-/// Generate the `get_nodes()` function body for a ProgramCollect impl.
-pub(crate) fn gen_get_nodes(entries: &[(String, String, String)]) -> TokenStream {
-    let mut node_entries = Vec::new();
-
-    for (node_name, _disp_type, _entry_name) in entries {
-        let static_name_str = format!("__internal_dispatcher_{}", snake_case!(node_name));
-        let static_ident =
-            proc_macro2::Ident::new(&static_name_str, proc_macro2::Span::call_site());
-        let node_display_name = node_name.replace('.', " ");
-        let node_display_lit = syn::LitStr::new(&node_display_name, proc_macro2::Span::call_site());
-
-        node_entries.push(quote! {
-            (#node_display_lit.to_string(), &#static_ident)
-        });
-    }
-
-    quote! {
-        fn get_nodes() -> Vec<(String, &'static (dyn ::mingling::Dispatcher<Self::Enum> + Send + Sync))> {
-            vec![
-                #(#node_entries),*
-            ]
-        }
-    }
-}
-
-/// Generate the `dispatch_args()` function body for a ProgramCollect impl.
+/// Generate the `dispatch_args()` function body for a `ProgramCollect` impl.
 ///
 /// Builds a hardcoded match tree: at each depth, group nodes by character.
 /// Single-node groups use `starts_with`; multi-node groups recurse with `nth()` match.
@@ -63,7 +37,7 @@ pub(crate) fn gen_dispatch_args_trie(entries: &[(String, String, String)]) -> To
 
 /// Recursively build the trie match body.
 ///
-/// `nodes`: slice of (display_name, disp_type) for commands that share the same prefix so far.
+/// `nodes`: slice of (`display_name`, `disp_type`) for commands that share the same prefix so far.
 /// `depth`: The character index currently being matched.
 /// `no_match`: fallback code to run when no node in this subtree matches the input.
 ///
@@ -95,7 +69,7 @@ fn build_dispatch_body(
     }
 
     let make_starts_with_arm = |name: &str, disp_type: &str| -> TokenStream {
-        let name_space = format!("{} ", name);
+        let name_space = format!("{name} ");
         let name_lit = syn::LitStr::new(&name_space, proc_macro2::Span::call_site());
         let disp_ident = proc_macro2::Ident::new(disp_type, proc_macro2::Span::call_site());
         let prefix_word_count = name.split_whitespace().count();

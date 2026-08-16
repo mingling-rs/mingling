@@ -55,7 +55,6 @@ For `--help` to work properly, add `BasicProgramSetup` in `main`:
 fn main() {
     let mut program = ThisProgram::new();
     program.with_setup(BasicProgramSetup);
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 ```

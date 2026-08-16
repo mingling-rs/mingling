@@ -25,8 +25,7 @@ use mingling::prelude::*;
 dispatcher!("greet", CMDGreet => EntryGreet);
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
+    let program = ThisProgram::new();
     program.exec_and_exit();
 }
 

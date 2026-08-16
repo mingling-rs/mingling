@@ -4,7 +4,6 @@ use quote::quote;
 
 use crate::CHAINS;
 use crate::CHAINS_EXIST;
-#[cfg(feature = "dispatch_tree")]
 use crate::COMPILE_TIME_DISPATCHERS;
 #[cfg(feature = "comp")]
 use crate::COMPLETIONS;
@@ -16,6 +15,8 @@ use crate::RENDERERS_EXIST;
 #[cfg(feature = "structural_renderer")]
 use crate::STRUCTURAL_RENDERERS;
 use crate::get_global_set;
+#[cfg(not(feature = "dispatch_tree"))]
+use crate::systems::dispatch_list_gen;
 #[cfg(feature = "dispatch_tree")]
 use crate::systems::dispatch_tree_gen;
 
@@ -23,6 +24,34 @@ use crate::systems::dispatch_tree_gen;
 const ASYNC_ENABLED: bool = true;
 #[cfg(not(feature = "async"))]
 const ASYNC_ENABLED: bool = false;
+
+/// Generate the `get_nodes()` function body for a `ProgramCollect` impl.
+///
+/// Shared by both dispatch strategies (trie and linear list); it only depends
+/// on the compile-time-collected `__internal_dispatcher_*` statics.
+fn gen_get_nodes(entries: &[(String, String, String)]) -> proc_macro2::TokenStream {
+    let mut node_entries = Vec::new();
+
+    for (node_name, _disp_type, _entry_name) in entries {
+        let static_name_str = format!("__internal_dispatcher_{}", just_fmt::snake_case!(node_name));
+        let static_ident =
+            proc_macro2::Ident::new(&static_name_str, proc_macro2::Span::call_site());
+        let node_display_name = node_name.replace('.', " ");
+        let node_display_lit = syn::LitStr::new(&node_display_name, proc_macro2::Span::call_site());
+
+        node_entries.push(quote! {
+            (#node_display_lit.to_string(), &#static_ident)
+        });
+    }
+
+    quote! {
+        fn get_nodes() -> Vec<(String, &'static (dyn ::mingling::Dispatcher<Self::Enum> + Send + Sync))> {
+            vec![
+                #(#node_entries),*
+            ]
+        }
+    }
+}
 
 /// Parses an entry of the format `StructName => EnumVariant,` into a pair of idents.
 fn parse_entry_pair(entry: &proc_macro2::TokenStream) -> (proc_macro2::Ident, proc_macro2::Ident) {
@@ -117,7 +146,6 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
     #[cfg(not(feature = "structural_renderer"))]
     let structural_render = quote! {};
 
-    #[cfg(feature = "dispatch_tree")]
     let compile_time_dispatchers: Vec<String> = get_global_set(&COMPILE_TIME_DISPATCHERS)
         .lock()
         .unwrap()
@@ -126,35 +154,45 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
         .cloned()
         .collect();
 
-    #[cfg(feature = "dispatch_tree")]
-    let dispatch_tree_nodes = {
-        let entries: Vec<(String, String, String)> = compile_time_dispatchers
-            .iter()
-            .filter_map(|entry| {
-                let parts: Vec<&str> = entry.split(':').collect();
-                if parts.len() == 3 {
-                    Some((
-                        parts[0].to_string(),
-                        parts[1].to_string(),
-                        parts[2].to_string(),
-                    ))
-                } else {
-                    None
-                }
-            })
-            .collect();
+    let entries: Vec<(String, String, String)> = compile_time_dispatchers
+        .iter()
+        .filter_map(|entry| {
+            let parts: Vec<&str> = entry.split(':').collect();
+            if parts.len() == 3 {
+                Some((
+                    parts[0].to_string(),
+                    parts[1].to_string(),
+                    parts[2].to_string(),
+                ))
+            } else {
+                None
+            }
+        })
+        .collect();
 
-        let get_nodes_fn = dispatch_tree_gen::gen_get_nodes(&entries);
-        let dispatch_trie_fn = dispatch_tree_gen::gen_dispatch_args_trie(&entries);
+    // The `dispatch_tree` feature only selects the internal matching strategy:
+    // a char-level trie when enabled, a linear longest-prefix list otherwise.
+    #[cfg(feature = "dispatch_tree")]
+    let dispatch_gen = {
+        let get_nodes_fn = gen_get_nodes(&entries);
+        let dispatch_fn = dispatch_tree_gen::gen_dispatch_args_trie(&entries);
 
         quote! {
             #get_nodes_fn
-            #dispatch_trie_fn
+            #dispatch_fn
         }
     };
 
     #[cfg(not(feature = "dispatch_tree"))]
-    let dispatch_tree_nodes = quote! {};
+    let dispatch_gen = {
+        let get_nodes_fn = gen_get_nodes(&entries);
+        let dispatch_fn = dispatch_list_gen::gen_dispatch_args(&entries);
+
+        quote! {
+            #get_nodes_fn
+            #dispatch_fn
+        }
+    };
 
     #[cfg(feature = "comp")]
     let completion_tokens: Vec<proc_macro2::TokenStream> = completions
@@ -367,7 +405,7 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
                     _ => false
                 }
             }
-            #dispatch_tree_nodes
+            #dispatch_gen
             #structural_render
             #comp
         }
@@ -395,7 +433,6 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
     get_global_set(&METADATA).lock().unwrap().clear();
     #[cfg(feature = "comp")]
     get_global_set(&COMPLETIONS).lock().unwrap().clear();
-    #[cfg(feature = "dispatch_tree")]
     get_global_set(&COMPILE_TIME_DISPATCHERS)
         .lock()
         .unwrap()

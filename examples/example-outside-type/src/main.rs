@@ -90,10 +90,7 @@ fn render_error_io(err: ErrorIo) -> RenderResult {
 }
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDParse);
-    program.with_dispatcher(CMDError);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }
 
 gen_program!();

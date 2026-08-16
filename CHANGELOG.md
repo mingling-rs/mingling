@@ -87,6 +87,57 @@ None
 
     _No behavioral changes — this is a pure rename of the prefix-tree dispatch method. The method's semantics, signature, and dispatch-tree behavior are unchanged; only its name dropped the redundant `_trie` suffix.
 
+2. **[`macros:dispatcher`]** **[BREAKING]** Dispatchers are now always registered at compile time — the `with_dispatcher` / `with_dispatchers` dynamic registration API on `Program` has been removed entirely.
+
+    ### What changed
+
+    Previously, the `dispatch_tree` feature controlled _whether_ dispatchers were collected at compile time. With the feature enabled, `dispatcher!` (and the related `dispatcher_clap!`, `#[command]`, and completion macros) emitted a `__internal_dispatcher_*` static and registered the node in the global `COMPILE_TIME_DISPATCHERS` registry via `register_dispatcher!`; `gen_program!` then built a `dispatch_args` trie from that registry. Without the feature, users had to manually register dispatchers at runtime via `program.with_dispatcher(CMDGreet)`.
+
+    Now, **all dispatchers are always collected at compile time** regardless of the `dispatch_tree` feature:
+
+    - `dispatcher!`, `dispatcher_clap!`, `#[command]`, and the `comp`-generated completion dispatcher **always** emit the `__internal_dispatcher_*` static and call `register_dispatcher!`.
+    - `gen_program!` always reads `COMPILE_TIME_DISPATCHERS` and generates both `ProgramCollect::dispatch_args` and `ProgramCollect::get_nodes` from it.
+    - The `dispatch_tree` feature now only selects the _internal matching strategy_: a char-level trie when enabled, a linear longest-prefix list otherwise. Both strategies are generated from the same compile-time-collected entries.
+    - The `Program.dispatcher` field and the `with_dispatcher` / `with_dispatchers` methods (and the deprecated `Dispatchers` multi-registration helper) have been **removed**.
+
+    ### Removed API
+    - `Program::with_dispatcher<Disp>(&mut self, dispatcher: Disp) -> &mut Self` — **removed**
+    - `Program::with_dispatchers<D>(&mut self, dispatchers: D) -> &mut Self` — **removed** (already deprecated)
+    - `Dispatchers<G>` struct and all its `From` tuple impls (up to 7 elements), `Deref`, and `Into<Vec<_>>` conversions — **removed** (already deprecated)
+    - `Program::dispatch_args_dynamic(...)` — **removed** (renamed to `dispatch_args` in **BREAKING CHANGE #1**)
+    - `ProgramCollect::dispatch_args` no longer has a fallback default body and is now a required (non-optional) method — any manual `ProgramCollect` impl (tests, mocks, etc.) must implement both `dispatch_args` and `get_nodes`.
+
+    ### New internal module
+
+    A new `dispatch_list_gen` module was added to `mingling_macros` (`systems/dispatch_list_gen.rs`) providing `gen_dispatch_args`, which generates a linear `dispatch_args` body used when the `dispatch_tree` feature is **disabled**. It sorts nodes by display-name length (longest first) so the first matching node is the most specific one, mirroring the old dynamic dispatcher's "longest registered prefix wins" rule:
+
+    ```rust,ignore
+    fn dispatch_args(
+        raw: &[String],
+    ) -> Result<AnyOutput<Self::Enum>, ProgramInternalExecuteError> {
+        let raw_string = format!("{} ", raw.join(" "));
+        // ... linear if-chain over each node, longest prefix first ...
+        Ok(Self::build_entry_fallback(raw.to_vec()))
+    }
+    ```
+
+    `dispatch_tree_gen::gen_dispatch_args_trie` continues to provide the trie strategy (and now also exposes the shared `gen_get_nodes` helper, moved from `dispatch_tree_gen` into `program_final_gen`).
+
+    ### pathf changes
+    - **`mingling_pathf::config::PathfinderConfig`** — **removed** (deleted `config.rs`). The `use_dispatch_tree` flag no longer exists.
+    - **`pattern_analyzer::init_with_config(config)`** — **removed**; `init()` now always registers `DispatcherPattern` / `DispatcherClapPattern` with compile-time collection enabled.
+    - **`DispatcherPattern` / `DispatcherClapPattern`** — no longer carry a `use_dispatch_tree` field (`new()` takes no arguments). Both patterns now always extract the `__internal_dispatcher_*` static for every matched command.
+    - **`mingling_pathf::analyze_and_build_type_mapping_for` / `analyze_and_build_type_mapping`** — signatures no longer take a `&PathfinderConfig` argument.
+    - **`mingling_core::build::pathf`** — the wrappers no longer pass a config (the `config::*` re-export was removed).
+
+    ### Migration guide
+    - **Remove all `program.with_dispatcher(...)` calls.** Dispatchers are now automatically collected by `gen_program!` — no explicit registration is needed. Examples of affected call sites (all updated in this release): `example-basic`, `example-argument-parse`, `example-argument-picker`, `example-async-support`, `example-clap-binding`, `example-command-macro`, `example-completion`, `example-custom-pickable`, `example-dispatch-tree`, `example-enum-tag`, `example-error-handling`, `example-exitcode`, `example-help`, `example-hook`, `example-implicit-dispatcher`, `example-lazy-resources`, `example-metadata`, `example-outside-type`, `example-pack-err`, `example-panic-unwind`, `example-pathfinder`, `example-repl-basic`, `example-resources`, `example-setup`, `example-structural-renderer`, `example-unit-test`, and `full-todolist`.
+    - **Any manual `ProgramCollect` impl** must now implement both required methods `dispatch_args` and `get_nodes`.
+    - **The `dispatch_tree` feature is now purely an internal optimization** (trie vs. linear-list command matching). It no longer changes whether dispatchers are collected at compile time — that behavior is unconditional. Update any documentation/comments that claimed otherwise.
+    - **The `__internal_dispatcher_*` static and the compile-time registration** are now always emitted, so `pathf`-based `use` imports for these types are unconditional.
+
+    _Behavioral note:_ the runtime behavior of programs is unchanged — all dispatchers registered via `with_dispatcher` are now simply gathered automatically, and the "longest registered prefix wins" matching rule is preserved by both the trie and the linear-list strategies.
+
 ---
 
 ## Contents

@@ -37,12 +37,6 @@ fn main() {
     // Resource
     program.with_resource(ResCurrentDir::default());
 
-    // Dispatchers
-    program.with_dispatcher(CMDCd);
-    program.with_dispatcher(CMDLs);
-    program.with_dispatcher(CMDExit);
-    program.with_dispatcher(CMDClear);
-
     // Setups
     // Enable basic std::io::stdin().read_line(&mut input)
     program.with_setup(BasicREPLReadlineSetup);

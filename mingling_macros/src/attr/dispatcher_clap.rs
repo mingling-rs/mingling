@@ -174,8 +174,8 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         None
     };
 
-    let dispatch_tree_entry =
-        get_dispatch_tree_entry(&command_name_str, dispatcher_struct, struct_name);
+    let compile_time_registration =
+        get_compile_time_registration(&command_name_str, dispatcher_struct, struct_name);
 
     let expanded = quote! {
         // Keep the original struct definition
@@ -187,8 +187,8 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         // Generate the help block if enabled
         #help_gen
 
-        // Dispatch tree registration (if feature enabled)
-        #dispatch_tree_entry
+        // Compile-time registration
+        #compile_time_registration
 
         // Generate the dispatcher struct
         #[doc(hidden)]
@@ -223,8 +223,11 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     expanded.into()
 }
 
-#[cfg(feature = "dispatch_tree")]
-fn get_dispatch_tree_entry(
+/// Registers the dispatcher at compile time (collects its node into the
+/// global `COMPILE_TIME_DISPATCHERS` registry and emits the
+/// `__internal_dispatcher_*` static), regardless of the `dispatch_tree`
+/// feature.
+fn get_compile_time_registration(
     command_name_str: &str,
     dispatcher_struct: &Ident,
     entry_name: &Ident,
@@ -233,13 +236,4 @@ fn get_dispatch_tree_entry(
     quote! {
         ::mingling::macros::register_dispatcher!(#node_name_lit, #dispatcher_struct, #entry_name);
     }
-}
-
-#[cfg(not(feature = "dispatch_tree"))]
-fn get_dispatch_tree_entry(
-    _command_name_str: &str,
-    _dispatcher_struct: &Ident,
-    _entry_name: &Ident,
-) -> proc_macro2::TokenStream {
-    quote! {}
 }

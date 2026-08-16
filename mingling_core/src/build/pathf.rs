@@ -1,6 +1,5 @@
 #![allow(unused_imports)]
 
-pub use mingling_pathf::config::*;
 pub use mingling_pathf::module_pathf::*;
 pub use mingling_pathf::pattern_analyzer::*;
 pub use mingling_pathf::patterns::*;
@@ -37,10 +36,7 @@ pub fn analyze_and_build_type_mapping_for(
     crate_dir: &Path,
     output_dir: &Path,
 ) -> Result<(), crate::error::MinglingPathfinderError> {
-    let config = mingling_pathf::config::PathfinderConfig {
-        use_dispatch_tree: cfg!(feature = "dispatch_tree"),
-    };
-    mingling_pathf::analyze_and_build_type_mapping_for(crate_dir, output_dir, &config)
+    mingling_pathf::analyze_and_build_type_mapping_for(crate_dir, output_dir)
 }
 
 /// # Analyzes and builds a type mapping
@@ -81,9 +77,6 @@ pub fn analyze_and_build_type_mapping_for(
 /// ```
 
 pub fn analyze_and_build_type_mapping() -> Result<(), crate::error::MinglingPathfinderError> {
-    let config = mingling_pathf::config::PathfinderConfig {
-        use_dispatch_tree: cfg!(feature = "dispatch_tree"),
-    };
     let crate_dir =
         std::env::current_dir().map_err(crate::error::MinglingPathfinderError::IoError)?;
     let crate_name = std::env::var("CARGO_PKG_NAME").map_err(|_| {
@@ -99,7 +92,7 @@ pub fn analyze_and_build_type_mapping() -> Result<(), crate::error::MinglingPath
         ))
     })?;
     let output_dir = Path::new(&out_dir).join(&crate_name);
-    mingling_pathf::analyze_and_build_type_mapping_for(&crate_dir, &output_dir, &config)?;
+    mingling_pathf::analyze_and_build_type_mapping_for(&crate_dir, &output_dir)?;
     println!("cargo:rerun-if-changed=src/");
     Ok(())
 }

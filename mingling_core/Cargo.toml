@@ -17,7 +17,6 @@ async = []
 build = []
 picker = []
 
-dispatch_tree = []
 structural_renderer = ["dep:serde"]
 ron_serde_fmt = ["dep:ron"]
 json_serde_fmt = ["dep:serde_json"]

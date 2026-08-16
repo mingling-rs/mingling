@@ -76,7 +76,6 @@ fn main() {
     program.with_setup(BasicProgramSetup);
     program.stdout_setting.clap_help_print_behaviour =
         mingling::config::ClapHelpPrintBehaviour::WriteToRenderResult;
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
 ```

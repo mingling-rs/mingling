@@ -53,9 +53,6 @@ where
 
     pub(crate) args: Vec<String>,
 
-    #[cfg(not(feature = "dispatch_tree"))]
-    pub(crate) dispatcher: Vec<Box<dyn Dispatcher<C> + Send + Sync>>,
-
     /// Program stdout settings.
     ///
     /// This struct controls the program's output behavior, including whether
@@ -115,9 +112,6 @@ where
         Self {
             collect: std::marker::PhantomData,
             args: args.into().into(),
-
-            #[cfg(not(feature = "dispatch_tree"))]
-            dispatcher: Vec::new(),
 
             stdout_setting: ProgramStdoutSetting::default(),
             user_context: ProgramUserContext::default(),
@@ -188,25 +182,12 @@ where
         get_nodes(self)
     }
 
-    /// Dynamically dispatch input arguments to registered entry types
+    /// Dispatch input arguments to an entry
     ///
     /// # Errors
     ///
     /// Returns `Err(ChainProcessError)` if the dispatch fails,
     /// e.g., if no dispatcher is found for the given arguments.
-    pub fn dispatch_args_dynamic(
-        &'static self,
-        args: impl Into<StringVec>,
-    ) -> Result<AnyOutput<C>, ChainProcessError> {
-        let sv: Vec<String> = args.into().into();
-        match exec::dispatch_args_dynamic(self, &sv) {
-            Ok(ok) => Ok(ok),
-            Err(e) => Err(e.into()),
-        }
-    }
-
-    /// Use a prefix tree to quickly match arguments and dispatch to an Entry
-    #[cfg(feature = "dispatch_tree")]
     pub fn dispatch_args(
         &'static self,
         args: impl Into<StringVec>,
@@ -225,40 +206,12 @@ where
 pub fn get_nodes<C: ProgramCollect<Enum = C>>(
     program: &'static Program<C>,
 ) -> Vec<(String, &'static (dyn Dispatcher<C> + Send + Sync + 'static))> {
-    #[cfg(feature = "dispatch_tree")]
     let r = C::get_nodes();
 
-    #[cfg(feature = "dispatch_tree")]
+    #[cfg(feature = "debug")]
     {
-        #[cfg(feature = "debug")]
-        {
-            let node_strs: Vec<String> = r.iter().map(|v| v.0.clone()).collect();
-            crate::info!("All Nodes: [{}]", node_strs.join(", "));
-        }
-    }
-
-    #[cfg(not(feature = "dispatch_tree"))]
-    let r: Vec<_> = program
-        .dispatcher
-        .iter()
-        .map(|disp| {
-            let node_str = disp
-                .node()
-                .to_string()
-                .split('.')
-                .collect::<Vec<_>>()
-                .join(" ");
-            (node_str, &**disp)
-        })
-        .collect();
-
-    #[cfg(not(feature = "dispatch_tree"))]
-    {
-        #[cfg(feature = "debug")]
-        {
-            let node_strs: Vec<String> = r.iter().map(|v| v.0.clone()).collect();
-            crate::info!("All Nodes: [{}]", node_strs.join(", "));
-        }
+        let node_strs: Vec<String> = r.iter().map(|v| v.0.clone()).collect();
+        crate::info!("All Nodes: [{}]", node_strs.join(", "));
     }
 
     r

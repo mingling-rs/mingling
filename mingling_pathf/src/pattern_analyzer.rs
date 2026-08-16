@@ -9,14 +9,12 @@
 //!
 //! The entry points are:
 //! - [`init()`] — creates a default `PatternAnalyzer` with all built-in patterns.
-//! - [`init_with_config()`] — creates a `PatternAnalyzer` with a given `PathfinderConfig`.
 //! - [`PatternAnalyzer::analyze_file()`] / [`PatternAnalyzer::analyze_file_items()`] — run
 //!   analysis on a single file.
 
 use std::collections::HashSet;
 use std::path::Path;
 
-use crate::config::PathfinderConfig;
 use crate::error::MinglingPathfinderError;
 use crate::patterns::{
     ChainPattern, CommandPattern, CompletionPattern, DispatcherClapPattern, DispatcherPattern,
@@ -26,13 +24,6 @@ use crate::patterns::{
 /// Creates a default `PatternAnalyzer` with all built-in patterns pre-registered.
 #[must_use]
 pub fn init() -> PatternAnalyzer {
-    init_with_config(&PathfinderConfig::default())
-}
-
-/// Creates a `PatternAnalyzer` with the given config, used by `mingling_core`'s pathf wrapper
-/// to inject feature-dependent settings (e.g., `dispatch_tree`).
-#[must_use]
-pub fn init_with_config(config: &PathfinderConfig) -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
     analyzer.add_pattern(PackPattern);
     analyzer.add_pattern(GroupPattern);
@@ -43,8 +34,8 @@ pub fn init_with_config(config: &PathfinderConfig) -> PatternAnalyzer {
     analyzer.add_pattern(HelpPattern);
     analyzer.add_pattern(MetadataPattern);
     analyzer.add_pattern(CompletionPattern);
-    analyzer.add_pattern(DispatcherPattern::new(config.use_dispatch_tree));
-    analyzer.add_pattern(DispatcherClapPattern::new(config.use_dispatch_tree));
+    analyzer.add_pattern(DispatcherPattern::new());
+    analyzer.add_pattern(DispatcherClapPattern::new());
     analyzer
 }
 

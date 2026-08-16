@@ -76,7 +76,6 @@ fn render_name(name: ResultName) {
 // 5. 在 main 函数内装配程序并运行
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDGreet);
     program.exec_and_exit();
 }
  

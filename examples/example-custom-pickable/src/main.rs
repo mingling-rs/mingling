@@ -70,9 +70,7 @@ pub fn render_error_parse_address_failed(_: ErrorParseAddressFailed) -> RenderRe
 gen_program!();
 
 fn main() {
-    let mut program = ThisProgram::new();
-    program.with_dispatcher(CMDConnect);
-    program.exec_and_exit();
+    ThisProgram::new().exec_and_exit();
 }
 
 // Address conversion
