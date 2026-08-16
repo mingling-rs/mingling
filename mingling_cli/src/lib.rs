@@ -1,7 +1,7 @@
 use mingling::{
-    ShellContext, Suggest,
+    RenderResult, ShellContext, Suggest,
     consts::HELP_FLAG,
-    macros::{completion, gen_program, help, suggest},
+    macros::{completion, gen_program, help, renderer, suggest},
 };
 
 use crate::{
@@ -26,7 +26,7 @@ pub mod utils;
 
 #[help]
 pub fn help_global(_: EntryFallback) -> String {
-    include_str!("../help/help.txt").parse_color_code()
+    format!("{}\n", include_str!("../help/help.txt").parse_color_code())
 }
 
 #[completion(EntryFallback)]
@@ -40,6 +40,27 @@ pub fn complete_global(_ctx: &ShellContext) -> Suggest {
         ARG_NO_DEFAULT_FEATURES: "Disable default features",
         ARG_NO_DEPS: "Do not include dependencies in metadata",
     }
+}
+
+#[renderer]
+pub fn handle_fallback(args: EntryFallback) -> RenderResult {
+    let mut r = RenderResult::new();
+    let args = args.inner;
+    if !args.is_empty() {
+        eprintln_cargo!(
+            r,
+            "{}",
+            format!("Unknown command `{}`", args.join(" ")).parse_color_code()
+        )
+    } else {
+        hprintln_cargo!(
+            r,
+            "{}",
+            "Welcome to MinglingCLI, please use `mling -h` to see available commands"
+                .parse_color_code(),
+        );
+    }
+    r
 }
 
 gen_program!();
