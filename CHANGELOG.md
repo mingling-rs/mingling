@@ -458,6 +458,25 @@ None
 
 8. **[`Cargo.toml`]** Removed the legacy `extra_macros` feature alias from `mingling/Cargo.toml`. The `extras` feature (introduced in 0.4.0, BREAKING CHANGE #1) is now the sole name for this feature; the deprecated alias is gone.
 
+9. **[`setups:dirs`]** **[BREAKING]** Simplified the `DirectoryEnvironmentSetup` type — it is no longer generic over the program collect type `C` and no longer requires `DirectoryEnvironmentSetup::<C>::default()` to construct.
+
+    ### What changed
+
+    Previously, `DirectoryEnvironmentSetup` was a generic struct `DirectoryEnvironmentSetup<C>` (carrying `PhantomData<C>`) that had to be constructed via `DirectoryEnvironmentSetup::<C>::default()` before calling `Program::with_setup`. Now the struct is unit-like (`pub struct DirectoryEnvironmentSetup;`), so it can be constructed directly as a value with no `::default()` call and no generic parameter.
+
+    Additionally, the `setup` method's `program` parameter was retyped from `crate::Program<C>` to `mingling_core::Program<C>` for cleanliness.
+
+    ### Removed / changed API
+    - **`DirectoryEnvironmentSetup<C>`** → **`DirectoryEnvironmentSetup`** — The struct no longer has a generic parameter (previously `DirectoryEnvironmentSetup<C>` with `PhantomData<C>`).
+    - **`impl<C> Default for DirectoryEnvironmentSetup<C>`** — Removed. The unit struct uses the derived/implicit `Default`, and more importantly construction is now just the plain value `DirectoryEnvironmentSetup`, not `DirectoryEnvironmentSetup::<C>::default()`.
+    - **`impl<C> ProgramSetup<C> for DirectoryEnvironmentSetup<C>`** → **`impl<C> ProgramSetup<C> for DirectoryEnvironmentSetup`** — The `ProgramSetup` impl is now on the unit type.
+
+    ### Migration guide
+    - Replace `program.with_setup(DirectoryEnvironmentSetup::<ThisProgram>::default())` with `program.with_setup(DirectoryEnvironmentSetup)`.
+    - Any type annotations referencing `DirectoryEnvironmentSetup<C>` must drop the generic argument.
+
+    _No behavioral changes — the setup still registers the same four directory resources (`ResCurrentDir`, `ResCurrentExe`, `ResHomeDir`, `ResTempDir`) in the program's resource store. The type simplification is purely ergonomic.
+
 ---
 
 ## Contents
