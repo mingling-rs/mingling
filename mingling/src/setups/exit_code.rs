@@ -37,12 +37,6 @@ use crate::res::ResExitCode;
 ///   - Overrides the program's exit code with that value if it is non-zero.
 ///   - Leaves the exit code untouched if the resource still holds its default
 ///     value of `0`.
-///
-/// # Notes
-///
-/// - Use [`update_exit_code`](crate::update_exit_code) to set a custom exit code
-///   during program execution.
-/// - Use [`current_exit_code`](crate::current_exit_code) to query the current value.
 pub struct ExitCodeSetup;
 
 impl<C> ProgramSetup<C> for ExitCodeSetup
