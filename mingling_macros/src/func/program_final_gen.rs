@@ -273,9 +273,25 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
         .collect();
 
     let do_chain_fn = if chain_tokens.is_empty() {
-        quote! {
-            fn do_chain(_any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::ChainProcess<Self::Enum> {
-                ::core::panic!("No chain found for type id")
+        // An empty chain list is still valid, but the synthesized `do_chain`
+        // must match the trait signature for the enabled mode. The sync
+        // branch used unconditionally breaks the `async` feature (E0053),
+        // so dispatch on `ASYNC_ENABLED` here as well.
+        if ASYNC_ENABLED {
+            quote! {
+                fn do_chain(
+                    _any: ::mingling::AnyOutput<Self::Enum>,
+                ) -> ::std::pin::Pin<::std::boxed::Box<dyn ::std::future::Future<Output = ::mingling::ChainProcess<Self::Enum>> + ::std::marker::Send>> {
+                    ::std::boxed::Box::pin(async {
+                        ::core::panic!("No chain found for type id")
+                    })
+                }
+            }
+        } else {
+            quote! {
+                fn do_chain(_any: ::mingling::AnyOutput<Self::Enum>) -> ::mingling::ChainProcess<Self::Enum> {
+                    ::core::panic!("No chain found for type id")
+                }
             }
         }
     } else if ASYNC_ENABLED {
