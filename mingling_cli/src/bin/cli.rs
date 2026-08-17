@@ -10,8 +10,8 @@ async fn main() {
 
     // Setups
     program.with_setup(HelpFlagSetup::default());
-    program.with_setup(ExitCodeSetup::default());
-    program.with_setup(DirectoryEnvironmentSetup::default());
+    program.with_setup(ExitCodeSetup);
+    program.with_setup(DirectoryEnvironmentSetup);
 
     program.with_setup(MinglingMetadataSetup);
     program.with_setup(MlingConfigSetup);

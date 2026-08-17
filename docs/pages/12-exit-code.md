@@ -12,7 +12,7 @@ Providing the shell with a correct exit code when a program terminates is a basi
 @@@use mingling::setup::ExitCodeSetup;
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_setup(ExitCodeSetup::default());
+    program.with_setup(ExitCodeSetup);
 @@@ program.exec_and_exit();
 }
 ```
@@ -55,7 +55,7 @@ fn handle_check(_args: EntryCheck, ec: &mut ResExitCode) {
 @@@use mingling::setup::ExitCodeSetup;
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_setup(ExitCodeSetup::default());
+    program.with_setup(ExitCodeSetup);
  
     // Get exit code and handle it yourself
     let exit_code = program.exec();

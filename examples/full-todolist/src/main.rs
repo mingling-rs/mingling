@@ -60,7 +60,7 @@ fn main() {
     let mut program = ThisProgram::new();
 
     // Setups
-    program.with_setup(ExitCodeSetup::default());
+    program.with_setup(ExitCodeSetup);
     program.with_setup(StructuralRendererSetup);
     program.with_setup(HelpFlagSetup::new(&arg![help: Flag, 'h']));
 

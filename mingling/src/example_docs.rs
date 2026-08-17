@@ -1318,7 +1318,7 @@ pub mod example_error_handling {}
 ///
 ///     // --------- IMPORTANT ---------
 ///     // Register `ExitCodeSetup` for the program to enable exit codes
-///     program.with_setup(ExitCodeSetup::default());
+///     program.with_setup(ExitCodeSetup);
 ///     // --------- IMPORTANT ---------
 ///
 ///     program.exec_and_exit();

@@ -477,6 +477,25 @@ None
 
     _No behavioral changes — the setup still registers the same four directory resources (`ResCurrentDir`, `ResCurrentExe`, `ResHomeDir`, `ResTempDir`) in the program's resource store. The type simplification is purely ergonomic.
 
+10. **[`setups:exit_code`]** **[BREAKING]** Simplified the `ExitCodeSetup` type — it is no longer generic over the program collect type `C` and no longer requires `ExitCodeSetup::<C>::default()` to construct.
+
+    ### What changed
+
+    Previously, `ExitCodeSetup` was a generic struct `ExitCodeSetup<C>` (carrying `PhantomData<C>`) that had to be constructed via `ExitCodeSetup::<C>::default()` before calling `Program::with_setup`. Now the struct is unit-like (`pub struct ExitCodeSetup;`), so it can be constructed directly as a value with no `::default()` call and no generic parameter.
+
+    Additionally, the `setup` method's `program` parameter was retyped from `crate::Program<C>` to `mingling_core::Program<C>` for cleanliness.
+
+    ### Removed / changed API
+    - **`ExitCodeSetup<C>`** → **`ExitCodeSetup`** — The struct no longer has a generic parameter (previously `ExitCodeSetup<C>` with `PhantomData<C>`).
+    - **`impl<C> Default for ExitCodeSetup<C>`** — Removed. The unit struct uses the derived/implicit `Default`, and more importantly construction is now just the plain value `ExitCodeSetup`, not `ExitCodeSetup::<C>::default()`.
+    - **`impl<C> ProgramSetup<C> for ExitCodeSetup<C>`** → **`impl<C> ProgramSetup<C> for ExitCodeSetup`** — The `ProgramSetup` impl is now on the unit type.
+
+    ### Migration guide
+    - Replace `program.with_setup(ExitCodeSetup::<ThisProgram>::default())` (or `ExitCodeSetup::default()`) with `program.with_setup(ExitCodeSetup)`.
+    - Any type annotations referencing `ExitCodeSetup<C>` must drop the generic argument.
+
+    _No behavioral changes — the setup still registers the same `ResExitCode` resource (initialised to `0`) and installs the same program-finish hook that overrides the program's exit code when the resource holds a non-zero value. The type simplification is purely ergonomic._
+
 ---
 
 ## Contents

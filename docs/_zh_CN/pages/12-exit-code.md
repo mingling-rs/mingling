@@ -12,7 +12,7 @@
 @@@use mingling::setup::ExitCodeSetup;
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_setup(ExitCodeSetup::default());
+    program.with_setup(ExitCodeSetup);
 @@@ program.exec_and_exit();
 }
 ```
@@ -55,7 +55,7 @@ fn handle_check(_args: EntryCheck, ec: &mut ResExitCode) {
 @@@use mingling::setup::ExitCodeSetup;
 fn main() {
     let mut program = ThisProgram::new();
-    program.with_setup(ExitCodeSetup::default());
+    program.with_setup(ExitCodeSetup);
  
     // 获取退出码自行处理
     let exit_code = program.exec();
