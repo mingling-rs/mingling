@@ -456,6 +456,8 @@ None
 
     _Behavioral note:_ the runtime behavior of programs is unchanged — completion scripts and pathf type mappings are still produced, just from compile-time macro expansion instead of a separate `build.rs` step. The output directory changed from an `OUT_DIR`-derived path (effectively `{target}/<profile>` style) to a dedicated `{target_directory}/mingling/` directory resolved via `cargo metadata`, which is deterministic regardless of build profile.
 
+8. **[`Cargo.toml`]** Removed the legacy `extra_macros` feature alias from `mingling/Cargo.toml`. The `extras` feature (introduced in 0.4.0, BREAKING CHANGE #1) is now the sole name for this feature; the deprecated alias is gone.
+
 ---
 
 ## Contents

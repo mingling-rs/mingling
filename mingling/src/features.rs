@@ -108,17 +108,6 @@ pub const MINGLING_DOCS_RS: bool = false;
 #[cfg(feature = "docs_rs")]
 #[allow(unused)]
 pub const MINGLING_DOCS_RS: bool = true;
-/// Whether the `extra_macros` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "extra_macros"))]
-#[allow(unused)]
-pub const MINGLING_EXTRA_MACROS: bool = false;
-
-/// Whether the `extra_macros` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "extra_macros")]
-#[allow(unused)]
-pub const MINGLING_EXTRA_MACROS: bool = true;
 /// Whether the `extras` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "extras"))]

@@ -94,11 +94,6 @@ ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 
 extras = ["mingling_macros/extras"]
 
-# - LEGACY -
-# These are old names, will be Breaking Change in the future
-
-extra_macros = ["mingling_macros/extras"]
-
 [dependencies]
 mingling_core = { workspace = true, optional = true }
 mingling_macros = { workspace = true, optional = true }
