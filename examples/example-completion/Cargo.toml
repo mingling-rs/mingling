@@ -12,16 +12,4 @@ features = [
     "picker",
 ]
 
-[build-dependencies.mingling]
-path = "../../mingling"
-
-features = [
-    # Enable `comp` features
-    "comp",
-
-    # If you want to build completion scripts,
-    # enable `build` features
-    "build",
-]
-
 [workspace]

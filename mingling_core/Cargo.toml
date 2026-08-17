@@ -14,7 +14,6 @@ categories = ["command-line-interface"]
 nightly = []
 default = []
 async = []
-build = []
 picker = []
 
 structural_renderer = ["dep:serde"]
@@ -26,17 +25,11 @@ toml_serde_fmt = ["dep:toml"]
 repl = []
 
 clap = []
-comp = ["dep:just_template"]
+comp = []
 debug = ["dep:log", "dep:env_logger"]
-pathf = ["dep:mingling_pathf"]
 
 [dependencies]
-mingling_pathf = { workspace = true, optional = true }
-
 just_fmt.workspace = true
-
-# comp
-just_template = { workspace = true, optional = true }
 
 # structural_renderer
 serde = { workspace = true, optional = true }

@@ -4,11 +4,13 @@
 //! > Types are defined in a submodule (`sub`), and `gen_program!()` resolves
 //! > them automatically via pathf without explicit `use` imports.
 //! >
-//! > **Important**: `dispatch_tree` must be enabled in BOTH `[dependencies]`
-//! > AND `[build-dependencies]` so that pathf's builder can detect
-//! > `__internal_dispatcher_*` types needed by the dispatch tree.
+//! > **Important**: `dispatch_tree` must be enabled so that pathf's builder can
+//! > detect `__internal_dispatcher_*` types needed by the dispatch tree.
 //! >
 //! > Also requires `extras` for the implicit `dispatcher!("hello")` form.
+//! >
+//! > With the `pathf` feature, `gen_program!()` automatically invokes
+//! > `build_pathf!()` at compile time — no `build.rs` needed.
 //!
 //! Run:
 //! ```bash

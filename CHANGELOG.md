@@ -395,6 +395,67 @@ None
 
     _All internal call sites, examples, docs, and tests updated_ (e.g., `mingling_cli` completion handlers, `example-completion`, `example-enum-tag`, `GETTING-STARTED.md`, `docs/pages/advanced/1-completion.md`, `docs/_zh_CN/pages/advanced/1-completion.md`, and `mingling/src/example_docs.rs`).
 
+7. **[`build`]** **[BREAKING]** Replaced the `build` / `builds` build-time feature system with compile-time macro-driven build steps. The `build` feature, `builds` feature, `build_advanced` preset, `build_full` preset, `mingling::build` module, and the entire `build.rs`-based workflow have been removed. Build steps (completion script generation and pathf type-mapping analysis) now run automatically as a side effect of `gen_program!()` expansion via new `build_comp!()` / `build_pathf!()` macros.
+
+    ### What changed
+
+    Previously, build-time functionality was enabled through the `build` feature (and preset groups `build_advanced` / `build_full`, plus the deprecated `builds` alias). Users needed a `[build-dependencies.mingling]` entry in `Cargo.toml` and a hand-written `build.rs` that called `mingling::build::build_comp_scripts(...)` (for completion scripts) and `mingling::build::analyze_and_build_type_mapping()` (for pathf). These functions were gated behind the `build` + `comp` / `build` + `pathf` feature combinations and read `OUT_DIR` to locate the output directory.
+
+    Now, the build steps are integrated directly into macro expansion:
+
+    - **`gen_program!()` automatically invokes `build_comp!()`** (when the `comp` feature is enabled) and **`build_pathf!()`** (when the `pathf` feature is enabled) at the very start of its expansion. These macros run the build logic as a compile-time side effect and expand to nothing.
+    - **`build_comp!()`** is a proc macro (re-exported as `mingling::macros::build_comp`) that generates completion scripts into `{target_directory}/mingling/`. It accepts an optional string literal for the binary name; without an argument it defaults to `CARGO_PKG_NAME`. On failure it emits a `compile_error!`.
+    - **`build_pathf!()`** is a proc macro (re-exported as `mingling::macros::build_pathf`) that runs the pathf type-mapping analysis, writing mapping files into `{target_directory}/mingling/{CARGO_PKG_NAME}/`. On failure it emits a `compile_error!`.
+    - **No `build.rs` is required anymore.** Build logic runs from proc-macro expansion, so no `[build-dependencies.mingling]` entry, no `build` feature, and no `build.rs` file are needed.
+
+    **Removed API:**
+
+    - **`build` feature** — Removed from `mingling/Cargo.toml` and `mingling_core/Cargo.toml`. The `build = ["mingling_core/build"]` feature mapping and the `mingling_core/build` feature have been deleted.
+    - **`builds` feature** — Removed (deprecated alias, mapped to `mingling_core/build`).
+    - **`build_advanced` / `build_full` preset features** — Removed from `mingling/Cargo.toml` feature groups.
+    - **`mingling::build` module** — Removed entirely from `mingling_core`:
+        - `mingling_core/src/build.rs` and the `mingling_core/src/build/` directory deleted.
+        - `mingling_core/src/docs/build.md` deleted.
+        - `mingling_core/src/lib.rs` no longer gates `pub mod build` behind the `build` feature.
+    - **Build functions** — Removed: `build_comp_scripts`, `build_comp_script`, `build_comp_script_to`, `build_comp_script_to_file`, `analyze_and_build_type_mapping`, `analyze_and_build_type_mapping_for`, `analyze`.
+    - **`MINGLING_BUILD` / `MINGLING_BUILDS` / `MINGLING_BUILD_ADVANCED` / `MINGLING_BUILD_FULL` feature constants** — Removed from `mingling/src/features.rs`.
+    - **`mingling_core` dependencies** — Removed `just_template` (comp) and `mingling_pathf` (pathf) from `mingling_core/Cargo.toml`; these moved to `mingling_macros` as optional dependencies gated behind the `comp` / `pathf` features.
+    - **`mingling_macros` feature wiring** — Changed `comp = []` to `comp = ["dep:just_template", "dep:mingling_pathf"]` and `pathf = []` to `pathf = ["dep:mingling_pathf"]`; `mingling` crate's `pathf` feature no longer forwards to `mingling_core/pathf`.
+    - **`mingling::build::pathf` error re-exports** — `mingling_core::error` no longer re-exports `mingling_pathf::error::*`.
+
+    **New internal infrastructure:**
+
+    - **`mingling_macros/src/build.rs`** — New module hosting `comp_build_impl` (behind `comp`) and `pathf_build_impl` (behind `pathf`), which parse the macro input and delegate to the build logic, converting errors into `compile_error!` token streams.
+    - **`mingling_macros/src/build/comp.rs`** — Moved from `mingling_core/src/build/comp.rs` (with the shell templates, which moved from `mingling_core/tmpls/comps/` to `mingling_macros/tmpls/comps/`). Contains a private copy of `ShellFlag` (since the macros crate cannot depend on `mingling_core`); the template files are identical. Scripts are written to `{target_directory}/mingling/` resolved via the new `mingling_pathf::build_output_dir()`.
+    - **`mingling_macros/src/build/pathf.rs`** — New module providing `output_dir()` (`{target_directory}/mingling/{CARGO_PKG_NAME}`) and `analyze_and_build_type_mapping()` delegating to `mingling_pathf`.
+    - **`mingling_pathf::build_output_dir()`** — New public function resolving `{target_directory}/mingling/` via `cargo metadata` (from `CARGO_MANIFEST_DIR`).
+    - **`mingling_pathf::target_directory()`** — New public function running `cargo metadata` (`no_deps`) from a crate directory and returning the target directory.
+    - **`MinglingPathfinderError::CargoMetadata(String)`** — New error variant added to `mingling_pathf`'s error enum.
+    - **`cargo_metadata` dependency** — Added to `mingling_pathf` (workspace, version `0.23.1`) and to the root workspace `Cargo.toml`.
+
+    **`gen_program!()` changes** (`mingling_macros/src/func/gen_program.rs`):
+    - Emits `::mingling::macros::build_comp!();` at the start of the expansion when `comp` is enabled (and `::mingling::macros::build_pathf!();` when `pathf` is enabled).
+    - The pathf `use`-statement loading now runs the analysis inline via `crate::build::pathf::analyze_and_build_type_mapping()` (so the mapping exists when the `use` statements are read) and loads `type_using.rs` from `crate::build::pathf::output_dir()`.
+    - The `load_pathf_uses` function now reads from `{target_directory}/mingling/{CARGO_PKG_NAME}/type_using.rs` instead of `{OUT_DIR}/{CARGO_PKG_NAME}/type_using.rs`.
+    - The empty-uses `compile_error!` hint was reworded: it no longer mentions `build.rs` or the `build` feature; it now says the analyzer found no types and suggests ensuring the `pathf` feature is enabled and `gen_program!()` is called in a crate with a `src/` directory.
+    - `mingling_pathf::analyze_and_build_type_mapping` no longer emits `cargo:rerun-if-changed=src/` / `cargo:rerun-if-env-changed=...` directives (there is no build script for Cargo to track).
+
+    **Migration guide:**
+
+    - **Delete `build.rs`** (and the `[build-dependencies]` block in `Cargo.toml`). Completion scripts are generated automatically when the `comp` feature is enabled; pathf analysis and any `[build-dependencies.mingling]`). If a feature list references only these, delete the whole section.
+    - **If your binary name differs from the crate name**, call `build_comp!()` manually with the binary name:
+        ```rust
+        // Features: ["comp"]
+        mingling::macros::build_comp!("mybin");
+        ```
+        This can be placed at module scope (e.g., in `src/lib.rs` or `src/main.rs`) alongside `gen_program!()`.
+    - **Remove any `mingling::build::...` imports.**
+    - **Example/build artifacts**: The completion scripts are now written to `{target_directory}/mingling/` rather than `{target_directory}/release/` or the `OUT_DIR`-derived path. Any scripts that copied them from the release directory must be updated (e.g., `.run/src/bin/install-mling.sh` now copies from `.temp/target/mingling/mling_comp.$comp`, and `.run/src/bin/install-mling.ps1` from `.temp/target/mingling/mling_comp.ps1`).
+    - **`mingling_cli`**: `build.rs` no longer calls `analyze_and_build_type_mapping` / `build_comp_scripts`; `mingling_cli/src/lib.rs` now invokes `mingling::macros::build_comp!("mling")` to generate scripts for the `mling` binary. `StateInstallBuild` / `StateInstallCopy` gained a `mingling_dir` field (`{target}/mingling/`) and the install copy step reads completion scripts from `{target}/mingling/` instead of `{target}/release/`.
+    - **Tests/examples**: Removed the `builds` feature from `mingling_core/tests/test-all`, `mingling_core/tests/test-comp`, and all pathf/completion examples, and deleted the corresponding `build.rs` files and `[build-dependencies]` blocks.
+
+    _Behavioral note:_ the runtime behavior of programs is unchanged — completion scripts and pathf type mappings are still produced, just from compile-time macro expansion instead of a separate `build.rs` step. The output directory changed from an `OUT_DIR`-derived path (effectively `{target}/<profile>` style) to a dedicated `{target_directory}/mingling/` directory resolved via `cargo metadata`, which is deterministic regardless of build profile.
+
 ---
 
 ## Contents

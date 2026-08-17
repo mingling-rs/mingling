@@ -46,10 +46,6 @@ pub mod core_res {
 #[cfg(feature = "comp")]
 pub(crate) mod comp;
 
-#[cfg(feature = "build")]
-#[doc = include_str!("docs/build.md")]
-pub mod build;
-
 // Public Modules
 
 /// Provides a toolkit for `Mingling` testing capabilities.
@@ -90,9 +86,6 @@ pub mod error {
 
     #[cfg(feature = "structural_renderer")]
     pub use crate::renderer::structural::error::*;
-
-    #[cfg(feature = "pathf")]
-    pub use mingling_pathf::error::*;
 }
 
 #[doc(hidden)]

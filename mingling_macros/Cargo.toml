@@ -19,11 +19,11 @@ default = []
 async = []
 
 clap = []
-comp = []
+comp = ["dep:just_template", "dep:mingling_pathf"]
 dispatch_tree = []
 structural_renderer = []
 repl = []
-pathf = []
+pathf = ["dep:mingling_pathf"]
 
 extras = []
 
@@ -33,3 +33,9 @@ quote.workspace = true
 proc-macro2.workspace = true
 
 just_fmt.workspace = true
+
+# comp — compile-time completion script generation (build_comp!())
+just_template = { workspace = true, optional = true }
+
+# pathf — compile-time type path analysis (build_pathf!())
+mingling_pathf = { workspace = true, optional = true }

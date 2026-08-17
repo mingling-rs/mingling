@@ -39,6 +39,7 @@ arg-picker-macros = { path = "arg_picker_macros", default-features = false }
 
 just_fmt = "0.2.0"
 just_template = "0.2.0"
+cargo_metadata = "0.23.1"
 
 might_be_async = "0.1.0"
 

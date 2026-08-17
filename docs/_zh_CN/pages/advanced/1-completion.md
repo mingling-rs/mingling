@@ -11,13 +11,6 @@ Mingling 的补全是**完全动态**的——没有静态的补全文件，而�
 # Cargo.toml
 [dependencies.mingling]
 features = ["comp"]
- 
-[build-dependencies.mingling]
-features = [
-    "comp",
-    # 启用 `build` 特性以提供构建期支持
-    "build"
-]
 ```
  
 ## 工作原理
@@ -72,8 +65,18 @@ suggest! {
 
 ## 生成补全脚本
 
-在 `build.rs` 中调用 `build_comp_scripts` 生成补全脚本（需要 `builds` + `comp` 特性）。
+开启 `comp` 特性后，`gen_program!()` 会在编译期自动调用 `build_comp!()`，生成以 `CARGO_PKG_NAME` 命名的补全脚本到 `target/mingling/`。
 
+如果你的二进制名与 crate 名不同，可以手动调用 `build_comp!()` 并指定二进制名：
+
+```rust
+// Features: ["comp"]
+@@@use mingling::macros::build_comp;
+@@@fn example() {
+build_comp!("mybin");
+@@@}
+```
+ 
 详见 [example-completion](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-completion)。
 
 <p align="center" style="font-size: 0.85em; color: gray;">

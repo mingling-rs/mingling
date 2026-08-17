@@ -20,6 +20,9 @@ mod derive;
 mod func;
 mod systems;
 
+#[cfg(any(feature = "comp", feature = "pathf"))]
+mod build;
+
 mod extensions;
 mod utils;
 
@@ -1651,6 +1654,50 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn gen_program(input: TokenStream) -> TokenStream {
     func::gen_program::gen_program_impl(input)
+}
+
+/// Executes the completion-script build at compile time and expands to nothing.
+///
+/// **This macro is only available with the `comp` feature.**
+///
+/// The completion scripts are written to `{target_directory}/mingling/` (the
+/// target directory is resolved via `cargo metadata`).
+///
+/// `gen_program!()` calls this macro automatically when the `comp` feature is
+/// enabled. It can also be invoked manually to customize the binary name:
+///
+/// - `build_comp!()` — uses the current package name (`CARGO_PKG_NAME`).
+/// - `build_comp!("mybin")` — uses the given binary name.
+///
+/// ```rust,ignore
+/// mingling::macros::build_comp!();
+/// // or:
+/// mingling::macros::build_comp!("mybin");
+/// ```
+#[cfg(feature = "comp")]
+#[proc_macro]
+pub fn build_comp(input: TokenStream) -> TokenStream {
+    build::comp_build_impl(input)
+}
+
+/// Executes the pathf type-mapping build at compile time and expands to nothing.
+///
+/// **This macro is only available with the `pathf` feature.**
+///
+/// The mapping files are written to `{target_directory}/mingling/{CARGO_PKG_NAME}/`
+/// (the target directory is resolved via `cargo metadata`), and are consumed by
+/// `gen_program!()` so that types defined in submodules are resolved automatically.
+///
+/// `gen_program!()` calls this macro automatically when the `pathf` feature is
+/// enabled.
+///
+/// ```rust,ignore
+/// mingling::macros::build_pathf!();
+/// ```
+#[cfg(feature = "pathf")]
+#[proc_macro]
+pub fn build_pathf(input: TokenStream) -> TokenStream {
+    build::pathf_build_impl(input)
 }
 
 /// Internal macro used by `gen_program!` to generate the completion infrastructure for

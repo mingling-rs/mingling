@@ -24,6 +24,10 @@ pub mod proj_mgr;
 pub mod updater;
 pub mod utils;
 
+// The `comp` feature makes `gen_program!()` generate completion scripts named after
+// the crate (`mingling-cli_comp.*`). Generate an additional set for the `mling` binary.
+mingling::macros::build_comp!("mling");
+
 #[help]
 pub fn help_global(_: EntryFallback) -> String {
     format!("{}\n", include_str!("../help/help.txt").parse_color_code())

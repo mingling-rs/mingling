@@ -125,8 +125,11 @@ Marks the block as a `build.rs` script instead of `src/main.rs`. The block code 
 
 ```rust
 // BUILD TIME
-// Features: ["builds", "pathf"]
-analyze_and_build_type_mapping().unwrap();
+// Dependencies:
+// serde = "1"
+fn main() {
+    // build-time work, e.g. writing generated sources into OUT_DIR
+}
 ```
  
 ### `// Features: [...]`

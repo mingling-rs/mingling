@@ -234,13 +234,9 @@ fn main() {
 }
 ```
 
-In your `build.rs`, generate the shell scripts:
-
-```rust
-// BUILD TIME
-// Features: ["comp", "build"]
-mingling::build::build_comp_scripts(env!("CARGO_PKG_NAME")).unwrap();
-```
+The completion scripts are generated automatically: with the `comp` feature enabled,
+`gen_program!()` invokes `build_comp!()` at compile time and writes the shell scripts
+(named after `CARGO_PKG_NAME`) into `target/mingling/`.
 
 For enum-based completions, use `suggest_enum!`:
 

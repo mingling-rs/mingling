@@ -30,15 +30,6 @@ features = [
     "comp",
 ]
 
-[build-dependencies.mingling]
-path = "../mingling"
-features = [
-    "build",
-    "pathf",
-    "dispatch_tree",
-    "comp"
-]
-
 [dependencies]
 
 # Project analyze

@@ -595,11 +595,13 @@ pub mod example_clap_binding {}
 ///  > Types are defined in a submodule (`sub`), and `gen_program!()` resolves
 ///  > them automatically via pathf without explicit `use` imports.
 ///  >
-///  > **Important**: `dispatch_tree` must be enabled in BOTH `[dependencies]`
-///  > AND `[build-dependencies]` so that pathf's builder can detect
-///  > `__internal_dispatcher_*` types needed by the dispatch tree.
+///  > **Important**: `dispatch_tree` must be enabled so that pathf's builder can
+///  > detect `__internal_dispatcher_*` types needed by the dispatch tree.
 ///  >
 ///  > Also requires `extras` for the implicit `dispatcher!("hello")` form.
+///  >
+///  > With the `pathf` feature, `gen_program!()` automatically invokes
+///  > `build_pathf!()` at compile time — no `build.rs` needed.
 ///
 ///  Run:
 ///  ```bash
@@ -623,19 +625,6 @@ pub mod example_clap_binding {}
 ///     "dispatch_tree",
 ///     "extras",
 ///     "pathf",
-/// ] }
-///
-/// [build-dependencies]
-/// mingling = { path = "../../mingling", features = [
-///     "builds",
-///
-///     # --------- IMPORTANT ---------
-///     # To use pathf under dispatch_tree
-///     #   **must** enable the `dispatch_tree`
-///     #   feature in build dependencies
-///     "dispatch_tree",
-///     "pathf",
-///     # --------- IMPORTANT ---------
 /// ] }
 ///
 /// [workspace]
@@ -688,15 +677,6 @@ pub mod example_combine_pathf_dispatch_tree {}
 ///     # `extras` is required by the implicit `dispatcher!("hello")` form
 ///     "extras",
 ///     # `pathf` resolves types across modules at build time
-///     "pathf",
-/// ]
-///
-/// [build-dependencies.mingling]
-/// path = "../../mingling"
-/// features = [
-///     # Enable the `build` feature for build-time support
-///     "build",
-///     # `pathf` must also be enabled in build-dependencies
 ///     "pathf",
 /// ]
 ///
@@ -811,30 +791,15 @@ pub mod example_command_macro {}
 ///  To make your completions work, you need to generate a completion script using Mingling's tools
 ///
 ///  1. Enable features
-///     You need to enable the `build` and `comp` features for `mingling` in `[build-dependencies]`
+///     Enable the `comp` feature for `mingling` in `[dependencies]`
 ///
-///  2. Write `build.rs`
-///     Write the following in `build.rs`
-///
-///  ```rust,ignore
-///  fn main() {
-///      build_scripts();
-///  }
-///
-///  /// Generate completion scripts
-///  fn build_scripts() {
-///      // `env!("CARGO_PKG_NAME")` equals the crate name, which matches the binary name.
-///      // If your binary name differs from the crate name, specify it explicitly.
-///      mingling::build::build_comp_scripts(
-///          // Your binary name:
-///          env!("CARGO_PKG_NAME"),
-///      )
-///      .unwrap();
-///  }
-///  ```
+///  2. Generate completion scripts
+///     When the `comp` feature is enabled, `gen_program!()` automatically invokes
+///     `build_comp!()` at compile time, which generates the completion scripts
+///     (named after `CARGO_PKG_NAME`) into `target/mingling/`.
 ///
 ///  3. Verify
-///     Build your project with `cargo build --release`. The completion scripts will be generated in `target/release/`
+///     Build your project with `cargo build`. The completion scripts will be generated in `target/mingling/`
 ///
 ///     Execute the script or have it be automatically sourced by your Shell
 ///
@@ -862,18 +827,6 @@ pub mod example_command_macro {}
 ///     # Enable `comp` features
 ///     "comp",
 ///     "picker",
-/// ]
-///
-/// [build-dependencies.mingling]
-/// path = "../../mingling"
-///
-/// features = [
-///     # Enable `comp` features
-///     "comp",
-///
-///     # If you want to build completion scripts,
-///     # enable `build` features
-///     "build",
 /// ]
 ///
 /// [workspace]
@@ -2102,17 +2055,6 @@ pub mod example_panic_unwind {}
 /// features = [
 ///     # Enable `pathf` features
 ///     "pathf",
-/// ]
-///
-/// [build-dependencies.mingling]
-/// path = "../../mingling"
-///
-/// features = [
-///     # Enable `pathf` features
-///     "pathf",
-///
-///     # Enable the `build` feature for build-time support
-///     "build",
 /// ]
 ///
 /// [workspace]

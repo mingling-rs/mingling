@@ -7,30 +7,15 @@
 //! To make your completions work, you need to generate a completion script using Mingling's tools
 //!
 //! 1. Enable features
-//!    You need to enable the `build` and `comp` features for `mingling` in `[build-dependencies]`
+//!    Enable the `comp` feature for `mingling` in `[dependencies]`
 //!
-//! 2. Write `build.rs`
-//!    Write the following in `build.rs`
-//!
-//! ```rust,ignore
-//! fn main() {
-//!     build_scripts();
-//! }
-//!
-//! /// Generate completion scripts
-//! fn build_scripts() {
-//!     // `env!("CARGO_PKG_NAME")` equals the crate name, which matches the binary name.
-//!     // If your binary name differs from the crate name, specify it explicitly.
-//!     mingling::build::build_comp_scripts(
-//!         // Your binary name:
-//!         env!("CARGO_PKG_NAME"),
-//!     )
-//!     .unwrap();
-//! }
-//! ```
+//! 2. Generate completion scripts
+//!    When the `comp` feature is enabled, `gen_program!()` automatically invokes
+//!    `build_comp!()` at compile time, which generates the completion scripts
+//!    (named after `CARGO_PKG_NAME`) into `target/mingling/`.
 //!
 //! 3. Verify
-//!    Build your project with `cargo build --release`. The completion scripts will be generated in `target/release/`
+//!    Build your project with `cargo build`. The completion scripts will be generated in `target/mingling/`
 //!
 //!    Execute the script or have it be automatically sourced by your Shell
 //!

@@ -215,16 +215,15 @@ pub fn generate_cargo_toml(block: &CodeBlock, package_name: &str, manifest_path:
         )
     };
 
-    // Build-time blocks: add `builds` by default, merge with explicit features
+    // Build-time blocks: mirror the declared features into [build-dependencies]
+    // so that build.rs can use the same feature set as the crate itself.
     let build_deps_section = if block.is_build_time {
-        let mut all_feats = vec!["builds".to_string()];
-        for f in &block.features {
-            if f != "builds" {
-                all_feats.push(f.clone());
-            }
-        }
-        let feats_str: Vec<String> = all_feats.iter().map(|f| format!("\"{f}\"")).collect();
-        let build_feats = format!("features = [{}]", feats_str.join(", "));
+        let feats_str: Vec<String> = block.features.iter().map(|f| format!("\"{f}\"")).collect();
+        let build_feats = if feats_str.is_empty() {
+            String::new()
+        } else {
+            format!("features = [{}]", feats_str.join(", "))
+        };
         format!(
             "\n[build-dependencies]\nmingling = {{ path = \"{mingling_path}\", {build_feats} }}\n"
         )
@@ -292,13 +291,9 @@ pub fn generate_main_rs(block: &CodeBlock) -> String {
 
 /// Generate build.rs for a build-time block
 ///
-/// Default: `use mingling::builds::*;`, code wrapped in `fn main() { }`.
+/// Default: code wrapped in `fn main() { }`.
 pub fn generate_build_rs(block: &CodeBlock) -> String {
     let mut output = String::from("#![allow(dead_code)]\n#![allow(unused)]\n");
-
-    if !block.code.contains("use mingling::build::*;") {
-        output.push_str("#[allow(unused_imports)]\nuse mingling::build::*;\n\n");
-    }
 
     if block.has_main {
         output.push_str(&block.code);

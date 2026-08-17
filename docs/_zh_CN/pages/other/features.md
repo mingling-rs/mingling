@@ -25,42 +25,6 @@ Mingling 提供了一系列**预设特性组**，方便用户按需组合启用�
 
 **定位：** 完整模式，启用 Mingling 的全部核心功能。在 `advanced` 的基础上额外包含 clap 集成、完整的结构化渲染器（含所有序列化格式）以及实验性的路径分析器，适合大型、功能全面的命令行应用。
 
-## `build_advanced`
-
-**启用特性：** `build`、`comp`
-
-**定位：** 构建期增强配置，用于在项目构建时生成补全脚本等构建辅助材料（`comp` 特性提供补全脚本生成能力）。
-
-> [!NOTE]
->
-> 此特性组为**构建依赖**专用，需配合 `advanced` 特性使用。请在 `Cargo.toml` 的 `[build-dependencies]` 中启用：
-
-```toml
-[dependencies.mingling]
-features = ["advanced"]
- 
-[build-dependencies.mingling]
-features = ["build_advanced"]
-```
- 
-## `build_full`
-
-**启用特性：** `build`、`comp`、`pathf`、`dispatch_tree`
-
-**定位：** 完整的构建期配置，在 `build_advanced` 的基础上额外包含路径分析器（`pathf`）以自动解析类型模块路径，适合结构复杂、需要自动化构建期分析的项目。
-
-> [!NOTE]
->
-> 此特性组为**构建依赖**专用，需配合 `full` 特性使用。请在 `Cargo.toml` 的 `[build-dependencies]` 中启用：
-
-```toml
-[dependencies.mingling]
-features = ["full"]
- 
-[build-dependencies.mingling]
-features = ["build_full"]
-```
- 
 # 特性详解
 
 ## 特性 `all_serde_fmt`
@@ -91,23 +55,6 @@ async fn handle_state_foo(foo: StateFoo) -> Next {
  
 详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-async-support)
 
-## 特性 `builds`
-
-**介绍:**
-
-启用部分需要在 `build.rs` 使用的脚本，目前包含：
-
-1. `comp` 特性下的补全脚本生成：
-
-```rust
-// BUILD TIME
-// Features: ["builds", "comp"]
-use mingling::build::build_comp_scripts;
- 
-// 为 `myprogram` 生成补全脚本
-build_comp_scripts("myprogram").unwrap();
-```
- 
 ## 特性 `clap`
 
 **介绍:**
@@ -318,17 +265,10 @@ pub struct ErrorNotDir(PathBuf);
 # Cargo.toml
 [dependencies.mingling]
 features = ["pathf"]
- 
-[build-dependencies.mingling]
-features = ["builds", "pathf"]
 ```
  
-```rust
-// BUILD TIME
-// Features: ["pathf"]
-analyze_and_build_type_mapping().unwrap();
-```
- 
+开启 `pathf` 特性后，`gen_program!()` 会在编译期自动调用 `build_pathf!()` 执行类型映射分析。
+
 详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-pathfinder)
 
 ## 特性 `picker`

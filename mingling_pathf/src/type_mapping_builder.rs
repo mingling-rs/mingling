@@ -5,7 +5,9 @@
 
 use std::collections::HashSet;
 use std::fmt::Write as FmtWrite;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use cargo_metadata::MetadataCommand;
 
 use crate::error::MinglingPathfinderError;
 use crate::module_pathf;
@@ -87,40 +89,74 @@ pub fn analyze_and_build_type_mapping_for(
     Ok(())
 }
 
-/// Convenience version to be called from `build.rs`, automatically reading configuration
-/// from environment variables.
+/// Runs `cargo metadata` from the given crate directory and returns the
+/// workspace's target directory.
 ///
-/// Reads `CARGO_PKG_NAME` and `OUT_DIR`, and outputs to `{OUT_DIR}/{CARGO_PKG_NAME}/`.
+/// The subprocess resolves the target directory exactly as Cargo does,
+/// honoring `.cargo/config.toml`, `CARGO_TARGET_DIR`, and `--target-dir`.
+///
+/// `crate_dir` — crate root directory (i.e., the directory containing Cargo.toml).
+///
+/// # Errors
+///
+/// Returns a [`MinglingPathfinderError::CargoMetadata`] if `cargo metadata`
+/// cannot be executed or its output cannot be parsed.
+pub fn target_directory(crate_dir: &Path) -> Result<PathBuf, MinglingPathfinderError> {
+    let metadata = MetadataCommand::new()
+        .current_dir(crate_dir)
+        .no_deps()
+        .exec()
+        .map_err(|e| MinglingPathfinderError::CargoMetadata(e.to_string()))?;
+    Ok(metadata.target_directory.into_std_path_buf())
+}
+
+/// The directory where all of Mingling's compile-time build artifacts are
+/// written for the current crate: `{target_directory}/mingling/`.
+///
+/// Reads `CARGO_MANIFEST_DIR` from the environment to locate the crate, then
+/// resolves the target directory via [`target_directory`]. Works both from a
+/// `build.rs` and from proc-macro expansion (no `OUT_DIR` required).
+///
+/// # Errors
+///
+/// Returns a [`MinglingPathfinderError`] if the environment variables are
+/// missing or the target directory cannot be resolved.
+pub fn build_output_dir() -> Result<PathBuf, MinglingPathfinderError> {
+    let crate_dir = std::env::var("CARGO_MANIFEST_DIR").map_err(|_| {
+        MinglingPathfinderError::IoError(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "CARGO_MANIFEST_DIR not set",
+        ))
+    })?;
+    Ok(target_directory(Path::new(&crate_dir))?.join("mingling"))
+}
+
+/// Convenience version to be called from `build.rs` or macro expansion,
+/// automatically reading configuration from environment variables.
+///
+/// Reads `CARGO_PKG_NAME` and `CARGO_MANIFEST_DIR`, and outputs to
+/// `{target_directory}/mingling/{CARGO_PKG_NAME}/` (see [`build_output_dir`]).
 ///
 /// # Errors
 ///
 /// Returns a [`MinglingPathfinderError`] if the required environment variables
-/// (`CARGO_PKG_NAME`, `OUT_DIR`) are not set, the current directory cannot be
-/// determined, or the type mapping generation fails.
+/// (`CARGO_PKG_NAME`, `CARGO_MANIFEST_DIR`) are not set or the type mapping
+/// generation fails.
 pub fn analyze_and_build_type_mapping() -> Result<(), MinglingPathfinderError> {
     let crate_name = std::env::var("CARGO_PKG_NAME").map_err(|_| {
         MinglingPathfinderError::IoError(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "CARGO_PKG_NAME not set (not running in build.rs?)",
+            "CARGO_PKG_NAME not set",
         ))
     })?;
-
-    let out_dir = std::env::var("OUT_DIR").map_err(|_| {
+    let crate_dir = std::env::var("CARGO_MANIFEST_DIR").map_err(|_| {
         MinglingPathfinderError::IoError(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "OUT_DIR not set (not running in build.rs?)",
+            "CARGO_MANIFEST_DIR not set",
         ))
     })?;
 
-    let crate_dir = std::env::current_dir()?;
-    let output_dir = Path::new(&out_dir).join(&crate_name);
+    let output_dir = build_output_dir()?.join(&crate_name);
 
-    analyze_and_build_type_mapping_for(&crate_dir, &output_dir)?;
-
-    // Notify Cargo to re-run build.rs when source files change
-    println!("cargo:rerun-if-changed=src/");
-    println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_OS");
-    println!("cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ARCH");
-
-    Ok(())
+    analyze_and_build_type_mapping_for(Path::new(&crate_dir), &output_dir)
 }

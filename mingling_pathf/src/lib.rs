@@ -13,3 +13,5 @@ pub mod patterns;
 mod type_mapping_builder;
 pub use type_mapping_builder::analyze_and_build_type_mapping;
 pub use type_mapping_builder::analyze_and_build_type_mapping_for;
+pub use type_mapping_builder::build_output_dir;
+pub use type_mapping_builder::target_directory;

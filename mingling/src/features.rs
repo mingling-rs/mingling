@@ -31,50 +31,6 @@ pub const MINGLING_ASYNC: bool = false;
 #[cfg(feature = "async")]
 #[allow(unused)]
 pub const MINGLING_ASYNC: bool = true;
-/// Whether the `build` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "build"))]
-#[allow(unused)]
-pub const MINGLING_BUILD: bool = false;
-
-/// Whether the `build` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "build")]
-#[allow(unused)]
-pub const MINGLING_BUILD: bool = true;
-/// Whether the `build_advanced` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "build_advanced"))]
-#[allow(unused)]
-pub const MINGLING_BUILD_ADVANCED: bool = false;
-
-/// Whether the `build_advanced` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "build_advanced")]
-#[allow(unused)]
-pub const MINGLING_BUILD_ADVANCED: bool = true;
-/// Whether the `build_full` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "build_full"))]
-#[allow(unused)]
-pub const MINGLING_BUILD_FULL: bool = false;
-
-/// Whether the `build_full` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "build_full")]
-#[allow(unused)]
-pub const MINGLING_BUILD_FULL: bool = true;
-/// Whether the `builds` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "builds"))]
-#[allow(unused)]
-pub const MINGLING_BUILDS: bool = false;
-
-/// Whether the `builds` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "builds")]
-#[allow(unused)]
-pub const MINGLING_BUILDS: bool = true;
 /// Whether the `clap` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "clap"))]

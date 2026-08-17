@@ -34,6 +34,9 @@ pub struct StateInstallBuild {
     pub workspace_root: PathBuf,
     pub install_dir: PathBuf,
     pub release_dir: PathBuf,
+    /// Directory holding Mingling's compile-time build outputs
+    /// (`{target_directory}/mingling/`), e.g. the completion scripts.
+    pub mingling_dir: PathBuf,
     pub exe_suffix: &'static str,
     pub enable: bool,
 }
@@ -43,6 +46,9 @@ pub struct StateInstallBuild {
 pub struct StateInstallCopy {
     pub install_dir: PathBuf,
     pub release_dir: PathBuf,
+    /// Directory holding Mingling's compile-time build outputs
+    /// (`{target_directory}/mingling/`), e.g. the completion scripts.
+    pub mingling_dir: PathBuf,
     pub exe_suffix: &'static str,
     pub installed: Vec<PathBuf>,
     pub enable: bool,
@@ -95,6 +101,10 @@ pub fn install(
             .target_directory
             .join("release")
             .into_std_path_buf(),
+        mingling_dir: metadata
+            .target_directory
+            .join("mingling")
+            .into_std_path_buf(),
         exe_suffix: env::consts::EXE_SUFFIX,
         enable: enable.bool(),
     }
@@ -117,6 +127,7 @@ pub fn handle_state_install_build(state: StateInstallBuild) -> Next {
     StateInstallCopy {
         install_dir: state.install_dir,
         release_dir: state.release_dir,
+        mingling_dir: state.mingling_dir,
         exe_suffix: state.exe_suffix,
         installed: vec![],
         enable: state.enable,
@@ -159,13 +170,13 @@ pub fn handle_state_install_copy(
         }
     }
 
-    // Completion scripts are generated into the build profile directory
-    // (OUT_DIR/../../../), copy every one whose name contains `_comp`,
-    // regardless of its suffix
-    for entry in fs::read_dir(&state.release_dir).map_err(|e| {
+    // Completion scripts are generated into `{target_directory}/mingling/` at
+    // compile time (via `build_comp!()`); copy every one whose name contains
+    // `_comp`, regardless of its suffix.
+    for entry in fs::read_dir(&state.mingling_dir).map_err(|e| {
         io::Error::new(
             e.kind(),
-            format!("failed to read {}: {e}", state.release_dir.display()),
+            format!("failed to read {}: {e}", state.mingling_dir.display()),
         )
     })? {
         let entry = entry.map_err(|e| {

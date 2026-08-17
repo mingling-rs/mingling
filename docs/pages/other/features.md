@@ -25,42 +25,6 @@ Mingling provides a set of **preset feature groups** that make it easy to enable
 
 **Positioning:** Full mode, enables all of Mingling's core functionality. In addition to `advanced`, it includes clap integration, the full structural renderer (with all serialization formats), and the experimental path analyzer. Suitable for large, feature-complete command-line applications.
 
-## `build_advanced`
-
-**Enables features:** `build`, `comp`
-
-**Positioning:** Build-time enhanced configuration, used to generate build helpers such as completion scripts at build time (the `comp` feature provides completion script generation).
-
-> [!NOTE]
->
-> This feature group is intended for **build dependencies** only and must be used alongside the `advanced` feature. Enable it in the `[build-dependencies]` section of `Cargo.toml`:
-
-```toml
-[dependencies.mingling]
-features = ["advanced"]
- 
-[build-dependencies.mingling]
-features = ["build_advanced"]
-```
- 
-## `build_full`
-
-**Enables features:** `build`, `comp`, `pathf`, `dispatch_tree`
-
-**Positioning:** Full build-time configuration, extends `build_advanced` with the path analyzer (`pathf`) to automatically resolve type module paths, suitable for projects with complex structures that require automated build-time analysis.
-
-> [!NOTE]
->
-> This feature group is intended for **build dependencies** only and must be used alongside the `full` feature. Enable it in the `[build-dependencies]` section of `Cargo.toml`:
-
-```toml
-[dependencies.mingling]
-features = ["full"]
- 
-[build-dependencies.mingling]
-features = ["build_full"]
-```
- 
 # Feature Details
 
 ## Feature `all_serde_fmt`
@@ -91,23 +55,6 @@ async fn handle_state_foo(foo: StateFoo) -> Next {
  
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-async-support)
 
-## Feature `builds`
-
-**Description:**
-
-Enables scripts needed for use in `build.rs`, currently including:
-
-1. Completion script generation under the `comp` feature:
-
-```rust
-// BUILD TIME
-// Features: ["builds", "comp"]
-use mingling::build::build_comp_scripts;
- 
-// Generate completion scripts for `myprogram`
-build_comp_scripts("myprogram").unwrap();
-```
- 
 ## Feature `clap`
 
 **Description:**
@@ -318,17 +265,10 @@ When enabled, types can be defined in any submodule, and `gen_program!()` can au
 # Cargo.toml
 [dependencies.mingling]
 features = ["pathf"]
- 
-[build-dependencies.mingling]
-features = ["builds", "pathf"]
 ```
  
-```rust
-// BUILD TIME
-// Features: ["pathf"]
-analyze_and_build_type_mapping().unwrap();
-```
- 
+With the `pathf` feature enabled, `gen_program!()` automatically invokes `build_pathf!()` at compile time to run the type mapping analysis.
+
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-pathfinder)
 
 ## Feature `picker`

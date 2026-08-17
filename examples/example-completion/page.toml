@@ -7,4 +7,4 @@ desc = """
 Demonstrates how to implement dynamic shell completion with `#[completion]` and generate scripts for bash, zsh, fish, and pwsh.
 """
 tags = ["comp"]
-files = ["src/main.rs", "build.rs", "Cargo.toml"]
+files = ["src/main.rs", "Cargo.toml"]

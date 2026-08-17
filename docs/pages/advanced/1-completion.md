@@ -11,13 +11,6 @@ Mingling's completion is **fully dynamic** — no static completion files, sugge
 # Cargo.toml
 [dependencies.mingling]
 features = ["comp"]
- 
-[build-dependencies.mingling]
-features = [
-    "comp",
-    # Enable `build` for build-time support
-    "build"
-]
 ```
  
 ## How it works
@@ -72,8 +65,18 @@ suggest! {
 
 ## Generate completion scripts
 
-Call `build_comp_scripts` in `build.rs` to generate completion scripts (requires `builds` + `comp` features).
+When the `comp` feature is enabled, `gen_program!()` automatically invokes `build_comp!()` at compile time, which generates the completion scripts (named after `CARGO_PKG_NAME`) into `target/mingling/`.
 
+If your binary name differs from the crate name, call `build_comp!()` manually with the binary name:
+
+```rust
+// Features: ["comp"]
+@@@use mingling::macros::build_comp;
+@@@fn example() {
+build_comp!("mybin");
+@@@}
+```
+ 
 See [example-completion](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-completion).
 
 <p align="center" style="font-size: 0.85em; color: gray;">

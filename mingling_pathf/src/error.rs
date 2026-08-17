@@ -53,6 +53,11 @@ pub enum MinglingPathfinderError {
         /// Details from the parser about the parse failure.
         message: String,
     },
+
+    /// `cargo metadata` could not be executed or parsed.
+    ///
+    /// `message` contains the underlying error from the cargo invocation.
+    CargoMetadata(String),
 }
 
 impl fmt::Display for MinglingPathfinderError {
@@ -82,6 +87,7 @@ impl fmt::Display for MinglingPathfinderError {
             Self::SynError { path, message } => {
                 write!(f, "Failed to parse {}: {message}", path.display())
             }
+            Self::CargoMetadata(message) => write!(f, "cargo metadata failed: {message}"),
         }
     }
 }

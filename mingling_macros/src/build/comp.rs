@@ -2,7 +2,27 @@ use std::path::PathBuf;
 
 use just_template::tmpl;
 
-use crate::ShellFlag;
+/// Represents the shell environment for which the output format is intended.
+///
+/// This is an internal copy of `mingling_core::ShellFlag`, kept private to the
+/// build module because the macros crate must not depend on `mingling_core`.
+/// Which variants are constructed depends on the target OS (`#[cfg]`), so
+/// platform-gated variants may be unused on any given host.
+#[allow(dead_code)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
+pub(crate) enum ShellFlag {
+    /// Represents the Bash shell.
+    #[default]
+    Bash,
+    /// Represents the Zsh shell.
+    Zsh,
+    /// Represents the Fish shell.
+    Fish,
+    /// Represents `PowerShell`.
+    Powershell,
+    /// A custom or unsupported shell type, identified by the provided string.
+    Other(String),
+}
 
 const TMPL_COMP_BASH: &str = include_str!("../../tmpls/comps/bash.sh");
 const TMPL_COMP_ZSH: &str = include_str!("../../tmpls/comps/zsh.zsh");
@@ -15,21 +35,10 @@ const TMPL_COMP_PWSH: &str = include_str!("../../tmpls/comps/pwsh.ps1");
 /// On Linux, generates Zsh, Bash, and Fish completions.
 /// Scripts are written to the `OUT_DIR` (or `target/` if `OUT_DIR` is not set).
 ///
-/// # Example
-/// ```
-/// # #[cfg(all(feature = "build", feature = "comp"))] {
-/// # temp_env::with_var("OUT_DIR", Some(".temp/target/test/out/"), || {
-/// # use mingling_core::ShellFlag;
-/// # use mingling_core::build::build_comp_scripts;
-/// // Generate completion scripts for "myapp"
-/// build_comp_scripts("myapp").unwrap();
+/// # Errors
 ///
-/// // Generate completion scripts for current package
-/// build_comp_scripts(env!("CARGO_PKG_NAME")).unwrap();
-/// # });
-/// # }
-/// ```
-pub fn build_comp_scripts(name: &str) -> Result<(), std::io::Error> {
+/// Returns an [`std::io::Error`] if a script cannot be written.
+pub(crate) fn build_comp_scripts(name: &str) -> Result<(), std::io::Error> {
     #[cfg(target_os = "windows")]
     {
         build_comp_script(&ShellFlag::Powershell, name)?;
@@ -57,22 +66,23 @@ pub fn build_comp_scripts(name: &str) -> Result<(), std::io::Error> {
 ///
 /// This function takes a shell flag and a binary name, selects the appropriate
 /// template, substitutes the binary name into the template, and writes the
-/// resulting completion script to the target directory (typically `target/`).
+/// resulting completion script to the Mingling build directory
+/// (`{target_directory}/mingling/`, resolved via `cargo metadata`).
 ///
-/// # Example
-/// ```
-/// # #[cfg(all(feature = "build", feature = "comp"))] {
-/// # temp_env::with_var("OUT_DIR", Some(".temp/target/test/out/"), || {
-/// # use mingling_core::ShellFlag;
-/// # use mingling_core::build::build_comp_script;
-/// build_comp_script(&ShellFlag::Bash, "myapp").unwrap();
-/// # });
-/// # }
-/// ```
-pub fn build_comp_script(shell_flag: &ShellFlag, bin_name: &str) -> Result<(), std::io::Error> {
-    let out_dir = std::path::PathBuf::from(std::env::var("OUT_DIR").unwrap());
-    let target_dir = out_dir.join("../../../");
-    build_comp_script_to(shell_flag, bin_name, &target_dir.to_string_lossy())
+/// # Errors
+///
+/// Returns an [`std::io::Error`] if the script cannot be written.
+pub(crate) fn build_comp_script(
+    shell_flag: &ShellFlag,
+    bin_name: &str,
+) -> Result<(), std::io::Error> {
+    let output_dir = comp_output_dir()?;
+    build_comp_script_to(shell_flag, bin_name, &output_dir.to_string_lossy())
+}
+
+/// The directory where completion scripts are written: `{target_directory}/mingling/`.
+fn comp_output_dir() -> Result<PathBuf, std::io::Error> {
+    mingling_pathf::build_output_dir().map_err(|e| std::io::Error::other(e.to_string()))
 }
 
 /// Generate a shell completion script to a specified directory.
@@ -81,17 +91,10 @@ pub fn build_comp_script(shell_flag: &ShellFlag, bin_name: &str) -> Result<(), s
 /// selects the appropriate template, substitutes the binary name into the template,
 /// and writes the resulting completion script to the specified directory.
 ///
-/// # Example
-/// ```
-/// # #[cfg(all(feature = "build", feature = "comp"))] {
-/// # temp_env::with_var("OUT_DIR", Some(".temp/target/test/out/"), || {
-/// # use mingling_core::ShellFlag;
-/// # use mingling_core::build::build_comp_script_to;
-/// build_comp_script_to(&ShellFlag::Bash, "myapp", ".temp/target/test/out/").unwrap();
-/// # });
-/// # }
-/// ```
-pub fn build_comp_script_to(
+/// # Errors
+///
+/// Returns an [`std::io::Error`] if the script cannot be written.
+pub(crate) fn build_comp_script_to(
     shell_flag: &ShellFlag,
     bin_name: &str,
     target_dir: &str,
@@ -103,33 +106,6 @@ pub fn build_comp_script_to(
     std::fs::create_dir_all(&target_path)?;
     let output_path = target_path.join(format!("{bin_name}_comp{ext}"));
     std::fs::write(&output_path, tmpl.to_string())
-}
-
-/// Generate a shell completion script and write it to a specified file path.
-///
-/// This function takes a shell flag, a binary name, and an output file path,
-/// selects the appropriate template, substitutes the binary name into the template,
-/// and writes the resulting completion script directly to the specified file path.
-///
-/// # Example
-/// ```
-/// # #[cfg(all(feature = "build", feature = "comp"))] {
-/// # temp_env::with_var("OUT_DIR", Some(".temp/target/test/out/"), || {
-/// # use mingling_core::ShellFlag;
-/// # use mingling_core::build::build_comp_script_to_file;
-/// build_comp_script_to_file(&ShellFlag::Bash, "myapp", ".temp/target/test/out/myapp.comp.sh").unwrap();
-/// # });
-/// # }
-/// ```
-pub fn build_comp_script_to_file(
-    shell_flag: &ShellFlag,
-    bin_name: &str,
-    output_path: impl Into<PathBuf>,
-) -> Result<(), std::io::Error> {
-    let (tmpl_str, _ext) = get_tmpl(shell_flag);
-    let mut tmpl = just_template::Template::from(tmpl_str);
-    tmpl!(bin_name = bin_name);
-    std::fs::write(output_path.into(), tmpl.to_string())
 }
 
 const fn get_tmpl(shell_flag: &ShellFlag) -> (&'static str, &'static str) {
@@ -144,7 +120,6 @@ const fn get_tmpl(shell_flag: &ShellFlag) -> (&'static str, &'static str) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ShellFlag;
 
     #[test]
     fn get_tmpl_bash() {

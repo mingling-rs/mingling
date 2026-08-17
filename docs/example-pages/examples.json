@@ -69,13 +69,11 @@
     "tags": [
       "pathf",
       "dispatch_tree",
-      "extras",
-      "build.rs"
+      "extras"
     ],
     "files": [
       "src/main.rs",
       "src/sub/mod.rs",
-      "build.rs",
       "Cargo.toml"
     ]
   },
@@ -87,13 +85,11 @@
     "desc": "Combines the `pathf` feature with entry metadata. The metadata `DataType` and the entry `BindType` are defined inside a submodule, and `pathf` resolves them for `gen_program!()` at build time.\n",
     "tags": [
       "pathf",
-      "metadata",
-      "build.rs"
+      "metadata"
     ],
     "files": [
       "src/main.rs",
       "src/sub/mod.rs",
-      "build.rs",
       "Cargo.toml"
     ]
   },
@@ -124,7 +120,6 @@
     ],
     "files": [
       "src/main.rs",
-      "build.rs",
       "Cargo.toml"
     ]
   },
@@ -294,12 +289,10 @@
     "desc": "Demonstrates the `pathf` feature, which automatically resolves type module paths at build time. Types can be defined in submodules without explicit `use` in the main module.\n",
     "tags": [
       "pathf",
-      "build.rs",
       "architecture"
     ],
     "files": [
       "Cargo.toml",
-      "build.rs",
       "src/main.rs",
       "src/sub/mod.rs"
     ]

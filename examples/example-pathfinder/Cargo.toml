@@ -11,15 +11,4 @@ features = [
     "pathf",
 ]
 
-[build-dependencies.mingling]
-path = "../../mingling"
-
-features = [
-    # Enable `pathf` features
-    "pathf",
-
-    # Enable the `build` feature for build-time support
-    "build",
-]
-
 [workspace]

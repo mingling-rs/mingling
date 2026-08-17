@@ -64,6 +64,10 @@ pub mod macros {
     #[cfg(feature = "picker")]
     pub use arg_picker::macros::*;
     pub use mingling_macros::buffer;
+    #[cfg(feature = "comp")]
+    pub use mingling_macros::build_comp;
+    #[cfg(feature = "pathf")]
+    pub use mingling_macros::build_pathf;
     pub use mingling_macros::chain;
     #[cfg(feature = "extras")]
     pub use mingling_macros::command;

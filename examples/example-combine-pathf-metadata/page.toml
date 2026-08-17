@@ -6,5 +6,5 @@ category = "advanced"
 desc = """
 Combines the `pathf` feature with entry metadata. The metadata `DataType` and the entry `BindType` are defined inside a submodule, and `pathf` resolves them for `gen_program!()` at build time.
 """
-tags = ["pathf", "metadata", "build.rs"]
-files = ["src/main.rs", "src/sub/mod.rs", "build.rs", "Cargo.toml"]
+tags = ["pathf", "metadata"]
+files = ["src/main.rs", "src/sub/mod.rs", "Cargo.toml"]

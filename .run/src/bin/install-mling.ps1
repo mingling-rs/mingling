@@ -6,5 +6,5 @@ New-Item -ItemType Directory -Force -Path .temp/mling/bin, .temp/mling/scripts |
 
 Copy-Item .temp/target/release/mling.exe .temp/mling/bin/
 Copy-Item .temp/target/release/mingling-cli.exe .temp/mling/bin/
-Copy-Item .temp/target/release/mling_comp.ps1 .temp/mling/scripts/mling_comp.ps1
+Copy-Item .temp/target/mingling/mling_comp.ps1 .temp/mling/scripts/mling_comp.ps1
 Copy-Item mingling_cli/scripts/load_mling.ps1 .temp/mling/

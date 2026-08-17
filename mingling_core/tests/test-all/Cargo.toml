@@ -10,7 +10,6 @@ publish = false
 mingling = { path = "../../../mingling", features = [
     "structural_renderer_full",
     "comp",
-    "builds",
     "repl",
     "dispatch_tree",
     "picker",
