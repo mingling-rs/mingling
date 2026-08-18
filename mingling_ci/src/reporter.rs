@@ -11,6 +11,9 @@ use std::sync::Mutex;
 /// Root of the collected CI logs (relative to the repo root).
 pub const COLLECT_DIR: &str = "./.temp/reports/collect";
 
+/// Generated report output (relative to the repo root).
+pub const REPORT_PATH: &str = "./.temp/reports/result.md";
+
 /// The platform a package check ran on.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReportPlatform {

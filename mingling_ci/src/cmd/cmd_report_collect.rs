@@ -8,10 +8,9 @@ use mingling::{
 };
 
 use crate::Next;
-use crate::reporter::COLLECT_DIR;
+use crate::reporter::{COLLECT_DIR, REPORT_PATH};
 use crate::res::{CargoError, Manifests, MessagePrinter, ResCollectLogs};
 
-const OUTPUT_PATH: &str = "./.temp/reports/result.md";
 const REPORT_TEMPLATE: &str = include_str!("../../tmpls/report.md");
 const TASK_SECTION_TEMPLATE: &str = include_str!("../../tmpls/task_section.md");
 
@@ -93,7 +92,7 @@ pub fn report_collect(manifests: &Manifests, logs: &ResCollectLogs) -> Next {
     *template.add_impl("task_sections".to_string()) = sections;
 
     let expanded = template.expand().unwrap_or_default();
-    let output = PathBuf::from(OUTPUT_PATH);
+    let output = PathBuf::from(REPORT_PATH);
     let parent = output.parent().expect("output path has a parent");
 
     if let Err(e) = std::fs::create_dir_all(parent).and_then(|()| std::fs::write(&output, expanded))
