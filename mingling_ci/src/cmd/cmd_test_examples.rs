@@ -1,5 +1,4 @@
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
 use mingling::{
     Grouped, Routable,
     macros::{buffer, command, renderer},
@@ -8,6 +7,7 @@ use mingling::{
 
 use crate::Next;
 use crate::examples::{check_example, load_test_configs};
+use crate::progress::task_progress_bar;
 use crate::reporter::{self, ReportResult};
 
 #[command(node = "test-examples")]
@@ -16,16 +16,7 @@ pub async fn test_examples() -> Next {
 
     let configs = load_test_configs();
     let total = configs.len();
-    let pb = ProgressBar::new(total as u64);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&format!(
-                "{} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}",
-                "     Testing".bold().bright_cyan()
-            ))
-            .unwrap()
-            .progress_chars("=> "),
-    );
+    let pb = task_progress_bar(total, "Testing");
     pb.set_message("examples");
 
     // One blocking task per example: build + run its test cases.

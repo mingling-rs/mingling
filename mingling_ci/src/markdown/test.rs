@@ -4,7 +4,8 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
+
+use crate::progress::task_progress_bar;
 
 use super::project::{
     MarkdownTestProject, generate_build_rs, generate_cargo_toml, generate_main_rs,
@@ -37,16 +38,7 @@ pub(crate) async fn try_test_markdown_project(
     }
 
     let total: usize = groups.values().map(Vec::len).sum();
-    let pb = ProgressBar::new(total as u64);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&format!(
-                "{} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}",
-                "     Testing".bold().bright_cyan()
-            ))
-            .unwrap()
-            .progress_chars("=> "),
-    );
+    let pb = task_progress_bar(total, "Testing");
     pb.set_message("blocks");
 
     // One blocking task per group; blocks within a group are serial because

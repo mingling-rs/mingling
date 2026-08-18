@@ -2,8 +2,8 @@ use std::ffi::OsString;
 use std::path::Path;
 
 use colored::Colorize;
-use indicatif::{ProgressBar, ProgressStyle};
 
+use crate::progress::task_progress_bar;
 use crate::reporter::{self, ReportResult};
 
 /// The manifest's parent directory, e.g. `./mingling` — the report location
@@ -33,17 +33,8 @@ pub(crate) async fn run_parallel_checks(
     reporter::set_task(task);
 
     let n = tasks.len();
-    let pb = ProgressBar::new(n as u64);
-    let padding = " ".repeat(12usize.saturating_sub(phase.len()));
-    let styled_prefix = format!("{}{}", padding, phase.bold().bright_cyan());
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template(&format!(
-                "{styled_prefix} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}"
-            ))
-            .unwrap()
-            .progress_chars("=> "),
-    );
+    let pb = task_progress_bar(n, phase);
+    pb.set_message("tasks");
 
     // Run each task in parallel.
     let mut set = tokio::task::JoinSet::new();

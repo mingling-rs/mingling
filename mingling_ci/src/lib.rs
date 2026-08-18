@@ -16,6 +16,7 @@ pub mod reporter;
 
 pub(crate) mod examples;
 pub(crate) mod markdown;
+pub(crate) mod progress;
 
 #[help]
 pub fn render_fallback(_: EntryFallback) -> String {
