@@ -1289,7 +1289,7 @@ pub fn hello() { /* ... */ }
 pub fn bye() { /* ... */ }
 
 #[completion(EntryHello)]
-pub fn complete_hello(ctx: &amp;ShellContext) -&gt; Suggest {
+pub fn complete_hello(ctx: ShellContext) -&gt; Suggest {
     if ctx.previous_word == "hello" {
         suggest! {
             "Alice": "The Sender",
