@@ -11,6 +11,9 @@ COMMANDS:
    report-collect                  Collect and organize all inspection reports
    report-clean                    Clean up all reports
 
+   git-lock                        Temporarily commit the workspace for CI
+   git-unlock                      Restore the workspace after CI
+
    show-features                   Print the docs.rs feature list of mingling
    show-manifests                  Print all crate paths that need to be checked
 
