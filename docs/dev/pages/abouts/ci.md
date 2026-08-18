@@ -112,7 +112,15 @@ Only acts when the HEAD commit message contains `CI TEMP` (case-sensitive); othe
 - `true` — hard reset past the marker commit, then soft reset + unstage, so **your pre-lock changes are restored into the working tree**.
 - `false` — a single hard reset back to the original HEAD.
 
-If the working tree is dirty when unlocking (e.g. CI left tracked changes behind, such as stale generated docs), the restore still runs but the command reports a **non-zero exit code** — this is the idempotency check. In CI, that fails the job.
+If the working tree is dirty when unlocking (e.g. CI left tracked changes behind, such as stale generated docs), the restore still runs but the command reports a **non-zero exit code** — this is the idempotency check. In CI, that fails the job. The dirtiness check compares **content**, not file timestamps, so merely touching files during a build never fails the check.
+
+Pass `--show-diff` to print the diff of those tracked changes before they are discarded:
+
+```bash
+cargo ci git-unlock --show-diff
+```
+ 
+This is what the CI workflow uses: an idempotency failure shows exactly what contaminated the workspace in the job logs.
 
 > **Warning**: when unlocking a `true` lock, changes made *during* CI are discarded. Anything you had before locking comes back.
 
