@@ -10,8 +10,8 @@ use crate::Next;
 use crate::res::ResFeatureList;
 use crate::task::run::run_parallel_checks;
 
-#[command(node = "docs-build")]
-pub async fn docs_build(features: &ResFeatureList) -> Next {
+#[command(node = "docs-check")]
+pub async fn docs_check(features: &ResFeatureList) -> Next {
     let args = vec![
         OsString::from("cargo"),
         OsString::from("rustdoc"),
@@ -24,20 +24,20 @@ pub async fn docs_build(features: &ResFeatureList) -> Next {
         OsString::from("warnings"),
     ];
     let tasks = vec![("mingling".to_string(), "./mingling".to_string(), args)];
-    let fail_count = run_parallel_checks("Docs-Build", "Docs", tasks).await;
+    let fail_count = run_parallel_checks("Docs-Check", "Docs", tasks).await;
 
-    ResultDocsBuild { fail_count }.to_chain()
+    ResultDocsCheck { fail_count }.to_chain()
 }
 
 /// Number of failed doc builds (0 or 1).
 #[derive(Grouped)]
-pub struct ResultDocsBuild {
+pub struct ResultDocsCheck {
     pub fail_count: usize,
 }
 
 /// Silently sets a non-zero exit code when the doc build failed.
 #[renderer(buffer)]
-pub fn render_docs_build(r: ResultDocsBuild, exit_code: &mut ResExitCode) {
+pub fn render_docs_check(r: ResultDocsCheck, exit_code: &mut ResExitCode) {
     if r.fail_count > 0 {
         exit_code.exit_code = 1;
     }

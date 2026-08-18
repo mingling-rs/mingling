@@ -10,9 +10,9 @@ use crate::examples::{check_example, load_test_configs};
 use crate::progress::task_progress_bar;
 use crate::reporter::{self, ReportResult};
 
-#[command(node = "test-examples")]
-pub async fn test_examples() -> Next {
-    reporter::set_task("Test-Examples");
+#[command(node = "example-check")]
+pub async fn example_check() -> Next {
+    reporter::set_task("Example-Check");
 
     let configs = load_test_configs();
     let total = configs.len();
@@ -51,18 +51,18 @@ pub async fn test_examples() -> Next {
     pb.finish_and_clear();
     reporter::flush();
 
-    ResultTestExamples { fail_count }.to_chain()
+    ResultExampleCheck { fail_count }.to_chain()
 }
 
 /// Number of examples that failed to build or pass their tests.
 #[derive(Grouped)]
-pub struct ResultTestExamples {
+pub struct ResultExampleCheck {
     pub fail_count: usize,
 }
 
 /// Silently sets a non-zero exit code when any example failed.
 #[renderer(buffer)]
-pub fn render_test_examples(r: ResultTestExamples, exit_code: &mut ResExitCode) {
+pub fn render_example_check(r: ResultExampleCheck, exit_code: &mut ResExitCode) {
     if r.fail_count > 0 {
         exit_code.exit_code = 1;
     }

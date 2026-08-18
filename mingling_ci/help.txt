@@ -19,8 +19,8 @@ COMMANDS:
    markdown-check-all              Verify rust code blocks in all configured markdown files
    markdown-compare <PATH> <PATH>  Compare the structure of two markdown files/dirs
    markdown-compare-all            Compare all translated docs against the reference
-   build-all                       Build all crates
-   clippy-all                      Run clippy with -D warnings on all crates
+   build-check                     Build all crates
+   clippy-check                    Run clippy with -D warnings on all crates
    test-all                        Test all crates
-   test-examples                   Build examples and run their test.toml cases
-   docs-build                      Build mingling docs with -D warnings
+   example-check                   Build examples and run their test.toml cases
+   docs-check                      Build mingling docs with -D warnings

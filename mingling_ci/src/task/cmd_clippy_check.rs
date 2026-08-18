@@ -11,15 +11,15 @@ use crate::Next;
 use crate::res::Manifests;
 use crate::task::run::{location, run_parallel_checks};
 
-#[command(node = "clippy-all")]
-pub async fn clippy_all(manifests: &Manifests) -> Next {
+#[command(node = "clippy-check")]
+pub async fn clippy_check(manifests: &Manifests) -> Next {
     let tasks = manifests
         .package_dirs
         .iter()
         .map(|(name, path)| (name.clone(), location(path), clippy_args(path)))
         .collect();
-    let fail_count = run_parallel_checks("Clippy-All", "Clippy", tasks).await;
-    ResultClippyAll { fail_count }.to_chain()
+    let fail_count = run_parallel_checks("Clippy-Check", "Clippy", tasks).await;
+    ResultClippyCheck { fail_count }.to_chain()
 }
 
 /// `cargo clippy --manifest-path <path> -- -D warnings`
@@ -37,13 +37,13 @@ fn clippy_args(path: &Path) -> Vec<OsString> {
 
 /// Number of packages that failed clippy.
 #[derive(Grouped)]
-pub struct ResultClippyAll {
+pub struct ResultClippyCheck {
     pub fail_count: usize,
 }
 
 /// Silently sets a non-zero exit code when any clippy check failed.
 #[renderer(buffer)]
-pub fn render_clippy_all(r: ResultClippyAll, exit_code: &mut ResExitCode) {
+pub fn render_clippy_check(r: ResultClippyCheck, exit_code: &mut ResExitCode) {
     if r.fail_count > 0 {
         exit_code.exit_code = 1;
     }
