@@ -26,7 +26,8 @@ pub struct ResCollectLogs {
 }
 
 impl ResCollectLogs {
-    /// Reads `collect/{task}/{os}/{package}.{ok|err}` and the git info.
+    /// Reads `collect/{task}/{os}/` — the aggregate `ok` file (one package per
+    /// line) and per-package `{package}.err` files — plus the git info.
     #[must_use]
     pub fn read() -> Self {
         let mut logs = Self::default();
@@ -52,16 +53,25 @@ impl ResCollectLogs {
                     };
                     for file in files.flatten() {
                         let file_name = file.file_name().to_string_lossy().into_owned();
-                        if let Some((package, ok)) = parse_log_name(&file_name) {
+                        if file_name == "ok" {
+                            // Aggregate success file: one package name per line.
+                            if let Ok(content) = std::fs::read_to_string(file.path()) {
+                                for package in content.lines().filter(|l| !l.is_empty()) {
+                                    logs.statuses
+                                        .entry((task.clone(), package.to_string()))
+                                        .or_default()
+                                        .insert(os.clone(), true);
+                                }
+                            }
+                        } else if let Some(package) = file_name.strip_suffix(".err") {
+                            let package = package.to_string();
                             logs.statuses
                                 .entry((task.clone(), package.clone()))
                                 .or_default()
-                                .insert(os.clone(), ok);
-                            if !ok {
-                                let err = std::fs::read_to_string(file.path()).unwrap_or_default();
-                                logs.err_outputs
-                                    .insert((task.clone(), os.clone(), package), strip_ansi(&err));
-                            }
+                                .insert(os.clone(), false);
+                            let err = std::fs::read_to_string(file.path()).unwrap_or_default();
+                            logs.err_outputs
+                                .insert((task.clone(), os.clone(), package), strip_ansi(&err));
                         }
                     }
                 }
@@ -76,18 +86,6 @@ impl ResCollectLogs {
 #[program_setup]
 pub fn report_setup(p: &mut Program<ThisProgram>) {
     p.with_resource(ResCollectLogs::read());
-}
-
-/// Parses a `{package}.{ok|err}` file name into `(package, ok)`.
-fn parse_log_name(file_name: &str) -> Option<(String, bool)> {
-    file_name
-        .strip_suffix(".ok")
-        .map(|n| (n.to_string(), true))
-        .or_else(|| {
-            file_name
-                .strip_suffix(".err")
-                .map(|n| (n.to_string(), false))
-        })
 }
 
 /// Strips ANSI escape sequences from `input`.

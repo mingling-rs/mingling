@@ -80,6 +80,7 @@ pub(crate) async fn run_parallel_checks(
     }
 
     pb.finish_and_clear();
+    reporter::flush();
     fail_count
 }
 

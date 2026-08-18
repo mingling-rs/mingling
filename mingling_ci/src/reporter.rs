@@ -4,9 +4,10 @@
 //! so that the [`crate::cmd::collect_results`] command can assemble the final
 //! report. The task name is set once per CI phase via [`set_task`].
 
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
-use std::sync::Mutex;
+use std::sync::{LazyLock, Mutex};
 
 /// Root of the collected CI logs (relative to the repo root).
 pub const COLLECT_DIR: &str = "./.temp/reports/collect";
@@ -15,7 +16,7 @@ pub const COLLECT_DIR: &str = "./.temp/reports/collect";
 pub const REPORT_PATH: &str = "./.temp/reports/result.md";
 
 /// The platform a package check ran on.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum ReportPlatform {
     Windows,
     Linux,
@@ -45,6 +46,10 @@ pub enum ReportResult {
 /// Current task name (e.g. `Build-All`); set via [`set_task`].
 static CURRENT_TASK: Mutex<Option<String>> = Mutex::new(None);
 
+/// Successful package names pending a [`flush`], grouped by platform.
+static OK_BUFFER: LazyLock<Mutex<HashMap<ReportPlatform, Vec<String>>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
 /// Sets the task that subsequent [`export`] calls write under.
 ///
 /// # Panics
@@ -54,13 +59,11 @@ pub fn set_task(task: &str) {
     *CURRENT_TASK.lock().unwrap() = Some(task.to_string());
 }
 
-/// Exports one package result to `collect/{task}/{platform}/{package}.{ok|err}`.
+/// Exports one package result to `collect/{task}/{platform}/`.
 ///
-/// The platform is inferred from the current build target using `#[cfg]`
-/// attributes, so callers don't need to pass it explicitly.
-///
-/// Writes `{package}.ok` on success and `{package}.err` (with the output) on
-/// failure. Errors are reported to stderr and otherwise ignored.
+/// Successes are buffered and written to the `ok` file by [`flush`]; failures
+/// write `{package}.err` (with the output) immediately. Errors are reported to
+/// stderr and otherwise ignored.
 ///
 /// # Panics
 ///
@@ -80,16 +83,59 @@ fn current_platform() -> ReportPlatform {
     }
 }
 
-/// Exports one package result to `collect/{task}/{platform}/{package}.{ok|err}`
-/// for a specific platform.
+/// Exports one package result for a specific platform.
 ///
-/// Writes `{package}.ok` on success and `{package}.err` (with the output) on
-/// failure. Errors are reported to stderr and otherwise ignored.
+/// Successes are buffered and written to the `ok` file by [`flush`]; failures
+/// write `{package}.err` (with the output) immediately. Errors are reported to
+/// stderr and otherwise ignored.
 ///
 /// # Panics
 ///
 /// Panics if the internal task mutex is poisoned.
 pub fn export_on(package: &str, platform: ReportPlatform, result: ReportResult) {
+    match result {
+        ReportResult::Ok => OK_BUFFER
+            .lock()
+            .unwrap()
+            .entry(platform)
+            .or_default()
+            .push(package.to_string()),
+        ReportResult::Error(output) => write_err(package, platform, output),
+    }
+}
+
+/// Writes buffered successes to `{task}/{platform}/ok`, one package per line.
+///
+/// # Panics
+///
+/// Panics if the internal task mutex is poisoned.
+pub fn flush() {
+    let Some(task) = CURRENT_TASK.lock().unwrap().clone() else {
+        eprintln!("reporter: no current task; call reporter::set_task first");
+        return;
+    };
+
+    let buffered = std::mem::take(&mut *OK_BUFFER.lock().unwrap());
+    for (platform, packages) in buffered {
+        let dir = Path::new(COLLECT_DIR).join(&task).join(platform.dir_name());
+        if let Err(e) = fs::create_dir_all(&dir) {
+            eprintln!("reporter: failed to create {}: {e}", dir.display());
+            continue;
+        }
+        let content = if packages.is_empty() {
+            String::new()
+        } else {
+            packages.join("\n") + "\n"
+        };
+        let path = dir.join("ok");
+        if let Err(e) = fs::write(&path, content) {
+            eprintln!("reporter: failed to write {}: {e}", path.display());
+        }
+    }
+}
+
+/// Writes a failure entry to `{task}/{platform}/{package}.err`.
+fn write_err(package: &str, platform: ReportPlatform, output: String) {
     let Some(task) = CURRENT_TASK.lock().unwrap().clone() else {
         eprintln!("reporter: no current task; call reporter::set_task first");
         return;
@@ -101,12 +147,8 @@ pub fn export_on(package: &str, platform: ReportPlatform, result: ReportResult) 
         return;
     }
 
-    let (file_name, content) = match result {
-        ReportResult::Ok => (format!("{package}.ok"), String::new()),
-        ReportResult::Error(output) => (format!("{package}.err"), output),
-    };
-    let path = dir.join(file_name);
-    if let Err(e) = fs::write(&path, content) {
+    let path = dir.join(format!("{package}.err"));
+    if let Err(e) = fs::write(&path, output) {
         eprintln!("reporter: failed to write {}: {e}", path.display());
     }
 }
@@ -119,13 +161,15 @@ mod tests {
     fn export_writes_ok_and_err_files() {
         set_task("reporter-test");
         let task_root = Path::new(COLLECT_DIR).join("reporter-test");
-        let dir = task_root.join("Linux");
+        let dir = task_root.join(current_platform().dir_name());
         fs::remove_dir_all(&task_root).ok();
 
         export("pkg-a", ReportResult::Ok);
         export("pkg-b", ReportResult::Error("boom".to_string()));
+        flush();
 
-        assert!(dir.join("pkg-a.ok").is_file());
+        assert!(dir.join("ok").is_file());
+        assert_eq!(fs::read_to_string(dir.join("ok")).unwrap(), "pkg-a\n");
         assert!(dir.join("pkg-b.err").is_file());
         assert_eq!(fs::read_to_string(dir.join("pkg-b.err")).unwrap(), "boom");
 
