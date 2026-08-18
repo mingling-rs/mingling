@@ -3,9 +3,9 @@
     CI workflow and local execution guide for Mingling
 </p>
 
-Mingling's CI process is built into the project, with its execution logic located in `.run/src/bin/ci.rs`. You can run it locally via the `cargo ci` command, which produces the same results as the `CI` workflow in GitHub Actions.
+Mingling's CI process is built into the project itself: the execution logic lives in `mingling_ci/`, a separate crate **built on the Mingling framework** — it dogfoods the very library it validates. You can run it locally via the `cargo ci` command, which produces the same results as the `CI` workflow in GitHub Actions.
 
-During development, you can run `cargo ci` at any time to verify that your code hasn't introduced regressions.
+During development, you can run `cargo ci <command>` at any time to verify that your code hasn't introduced regressions.
 
 ## Running Locally
 
@@ -13,82 +13,132 @@ An alias is defined in `.cargo/config.toml` at the project root:
 
 ```toml
 [alias]
-ci = "run --manifest-path .run/Cargo.toml --bin ci --quiet --"
+ci = "run --manifest-path mingling_ci/Cargo.toml --bin ci --quiet --"
 ```
  
-Simply execute:
+Run a single step:
 
 ```bash
-cargo ci
+cargo ci build-check
 ```
  
-## CI Steps
+Run the full pipeline (lock → all checks → refresh → unlock) via the orchestration script:
 
-Every CI step is an independent switch (`--check-*`). Running `cargo ci` with no options executes **all** steps in the order below; pass one or more `--check-*` flags to run only the selected steps.
+```bash
+python .run/src/bin/ci.py
+```
+ 
+The script is also picked up by `run.sh`:
 
-| Step            | Flag                    | What it does                                                                                                                                                |
-| --------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Build           | `--check-build`         | Recursively finds all `Cargo.toml` files and runs `cargo build` for each crate in parallel (workspace members build with all documented features).          |
-| Clippy          | `--check-clippy`        | Runs `cargo clippy ... -- -D warnings` for every crate in parallel; any warning fails the check.                                                            |
-| Test            | `--check-test`          | Runs `cargo test` for every crate in parallel (workspace tests run with all documented features; `arg-picker` is excluded).                                 |
-| Arg picker      | `--check-arg-picker`    | Runs `cargo test -p arg-picker` with its default features.                                                                                                  |
-| Markdown code   | `--check-markdown-code` | Runs the `test-all-markdown-code` tool to verify code blocks in all `*.md` files compile. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md).              |
-| Examples        | `--check-examples`      | Runs the `test-examples` tool to verify all examples behave as expected. Each example declares its expected output tests in `examples/<example>/test.toml`. |
-| Docs up to date | `--check-docs-refresh`  | Runs the documentation refresh tools and `cargo fmt`, then fails if the working tree is no longer clean (i.e. the docs were stale).                         |
-| API docs        | `--check-api-docs`      | Builds API docs with the `[package.metadata.docs.rs]` features and fails if `docs/api-docs/` is out of date.                                                |
+```bash
+./run.sh ci
+```
+ 
+## Commands
 
-### Docs up to date in detail
+Every CI step is one subcommand. `cargo ci` with no subcommand prints the help page.
 
-`--check-docs-refresh` runs the following documentation refresh tools in sequence:
+### UTILS
 
-- `docs-code-box-fix`
-- `docsify-sidebar-gen`
-- `refresh-docs`
-- `refresh-feature-mod`
-- `sync-examples`
+| Command         | What it does                                                            |
+| --------------- | ----------------------------------------------------------------------- |
+| `report-collect` | Assembles the collected logs in `.temp/reports/collect/` into `.temp/reports/result.md` |
+| `report-clean`  | Deletes all collected logs and the generated report                     |
+| `git-lock`      | Locks the workspace for a CI run (temporary commit, see below)          |
+| `git-unlock`    | Restores the workspace and checks idempotency (see below)               |
+| `show-manifests` | Prints every crate path that CI will check                              |
+| `show-features` | Prints the `docs.rs` feature list of `mingling`                         |
 
-Finally, it runs `cargo fmt` to unify code formatting. Because the refresh tools regenerate derived files, running this check against stale documentation modifies the working tree — and `ci.rs` fails the run in that case. (Using `--dirty` skips the cleanliness check, which makes this flag behave like a plain "refresh docs" command.)
+### TOOLS (refresh)
 
-### Examples in detail
+| Command             | What it does                                                                      |
+| ------------------- | --------------------------------------------------------------------------------- |
+| `example-refresh`   | Regenerates `mingling/src/example_docs.rs` and `docs/example-pages/examples.json` |
+| `docsify-refresh`   | Fixes docsify code-box blank lines and regenerates `_sidebar.md` files            |
+| `features-refresh`  | Regenerates `mingling/src/features.rs` from `mingling/Cargo.toml`                 |
 
-`--check-examples` runs the `test-examples` tool in two phases:
+These tools **write files**. Running them inside a `git-lock` / `git-unlock` pair turns them into an up-to-date check: if the generated files are stale, the tree becomes dirty and `git-unlock` fails.
 
-1. **Build** — every example that has a `test.toml` is built in parallel (one `cargo build` task per example, reusing the shared `.temp/target` cache).
-2. **Test** — each `[[runs]]` entry in `examples/*/test.toml` is executed serially against the pre-built binary, asserting the CLI arguments (`input`) and the expected `exit-code` / `result`.
+### TASKS (checks)
 
-An example that changes its behavior only needs its own `test.toml` updated.
+| Command                 | What it does                                                                                                        |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `build-check`           | Finds all `Cargo.toml` files (minus `.config/ci-ignored-dirs.txt`) and runs `cargo build` per crate in parallel.   |
+| `clippy-check`          | Runs `cargo clippy ... -- -D warnings` for every crate in parallel; any warning fails the check.                    |
+| `test-all`              | Runs `cargo test` for every crate in parallel. Each base crate can override its command in its `mingling-ci.toml` (`[test].command`, with `<<<features>>>` expanded from the docs.rs feature list); `arg-picker` uses this to run `cargo test -p arg-picker`. |
+| `example-check`         | Builds every example and runs the expected-output tests declared in `examples/<example>/test.toml`.                 |
+| `docs-check`            | Builds the `mingling` API docs with the `[package.metadata.docs.rs]` features and `-D warnings`.                   |
+| `markdown-check <PATH>` | Verifies the rust code blocks of a single markdown file compile. See [ABOUT_CODE_VERIFY](docs/_ABOUT_CODE_VERIFY.md). |
+| `markdown-check-all`    | Verifies all markdown files declared in `.config/verified-docs.toml`.                                              |
+| `markdown-compare <A> <B>` | Compares the *structure* of two markdown files or directories.                                                  |
+| `markdown-compare-all`  | Checks every translated docs directory mirrors the reference `./docs/pages/` (per `.config/docs-lang.txt`).         |
 
-### Combining steps
+## Reports
 
-When several `--check-*` flags are combined, the steps run in the order listed above. In "run all" mode (no flags given), the documentation steps all execute even if one of them fails, so every problem is reported in a single run.
+Every check exports its per-item outcome through the reporter into `.temp/reports/collect/`:
 
-## File Normalization
+- `{Task}.{Platform}.ok` — one `item = location` per line (aggregated on flush).
+- `{Task}.{Platform}.{item}.err` — failures, first line is the location.
 
-Regardless of which steps run, `cargo ci` finishes with `git add --renormalize .` to ensure file attributes such as line endings conform to the repository configuration.
+`cargo ci report-collect` reads that directory and renders the consolidated report (per-task tables + failure details) to `.temp/reports/result.md`:
+
+```bash
+cargo ci report-collect
+cat .temp/reports/result.md
+```
+ 
+`cargo ci report-clean` wipes both the collect directory and the report.
 
 ## Workspace Cleanliness and Temporary Commits
 
-To ensure reproducible CI results, `ci.rs` imposes strict requirements on the workspace state:
+To ensure reproducible CI results, CI runs inside a `git-lock` / `git-unlock` pair.
 
-- If the current workspace is not clean and `--dirty` has not been specified, the script will prompt whether to create a temporary commit:
-    - The commit message is `[DO NOT PUSH] CI TEMP [DO NOT PUSH]`.
-    - Use `-y` to auto-confirm without interaction.
-- After CI finishes, the script automatically restores the workspace:
-    - First, `git reset --hard` discards all changes.
-    - If a temporary commit was created, it then runs `git reset --soft HEAD~1` and unstages everything, restoring the state to before CI started.
-- If `--dirty` is specified, the temporary commit and the final cleanliness check are skipped.
+### git-lock
 
-> **Warning**: `git reset --hard` is executed at the end of CI. If you use `--dirty`, ensure you have no unsaved important changes.
+1. Pins the current HEAD to a backup branch: `git branch -f mingling/bkup HEAD` (created or force-reset).
+2. If the working tree is dirty, all changes are packed into a plain temporary commit `[DO NOT PUSH] TEMP [DO NOT PUSH]`.
+3. A marker file `MINGLING-CI-CHECKING` is written — content `true` when the tree was dirty, `false` when it was clean.
+4. Everything is committed as `[DO NOT PUSH] CI TEMP [DO NOT PUSH]`.
+
+```
+clean:  A ── CI TEMP (marker = false)
+dirty:  A ── TEMP (your changes) ── CI TEMP (marker = true)
+```
+ 
+### git-unlock
+
+Only acts when the HEAD commit message contains `CI TEMP` (case-sensitive); otherwise it refuses with a non-zero exit. The restore path is picked by the marker:
+
+- `true` — hard reset past the marker commit, then soft reset + unstage, so **your pre-lock changes are restored into the working tree**.
+- `false` — a single hard reset back to the original HEAD.
+
+If the working tree is dirty when unlocking (e.g. CI left tracked changes behind, such as stale generated docs), the restore still runs but the command reports a **non-zero exit code** — this is the idempotency check. In CI, that fails the job.
+
+> **Warning**: when unlocking a `true` lock, changes made *during* CI are discarded. Anything you had before locking comes back.
 
 ## GitHub Actions Workflow
 
 `.github/workflows/ci.yml` defines the project's CI:
 
 - Triggered on `push` to the `main` branch.
-- A single `Check` job runs every `--check-*` step in a **step × platform** matrix (`ubuntu-latest` and `windows-latest`), i.e. `cargo ci --check-<item>` for each combination. The `.temp` build cache is no longer used; every matrix job starts from a clean workspace.
+- A `Check` job runs in a **item × platform** matrix (`ubuntu-latest`, `windows-latest`, `macos-latest`), each combination being `cargo ci <command>` inside a `git-lock` / `git-unlock` pair:
+
+| Matrix item    | Command                                                         |
+| -------------- | -------------------------------------------------------------- |
+| `build`        | `cargo ci build-check`                                         |
+| `clippy`       | `cargo ci clippy-check`                                        |
+| `test`         | `cargo ci test-all`                                            |
+| `arg-picker`   | `cargo ci test-all` (covered via its `mingling-ci.toml` override) |
+| `markdown-code` | `cargo ci markdown-check-all && cargo ci markdown-compare-all` |
+| `examples`     | `cargo ci example-check`                                       |
+| `docs-refresh` | `cargo ci example-refresh` + `docsify-refresh` + `features-refresh` |
+| `api-docs`     | `cargo ci docs-check`                                          |
+
+- Every matrix job uploads its `.temp/reports/collect/` as an artifact — **even on failure**, so failures are always collected.
+- A `Report` job (runs even when some checks failed) downloads all collect artifacts, runs `cargo ci report-collect`, and publishes `result.md` to the job summary via `$GITHUB_STEP_SUMMARY`.
 - After CI passes, the `unreleased` tag is automatically moved to the latest commit on `main`.
 
-For non-`main` branches and pull requests, `.github/workflows/ci-check-only.yml` runs the same matrix without moving the tag or deploying.
+For non-`main` branches and pull requests, `.github/workflows/ci-check-only.yml` runs the same matrix and report collection without moving the tag or deploying.
 
 ### API Documentation Deployment
 

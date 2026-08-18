@@ -7,16 +7,28 @@ This system automatically extracts and compiles Rust code blocks from docs, ensu
 
 ## Config
 
-Specify which Markdown files to verify via [`verified-docs.toml`](https://github.com/mingling-rs/mingling/blob/main/verified-docs.toml) in the project root.
+Specify which Markdown files to verify via `.config/verified-docs.toml`:
 
-You can also test a single file via command-line arg:
-
-```sh
-./run-tools.sh test-all-markdown-code docs/pages/1-getting-started.md
+```toml
+[verified]
+readme = "./README.md"
+getting_started = "./GETTING-STARTED.md"
+documents_en_us = "./docs/pages/**"
+documents_zh_cn = "./docs/_zh_CN/pages/**"
 ```
  
-```powershell
-.\run-tools.ps1 test-all-markdown-code docs/pages/1-getting-started.md
+Each key is a label used to name the report items; values are single files, directories, or `**` globs.
+
+Run all configured files:
+
+```sh
+cargo ci markdown-check-all
+```
+ 
+You can also test a single file via command-line arg (path is joined onto the current directory):
+
+```sh
+cargo ci markdown-check docs/pages/1-getting-started.md
 ```
  
 ## Default Rules
@@ -74,7 +86,7 @@ After the **default rules** are applied, each block goes through:
 
 ### 2. Temp Project Generation
 
-Each block (or each dedup-hash group) gets its own Cargo project:
+Each dedup-hash group gets its own Cargo project:
 
 ```
 .temp/doc-test/<hash>/
@@ -85,18 +97,16 @@ Each block (or each dedup-hash group) gets its own Cargo project:
  
 ### 3. Build Verification
 
-Compiled with `cargo build --release`, stderr inherited to the terminal for real-time progress.
+Compiled with `cargo check --manifest-path ... --color=always`, stderr inherited to the terminal for real-time progress. Blocks within a group are serial (they share the crate directory); groups run in parallel.
 
 - **Build OK** → **PASS**
 - **Build FAIL** → **FAIL**, last 20 lines of error captured.
 
 ### 4. Report
 
-After all tests, a report is written to `.temp/DOCS-TEST-RESULT.md`, containing:
+Each file's result is exported through the reporter: an `ok` entry when every block passed, otherwise an `err` entry carrying the failed blocks' details. All entries land in `.temp/reports/collect/` (e.g. `Markdown-Check-All.Linux.ok`, `Markdown-Check-All.Linux.<item>.err`).
 
-- Total tests, passed, failed
-- Table of results per block (block #, file, line, status)
-- Detailed errors for failed blocks
+`cargo ci report-collect` then assembles everything into `.temp/reports/result.md` (also published to the GitHub Actions job summary).
 
 ### 5. Exit Code
 
@@ -121,7 +131,7 @@ fn placeholder() {}
  
 ### `// BUILD TIME`
 
-Marks the block as a `build.rs` script instead of `src/main.rs`. The block code is wrapped in `fn main() { }` and written to `build.rs`. A stub `fn main() {}` is generated for `src/main.rs`.
+Marks the block as a `build.rs` script instead of `src/main.rs`. The block code is wrapped in `fn main() { }` and written to `build.rs`. A stub `fn main() {}` is generated for `src/main.rs`. The declared features are mirrored into `[build-dependencies]` so `build.rs` sees the same feature set.
 
 ```rust
 // BUILD TIME
@@ -202,11 +212,16 @@ Use `@@@` for:
 
 | Module                                        | Responsibility                                                                      |
 | --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `dev_tools/src/verify.rs`                     | Block parsing, Cargo.toml/main.rs generation, build exec, hash dedup, report output |
-| `dev_tools/src/bin/test-all-markdown-code.rs` | Entry point: read config, collect files, orchestrate tests, aggregate results       |
-| `verified-docs.toml`                          | Specifies which doc files to verify                                                 |
+| `mingling_ci/src/markdown/project.rs`         | Block parsing, Cargo.toml/main.rs generation, FNV-1a dep hash                      |
+| `mingling_ci/src/markdown/test.rs`            | Grouping by dep hash, parallel `cargo check` execution                             |
+| `mingling_ci/src/task/cmd_markdown_check.rs`  | `markdown-check` / `markdown-check-all` commands: read config, collect files, report |
+| `mingling_ci/src/markdown/compare.rs`         | Structural signature comparison (for `markdown-compare`)                           |
+| `mingling_ci/src/task/cmd_markdown_compare.rs`| `markdown-compare` / `markdown-compare-all` commands                               |
+| `.config/verified-docs.toml`                  | Specifies which doc files to verify                                                 |
 
----
+### Structure Comparison
+
+`markdown-compare` (two files or directories) and `markdown-compare-all` (all languages from `.config/docs-lang.txt`, whose first line is the reference directory) check that every translated docs directory **mirrors the structure** of the reference docs exactly: one token per line classifying headings, fenced code blocks (with language tag), `@@@` lines, blank lines, blockquotes, lists and plain text. Translated text may differ; the structure may not.
 
 ## Full Example
 

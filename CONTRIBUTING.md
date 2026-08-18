@@ -19,8 +19,10 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 | **Documents**               | `docs/`              | All documents                                                        |
 | **Dev Documents**           | `docs/dev/`          | Internal documents                                                   |
 | **Resources**               | `docs/res/`          | All resources                                                        |
-| **Development tools**       | `.run/src/bin`       | Contains scripts and Rust tools                                      |
-| **CI**                      | `.run/src/bin/ci.rs` | Can be invoked directly via `cargo ci`                               |
+| **CI system**               | `mingling_ci/`       | CI crate built on the Mingling framework, invoked via `cargo ci`     |
+| **CI orchestration**        | `.run/src/bin/ci.py` | Full pipeline script (lock → checks → refresh → unlock)             |
+| **Development tools**       | `.run/src/bin`       | Contains scripts and Rust tools (`deploy-api-docs`, `install-mling`, …) |
+| **CI configs**              | `.config/`           | `ci-ignored-dirs.txt`, `verified-docs.toml`, `docs-lang.txt`         |
 | **Temporary files**         | `.temp/`             | Ignored by `.gitignore`                                              |
 
 ## 2. How to Contribute
@@ -30,7 +32,13 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 If you'd like to contribute to `mingling`, `mingling_core`, `mingling_macros`, or `mingling_pathf`, first share your idea on the [Github Issue](https://github.com/mingling-rs/mingling/issues) page to confirm before starting work.
 
 - **Before making changes**, make sure your branch stays **as close as possible** to the upstream `main` branch.
-- **After finishing**, run `cargo ci` locally (see [ABOUT CI](https://mingling-rs.github.io/mingling/docs/dev/#/pages/abouts/ci) for how it works). If `cargo ci` passes locally, your changes are most likely correct.
+- **After finishing**, run the full CI pipeline locally (see [ABOUT CI](https://mingling-rs.github.io/mingling/docs/dev/#/pages/abouts/ci) for how it works):
+
+```bash
+./run.sh ci
+```
+
+If it passes locally, your changes are most likely correct. (`./run.sh ci` runs `python .run/src/bin/ci.py`, which locks the workspace, runs every check and refresh step, then unlocks — the final unlock fails if the run left the tree dirty.)
 
 ### Example Code Contribution
 
@@ -51,7 +59,7 @@ tags = ["tag1", "tag2"]    # Tags (optional)
 files = ["Cargo.toml", "src/main.rs"]
 ```
 
-Optionally, each example may contain a `test.toml` file declaring expected output tests, which are executed by CI (`./run.sh test-examples`):
+Optionally, each example may contain a `test.toml` file declaring expected output tests, which are executed by CI (`cargo ci example-check`):
 
 ```toml
 [[runs]]
@@ -66,23 +74,20 @@ expect.result = "Hello, Alice!"
 
 If you change expected behavior, update the assertions in the example's `test.toml`.
 
-After editing examples, run these scripts to keep things in sync:
+After editing examples, run these commands to keep things in sync:
 
 ```bash
 # Ensure code compiles
-./run.sh build-all
+cargo ci build-check
 
 # Ensure code style
-./run.sh clippy
-
-# Sync page.toml info to docs/example-pages/examples.json
-./run.sh sync-examples
+cargo ci clippy-check
 
 # Check all examples behave as expected
-./run.sh test-examples
+cargo ci example-check
 
-# Sync examples content into mingling/src/example_docs.rs
-./run.sh refresh-docs
+# Sync examples content into mingling/src/example_docs.rs and examples.json
+cargo ci example-refresh
 
 # (Optional) Preview the Example Viewer in a browser
 # Requires: Python
@@ -99,14 +104,14 @@ To contribute docs, edit files under `docs/`. For other language translations, r
 - **Before submitting**, always run:
 
 ```bash
-# Fix code block issues in docsify
-./run.sh docs-code-box-fix
-
-# Generate sidebar
-./run.sh docsify-sidebar-gen
+# Fix code box issues and regenerate sidebars
+cargo ci docsify-refresh
 
 # Verify all Markdown code blocks compile
-./run.sh test-all-markdown-code
+cargo ci markdown-check-all
+
+# Verify translated docs mirror the reference structure
+cargo ci markdown-compare-all
 ```
 
 ### Web Frontend Contribution
@@ -121,7 +126,7 @@ No strict requirements here — just modify the relevant `*.html` files. Preview
 
 ### Dev Tool Contribution
 
-`Mingling CI` code is under strict review. If you want to improve `mingling`'s CI pipeline or other dev tools (under `.run/`), **please** first file an [Issue](https://github.com/mingling-rs/mingling/issues) and contact [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)!
+`Mingling CI` code is under strict review. If you want to improve `mingling`'s CI pipeline (`mingling_ci/`) or other dev tools (under `.run/`), **please** first file an [Issue](https://github.com/mingling-rs/mingling/issues) and contact [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)!
 
 ## 3. Submission Guide 🖊
 
@@ -161,15 +166,14 @@ No strict requirements here — just modify the relevant `*.html` files. Preview
 After editing documentation, refresh relevant files:
 
 ```bash
-# Refresh sidebar and README sync
-./run.sh docsify-sidebar-gen
-./run.sh refresh-docs
+# Fix code block blank line issues and regenerate sidebars
+cargo ci docsify-refresh
 
-# Fix code block blank line issues
-./run.sh docs-code-box-fix
+# Regenerate example docs module and examples index
+cargo ci example-refresh
 ```
 
-These steps are included in `cargo ci`; running `cargo ci` will execute them automatically.
+These steps are part of the full pipeline; `./run.sh ci` executes them automatically and fails if they leave the tree dirty (i.e. the generated files were stale).
 
 > [!TIP]
 > You can check the [ABOUT CI](https://mingling-rs.github.io/mingling/docs/dev/#/pages/abouts/ci) section to learn how "Mingling CI" works.
