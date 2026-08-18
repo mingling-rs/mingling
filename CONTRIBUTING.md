@@ -6,24 +6,24 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 
 ## 1. Project Structure 📦
 
-| Category                    | Path/Name            | Description                                                          |
-| --------------------------- | -------------------- | -------------------------------------------------------------------- |
-| **Entry crate**             | `mingling/`          | Project entry point                                                  |
-| **Core library**            | `mingling_core/`     | Imported as an external dependency                                   |
-| **Macro library**           | `mingling_macros/`   | Imported as an external dependency                                   |
-| **Mingling Pathfinder**     | `mingling_pathf/`    | Build-time module path resolution for types                          |
-| **Mingling Picker2**        | `arg_picker/`        | Mingling Arguments Parser                                            |
-| **Mingling Picker2 Macros** | `arg_picker_macros/` | Mingling Arguments Parser Macros                                     |
-| **Scaffolding tool**        | `mling/`             | Scaffolding tool `mingling-cli`                                      |
-| **Examples**                | `examples/`          | To add expected output tests, add a `test.toml` in the example's dir |
-| **Documents**               | `docs/`              | All documents                                                        |
-| **Dev Documents**           | `docs/dev/`          | Internal documents                                                   |
-| **Resources**               | `docs/res/`          | All resources                                                        |
-| **CI system**               | `mingling_ci/`       | CI crate built on the Mingling framework, invoked via `cargo ci`     |
-| **CI orchestration**        | `.run/src/bin/ci.py` | Full pipeline script (lock → checks → refresh → unlock)             |
+| Category                    | Path/Name            | Description                                                             |
+| --------------------------- | -------------------- | ----------------------------------------------------------------------- |
+| **Entry crate**             | `mingling/`          | Project entry point                                                     |
+| **Core library**            | `mingling_core/`     | Imported as an external dependency                                      |
+| **Macro library**           | `mingling_macros/`   | Imported as an external dependency                                      |
+| **Mingling Pathfinder**     | `mingling_pathf/`    | Build-time module path resolution for types                             |
+| **Mingling Picker2**        | `arg_picker/`        | Mingling Arguments Parser                                               |
+| **Mingling Picker2 Macros** | `arg_picker_macros/` | Mingling Arguments Parser Macros                                        |
+| **Scaffolding tool**        | `mling/`             | Scaffolding tool `mingling-cli`                                         |
+| **Examples**                | `examples/`          | To add expected output tests, add a `test.toml` in the example's dir    |
+| **Documents**               | `docs/`              | All documents                                                           |
+| **Dev Documents**           | `docs/dev/`          | Internal documents                                                      |
+| **Resources**               | `docs/res/`          | All resources                                                           |
+| **CI system**               | `mingling_ci/`       | CI crate built on the Mingling framework, invoked via `cargo ci`        |
+| **CI orchestration**        | `.run/src/bin/ci.py` | Full pipeline script (lock → checks → refresh → unlock)                 |
 | **Development tools**       | `.run/src/bin`       | Contains scripts and Rust tools (`deploy-api-docs`, `install-mling`, …) |
-| **CI configs**              | `.config/`           | `ci-ignored-dirs.txt`, `verified-docs.toml`, `docs-lang.txt`         |
-| **Temporary files**         | `.temp/`             | Ignored by `.gitignore`                                              |
+| **CI configs**              | `.config/`           | `ci-ignored-dirs.txt`, `verified-docs.toml`, `docs-lang.txt`            |
+| **Temporary files**         | `.temp/`             | Ignored by `.gitignore`                                                 |
 
 ## 2. How to Contribute
 
@@ -190,3 +190,7 @@ Mingling uses the **MIT + Apache 2.0** dual license. For details, please see:
 
 - [LICENSE-MIT](LICENSE-MIT)
 - [LICENSE-APACHE](LICENSE-APACHE)
+
+# Contributors
+
+<img src="https://contrib.rocks/image?repo=mingling-rs/mingling" />
