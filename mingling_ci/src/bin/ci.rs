@@ -41,6 +41,7 @@ async fn mingling_ci_begin() -> i32 {
 
     // CI Plugins
     program.with_setup(ManifestsSetup);
+    program.with_setup(FeaturesSetup);
     program.with_setup(ReportSetup);
 
     program.exec().await
