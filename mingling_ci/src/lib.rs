@@ -6,7 +6,7 @@
 use mingling::macros::{gen_program, help};
 
 pub(crate) mod cmd;
-pub(crate) mod job;
+pub(crate) mod task;
 
 /// Mingling CI's Resources
 pub mod res;
