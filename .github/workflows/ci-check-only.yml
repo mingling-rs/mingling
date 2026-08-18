@@ -61,7 +61,7 @@ jobs:
 
       - name: Unlock workspace (idempotency check)
         if: always()
-        run: cargo ci git-unlock
+        run: cargo ci git-unlock --show-diff
 
       - name: Fail when the check failed
         if: steps.check.outcome == 'failure'

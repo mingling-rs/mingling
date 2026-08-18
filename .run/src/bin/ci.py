@@ -14,20 +14,21 @@ import subprocess
 import sys
 from pathlib import Path
 
-# The pipeline steps, in execution order.
-STEPS = [
-    "git-lock",
-    "report-clean",
-    "build-check",
-    "clippy-check",
-    "test-all",
-    "example-check",
-    "docs-check",
-    "example-refresh",
-    "docsify-refresh",
-    "features-refresh",
-    # Idempotency check: exits non-zero if CI contaminated the workspace.
-    "git-unlock",
+# The pipeline steps, in execution order, as (command, args) pairs.
+STEPS: list[tuple[str, list[str]]] = [
+    ("git-lock", []),
+    ("report-clean", []),
+    ("build-check", []),
+    ("clippy-check", []),
+    ("test-all", []),
+    ("example-check", []),
+    ("docs-check", []),
+    ("example-refresh", []),
+    ("docsify-refresh", []),
+    ("features-refresh", []),
+    # Idempotency check: exits non-zero if CI contaminated the workspace, and
+    # prints the diff of the contamination before restoring.
+    ("git-unlock", ["--show-diff"]),
 ]
 
 
@@ -57,12 +58,12 @@ def main() -> int:
     except OSError:
         pass
 
-    for step in STEPS:
-        print(f"==> cargo ci {step}")
-        result = subprocess.run(["cargo", "ci", step], check=False)
+    for command, args in STEPS:
+        print(f"==> cargo ci {' '.join([command, *args])}")
+        result = subprocess.run(["cargo", "ci", command, *args], check=False)
         if result.returncode != 0:
             print(
-                f"error: step `{step}` failed with exit code {result.returncode}",
+                f"error: step `{command}` failed with exit code {result.returncode}",
                 file=sys.stderr,
             )
             return result.returncode

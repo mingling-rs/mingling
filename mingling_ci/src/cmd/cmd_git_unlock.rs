@@ -1,12 +1,13 @@
 use mingling::{
     Grouped, RenderResult, Routable,
-    macros::{buffer, command, r_println, renderer},
+    macros::{arg, buffer, command, r_println, renderer},
+    picker::{EntryPicker, value::Flag},
     res::ResExitCode,
 };
 
-use crate::Next;
 use crate::git::{LOCK_FILE, TEMP_COMMIT_MARK, head_message, run_git, worktree_clean};
 use crate::res::{CargoError, MessagePrinter};
+use crate::{Entry, Next};
 
 /// Undoes a CI temporary commit created by [`crate::cmd::cmd_git_lock`].
 ///
@@ -21,9 +22,13 @@ use crate::res::{CargoError, MessagePrinter};
 ///
 /// When the working tree is dirty (e.g. CI left tracked changes behind) the
 /// restore still runs, but the command reports a non-zero exit code so the
-/// caller knows the CI phase contaminated the repository.
+/// caller knows the CI phase contaminated the repository. With `--show-diff`
+/// the diff of those changes is printed before they are discarded.
 #[command(node = "git-unlock")]
-pub fn git_unlock() -> Next {
+// `#[command]` rewrites an owned first param into the entry type, so the args
+// must be passed by value even though the body only reads them.
+#[allow(clippy::needless_pass_by_value)]
+pub fn git_unlock(args: Entry) -> Next {
     let head = head_message().unwrap_or_default();
     if !head.contains(TEMP_COMMIT_MARK) {
         return ErrorGitUnlock(format!("HEAD is not a CI temporary commit: `{head}`")).to_chain();
@@ -37,11 +42,27 @@ pub fn git_unlock() -> Next {
     let based_on_dirty =
         std::fs::read_to_string(LOCK_FILE).is_ok_and(|content| content.trim() == "true");
 
+    if dirty && *args.pick(&arg![show_diff: Flag]).unwrap() {
+        show_diff();
+    }
+
     if let Err(e) = undo_ci_phase(based_on_dirty) {
         return ErrorGitUnlock(e).to_chain();
     }
 
     ResultGitUnlock { dirty }.to_chain()
+}
+
+/// Prints the tracked changes the CI run left behind, before the restore
+/// discards them. Untracked files are not shown (they are removed by clean).
+fn show_diff() {
+    let Ok(diff) = run_git(["diff", "HEAD"]) else {
+        return;
+    };
+    if diff.is_empty() {
+        return;
+    }
+    println!("{diff}");
 }
 
 /// Restores the workspace, keeping the user's pre-lock changes.
