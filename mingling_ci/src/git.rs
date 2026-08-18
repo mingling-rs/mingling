@@ -42,12 +42,19 @@ where
     }
 }
 
-/// Returns `true` when `git diff-index --quiet HEAD --` succeeds, i.e. the
-/// working tree has no tracked changes. Git failures count as "not clean" so
-/// the caller falls back to the marker-file path.
+/// Returns `true` when the working tree has no tracked changes relative to
+/// HEAD. Git failures count as "not clean" so the caller falls back to the
+/// marker-file path.
+///
+/// Uses the porcelain `git diff --quiet HEAD` rather than the plumbing
+/// `git diff-index --quiet HEAD`: after a full compile the source files'
+/// mtimes can be newer than the index stat records even though their content
+/// is unchanged, and `diff-index` reports that stale stat as a change. The
+/// porcelain diff refreshes the index first (via `diff.autoRefreshIndex`),
+/// so it only reports real content differences.
 pub(crate) fn worktree_clean() -> bool {
     Command::new("git")
-        .args(["diff-index", "--quiet", "HEAD", "--"])
+        .args(["diff", "--quiet", "HEAD", "--"])
         .status()
         .is_ok_and(|status| status.success())
 }
