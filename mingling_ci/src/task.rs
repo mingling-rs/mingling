@@ -1,2 +1,3 @@
 pub(crate) mod cmd_build;
 pub(crate) mod cmd_clippy;
+pub(crate) mod run;

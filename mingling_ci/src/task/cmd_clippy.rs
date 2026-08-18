@@ -1,81 +1,32 @@
+use std::ffi::OsString;
 use std::path::Path;
 
-use just_progress::progress::{self, ProgressInfo};
 use mingling::{
     Grouped, Routable,
-    macros::{buffer, command, r_println, renderer},
+    macros::{buffer, command, renderer},
+    res::ResExitCode,
 };
 
 use crate::Next;
-use crate::reporter::{self, ReportResult};
 use crate::res::Manifests;
+use crate::task::run::run_parallel_checks;
 
 #[command(node = "clippy-all")]
 pub async fn clippy_all(manifests: &Manifests) -> Next {
-    const TASK: &str = "Clippy-All";
-
-    reporter::set_task(TASK);
-
-    let total = manifests.package_dirs.len();
-    progress::update(TASK, 0.0, ProgressInfo::Info("Clippy"));
-
-    // Run one `cargo clippy` per manifest in parallel.
-    let mut set = tokio::task::JoinSet::new();
-    for (name, path) in &manifests.package_dirs {
-        let (name, path) = (name.clone(), path.clone());
-        set.spawn(async move { (name, run_cargo_clippy(&path).await) });
-    }
-
-    // Collect all outcomes first, then dump the report files in one round.
-    let mut results: Vec<(String, ReportResult)> = Vec::new();
-    let mut done = 0;
-    while let Some(joined) = set.join_next().await {
-        done += 1;
-        let Ok((name, (ok, output))) = joined else {
-            continue;
-        };
-        // The count is small, so the `usize -> f32` cast cannot lose precision.
-        #[allow(clippy::cast_precision_loss)]
-        let overall = done as f32 / total as f32;
-        progress::update(TASK, overall, ProgressInfo::Info("Clippy"));
-        results.push((
-            name,
-            if ok {
-                ReportResult::Ok
-            } else {
-                ReportResult::Error(output)
-            },
-        ));
-    }
-
-    let fail_count = results
-        .iter()
-        .filter(|(_, r)| matches!(r, ReportResult::Error(_)))
-        .count();
-    for (name, result) in results {
-        reporter::export(&name, result);
-    }
-
+    let fail_count = run_parallel_checks("Clippy-All", "Clippy", clippy_args, manifests).await;
     ResultClippyAll { fail_count }.to_chain()
 }
 
-/// Runs `cargo clippy --manifest-path <path> -- -D warnings`, returning success
-/// and output.
-async fn run_cargo_clippy(path: &Path) -> (bool, String) {
-    let output = tokio::process::Command::new("cargo")
-        .args(["clippy", "--manifest-path"])
-        .arg(path)
-        .args(["--", "-D", "warnings"])
-        .output()
-        .await;
-    match output {
-        Ok(output) => {
-            let mut log = String::from_utf8_lossy(&output.stdout).into_owned();
-            log.push_str(&String::from_utf8_lossy(&output.stderr));
-            (output.status.success(), log)
-        }
-        Err(e) => (false, format!("failed to run cargo: {e}")),
-    }
+/// `cargo clippy --manifest-path <path> -- -D warnings`
+fn clippy_args(path: &Path) -> Vec<OsString> {
+    vec![
+        "clippy".into(),
+        "--manifest-path".into(),
+        path.as_os_str().to_os_string(),
+        "--".into(),
+        "-D".into(),
+        "warnings".into(),
+    ]
 }
 
 /// Number of packages that failed clippy.
@@ -84,7 +35,10 @@ pub struct ResultClippyAll {
     pub fail_count: usize,
 }
 
+/// Silently sets a non-zero exit code when any clippy check failed.
 #[renderer(buffer)]
-pub fn render_clippy_all(r: ResultClippyAll) {
-    r_println!("Clippy-All: {} package(s) failed", r.fail_count);
+pub fn render_clippy_all(r: ResultClippyAll, exit_code: &mut ResExitCode) {
+    if r.fail_count > 0 {
+        exit_code.exit_code = 1;
+    }
 }
