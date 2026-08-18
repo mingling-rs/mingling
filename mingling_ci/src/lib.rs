@@ -14,6 +14,8 @@ pub mod res;
 /// Log exporter for CI reports
 pub mod reporter;
 
+pub(crate) mod markdown;
+
 #[help]
 pub fn render_fallback(_: EntryFallback) -> String {
     include_str!("../help.txt").to_string()

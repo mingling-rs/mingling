@@ -9,6 +9,8 @@ FLAGS:
 
 COMMANDS:
   UTILS:
+   markdown-check <PATH>    Verify rust code blocks in one markdown file
+   markdown-check-all       Verify rust code blocks in all configured markdown files
    report-collect           Collect and organize all inspection reports
    report-clean             Clean up all reports
 
