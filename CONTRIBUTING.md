@@ -25,8 +25,8 @@ Before contributing, we recommend reading [README](README.md) to get an overview
 | **Dev Documents**       | `docs/dev/`          | Internal documents                                                      |
 | **Resources**           | `docs/res/`          | All resources                                                           |
 | Dev Tools               |                      |                                                                         |
-| **CI system**           | `mingling_ci/`       | CI crate built on the Mingling framework, invoked via `cargo ci`        |
-| **CI configs**          | `.config/`           | `ci-ignored-dirs.txt`, `verified-docs.toml`, `docs-lang.txt`            |
+| **CI system**           | `dev/ci/`            | CI crate built on the Mingling framework, invoked via `cargo ci`        |
+| **CI configs**          | `dev/configs/`       | `ci-ignored-dirs.txt`, `verified-docs.toml`, `docs-lang.txt`            |
 | **CI orchestration**    | `.run/src/bin/ci.py` | Full pipeline script (lock → checks → refresh → unlock)                 |
 | **Development tools**   | `.run/src/bin`       | Contains scripts and Rust tools (`deploy-api-docs`, `install-mling`, …) |
 | Misc                    |                      |                                                                         |
@@ -142,34 +142,34 @@ No strict requirements here — just modify the relevant `*.html` files. Preview
 
 ### Dev Tool Contribution
 
-`Mingling CI` code is under strict review. If you want to improve `mingling`'s CI pipeline (`mingling_ci/`) or other dev tools (under `.run/`),
+`Mingling CI` code is under strict review. If you want to improve `mingling`'s CI pipeline (`dev/ci/`) or other dev tools (under `.run/`),
 **please** first file an [Issue](https://github.com/mingling-rs/mingling/issues) and contact [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)!
 
 ## 3. Submission Guide 🖊
 
 1. **Pull Request**
-   - Submit a GitHub Pull Request and @Reviewer **[Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)** for review
-   - Or send patches to **catil_grass@qq.com**
+    - Submit a GitHub Pull Request and @Reviewer **[Weicao-CatilGrass](https://github.com/Weicao-CatilGrass)** for review
+    - Or send patches to **catil_grass@qq.com**
 
 2. **Commit Messages**
-   - Clearly and concisely describe the changes, no stringent requirements
-   - Provide more detail for complex changes, keep it brief for simple changes
-   - But: if you use [Conventional Commits](https://www.conventionalcommits.org/), it would make me even happier :)
+    - Clearly and concisely describe the changes, no stringent requirements
+    - Provide more detail for complex changes, keep it brief for simple changes
+    - But: if you use [Conventional Commits](https://www.conventionalcommits.org/), it would make me even happier :)
 
 3. **CHANGELOG**
-   - If the submission includes functional changes or fixes, **the PR must include modifications to CHANGELOG.md** to describe the changes
-   - For minor changes like typo fixes, **CHANGELOG.md modification is not required**, and we will merge faster
+    - If the submission includes functional changes or fixes, **the PR must include modifications to CHANGELOG.md** to describe the changes
+    - For minor changes like typo fixes, **CHANGELOG.md modification is not required**, and we will merge faster
 
 4. **Multi-commit PR**
 
-   - A PR can contain multiple commits
-   - However, at least one commit must modify CHANGELOG.md
+    - A PR can contain multiple commits
+    - However, at least one commit must modify CHANGELOG.md
 
 5. **Review**
-   - After submission, please notify [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass) for review — this is the most efficient way to get feedback
+    - After submission, please notify [Weicao-CatilGrass](https://github.com/Weicao-CatilGrass) for review — this is the most efficient way to get feedback
 
 6. **Binary Resources**
-   - For binary resource files (images, etc.), please be cautious about adding them to avoid repository bloat
+    - For binary resource files (images, etc.), please be cautious about adding them to avoid repository bloat
 
 ## 5. Regarding AI Agent Usage 🤖
 

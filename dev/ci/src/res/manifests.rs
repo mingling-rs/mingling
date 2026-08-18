@@ -7,8 +7,8 @@ use crate::ThisProgram;
 
 /// Directories whose manifests are excluded from CI checks.
 ///
-/// Path is relative to the crate source file (`mingling_ci/src/res/`).
-const IGNORED_DIRS_FILE: &str = include_str!("../../../.config/ci-ignored-dirs.txt");
+/// Path is relative to the crate source file (`dev/ci/src/res/`).
+const IGNORED_DIRS_FILE: &str = include_str!("../../../configs/ci-ignored-dirs.txt");
 
 /// All `Cargo.toml` manifests the CI will check.
 #[derive(Default, Clone)]
@@ -27,7 +27,7 @@ pub fn manifests_setup(p: &mut Program<ThisProgram>) {
 
 /// Recursively collects every `Cargo.toml` under the current directory,
 /// skipping the legacy `.run` CI directory and any directory listed in
-/// `.config/ci-ignored-dirs.txt`.
+/// `dev/configs/ci-ignored-dirs.txt`.
 #[must_use]
 fn cargo_tomls() -> Vec<PathBuf> {
     let ignored = ignored_dirs();
@@ -55,7 +55,7 @@ fn cargo_tomls() -> Vec<PathBuf> {
     cargo_tomls
 }
 
-/// Parses `.config/ci-ignored-dirs.txt` into directory prefixes:
+/// Parses `dev/configs/ci-ignored-dirs.txt` into directory prefixes:
 /// non-empty lines that do not start with `#`, with the trailing `/` stripped
 /// (e.g. `./.temp/` → `./.temp`).
 fn ignored_dirs() -> Vec<String> {

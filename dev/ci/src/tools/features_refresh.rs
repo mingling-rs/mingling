@@ -16,7 +16,7 @@ use crate::res::{CargoError, MessagePrinter};
 
 const CARGO_TOML_PATH: &str = "./mingling/Cargo.toml";
 const OUTPUT_PATH: &str = "./mingling/src/features.rs";
-const TEMPLATE_CONTENT: &str = include_str!("../../../mingling/src/features.rs.tmpl");
+const TEMPLATE_CONTENT: &str = include_str!("../../../../mingling/src/features.rs.tmpl");
 
 #[command(node = "features-refresh")]
 pub fn features_refresh() -> Next {

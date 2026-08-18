@@ -10,10 +10,13 @@ docs/api-docs/
 docs/cov-test/
 
 # Drafts
-__*.md
+__*.*
 __*/
-__*.py
-__*.rs
 
 # Fuck
 nul
+
+# Editors config
+/.zed/
+/.vscode/
+/.idea/

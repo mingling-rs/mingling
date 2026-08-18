@@ -4,7 +4,7 @@
     Internal development documentation for the <b>Mingling</b> codebase — design notes, issue discussions, and architectural decisions.
 </p>
 
-This site is separate from the [Helpdoc](https://mingling-rs.github.io/mingling/docs/doc.html).
+This site is separate from the [Helpdoc](https://mingling-rs.github.io/mingling/docs/index.html).
 
 The helpdoc is user-facing: `tutorials`, `feature guides`, and `how-to content` for developers _using_ Mingling to build CLI applications.
 

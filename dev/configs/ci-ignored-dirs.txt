@@ -2,4 +2,4 @@
 ./.temp/
 
 # Self
-./mingling_ci/
+./dev/ci/

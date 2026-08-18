@@ -102,9 +102,9 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Windows" ]; then
-            powershell -ExecutionPolicy Bypass -File .run/src/bin/install-mling.ps1
+            powershell -ExecutionPolicy Bypass -File dev/run/src/bin/install-mling.ps1
           else
-            bash .run/src/bin/install-mling.sh
+            bash dev/run/src/bin/install-mling.sh
           fi
 
       - name: Package mling
@@ -181,13 +181,13 @@ jobs:
         run: rustup toolchain install nightly
 
       - name: Build API docs
-        run: cargo +nightly run --manifest-path .run/Cargo.toml --bin deploy-api-docs -- --docsrs
+        run: cargo +nightly run --manifest-path dev/run/Cargo.toml --bin deploy-api-docs -- --docsrs
 
       - name: Install cargo-llvm-cov
         run: cargo install --git https://github.com/Weicao-CatilGrass/cargo-llvm-cov cargo-llvm-cov
 
       - name: Run cov-test
-        run: cargo run --manifest-path .run/Cargo.toml --bin cov-test
+        run: cargo run --manifest-path dev/run/Cargo.toml --bin cov-test
 
       - name: Delete .temp directory before deployment
         run: rm -rf .temp

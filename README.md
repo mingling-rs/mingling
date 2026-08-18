@@ -176,7 +176,7 @@ This is because the Rust ecosystem already has excellent and mature crates to ha
 - 📦 Repo - [Github](https://github.com/mingling-rs/mingling) | [Gitee](https://gitee.com/mingling-rs/mingling) | [Origin](https://catilgrass.cn/mingling.git)
 - 🚪 Mainpage - [Github](https://mingling-rs.github.io/mingling/) | [crates.io](https://crates.io/crates/mingling)
 - 💡 Examples - [Github](https://mingling-rs.github.io/mingling/docs/examples.html)
-- 📖 Help Doc - [EN](https://mingling-rs.github.io/mingling/docs/doc.html#/) | [中文](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
+- 📖 Help Doc - [EN](https://mingling-rs.github.io/mingling/docs/index.html#/) | [中文](https://mingling-rs.github.io/mingling/docs/_zh_CN/index.html#/)
 - 📖 API Doc - [docs.rs](https://docs.rs/mingling/latest/mingling/) | [latest](https://mingling-rs.github.io/mingling/docs/api-docs/mingling/)
 - 📖 Coverage Test - [LLVM Coverage](https://mingling-rs.github.io/mingling/docs/cov-test/)
 - 📖 Dev Doc - [Github](https://mingling-rs.github.io/mingling/docs/dev/)

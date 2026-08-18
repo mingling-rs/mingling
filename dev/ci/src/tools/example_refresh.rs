@@ -17,8 +17,8 @@ use crate::res::{CargoError, MessagePrinter};
 
 const EXAMPLE_ROOT: &str = "./examples";
 const EXAMPLE_DOCS_OUTPUT: &str = "./mingling/src/example_docs.rs";
-const EXAMPLE_DOCS_TEMPLATE: &str = include_str!("../../../mingling/src/example_docs.rs.tmpl");
-const EXAMPLES_JSON_OUTPUT: &str = "./docs/example-pages/examples.json";
+const EXAMPLE_DOCS_TEMPLATE: &str = include_str!("../../../../mingling/src/example_docs.rs.tmpl");
+const EXAMPLES_JSON_OUTPUT: &str = "./docs/examples.json";
 
 #[command(node = "example-refresh")]
 pub fn example_refresh() -> Next {

@@ -15,7 +15,7 @@ use crate::reporter::{self, ReportResult};
 use crate::task::cmd_markdown_check::{ErrorMarkdownArgs, ErrorMarkdownConfig, stem_of};
 
 const DOCS_DIR: &str = "./docs";
-const LANG_CONFIG: &str = ".config/docs-lang.txt";
+const LANG_CONFIG: &str = "dev/configs/docs-lang.txt";
 
 /// One file-pair outcome of a structure comparison.
 struct CompareOutcome {
@@ -182,7 +182,7 @@ fn export_outcomes(outcomes: &[CompareOutcome]) -> usize {
     fail_count
 }
 
-/// Reads `.config/docs-lang.txt`: the first line is the reference directory
+/// Reads `dev/configs/docs-lang.txt`: the first line is the reference directory
 /// (relative to `./docs/`), the rest are translations that must mirror it.
 fn lang_config() -> Option<Vec<String>> {
     let content = std::fs::read_to_string(LANG_CONFIG).ok()?;

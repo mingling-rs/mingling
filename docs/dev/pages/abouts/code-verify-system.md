@@ -7,7 +7,7 @@ This system automatically extracts and compiles Rust code blocks from docs, ensu
 
 ## Config
 
-Specify which Markdown files to verify via `.config/verified-docs.toml`:
+Specify which Markdown files to verify via `dev/configs/verified-docs.toml`:
 
 ```toml
 [verified]
@@ -210,18 +210,18 @@ Use `@@@` for:
 
 ## Structure Overview
 
-| Module                                        | Responsibility                                                                      |
-| --------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `mingling_ci/src/markdown/project.rs`         | Block parsing, Cargo.toml/main.rs generation, FNV-1a dep hash                      |
-| `mingling_ci/src/markdown/test.rs`            | Grouping by dep hash, parallel `cargo check` execution                             |
-| `mingling_ci/src/task/cmd_markdown_check.rs`  | `markdown-check` / `markdown-check-all` commands: read config, collect files, report |
-| `mingling_ci/src/markdown/compare.rs`         | Structural signature comparison (for `markdown-compare`)                           |
-| `mingling_ci/src/task/cmd_markdown_compare.rs`| `markdown-compare` / `markdown-compare-all` commands                               |
-| `.config/verified-docs.toml`                  | Specifies which doc files to verify                                                 |
+| Module                                    | Responsibility                                                                       |
+| ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| `dev/ci/src/markdown/project.rs`          | Block parsing, Cargo.toml/main.rs generation, FNV-1a dep hash                        |
+| `dev/ci/src/markdown/test.rs`             | Grouping by dep hash, parallel `cargo check` execution                               |
+| `dev/ci/src/task/cmd_markdown_check.rs`   | `markdown-check` / `markdown-check-all` commands: read config, collect files, report |
+| `dev/ci/src/markdown/compare.rs`          | Structural signature comparison (for `markdown-compare`)                             |
+| `dev/ci/src/task/cmd_markdown_compare.rs` | `markdown-compare` / `markdown-compare-all` commands                                 |
+| `dev/configs/verified-docs.toml`          | Specifies which doc files to verify                                                  |
 
 ### Structure Comparison
 
-`markdown-compare` (two files or directories) and `markdown-compare-all` (all languages from `.config/docs-lang.txt`, whose first line is the reference directory) check that every translated docs directory **mirrors the structure** of the reference docs exactly: one token per line classifying headings, fenced code blocks (with language tag), `@@@` lines, blank lines, blockquotes, lists and plain text. Translated text may differ; the structure may not.
+`markdown-compare` (two files or directories) and `markdown-compare-all` (all languages from `dev/configs/docs-lang.txt`, whose first line is the reference directory) check that every translated docs directory **mirrors the structure** of the reference docs exactly: one token per line classifying headings, fenced code blocks (with language tag), `@@@` lines, blank lines, blockquotes, lists and plain text. Translated text may differ; the structure may not.
 
 ## Full Example
 

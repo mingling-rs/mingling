@@ -80,7 +80,7 @@ See [Examples](EXAMPLES/index.html) or [Helpdoc](https://mingling-rs.github.io/m
 
 ## About Features
 
-All features of `Mingling` are opt-in. To learn what each feature provides, see [Features](feature/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/doc.html#/pages/other/features)
+All features of `Mingling` are opt-in. To learn what each feature provides, see [Features](feature/index.html) or [Helpdoc](https://mingling-rs.github.io/mingling/docs/index.html#/pages/other/features)
 
 ## Use unreleased version
 

@@ -4,7 +4,7 @@
     "rust-analyzer.files.exclude": ["**/target/**", "**/.temp/**"],
     "rust-analyzer.linkedProjects": [
         ".run/Cargo.toml",
-        "mingling_ci/Cargo.toml",
+        "dev/ci/Cargo.toml",
         "mingling_pathf/test/Cargo.toml",
         "arg_picker/Cargo.toml",
         "arg_picker/test/Cargo.toml",

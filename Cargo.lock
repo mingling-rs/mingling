@@ -316,6 +316,10 @@ dependencies = [
 [[package]]
 name = "mingling-workspace"
 version = "0.5.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "mingling_core"

@@ -14,7 +14,7 @@ use crate::markdown::test::{MarkdownBlockOutcome, try_test_markdown_project};
 use crate::reporter::{self, ReportResult};
 use crate::res::{CargoError, MessagePrinter};
 
-const VERIFIED_DOCS: &str = ".config/verified-docs.toml";
+const VERIFIED_DOCS: &str = "dev/configs/verified-docs.toml";
 
 #[command(node = "markdown-check")]
 pub async fn markdown_check(args: Vec<String>) -> Next {
