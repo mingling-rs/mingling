@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use mingling::{Program, macros::program_setup};
@@ -13,13 +14,15 @@ const IGNORED_DIRS_FILE: &str = include_str!("../../../.config/ci-ignored-dirs.t
 #[derive(Default, Clone)]
 pub struct Manifests {
     pub path: Vec<PathBuf>,
+    /// Package name -> its manifest path.
+    pub package_dirs: HashMap<String, PathBuf>,
 }
 
 #[program_setup]
 pub fn manifests_setup(p: &mut Program<ThisProgram>) {
-    p.with_resource(Manifests {
-        path: cargo_tomls(),
-    });
+    let path = cargo_tomls();
+    let package_dirs = path.iter().map(|p| (package_name(p), p.clone())).collect();
+    p.with_resource(Manifests { path, package_dirs });
 }
 
 /// Recursively collects every `Cargo.toml` under the current directory,
@@ -77,7 +80,7 @@ fn is_ignored(path: &str, ignored: &[String]) -> bool {
 ///
 /// Falls back to the parent directory name (e.g. `mingling_core/Cargo.toml` →
 /// `mingling_core`, workspace root → `(root)`), matching the legacy CI.
-pub(crate) fn package_name(path: &Path) -> String {
+fn package_name(path: &Path) -> String {
     let fallback = || {
         path.parent()
             .and_then(|p| p.file_name())

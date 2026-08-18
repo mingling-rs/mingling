@@ -10,15 +10,15 @@ use prettytable::{
     format::{FormatBuilder, LinePosition, LineSeparator},
 };
 
-use crate::res::{Manifests, package_name};
+use crate::res::Manifests;
 
 #[command(node = "show-manifests")]
 pub fn show_manifests(manifests: &Manifests) -> ResultPrintManifests {
     let mut entries: Vec<ManifestEntry> = manifests
-        .path
+        .package_dirs
         .iter()
-        .map(|path| ManifestEntry {
-            name: package_name(path),
+        .map(|(name, path)| ManifestEntry {
+            name: name.clone(),
             path: path.clone(),
         })
         .collect();
