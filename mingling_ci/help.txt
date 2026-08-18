@@ -1,0 +1,11 @@
+This program is used to check the code quality of the Mingling project itself.
+
+FLAGS:
+  -h, --help                Print this help page
+  -q, --quiet               Quiet output
+
+USAGE:
+  report-collect            Collect and organize all inspection reports
+  report-clean              Clean up all reports
+
+  show-manifests            Print all crate paths that need to be checked

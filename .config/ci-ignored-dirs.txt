@@ -1,0 +1,5 @@
+# Temp
+./.temp/
+
+# Self
+./mingling_ci/

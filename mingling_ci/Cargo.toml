@@ -1,0 +1,41 @@
+# This CI system is built on Mingling and is used to validate the next
+# version of Mingling.
+
+[package]
+name = "mingling-ci-system"
+edition = "2024"
+version = "0.1.0"
+publish = false
+
+[workspace]
+
+[dependencies]
+# NOTE: Do not use the current version of Mingling. The CI must be built on an
+# earlier version than the mainline Mingling.
+#
+# > You know the reason! ... the **grandfather paradox**
+mingling = { version = "0.4.0", features = [
+    "async",
+    "dispatch_tree",
+    "extras",
+    "pathf",
+    "picker",
+] }
+
+just_progress = "0.1.3"
+colored = "3.1.1"
+tokio = { version = "1.53.1", features = [
+    "rt",
+    "rt-multi-thread",
+    "macros",
+] }
+prettytable-rs = "0.10.0"
+toml = "0.8"
+just_template = "0.2.1"
+
+[build-dependencies]
+mingling = { version = "0.4.0", features = [
+    "build",
+    "dispatch_tree",
+    "pathf"
+] }

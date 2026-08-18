@@ -6,3 +6,6 @@ target-dir = "./.temp/target"
 [alias]
 ci = "run --manifest-path .run/Cargo.toml --bin ci --quiet --"
 dev_tool = "run --manifest-path .run/Cargo.toml --quiet --bin "
+
+# CI Next (Developing)
+cin = "run --manifest-path mingling_ci/Cargo.toml --bin ci --quiet --"
