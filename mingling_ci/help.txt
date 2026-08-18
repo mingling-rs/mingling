@@ -14,6 +14,11 @@ COMMANDS:
    show-features                   Print the docs.rs feature list of mingling
    show-manifests                  Print all crate paths that need to be checked
 
+  TOOLS:
+   example-refresh                 Regenerate example docs module and examples index
+   docsify-refresh                 Fix docsify code boxes and regenerate sidebars
+   features-refresh                Regenerate the features module
+
   TASKS:
    markdown-check <PATH>           Verify rust code blocks in one markdown file
    markdown-check-all              Verify rust code blocks in all configured markdown files
