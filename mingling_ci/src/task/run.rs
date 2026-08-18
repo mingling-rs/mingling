@@ -1,9 +1,17 @@
 use std::ffi::OsString;
+use std::path::Path;
 
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::reporter::{self, ReportResult};
+
+/// The manifest's parent directory, e.g. `./mingling` — the report location
+/// for a crate-based item.
+pub(crate) fn location(path: &Path) -> String {
+    path.parent()
+        .map_or_else(|| ".".to_string(), |d| d.to_string_lossy().into_owned())
+}
 
 /// Outcome of a `cargo` subcommand.
 struct CargoResult {
@@ -14,13 +22,13 @@ struct CargoResult {
 
 /// Runs the given cargo task list in parallel.
 ///
-/// Each task is a `(name, args)` pair; progress and failures go to stderr: a
-/// failing task prints its output immediately and writes its report entry at
-/// the same time. Returns the number of failing tasks.
+/// Each task is an `(item, location, argv)` triple; progress and failures go
+/// to stderr: a failing task prints its output immediately and writes its
+/// report entry at the same time. Returns the number of failing tasks.
 pub(crate) async fn run_parallel_checks(
     task: &str,
     phase: &str,
-    tasks: Vec<(String, Vec<OsString>)>,
+    tasks: Vec<(String, String, Vec<OsString>)>,
 ) -> usize {
     reporter::set_task(task);
 
@@ -39,20 +47,20 @@ pub(crate) async fn run_parallel_checks(
 
     // Run each task in parallel.
     let mut set = tokio::task::JoinSet::new();
-    for (name, args) in tasks {
-        set.spawn(async move { (name, run_cargo(args).await) });
+    for (item, location, args) in tasks {
+        set.spawn(async move { (item, location, run_cargo(args).await) });
     }
 
     let mut fail_count = 0;
     while let Some(joined) = set.join_next().await {
-        let Ok((name, result)) = joined else {
+        let Ok((item, location, result)) = joined else {
             continue;
         };
         pb.inc(1);
-        pb.set_message(name.clone());
+        pb.set_message(item.clone());
 
         if result.ok {
-            reporter::export(&name, ReportResult::Ok);
+            reporter::export(&item, &location, ReportResult::Ok);
         } else {
             fail_count += 1;
             // Failures print to stderr immediately (bar suspended to avoid
@@ -61,7 +69,7 @@ pub(crate) async fn run_parallel_checks(
                 eprintln!(
                     "{}: {} failed{}",
                     phase.bold().bright_cyan(),
-                    name,
+                    item,
                     result
                         .exit_code
                         .map_or_else(String::new, |c| format!(" (exit code {c})"))
@@ -70,7 +78,7 @@ pub(crate) async fn run_parallel_checks(
                     eprintln!("  {line}");
                 }
             });
-            reporter::export(&name, ReportResult::Error(result.output));
+            reporter::export(&item, &location, ReportResult::Error(result.output));
         }
     }
 

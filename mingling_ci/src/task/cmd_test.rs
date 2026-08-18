@@ -9,7 +9,7 @@ use mingling::{
 
 use crate::Next;
 use crate::res::{Manifests, ResCrateConfig};
-use crate::task::run::run_parallel_checks;
+use crate::task::run::{location, run_parallel_checks};
 
 #[command(node = "test-all")]
 pub async fn test_all(manifests: &Manifests, config: &ResCrateConfig) -> Next {
@@ -21,7 +21,7 @@ pub async fn test_all(manifests: &Manifests, config: &ResCrateConfig) -> Next {
                 || test_args(path),
                 |cmd| cmd.iter().map(|s| OsString::from(s.as_str())).collect(),
             );
-            (name.clone(), args)
+            (name.clone(), location(path), args)
         })
         .collect();
     let fail_count = run_parallel_checks("Test-All", "Testing", tasks).await;

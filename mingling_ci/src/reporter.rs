@@ -46,8 +46,11 @@ pub enum ReportResult {
 /// Current task name (e.g. `Build-All`); set via [`set_task`].
 static CURRENT_TASK: Mutex<Option<String>> = Mutex::new(None);
 
-/// Successful package names pending a [`flush`], grouped by platform.
-static OK_BUFFER: LazyLock<Mutex<HashMap<ReportPlatform, Vec<String>>>> =
+/// Pending success entries: `(item, location)`.
+type PendingOk = (String, String);
+
+/// Successful items pending a [`flush`], grouped by platform.
+static OK_BUFFER: LazyLock<Mutex<HashMap<ReportPlatform, Vec<PendingOk>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Sets the task that subsequent [`export`] calls write under.
@@ -59,17 +62,18 @@ pub fn set_task(task: &str) {
     *CURRENT_TASK.lock().unwrap() = Some(task.to_string());
 }
 
-/// Exports one package result to `collect/{task}/{platform}/`.
+/// Exports one item result.
 ///
+/// `item` and `location` are free-form strings chosen by the generator.
 /// Successes are buffered and written to the `ok` file by [`flush`]; failures
-/// write `{package}.err` (with the output) immediately. Errors are reported to
-/// stderr and otherwise ignored.
+/// write `{task}.{platform}.{item}.err` immediately (first line is the
+/// location). Errors are reported to stderr and otherwise ignored.
 ///
 /// # Panics
 ///
 /// Panics if the internal task mutex is poisoned.
-pub fn export(package: &str, result: ReportResult) {
-    export_on(package, current_platform(), result);
+pub fn export(item: &str, location: &str, result: ReportResult) {
+    export_on(item, location, current_platform(), result);
 }
 
 /// The `ReportPlatform` for the currently compiling target.
@@ -83,29 +87,30 @@ fn current_platform() -> ReportPlatform {
     }
 }
 
-/// Exports one package result for a specific platform.
+/// Exports one item result for a specific platform.
 ///
+/// `item` and `location` are free-form strings chosen by the generator.
 /// Successes are buffered and written to the `ok` file by [`flush`]; failures
-/// write `{package}.err` (with the output) immediately. Errors are reported to
-/// stderr and otherwise ignored.
+/// write `{task}.{platform}.{item}.err` immediately (first line is the
+/// location). Errors are reported to stderr and otherwise ignored.
 ///
 /// # Panics
 ///
 /// Panics if the internal task mutex is poisoned.
-pub fn export_on(package: &str, platform: ReportPlatform, result: ReportResult) {
+pub fn export_on(item: &str, location: &str, platform: ReportPlatform, result: ReportResult) {
     match result {
         ReportResult::Ok => OK_BUFFER
             .lock()
             .unwrap()
             .entry(platform)
             .or_default()
-            .push(package.to_string()),
-        ReportResult::Error(output) => write_err(package, platform, output),
+            .push((item.to_string(), location.to_string())),
+        ReportResult::Error(output) => write_err(item, location, platform, &output),
     }
 }
 
-/// Writes buffered successes to `collect/{task}.{platform}.ok`, one package per
-/// line.
+/// Writes buffered successes to `collect/{task}.{platform}.ok`, one `item` (or
+/// `item = location`) per line.
 ///
 /// # Panics
 ///
@@ -126,11 +131,21 @@ pub fn flush() {
         return;
     }
 
-    for (platform, packages) in buffered {
-        let content = if packages.is_empty() {
+    for (platform, items) in buffered {
+        let lines: Vec<String> = items
+            .iter()
+            .map(|(item, location)| {
+                if location.is_empty() {
+                    item.clone()
+                } else {
+                    format!("{item} = {location}")
+                }
+            })
+            .collect();
+        let content = if lines.is_empty() {
             String::new()
         } else {
-            packages.join("\n") + "\n"
+            lines.join("\n") + "\n"
         };
         let platform_name = platform.dir_name();
         let path = Path::new(COLLECT_DIR).join(format!("{task}.{platform_name}.ok"));
@@ -140,8 +155,9 @@ pub fn flush() {
     }
 }
 
-/// Writes a failure entry to `collect/{task}.{platform}.{package}.err`.
-fn write_err(package: &str, platform: ReportPlatform, output: String) {
+/// Writes a failure entry to `collect/{task}.{platform}.{item}.err`, with the
+/// location as the first line (empty when unknown).
+fn write_err(item: &str, location: &str, platform: ReportPlatform, output: &str) {
     let Some(task) = CURRENT_TASK.lock().unwrap().clone() else {
         eprintln!("reporter: no current task; call reporter::set_task first");
         return;
@@ -153,8 +169,8 @@ fn write_err(package: &str, platform: ReportPlatform, output: String) {
     }
 
     let platform_name = platform.dir_name();
-    let path = Path::new(COLLECT_DIR).join(format!("{task}.{platform_name}.{package}.err"));
-    if let Err(e) = fs::write(&path, output) {
+    let path = Path::new(COLLECT_DIR).join(format!("{task}.{platform_name}.{item}.err"));
+    if let Err(e) = fs::write(&path, format!("{location}\n{output}")) {
         eprintln!("reporter: failed to write {}: {e}", path.display());
     }
 }
@@ -173,14 +189,18 @@ mod tests {
         fs::remove_file(&ok_path).ok();
         fs::remove_file(&err_path).ok();
 
-        export("pkg-a", ReportResult::Ok);
-        export("pkg-b", ReportResult::Error("boom".to_string()));
+        export("pkg-a", "./pkg-a", ReportResult::Ok);
+        export("pkg-b", "./pkg-b", ReportResult::Error("boom".to_string()));
+        export("pkg-c", "", ReportResult::Ok); // no location
         flush();
 
         assert!(ok_path.is_file());
-        assert_eq!(fs::read_to_string(&ok_path).unwrap(), "pkg-a\n");
+        assert_eq!(
+            fs::read_to_string(&ok_path).unwrap(),
+            "pkg-a = ./pkg-a\npkg-c\n"
+        );
         assert!(err_path.is_file());
-        assert_eq!(fs::read_to_string(&err_path).unwrap(), "boom");
+        assert_eq!(fs::read_to_string(&err_path).unwrap(), "./pkg-b\nboom");
 
         fs::remove_file(ok_path).ok();
         fs::remove_file(err_path).ok();

@@ -18,17 +18,20 @@ pub struct GitInfo {
 /// Parsed contents of the collect directory.
 #[derive(Default, Clone)]
 pub struct ResCollectLogs {
-    /// `(task, package) -> os -> ok`
+    /// `(task, item) -> os -> ok`
     pub statuses: BTreeMap<(String, String), BTreeMap<String, bool>>,
-    /// `(task, os, package) -> stripped error output`
+    /// `(task, item) -> location`
+    pub locations: BTreeMap<(String, String), String>,
+    /// `(task, os, item) -> stripped error output (location line removed)`
     pub err_outputs: BTreeMap<(String, String, String), String>,
     pub git: GitInfo,
 }
 
 impl ResCollectLogs {
     /// Reads the flat `collect/` directory — aggregate `{task}.{os}.ok` files
-    /// (one package per line) and per-package `{task}.{os}.{package}.err`
-    /// files — plus the git info.
+    /// (`item` or `item = location` per line) and per-item
+    /// `{task}.{os}.{item}.err` files (first line is the location) — plus the
+    /// git info.
     #[must_use]
     pub fn read() -> Self {
         let mut logs = Self::default();
@@ -37,23 +40,33 @@ impl ResCollectLogs {
             for entry in entries.flatten() {
                 let file_name = entry.file_name().to_string_lossy().into_owned();
                 if let Some((task, os)) = parse_ok_name(&file_name) {
-                    // Aggregate success file: one package name per line.
+                    // Aggregate success file: `item` or `item = location` per line.
                     if let Ok(content) = std::fs::read_to_string(entry.path()) {
-                        for package in content.lines().filter(|l| !l.is_empty()) {
+                        for line in content.lines().filter(|l| !l.is_empty()) {
+                            let (item, location) = line
+                                .split_once('=')
+                                .map_or((line, ""), |(name, loc)| (name.trim(), loc.trim()));
                             logs.statuses
-                                .entry((task.clone(), package.to_string()))
+                                .entry((task.clone(), item.to_string()))
                                 .or_default()
                                 .insert(os.clone(), true);
+                            logs.locations
+                                .insert((task.clone(), item.to_string()), location.to_string());
                         }
                     }
-                } else if let Some((task, os, package)) = parse_err_name(&file_name) {
+                } else if let Some((task, os, item)) = parse_err_name(&file_name) {
+                    let content = std::fs::read_to_string(entry.path()).unwrap_or_default();
+                    let mut lines = content.splitn(2, '\n');
+                    let location = lines.next().unwrap_or_default().to_string();
+                    let output = lines.next().unwrap_or_default().to_string();
                     logs.statuses
-                        .entry((task.clone(), package.clone()))
+                        .entry((task.clone(), item.clone()))
                         .or_default()
                         .insert(os.clone(), false);
-                    let err = std::fs::read_to_string(entry.path()).unwrap_or_default();
+                    logs.locations
+                        .insert((task.clone(), item.clone()), location);
                     logs.err_outputs
-                        .insert((task, os, package), strip_ansi(&err));
+                        .insert((task, os, item), strip_ansi(&output));
                 }
             }
         }

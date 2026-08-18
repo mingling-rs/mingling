@@ -9,14 +9,14 @@ use mingling::{
 
 use crate::Next;
 use crate::res::Manifests;
-use crate::task::run::run_parallel_checks;
+use crate::task::run::{location, run_parallel_checks};
 
 #[command(node = "clippy-all")]
 pub async fn clippy_all(manifests: &Manifests) -> Next {
     let tasks = manifests
         .package_dirs
         .iter()
-        .map(|(name, path)| (name.clone(), clippy_args(path)))
+        .map(|(name, path)| (name.clone(), location(path), clippy_args(path)))
         .collect();
     let fail_count = run_parallel_checks("Clippy-All", "Clippy", tasks).await;
     ResultClippyAll { fail_count }.to_chain()

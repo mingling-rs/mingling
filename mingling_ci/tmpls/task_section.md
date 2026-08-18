@@ -1,15 +1,15 @@
 ## Task: <<<task_name>>>
 
-| Package-Name   | Package-Directory | PASS (Windows) | PASS (Linux) | PASS (Mac OS) |
-| -------------- | ----------------- | -------------- | ------------ | ------------- |
+| Item-Name   | Location | PASS (Windows) | PASS (Linux) | PASS (Mac OS) |
+| ----------- | -------- | -------------- | ------------ | ------------- |
 >>>>>>>>>> rows
 @@@ >>> rows
-| <<<package_name>>> | <<<package_dir>>> | <<<pass_win>>> | <<<pass_linux>>> | <<<pass_mac>>> |
+| <<<item_name>>> | <<<location>>> | <<<pass_win>>> | <<<pass_linux>>> | <<<pass_mac>>> |
 @@@ <<<
 
 >>>>>>>>>> fails
 @@@ >>> fails
-### Fail: #<<<package_name>>>
+### Fail: <<<item_name>>>
 
 ```stdout
 <<<stdout>>>

@@ -9,7 +9,7 @@ use mingling::{
 
 use crate::Next;
 use crate::reporter::{COLLECT_DIR, REPORT_PATH};
-use crate::res::{CargoError, Manifests, MessagePrinter, ResCollectLogs};
+use crate::res::{CargoError, MessagePrinter, ResCollectLogs};
 
 const REPORT_TEMPLATE: &str = include_str!("../../tmpls/report.md");
 const TASK_SECTION_TEMPLATE: &str = include_str!("../../tmpls/task_section.md");
@@ -17,26 +17,26 @@ const TASK_SECTION_TEMPLATE: &str = include_str!("../../tmpls/task_section.md");
 /// Maps a package to its per-OS pass/fail status.
 type OsStatuses = BTreeMap<String, bool>;
 
-/// A row in a task section: package name and its per-OS statuses.
+/// A row in a task section: item name and its per-OS statuses.
 type TaskRow<'a> = (&'a String, &'a OsStatuses);
 
 /// Rows grouped by task name.
 type RowsByTask<'a> = BTreeMap<&'a String, Vec<TaskRow<'a>>>;
 
 #[command(node = "report-collect")]
-pub fn report_collect(manifests: &Manifests, logs: &ResCollectLogs) -> Next {
+pub fn report_collect(logs: &ResCollectLogs) -> Next {
     if !PathBuf::from(COLLECT_DIR).is_dir() {
         return ErrorNoCollectDir.to_chain();
     }
 
-    // Group rows by task: task -> [(package, os_statuses)].
-    let by_task: RowsByTask = logs.statuses.iter().fold(
-        BTreeMap::new(),
-        |mut acc, ((task, package), os_statuses)| {
-            acc.entry(task).or_default().push((package, os_statuses));
-            acc
-        },
-    );
+    // Group rows by task: task -> [(item, os_statuses)].
+    let by_task: RowsByTask =
+        logs.statuses
+            .iter()
+            .fold(BTreeMap::new(), |mut acc, ((task, item), os_statuses)| {
+                acc.entry(task).or_default().push((item, os_statuses));
+                acc
+            });
 
     // Render one section per task (table rows + this task's failures).
     let mut fail_count = 0;
@@ -44,10 +44,15 @@ pub fn report_collect(manifests: &Manifests, logs: &ResCollectLogs) -> Next {
     for (task, rows) in by_task {
         let mut row_arms = Vec::new();
         let mut fail_arms = Vec::new();
-        for (package, os_statuses) in rows {
+        for (item, os_statuses) in rows {
+            let location = logs
+                .locations
+                .get(&(task.clone(), item.clone()))
+                .cloned()
+                .unwrap_or_default();
             row_arms.push(HashMap::from([
-                ("package_name".to_string(), package.clone()),
-                ("package_dir".to_string(), package_dir(manifests, package)),
+                ("item_name".to_string(), item.clone()),
+                ("location".to_string(), location),
                 (
                     "pass_win".to_string(),
                     pass_cell(os_statuses.get("Windows")),
@@ -63,11 +68,11 @@ pub fn report_collect(manifests: &Manifests, logs: &ResCollectLogs) -> Next {
                 if !ok {
                     let stdout = logs
                         .err_outputs
-                        .get(&(task.clone(), os.clone(), package.clone()))
+                        .get(&(task.clone(), os.clone(), item.clone()))
                         .cloned()
                         .unwrap_or_default();
                     fail_arms.push(HashMap::from([
-                        ("package_name".to_string(), package.clone()),
+                        ("item_name".to_string(), item.clone()),
                         ("stdout".to_string(), stdout),
                     ]));
                     fail_count += 1;
@@ -101,16 +106,6 @@ pub fn report_collect(manifests: &Manifests, logs: &ResCollectLogs) -> Next {
     }
 
     ResultCollectResults { output, fail_count }.to_chain()
-}
-
-/// Maps a package name to its manifest directory (e.g. `mingling` →
-/// `./mingling`), or `—` when the manifest is unknown.
-fn package_dir(manifests: &Manifests, package: &str) -> String {
-    manifests
-        .package_dirs
-        .get(package)
-        .and_then(|path| path.parent())
-        .map_or_else(|| "—".to_string(), |dir| dir.to_string_lossy().into_owned())
 }
 
 fn pass_cell(status: Option<&bool>) -> String {
