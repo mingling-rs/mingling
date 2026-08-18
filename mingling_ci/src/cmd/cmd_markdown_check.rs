@@ -1,5 +1,7 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use just_fmt::snake_case;
 use mingling::{
     Grouped, RenderResult, Routable,
     macros::{buffer, command, renderer},
@@ -8,7 +10,8 @@ use mingling::{
 
 use crate::Next;
 use crate::markdown::project::parse_markdown;
-use crate::markdown::test::try_test_markdown_project;
+use crate::markdown::test::{MarkdownBlockOutcome, try_test_markdown_project};
+use crate::reporter::{self, ReportResult};
 use crate::res::{CargoError, MessagePrinter};
 
 const VERIFIED_DOCS: &str = ".config/verified-docs.toml";
@@ -23,12 +26,19 @@ pub async fn markdown_check(args: Vec<String>) -> Next {
     if !path.is_file() {
         return ErrorMarkdownArgs(format!("{} is not a file", path.display())).to_chain();
     }
-
     let Ok(content) = std::fs::read_to_string(&path) else {
         return ErrorMarkdownArgs(format!("failed to read {}", path.display())).to_chain();
     };
-    let projects = parse_markdown(&content, &path.to_string_lossy());
-    let fail_count = try_test_markdown_project(projects).await;
+
+    let location = path.to_string_lossy().into_owned();
+    let item = format!("doc-{}", snake_case!(&stem_of(&path)));
+    reporter::set_task("Markdown-Check");
+
+    let projects = parse_markdown(&content, &location);
+    let outcomes = try_test_markdown_project(projects).await;
+    let file_info = HashMap::from([(location.clone(), (item, location))]);
+    let fail_count = report_files(&outcomes, &file_info);
+    reporter::flush();
 
     ResultMarkdownCheck { fail_count }.to_chain()
 }
@@ -38,18 +48,72 @@ pub async fn markdown_check_all() -> Next {
     let Some(files) = verified_md_files() else {
         return ErrorMarkdownConfig.to_chain();
     };
+    reporter::set_task("Markdown-Check-All");
 
+    // Collect all projects; remember each file's report identity
+    // (`{key}-{snake_case(file_stem)}` -> location).
     let mut projects = Vec::new();
+    let mut file_info: HashMap<String, (String, String)> = HashMap::new();
     for (label, path) in files {
         let Ok(content) = std::fs::read_to_string(&path) else {
             continue;
         };
-        let source_file = format!("{label}/{}", path.file_name().unwrap().to_string_lossy());
+        let file_name = path.file_name().unwrap().to_string_lossy();
+        let source_file = format!("{label}/{file_name}");
+        let item = format!("{label}-{}", snake_case!(&stem_of(&path)));
+        let location = path.to_string_lossy().into_owned();
+        file_info.insert(source_file.clone(), (item, location));
         projects.extend(parse_markdown(&content, &source_file));
     }
-    let fail_count = try_test_markdown_project(projects).await;
+
+    let outcomes = try_test_markdown_project(projects).await;
+    let fail_count = report_files(&outcomes, &file_info);
+    reporter::flush();
 
     ResultMarkdownCheck { fail_count }.to_chain()
+}
+
+/// The file name without extension, e.g. `README.md` → `README`.
+fn stem_of(path: &Path) -> String {
+    path.file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// Exports one report entry per source file: `ok` when every block passed,
+/// otherwise an error carrying the failed blocks' details.
+fn report_files(
+    outcomes: &[MarkdownBlockOutcome],
+    file_info: &HashMap<String, (String, String)>,
+) -> usize {
+    let mut by_file: HashMap<&str, (bool, Vec<String>)> = HashMap::new();
+    for outcome in outcomes {
+        let (ok, outputs) = by_file
+            .entry(outcome.source_file.as_str())
+            .or_insert((true, Vec::new()));
+        if !outcome.ok {
+            *ok = false;
+            outputs.push(format!(
+                "{}:{}:\n{}",
+                outcome.source_file, outcome.line, outcome.output
+            ));
+        }
+    }
+
+    let mut fail_count = 0;
+    for (source_file, (ok, outputs)) in by_file {
+        let Some((item, location)) = file_info.get(source_file) else {
+            continue;
+        };
+        if ok {
+            reporter::export(item, location, ReportResult::Ok);
+        } else {
+            fail_count += outputs.len();
+            reporter::export(item, location, ReportResult::Error(outputs.join("\n\n")));
+        }
+    }
+    fail_count
 }
 
 /// Reads `verified-docs.toml` and collects all `.md` files: single files,

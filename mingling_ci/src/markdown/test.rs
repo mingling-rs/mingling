@@ -13,12 +13,23 @@ use super::project::{
 /// Temporary root for the generated test crates.
 const TEMP_BASE: &str = ".temp/doc-test";
 
+/// Outcome of testing one code block.
+pub(crate) struct MarkdownBlockOutcome {
+    pub source_file: String,
+    pub line: usize,
+    pub ok: bool,
+    /// Failure detail; empty when `ok`.
+    pub output: String,
+}
+
 /// Runs the given projects in parallel.
 ///
 /// Projects sharing a dependency hash share one temporary crate (written
 /// serially within the group); groups run in parallel. Progress is shown on
-/// stderr; failures print immediately. Returns the number of failed blocks.
-pub(crate) async fn try_test_markdown_project(projs: Vec<MarkdownTestProject>) -> usize {
+/// stderr; failures print there too. Returns one outcome per block.
+pub(crate) async fn try_test_markdown_project(
+    projs: Vec<MarkdownTestProject>,
+) -> Vec<MarkdownBlockOutcome> {
     // Group by dependency hash for crate sharing.
     let mut groups: BTreeMap<String, Vec<MarkdownTestProject>> = BTreeMap::new();
     for proj in projs {
@@ -49,7 +60,7 @@ pub(crate) async fn try_test_markdown_project(projs: Vec<MarkdownTestProject>) -
             let manifest_path = crate_dir.join("Cargo.toml");
             let cargo_toml = generate_cargo_toml(&blocks[0], &manifest_path);
 
-            let mut failed = 0;
+            let mut group_outcomes = Vec::new();
             for proj in &blocks {
                 let label = format!("{}:{}", proj.source_file, proj.line);
                 pb.set_message(label.clone());
@@ -69,25 +80,30 @@ pub(crate) async fn try_test_markdown_project(projs: Vec<MarkdownTestProject>) -
                 pb.inc(1);
 
                 if !ok {
-                    failed += 1;
                     // Plain stderr: `pb.println` is swallowed on non-TTY (CI).
                     eprintln!("  {} {label}", "failed".bold().bright_red());
                     eprintln!("  {label} FAILED:\n{err}");
                 }
+                group_outcomes.push(MarkdownBlockOutcome {
+                    source_file: proj.source_file.clone(),
+                    line: proj.line,
+                    ok,
+                    output: err,
+                });
             }
-            failed
+            group_outcomes
         }));
     }
 
-    let mut fail_count = 0;
+    let mut all_outcomes = Vec::new();
     for handle in handles {
-        if let Ok(failed) = handle.await {
-            fail_count += failed;
+        if let Ok(group_outcomes) = handle.await {
+            all_outcomes.extend(group_outcomes);
         }
     }
 
     pb.finish_and_clear();
-    fail_count
+    all_outcomes
 }
 
 /// Writes the temporary crate files and runs `cargo check`.

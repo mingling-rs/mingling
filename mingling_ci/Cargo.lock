@@ -322,6 +322,7 @@ version = "0.1.0"
 dependencies = [
  "colored",
  "indicatif",
+ "just_fmt 0.2.1",
  "just_progress",
  "just_template",
  "mingling",
