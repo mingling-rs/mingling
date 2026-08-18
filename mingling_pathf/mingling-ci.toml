@@ -1,0 +1,2 @@
+[test]
+command = ["cargo", "test", "-p", "mingling_pathf"]

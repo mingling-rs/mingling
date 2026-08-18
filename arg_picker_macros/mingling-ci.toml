@@ -1,0 +1,2 @@
+[test]
+command = ["cargo", "test", "-p", "arg-picker-macros"]

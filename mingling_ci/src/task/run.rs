@@ -1,11 +1,9 @@
 use std::ffi::OsString;
-use std::path::Path;
 
 use colored::Colorize;
 use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::reporter::{self, ReportResult};
-use crate::res::Manifests;
 
 /// Outcome of a `cargo` subcommand.
 struct CargoResult {
@@ -14,20 +12,19 @@ struct CargoResult {
     output: String,
 }
 
-/// Runs one `cargo` subcommand per manifest in parallel.
+/// Runs the given cargo task list in parallel.
 ///
-/// Progress and failures go to stderr: a failing package prints its output
-/// immediately and writes its report entry at the same time. Returns the
-/// number of failing packages.
+/// Each task is a `(name, args)` pair; progress and failures go to stderr: a
+/// failing task prints its output immediately and writes its report entry at
+/// the same time. Returns the number of failing tasks.
 pub(crate) async fn run_parallel_checks(
     task: &str,
     phase: &str,
-    args_for: fn(&Path) -> Vec<OsString>,
-    manifests: &Manifests,
+    tasks: Vec<(String, Vec<OsString>)>,
 ) -> usize {
     reporter::set_task(task);
 
-    let n = manifests.package_dirs.len();
+    let n = tasks.len();
     let pb = ProgressBar::new(n as u64);
     let padding = " ".repeat(12usize.saturating_sub(phase.len()));
     let styled_prefix = format!("{}{}", padding, phase.bold().bright_cyan());
@@ -40,11 +37,9 @@ pub(crate) async fn run_parallel_checks(
             .progress_chars("=> "),
     );
 
-    // Run one cargo invocation per manifest in parallel.
+    // Run each task in parallel.
     let mut set = tokio::task::JoinSet::new();
-    for (name, path) in &manifests.package_dirs {
-        let (name, path) = (name.clone(), path.clone());
-        let args = args_for(&path);
+    for (name, args) in tasks {
         set.spawn(async move { (name, run_cargo(args).await) });
     }
 
@@ -85,11 +80,22 @@ pub(crate) async fn run_parallel_checks(
 }
 
 /// Runs a `cargo` subcommand, capturing its output.
-async fn run_cargo(args: Vec<OsString>) -> CargoResult {
-    let output = tokio::process::Command::new("cargo")
-        .args(args)
+/// Runs a cargo subcommand (`argv[0]` is the program), capturing its output.
+async fn run_cargo(argv: Vec<OsString>) -> CargoResult {
+    let mut argv = argv.into_iter();
+    let Some(program) = argv.next() else {
+        return CargoResult {
+            ok: false,
+            exit_code: None,
+            output: "empty command".to_string(),
+        };
+    };
+
+    let output = tokio::process::Command::new(program)
+        .args(argv)
         .output()
         .await;
+
     match output {
         Ok(output) => {
             let mut log = String::from_utf8_lossy(&output.stdout).into_owned();

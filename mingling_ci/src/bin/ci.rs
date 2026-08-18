@@ -23,6 +23,7 @@ async fn main() {
     // CI Plugins
     program.with_setup(ManifestsSetup);
     program.with_setup(FeaturesSetup);
+    program.with_setup(CrateConfigSetup);
     program.with_setup(ReportSetup);
 
     program.exec_and_exit().await;

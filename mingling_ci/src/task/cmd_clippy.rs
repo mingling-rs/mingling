@@ -13,13 +13,19 @@ use crate::task::run::run_parallel_checks;
 
 #[command(node = "clippy-all")]
 pub async fn clippy_all(manifests: &Manifests) -> Next {
-    let fail_count = run_parallel_checks("Clippy-All", "Clippy", clippy_args, manifests).await;
+    let tasks = manifests
+        .package_dirs
+        .iter()
+        .map(|(name, path)| (name.clone(), clippy_args(path)))
+        .collect();
+    let fail_count = run_parallel_checks("Clippy-All", "Clippy", tasks).await;
     ResultClippyAll { fail_count }.to_chain()
 }
 
 /// `cargo clippy --manifest-path <path> -- -D warnings`
 fn clippy_args(path: &Path) -> Vec<OsString> {
     vec![
+        "cargo".into(),
         "clippy".into(),
         "--manifest-path".into(),
         path.as_os_str().to_os_string(),

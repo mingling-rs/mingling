@@ -13,13 +13,19 @@ use crate::task::run::run_parallel_checks;
 
 #[command(node = "build-all")]
 pub async fn build_all(manifests: &Manifests) -> Next {
-    let fail_count = run_parallel_checks("Build-All", "Building", build_args, manifests).await;
+    let tasks = manifests
+        .package_dirs
+        .iter()
+        .map(|(name, path)| (name.clone(), build_args(path)))
+        .collect();
+    let fail_count = run_parallel_checks("Build-All", "Building", tasks).await;
     ResultBuildAll { fail_count }.to_chain()
 }
 
 /// `cargo build --manifest-path <path>`
 fn build_args(path: &Path) -> Vec<OsString> {
     vec![
+        "cargo".into(),
         "build".into(),
         "--manifest-path".into(),
         path.as_os_str().to_os_string(),
