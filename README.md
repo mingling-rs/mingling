@@ -18,7 +18,7 @@
     <img alt="GitHub stars" src="https://img.shields.io/github/stars/mingling-rs/mingling?style=for-the-badge&color=yellow">
 		<img alt="Crate size" src="https://img.shields.io/crates/size/mingling?style=for-the-badge">
 		<img alt="Crates.io version" src="https://img.shields.io/crates/v/mingling?style=for-the-badge">
-		<img alt="CI" src="https://img.shields.io/github/actions/workflow/status/mingling-rs/mingling/ci.yml?style=for-the-badge">
+		<img alt="CI" src="https://mingling-rs.github.io/badges/badge-build.png" height="36">
 </p>
 
 ## What is Mingling?
