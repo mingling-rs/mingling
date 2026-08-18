@@ -16,7 +16,6 @@ jobs:
             build,
             clippy,
             test,
-            arg-picker,
             markdown-code,
             examples,
             docs-refresh,
@@ -40,9 +39,9 @@ jobs:
           case "${{ matrix.item }}" in
             build) cargo ci build-check ;;
             clippy) cargo ci clippy-check ;;
-            # arg-picker has no dedicated command: its tests are covered by
-            # test-all through its mingling-ci.toml override.
-            test|arg-picker) cargo ci test-all ;;
+            # arg-picker tests are covered by test-all through its
+            # mingling-ci.toml override.
+            test) cargo ci test-all ;;
             # markdown-code also verifies the translated docs structure.
             markdown-code) cargo ci markdown-check-all && cargo ci markdown-compare-all ;;
             examples) cargo ci example-check ;;
