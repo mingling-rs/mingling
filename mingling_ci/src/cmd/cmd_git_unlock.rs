@@ -10,11 +10,14 @@ use crate::res::{CargoError, MessagePrinter};
 
 /// Undoes a CI temporary commit created by [`crate::cmd::cmd_git_lock`].
 ///
-/// Only acts when the HEAD commit message contains `CI TEMP` (case-sensitive),
-/// which together with the `MINGLING-CI-CHECKING` marker means the workspace
-/// is in a CI phase and all uncommitted state may be discarded. Restores the
-/// tree in five steps: unstage, restore tracked files, delete untracked files,
-/// roll back the temporary commit, and remove the marker file.
+/// Only acts when the HEAD commit message contains `CI TEMP` (case-sensitive).
+/// The restore path is picked by the marker file content:
+///
+/// - `true`: a base `TEMP` commit with the dirty changes sits below; restore
+///   by hard-resetting past the marker commit, then soft-resetting and
+///   unstaging to put the user's changes back into the working tree.
+/// - `false`: the tree was clean; a single hard reset back to the original
+///   HEAD is enough.
 ///
 /// When the working tree is dirty (e.g. CI left tracked changes behind) the
 /// restore still runs, but the command reports a non-zero exit code so the
@@ -29,19 +32,33 @@ pub fn git_unlock() -> Next {
     // Record dirtiness before restoring: the restore discards those changes.
     let dirty = !worktree_clean();
 
-    if let Err(e) = undo_ci_phase() {
+    // The marker file lives in the HEAD (CI TEMP) commit, so it is readable
+    // from the working tree; a missing marker falls back to the clean path.
+    let based_on_dirty =
+        std::fs::read_to_string(LOCK_FILE).is_ok_and(|content| content.trim() == "true");
+
+    if let Err(e) = undo_ci_phase(based_on_dirty) {
         return ErrorGitUnlock(e).to_chain();
     }
 
     ResultGitUnlock { dirty }.to_chain()
 }
 
-/// The five-step restoration sequence of `git-unlock`.
-fn undo_ci_phase() -> Result<(), String> {
-    run_git(["reset"])?;
-    run_git(["restore", "."])?;
-    run_git(["clean", "-f", "-d"])?;
+/// Restores the workspace, keeping the user's pre-lock changes.
+///
+/// With a base `TEMP` commit (`true`) the marker commit is dropped by a hard
+/// reset to `HEAD~1`, the `TEMP` commit is unwrapped into the staging area by
+/// a soft reset, and a plain reset unstages it back into the working tree.
+/// Without one (`false`) a single hard reset to `HEAD~1` removes the marker
+/// commit and lands on the original HEAD.
+fn undo_ci_phase(based_on_dirty: bool) -> Result<(), String> {
     run_git(["reset", "--hard", "HEAD~1"])?;
+    if based_on_dirty {
+        // Unwrap the `TEMP` commit into the staging area, then unstage it
+        // back into the working tree.
+        run_git(["reset", "--soft", "HEAD~1"])?;
+        run_git(["reset"])?;
+    }
     std::fs::remove_file(LOCK_FILE).ok();
     Ok(())
 }

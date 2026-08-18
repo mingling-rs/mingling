@@ -3,13 +3,18 @@
 use std::ffi::OsStr;
 use std::process::Command;
 
-/// Marker file created by `git-lock` when the working tree is clean, so that a
-/// temporary commit can always be made; `git-unlock` removes it. Its presence
-/// marks "CI phase in progress".
+/// Marker file created by `git-lock` in the CI temporary commit; its content
+/// is `true` when the tree was dirty (a base TEMP commit exists below) or
+/// `false` when it was clean. `git-unlock` reads it to pick the restore path.
 pub(crate) const LOCK_FILE: &str = "MINGLING-CI-CHECKING";
 
-/// Temporary commit message used by `git-lock`.
-pub(crate) const TEMP_COMMIT_MESSAGE: &str = "[DO NOT PUSH] CI TEMP [DO NOT PUSH]";
+/// First temporary commit: packs the dirty workspace changes so they can be
+/// restored later. Only created when the tree is dirty.
+pub(crate) const TEMP_COMMIT_MESSAGE: &str = "[DO NOT PUSH] TEMP [DO NOT PUSH]";
+
+/// Second temporary commit: carries the marker file, and its message is what
+/// `git-unlock` matches to confirm the CI phase.
+pub(crate) const CI_TEMP_COMMIT_MESSAGE: &str = "[DO NOT PUSH] CI TEMP [DO NOT PUSH]";
 
 /// Case-sensitive substring that identifies a CI temporary commit in the HEAD
 /// commit message.
