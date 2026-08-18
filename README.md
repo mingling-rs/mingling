@@ -14,11 +14,10 @@
 </p>
 
 <p align="center">
-    <img alt="License" src="https://img.shields.io/github/license/mingling-rs/mingling?style=for-the-badge&color=yellow">
-    <img alt="GitHub stars" src="https://img.shields.io/github/stars/mingling-rs/mingling?style=for-the-badge&color=yellow">
-		<img alt="Crate size" src="https://img.shields.io/crates/size/mingling?style=for-the-badge">
-		<img alt="Crates.io version" src="https://img.shields.io/crates/v/mingling?style=for-the-badge">
-		<img alt="CI" src="https://mingling-rs.github.io/badges/badge-build.png" height="36">
+		<img src="https://mingling-rs.github.io/badges/badge-license.png" height="36">
+		<img src="https://mingling-rs.github.io/badges/badge-stars.png" height="36">
+		<img src="https://mingling-rs.github.io/badges/badge-version.png" height="36">
+		<img src="https://mingling-rs.github.io/badges/badge-build.png" height="36">
 </p>
 
 ## What is Mingling?
