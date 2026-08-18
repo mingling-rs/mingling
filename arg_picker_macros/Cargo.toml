@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/mingling-rs/mingling/tree/main/arg_picker"
 authors = ["Weicao-CatilGrass"]
 readme = "README.md"
-description = "Mingling's lightweight argument parser macros"
+description = "Macros for arg-picker"
 
 [lib]
 proc-macro = true

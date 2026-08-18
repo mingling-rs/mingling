@@ -7,7 +7,7 @@ repository = "https://github.com/mingling-rs/mingling/tree/main/mingling_cli"
 authors = ["Weicao-CatilGrass"]
 readme = "README.md"
 
-description = "Mingling's scaffolding tool for generating, analyzing, and modifying Mingling projects"
+description = "Mingling's toolchains for generating, analyzing, and modifying Mingling projects"
 keywords = ["cli", "cli-framework", "command-line", "tools"]
 categories = ["command-line-interface"]
 
