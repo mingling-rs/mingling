@@ -53,13 +53,40 @@ pub fn set_task(task: &str) {
 
 /// Exports one package result to `collect/{task}/{platform}/{package}.{ok|err}`.
 ///
+/// The platform is inferred from the current build target using `#[cfg]`
+/// attributes, so callers don't need to pass it explicitly.
+///
 /// Writes `{package}.ok` on success and `{package}.err` (with the output) on
 /// failure. Errors are reported to stderr and otherwise ignored.
 ///
 /// # Panics
 ///
 /// Panics if the internal task mutex is poisoned.
-pub fn export(package: &str, platform: ReportPlatform, result: ReportResult) {
+pub fn export(package: &str, result: ReportResult) {
+    export_on(package, current_platform(), result);
+}
+
+/// The `ReportPlatform` for the currently compiling target.
+fn current_platform() -> ReportPlatform {
+    if cfg!(target_os = "windows") {
+        ReportPlatform::Windows
+    } else if cfg!(target_os = "macos") {
+        ReportPlatform::MacOS
+    } else {
+        ReportPlatform::Linux
+    }
+}
+
+/// Exports one package result to `collect/{task}/{platform}/{package}.{ok|err}`
+/// for a specific platform.
+///
+/// Writes `{package}.ok` on success and `{package}.err` (with the output) on
+/// failure. Errors are reported to stderr and otherwise ignored.
+///
+/// # Panics
+///
+/// Panics if the internal task mutex is poisoned.
+pub fn export_on(package: &str, platform: ReportPlatform, result: ReportResult) {
     let Some(task) = CURRENT_TASK.lock().unwrap().clone() else {
         eprintln!("reporter: no current task; call reporter::set_task first");
         return;
@@ -92,12 +119,8 @@ mod tests {
         let dir = task_root.join("Linux");
         fs::remove_dir_all(&task_root).ok();
 
-        export("pkg-a", ReportPlatform::Linux, ReportResult::Ok);
-        export(
-            "pkg-b",
-            ReportPlatform::Linux,
-            ReportResult::Error("boom".to_string()),
-        );
+        export("pkg-a", ReportResult::Ok);
+        export("pkg-b", ReportResult::Error("boom".to_string()));
 
         assert!(dir.join("pkg-a.ok").is_file());
         assert!(dir.join("pkg-b.err").is_file());
