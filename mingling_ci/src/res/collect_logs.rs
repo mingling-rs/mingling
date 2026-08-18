@@ -26,54 +26,34 @@ pub struct ResCollectLogs {
 }
 
 impl ResCollectLogs {
-    /// Reads `collect/{task}/{os}/` — the aggregate `ok` file (one package per
-    /// line) and per-package `{package}.err` files — plus the git info.
+    /// Reads the flat `collect/` directory — aggregate `{task}.{os}.ok` files
+    /// (one package per line) and per-package `{task}.{os}.{package}.err`
+    /// files — plus the git info.
     #[must_use]
     pub fn read() -> Self {
         let mut logs = Self::default();
 
-        if let Ok(task_entries) = std::fs::read_dir(COLLECT_DIR) {
-            for task_entry in task_entries.flatten() {
-                if !task_entry.file_type().is_ok_and(|t| t.is_dir()) {
-                    continue;
-                }
-                let task = task_entry.file_name().to_string_lossy().into_owned();
-
-                let Ok(os_entries) = std::fs::read_dir(task_entry.path()) else {
-                    continue;
-                };
-                for os_entry in os_entries.flatten() {
-                    if !os_entry.file_type().is_ok_and(|t| t.is_dir()) {
-                        continue;
-                    }
-                    let os = os_entry.file_name().to_string_lossy().into_owned();
-
-                    let Ok(files) = std::fs::read_dir(os_entry.path()) else {
-                        continue;
-                    };
-                    for file in files.flatten() {
-                        let file_name = file.file_name().to_string_lossy().into_owned();
-                        if file_name == "ok" {
-                            // Aggregate success file: one package name per line.
-                            if let Ok(content) = std::fs::read_to_string(file.path()) {
-                                for package in content.lines().filter(|l| !l.is_empty()) {
-                                    logs.statuses
-                                        .entry((task.clone(), package.to_string()))
-                                        .or_default()
-                                        .insert(os.clone(), true);
-                                }
-                            }
-                        } else if let Some(package) = file_name.strip_suffix(".err") {
-                            let package = package.to_string();
+        if let Ok(entries) = std::fs::read_dir(COLLECT_DIR) {
+            for entry in entries.flatten() {
+                let file_name = entry.file_name().to_string_lossy().into_owned();
+                if let Some((task, os)) = parse_ok_name(&file_name) {
+                    // Aggregate success file: one package name per line.
+                    if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                        for package in content.lines().filter(|l| !l.is_empty()) {
                             logs.statuses
-                                .entry((task.clone(), package.clone()))
+                                .entry((task.clone(), package.to_string()))
                                 .or_default()
-                                .insert(os.clone(), false);
-                            let err = std::fs::read_to_string(file.path()).unwrap_or_default();
-                            logs.err_outputs
-                                .insert((task.clone(), os.clone(), package), strip_ansi(&err));
+                                .insert(os.clone(), true);
                         }
                     }
+                } else if let Some((task, os, package)) = parse_err_name(&file_name) {
+                    logs.statuses
+                        .entry((task.clone(), package.clone()))
+                        .or_default()
+                        .insert(os.clone(), false);
+                    let err = std::fs::read_to_string(entry.path()).unwrap_or_default();
+                    logs.err_outputs
+                        .insert((task, os, package), strip_ansi(&err));
                 }
             }
         }
@@ -81,6 +61,28 @@ impl ResCollectLogs {
         logs.git = git_info();
         logs
     }
+}
+
+/// Parses a `{task}.{os}.ok` file name.
+fn parse_ok_name(file_name: &str) -> Option<(String, String)> {
+    let name = file_name.strip_suffix(".ok")?;
+    let mut parts = name.rsplitn(2, '.');
+    let os = parts.next()?.to_string();
+    let task = parts.next()?.to_string();
+    Some((task, os))
+}
+
+/// Parses a `{task}.{os}.{package}.err` file name.
+///
+/// Split from the right: package names cannot contain dots (cargo forbids
+/// them), while task names may.
+fn parse_err_name(file_name: &str) -> Option<(String, String, String)> {
+    let name = file_name.strip_suffix(".err")?;
+    let mut parts = name.rsplitn(3, '.');
+    let package = parts.next()?.to_string();
+    let os = parts.next()?.to_string();
+    let task = parts.next()?.to_string();
+    Some((task, os, package))
 }
 
 #[program_setup]

@@ -104,7 +104,8 @@ pub fn export_on(package: &str, platform: ReportPlatform, result: ReportResult) 
     }
 }
 
-/// Writes buffered successes to `{task}/{platform}/ok`, one package per line.
+/// Writes buffered successes to `collect/{task}.{platform}.ok`, one package per
+/// line.
 ///
 /// # Panics
 ///
@@ -116,38 +117,43 @@ pub fn flush() {
     };
 
     let buffered = std::mem::take(&mut *OK_BUFFER.lock().unwrap());
+    if buffered.is_empty() {
+        return;
+    }
+
+    if let Err(e) = fs::create_dir_all(COLLECT_DIR) {
+        eprintln!("reporter: failed to create {COLLECT_DIR}: {e}");
+        return;
+    }
+
     for (platform, packages) in buffered {
-        let dir = Path::new(COLLECT_DIR).join(&task).join(platform.dir_name());
-        if let Err(e) = fs::create_dir_all(&dir) {
-            eprintln!("reporter: failed to create {}: {e}", dir.display());
-            continue;
-        }
         let content = if packages.is_empty() {
             String::new()
         } else {
             packages.join("\n") + "\n"
         };
-        let path = dir.join("ok");
+        let platform_name = platform.dir_name();
+        let path = Path::new(COLLECT_DIR).join(format!("{task}.{platform_name}.ok"));
         if let Err(e) = fs::write(&path, content) {
             eprintln!("reporter: failed to write {}: {e}", path.display());
         }
     }
 }
 
-/// Writes a failure entry to `{task}/{platform}/{package}.err`.
+/// Writes a failure entry to `collect/{task}.{platform}.{package}.err`.
 fn write_err(package: &str, platform: ReportPlatform, output: String) {
     let Some(task) = CURRENT_TASK.lock().unwrap().clone() else {
         eprintln!("reporter: no current task; call reporter::set_task first");
         return;
     };
 
-    let dir = Path::new(COLLECT_DIR).join(task).join(platform.dir_name());
-    if let Err(e) = fs::create_dir_all(&dir) {
-        eprintln!("reporter: failed to create {}: {e}", dir.display());
+    if let Err(e) = fs::create_dir_all(COLLECT_DIR) {
+        eprintln!("reporter: failed to create {COLLECT_DIR}: {e}");
         return;
     }
 
-    let path = dir.join(format!("{package}.err"));
+    let platform_name = platform.dir_name();
+    let path = Path::new(COLLECT_DIR).join(format!("{task}.{platform_name}.{package}.err"));
     if let Err(e) = fs::write(&path, output) {
         eprintln!("reporter: failed to write {}: {e}", path.display());
     }
@@ -160,19 +166,23 @@ mod tests {
     #[test]
     fn export_writes_ok_and_err_files() {
         set_task("reporter-test");
-        let task_root = Path::new(COLLECT_DIR).join("reporter-test");
-        let dir = task_root.join(current_platform().dir_name());
-        fs::remove_dir_all(&task_root).ok();
+        let platform_name = current_platform().dir_name();
+        let ok_path = Path::new(COLLECT_DIR).join(format!("reporter-test.{platform_name}.ok"));
+        let err_path =
+            Path::new(COLLECT_DIR).join(format!("reporter-test.{platform_name}.pkg-b.err"));
+        fs::remove_file(&ok_path).ok();
+        fs::remove_file(&err_path).ok();
 
         export("pkg-a", ReportResult::Ok);
         export("pkg-b", ReportResult::Error("boom".to_string()));
         flush();
 
-        assert!(dir.join("ok").is_file());
-        assert_eq!(fs::read_to_string(dir.join("ok")).unwrap(), "pkg-a\n");
-        assert!(dir.join("pkg-b.err").is_file());
-        assert_eq!(fs::read_to_string(dir.join("pkg-b.err")).unwrap(), "boom");
+        assert!(ok_path.is_file());
+        assert_eq!(fs::read_to_string(&ok_path).unwrap(), "pkg-a\n");
+        assert!(err_path.is_file());
+        assert_eq!(fs::read_to_string(&err_path).unwrap(), "boom");
 
-        fs::remove_dir_all(&task_root).ok();
+        fs::remove_file(ok_path).ok();
+        fs::remove_file(err_path).ok();
     }
 }
