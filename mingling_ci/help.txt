@@ -22,3 +22,4 @@ COMMANDS:
    build-all                       Build all crates
    clippy-all                      Run clippy with -D warnings on all crates
    test-all                        Test all crates
+   test-examples                   Build examples and run their test.toml cases
