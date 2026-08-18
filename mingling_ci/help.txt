@@ -9,15 +9,17 @@ FLAGS:
 
 COMMANDS:
   UTILS:
-   markdown-check <PATH>    Verify rust code blocks in one markdown file
-   markdown-check-all       Verify rust code blocks in all configured markdown files
-   report-collect           Collect and organize all inspection reports
-   report-clean             Clean up all reports
+   report-collect                       Collect and organize all inspection reports
+   report-clean                         Clean up all reports
 
-   show-features            Print the docs.rs feature list of mingling
-   show-manifests           Print all crate paths that need to be checked
+   show-features                        Print the docs.rs feature list of mingling
+   show-manifests                       Print all crate paths that need to be checked
 
   TASKS:
-   build-all                Build all crates
-   clippy-all               Run clippy with -D warnings on all crates
-   test-all                 Test all crates
+   markdown-check                       Verify rust code blocks in one markdown file
+   markdown-check-all <PATH>            Verify rust code blocks in all configured markdown files
+   markdown-compare                     Compare the structure of two markdown files/dirs
+   markdown-compare-all <PATH> <PATH>   Compare all translated docs against the reference
+   build-all                            Build all crates
+   clippy-all                           Run clippy with -D warnings on all crates
+   test-all                             Test all crates

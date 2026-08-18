@@ -74,7 +74,7 @@ pub async fn markdown_check_all() -> Next {
 }
 
 /// The file name without extension, e.g. `README.md` → `README`.
-fn stem_of(path: &Path) -> String {
+pub(crate) fn stem_of(path: &Path) -> String {
     path.file_stem()
         .unwrap_or_default()
         .to_string_lossy()
