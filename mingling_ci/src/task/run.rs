@@ -1,25 +1,44 @@
 use std::ffi::OsString;
 use std::path::Path;
 
-use just_progress::progress::{self, ProgressInfo};
+use colored::Colorize;
+use indicatif::{ProgressBar, ProgressStyle};
 
 use crate::reporter::{self, ReportResult};
 use crate::res::Manifests;
 
-/// Runs one `cargo` subcommand per manifest in parallel, reporting each
-/// outcome via `reporter` after the whole round finishes.
+/// Outcome of a `cargo` subcommand.
+struct CargoResult {
+    ok: bool,
+    exit_code: Option<i32>,
+    output: String,
+}
+
+/// Runs one `cargo` subcommand per manifest in parallel.
 ///
-/// Only output is the progress bar; returns the number of failing packages.
-#[allow(clippy::cast_precision_loss)] // counts are small
+/// Progress and failures go to stderr: a failing package prints its output
+/// immediately and writes its report entry at the same time. Returns the
+/// number of failing packages.
 pub(crate) async fn run_parallel_checks(
     task: &str,
-    status: &'static str,
+    phase: &str,
     args_for: fn(&Path) -> Vec<OsString>,
     manifests: &Manifests,
 ) -> usize {
     reporter::set_task(task);
-    let total = manifests.package_dirs.len();
-    progress::update(task, 0.0, ProgressInfo::Info(status));
+
+    let n = manifests.package_dirs.len();
+    let pb = ProgressBar::new(n as u64);
+    let padding = " ".repeat(12usize.saturating_sub(phase.len()));
+    let styled_prefix = format!("{}{}", padding, phase.bold().bright_cyan());
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template(&format!(
+                "{styled_prefix} [{{bar:28}}] {{pos}}/{{len}}: {{msg}}"
+            ))
+            .unwrap()
+            .progress_chars("=> "),
+    );
 
     // Run one cargo invocation per manifest in parallel.
     let mut set = tokio::task::JoinSet::new();
@@ -29,37 +48,43 @@ pub(crate) async fn run_parallel_checks(
         set.spawn(async move { (name, run_cargo(args).await) });
     }
 
-    // Collect all outcomes first, then dump the report files in one round.
-    let mut results: Vec<(String, ReportResult)> = Vec::new();
-    let mut done = 0;
+    let mut fail_count = 0;
     while let Some(joined) = set.join_next().await {
-        done += 1;
-        let Ok((name, (ok, output))) = joined else {
+        let Ok((name, result)) = joined else {
             continue;
         };
-        progress::update(task, done as f32 / total as f32, ProgressInfo::Info(status));
-        results.push((
-            name,
-            if ok {
-                ReportResult::Ok
-            } else {
-                ReportResult::Error(output)
-            },
-        ));
+        pb.inc(1);
+        pb.set_message(name.clone());
+
+        if result.ok {
+            reporter::export(&name, ReportResult::Ok);
+        } else {
+            fail_count += 1;
+            // Failures print to stderr immediately (bar suspended to avoid
+            // interleaving) and write their report entry at the same time.
+            pb.suspend(|| {
+                eprintln!(
+                    "{}: {} failed{}",
+                    phase.bold().bright_cyan(),
+                    name,
+                    result
+                        .exit_code
+                        .map_or_else(String::new, |c| format!(" (exit code {c})"))
+                );
+                for line in result.output.lines() {
+                    eprintln!("  {line}");
+                }
+            });
+            reporter::export(&name, ReportResult::Error(result.output));
+        }
     }
 
-    let fail_count = results
-        .iter()
-        .filter(|(_, r)| matches!(r, ReportResult::Error(_)))
-        .count();
-    for (name, result) in results {
-        reporter::export(&name, result);
-    }
+    pb.finish_and_clear();
     fail_count
 }
 
-/// Runs a `cargo` subcommand, returning success and captured output.
-async fn run_cargo(args: Vec<OsString>) -> (bool, String) {
+/// Runs a `cargo` subcommand, capturing its output.
+async fn run_cargo(args: Vec<OsString>) -> CargoResult {
     let output = tokio::process::Command::new("cargo")
         .args(args)
         .output()
@@ -68,8 +93,16 @@ async fn run_cargo(args: Vec<OsString>) -> (bool, String) {
         Ok(output) => {
             let mut log = String::from_utf8_lossy(&output.stdout).into_owned();
             log.push_str(&String::from_utf8_lossy(&output.stderr));
-            (output.status.success(), log)
+            CargoResult {
+                ok: output.status.success(),
+                exit_code: output.status.code(),
+                output: log,
+            }
         }
-        Err(e) => (false, format!("failed to run cargo: {e}")),
+        Err(e) => CargoResult {
+            ok: false,
+            exit_code: None,
+            output: format!("failed to run cargo: {e}"),
+        },
     }
 }
