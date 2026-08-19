@@ -25,7 +25,7 @@ structural_renderer = []
 repl = []
 pathf = ["dep:mingling_pathf"]
 
-# Dispatch strategy (mutually exclusive; none = auto, currently linear)
+# Dispatch strategy (mutually exclusive; none = auto)
 dispatch_linear = []
 dispatch_tree = []
 dispatch_phf = []
