@@ -524,6 +524,11 @@ None
 
     _No behavioral changes — the setup still registers the same `ResExitCode` resource (initialised to `0`) and installs the same program-finish hook that overrides the program's exit code when the resource holds a non-zero value. The type simplification is purely ergonomic._
 
+11. **[`features`]** Updated the preset feature groups in `mingling/Cargo.toml`:
+
+- **`advanced`** — Changed from `extras`, `picker`, `repl`, `comp`, `dispatch_tree`, `structural_renderer` to `extras`, `picker`, `repl`, `comp`, `structural_renderer`, `pathf`. The `dispatch_tree` feature was removed and `pathf` was added.
+- **`full`** — Changed from `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`, `pathf` to `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`. The `pathf` feature was removed, while `dispatch_tree` remains.
+
 ---
 
 ## Contents

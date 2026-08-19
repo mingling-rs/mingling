@@ -37,8 +37,8 @@ features = [
 
 # Presets
 mini = ["extras", "picker"]
-advanced = ["extras", "picker", "repl", "comp", "dispatch_tree", "structural_renderer"]
-full = ["extras", "picker", "repl", "clap", "comp", "dispatch_tree", "structural_renderer_full", "pathf"]
+advanced = ["extras", "picker", "repl", "comp", "structural_renderer", "pathf"]
+full = ["extras", "picker", "repl", "clap", "comp", "dispatch_tree", "structural_renderer_full"]
 
 # Core
 core = ["dep:mingling_core", "mingling_core/default"]
