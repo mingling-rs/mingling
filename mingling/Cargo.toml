@@ -54,7 +54,12 @@ docs_rs = []
 
 # Features
 clap = ["mingling_core/clap", "mingling_macros/clap"]
+
+# Dispatch strategy (mutually exclusive; none = auto, currently linear)
+dispatch_linear = ["mingling_macros/dispatch_linear"]
 dispatch_tree = ["mingling_macros/dispatch_tree"]
+dispatch_phf = ["mingling_macros/dispatch_phf"]
+
 repl = ["mingling_core/repl", "mingling_macros/repl"]
 comp = ["mingling_core/comp", "mingling_macros/comp"]
 picker = ["mingling_core/picker", "dep:arg-picker", "arg-picker/mingling_support"]

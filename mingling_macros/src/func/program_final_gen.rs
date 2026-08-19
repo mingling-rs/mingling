@@ -15,9 +15,17 @@ use crate::RENDERERS_EXIST;
 #[cfg(feature = "structural_renderer")]
 use crate::STRUCTURAL_RENDERERS;
 use crate::get_global_set;
-#[cfg(not(feature = "dispatch_tree"))]
+#[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
+use crate::systems::dispatch_auto;
+#[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
 use crate::systems::dispatch_list_gen;
-#[cfg(feature = "dispatch_tree")]
+#[cfg(feature = "dispatch_phf")]
+use crate::systems::dispatch_phf_gen;
+#[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
+use crate::systems::dispatch_phf_gen;
+#[cfg(all(not(feature = "dispatch_phf"), feature = "dispatch_tree"))]
+use crate::systems::dispatch_tree_gen;
+#[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
 use crate::systems::dispatch_tree_gen;
 
 #[cfg(feature = "async")]
@@ -27,7 +35,8 @@ const ASYNC_ENABLED: bool = false;
 
 /// Generate the `get_nodes()` function body for a `ProgramCollect` impl.
 ///
-/// Shared by both dispatch strategies (trie and linear list); it only depends
+/// Shared by all three dispatch strategies (linear list, trie, perfect hash);
+/// it only depends
 /// on the compile-time-collected `__internal_dispatcher_*` statics.
 fn gen_get_nodes(entries: &[(String, String, String)]) -> proc_macro2::TokenStream {
     let mut node_entries = Vec::new();
@@ -170,28 +179,67 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
         })
         .collect();
 
-    // The `dispatch_tree` feature only selects the internal matching strategy:
-    // a char-level trie when enabled, a linear longest-prefix list otherwise.
-    #[cfg(feature = "dispatch_tree")]
-    let dispatch_gen = {
+    // The dispatch strategy is selected by features:
+    // - `dispatch_phf` (perfect hash) has priority
+    // - `dispatch_tree` (char-level trie)
+    // - `dispatch_linear`, or no dispatch feature at all ("auto" mode), picks
+    //   the best strategy from the command table via
+    //   `dispatch_auto::select_strategy`.
+    // The three dispatch features are mutually exclusive (see the crate-level
+    // `compile_error!` in lib.rs).
+    //
+    // `dispatch_extra` carries items that must live in an inherent impl of
+    // the program type (currently the trie's `__trie_fallback` method).
+    #[cfg(feature = "dispatch_phf")]
+    let (dispatch_gen, dispatch_extra) = {
         let get_nodes_fn = gen_get_nodes(&entries);
-        let dispatch_fn = dispatch_tree_gen::gen_dispatch_args_trie(&entries);
+        let dispatch_fn = dispatch_phf_gen::gen_dispatch_args_phf(&entries);
 
-        quote! {
-            #get_nodes_fn
-            #dispatch_fn
-        }
+        (
+            quote! {
+                #get_nodes_fn
+                #dispatch_fn
+            },
+            quote! {},
+        )
     };
 
-    #[cfg(not(feature = "dispatch_tree"))]
-    let dispatch_gen = {
+    #[cfg(all(not(feature = "dispatch_phf"), feature = "dispatch_tree"))]
+    let (dispatch_gen, dispatch_extra) = {
         let get_nodes_fn = gen_get_nodes(&entries);
-        let dispatch_fn = dispatch_list_gen::gen_dispatch_args(&entries);
+        let (dispatch_fn, extra) = dispatch_tree_gen::gen_dispatch_args_trie(&entries);
 
-        quote! {
-            #get_nodes_fn
-            #dispatch_fn
-        }
+        (
+            quote! {
+                #get_nodes_fn
+                #dispatch_fn
+            },
+            extra,
+        )
+    };
+
+    #[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
+    let (dispatch_gen, dispatch_extra) = {
+        let get_nodes_fn = gen_get_nodes(&entries);
+        let (dispatch_fn, extra) = match dispatch_auto::select_strategy(&entries) {
+            dispatch_auto::DispatchStrategy::Linear => {
+                (dispatch_list_gen::gen_dispatch_args(&entries), quote! {})
+            }
+            dispatch_auto::DispatchStrategy::Trie => {
+                dispatch_tree_gen::gen_dispatch_args_trie(&entries)
+            }
+            dispatch_auto::DispatchStrategy::Phf => {
+                (dispatch_phf_gen::gen_dispatch_args_phf(&entries), quote! {})
+            }
+        };
+
+        (
+            quote! {
+                #get_nodes_fn
+                #dispatch_fn
+            },
+            extra,
+        )
     };
 
     #[cfg(feature = "comp")]
@@ -436,6 +484,7 @@ pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
             pub fn this() -> &'static ::mingling::Program<#name> {
                 &::mingling::this::<#name>()
             }
+            #dispatch_extra
         }
     };
 

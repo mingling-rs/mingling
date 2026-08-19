@@ -86,6 +86,28 @@ pub const MINGLING_DEFAULT: bool = false;
 #[cfg(feature = "default")]
 #[allow(unused)]
 pub const MINGLING_DEFAULT: bool = true;
+/// Whether the `dispatch_linear` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "dispatch_linear"))]
+#[allow(unused)]
+pub const MINGLING_DISPATCH_LINEAR: bool = false;
+
+/// Whether the `dispatch_linear` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "dispatch_linear")]
+#[allow(unused)]
+pub const MINGLING_DISPATCH_LINEAR: bool = true;
+/// Whether the `dispatch_phf` feature is enabled
+/// Current: `disabled`
+#[cfg(not(feature = "dispatch_phf"))]
+#[allow(unused)]
+pub const MINGLING_DISPATCH_PHF: bool = false;
+
+/// Whether the `dispatch_phf` feature is enabled
+/// Current: `enabled`
+#[cfg(feature = "dispatch_phf")]
+#[allow(unused)]
+pub const MINGLING_DISPATCH_PHF: bool = true;
 /// Whether the `dispatch_tree` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "dispatch_tree"))]

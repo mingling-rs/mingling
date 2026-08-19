@@ -20,10 +20,18 @@ async = []
 
 clap = []
 comp = ["dep:just_template", "dep:mingling_pathf"]
-dispatch_tree = []
+
 structural_renderer = []
 repl = []
 pathf = ["dep:mingling_pathf"]
+
+# Dispatch strategy (mutually exclusive; none = auto, currently linear)
+dispatch_linear = []
+dispatch_tree = []
+dispatch_phf = []
+
+# Workspace-internal: compile all dispatch generators (used by the dev/bench/dispatch harness)
+bench_support = []
 
 extras = []
 
