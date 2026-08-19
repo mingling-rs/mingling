@@ -1,4 +1,3 @@
-// Doc Not Optimize
 //! Auto dispatch-strategy selection (no dispatch feature enabled).
 //!
 //! Picks the matching strategy at macro-expansion time from the normalized

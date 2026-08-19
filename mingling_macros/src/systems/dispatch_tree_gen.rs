@@ -1,4 +1,3 @@
-// Doc Not Optimize
 //! Char-level trie dispatch generator (`dispatch_tree` feature).
 //!
 //! Builds a hardcoded match tree: at each depth, group nodes by character.

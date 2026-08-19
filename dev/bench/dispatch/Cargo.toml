@@ -1,0 +1,16 @@
+[package]
+name = "mingling_bench"
+version = "0.1.0"
+edition = "2024"
+publish = false
+description = "Workspace-internal dispatch-strategy benchmark: linear list vs char trie vs perfect hash"
+
+[dependencies]
+mingling = { path = "../../../mingling" }
+mingling_macros = { path = "../../../mingling_macros", features = ["bench_support"] }
+prettytable-rs = "0.10"
+
+[profile.release]
+opt-level = 2
+
+[workspace]

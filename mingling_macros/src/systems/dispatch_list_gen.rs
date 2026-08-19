@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use std::cmp::Reverse;
 
 use proc_macro2::TokenStream;

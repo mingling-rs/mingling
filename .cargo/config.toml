@@ -6,3 +6,5 @@ target-dir = "./.temp/target"
 [alias]
 ci = "run --manifest-path dev/ci/Cargo.toml --bin ci --quiet --"
 dev_tool = "run --manifest-path dev/run/Cargo.toml --quiet --bin "
+
+dispatch-bench = "run --release --quiet --manifest-path dev/bench/dispatch/Cargo.toml"

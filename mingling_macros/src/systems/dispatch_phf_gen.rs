@@ -1,4 +1,3 @@
-// Doc Not Optimize
 //! Perfect-hash dispatch generator (`dispatch_phf` feature).
 //!
 //! Generates a `dispatch_args()` body using a **CHD minimal perfect hash**
