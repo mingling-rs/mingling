@@ -1,4 +1,4 @@
-`<h1 align="center">[T0] Remove the pack! Family of Macros</h1>
+`<h1 align="center">[Solved] [T0] Remove the pack! Family of Macros</h1>
 <p align="center">
     Breaking: retire the entire <code>pack!</code> family in favor of the <code>Grouped</code> derive
 </p>

@@ -1,4 +1,4 @@
-<h1 align="center">[T1] Modify the dispatcher! Syntax</h1>
+<h1 align="center">[Solved] [T1] Modify the dispatcher! Syntax</h1>
 <p align="center">
     Breaking: drop the <code>CMD*</code> struct from the explicit form of <code>dispatcher!</code>
 </p>

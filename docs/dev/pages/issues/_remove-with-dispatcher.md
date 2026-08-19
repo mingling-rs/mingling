@@ -1,4 +1,4 @@
-<h1 align="center">[T0] Remove with_dispatcher and with_dispatchers</h1>
+<h1 align="center">[Solved] [T0] Remove with_dispatcher and with_dispatchers</h1>
 <p align="center">
     Breaking: make <code>Dispatcher</code> registration compile-time collected in all modes
 </p>

@@ -1,4 +1,4 @@
-<h1 align="center">[T0] Remove the parser Feature</h1>
+<h1 align="center">[Solved] [T0] Remove the parser Feature</h1>
 <p align="center">
     Breaking: retire the legacy argument parsing in favor of <code>picker</code>
 </p>

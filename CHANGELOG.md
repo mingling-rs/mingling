@@ -62,7 +62,35 @@ None
 
 #### Optimizations:
 
-None
+1. **[`macros:dispatch`]** Introduced an "auto" dispatch-strategy selection mode plus a third explicit strategy. Previously, `dispatch_tree` was the only strategy-related feature (enabling a char-level trie; with it disabled, a linear longest-prefix list was used). Now there are three mutually-exclusive dispatch features — `dispatch_linear`, `dispatch_tree`, `dispatch_phf` — and when none is enabled, `gen_program!` selects the best strategy from the command table automatically.
+
+    **New feature flags** (`mingling/Cargo.toml`, `mingling_macros/Cargo.toml`):
+
+    - `dispatch_linear` — forces the linear longest-prefix list generator
+    - `dispatch_tree` — forces the char-level trie generator (unchanged behavior)
+    - `dispatch_phf` — new: forces the CHD minimal perfect-hash generator
+    - `bench_support` — workspace-internal feature (in `mingling_macros`) that compiles all three generators and exposes the `bench_cell!` proc macro used by the `dev/bench/dispatch` harness
+
+    The three dispatch features are mutually exclusive: enabling more than one triggers a `compile_error!` (in `mingling_macros/src/lib.rs`). Enabling none selects _auto_ mode.
+
+    **Auto mode** (`mingling_macros/src/systems/dispatch_auto.rs`): when no dispatch feature is enabled, `program_final_gen` calls `dispatch_auto::select_strategy(&entries)` at macro-expansion time, which picks `Linear`, `Trie`, or `Phf` from the normalized command table based on a cost model calibrated against the `dev/bench/dispatch` matrix:
+
+    - deep nested chains at modest sizes (`max_words ≥ 8`, `n ≤ 128`) → linear list (a few short memcmps beat the trie's per-level `nth(0)` walk plus the fallback call on non-leaf hits);
+    - single-word tables with long names → perfect hash (one hash beats the trie's char walk once names grow past ~16 chars);
+    - small tables (`n ≤ 64`) → linear vs trie by a cost model (linear wins on short names, loses once `count × length` grows);
+    - everything else → char trie (O(depth) hit cost independent of table size, best miss path).
+
+    **New perfect-hash generator** (`mingling_macros/src/systems/dispatch_phf_gen.rs`): implements a CHD (Belazzougui, Botelho, Dietzfelbinger) minimal perfect hash computed at macro-expansion time. Semantics match the other two generators exactly: longest registered word-aligned prefix wins; every hash hit is verified with an exact byte equality against the stored key; duplicate normalized names are dropped (first wins). Runtime cost is one byte scan over the first `max_words` words plus at most `max_words` double-hash + verify attempts; code size is O(1) in the command count.
+
+    **Trie generator refactor** (`mingling_macros/src/systems/dispatch_tree_gen.rs`): the trie's longest-prefix fallback is no longer inlined into every arm. Each trie node gets an id and every arm _calls_ a single generic `__trie_fallback<G>` method that runs that node's exact-endpoint checks and tail-recurses to the parent, returning `None` when nothing in the chain matches. This keeps the generated code linear in the table size — previously, inlining the whole fallback chain per arm grew quadratically with nesting depth (a 1024×16 nested table emitted ~13 MB of tokens). The generator now returns two token streams: the `dispatch_args` method (for the `ProgramCollect` trait impl) and the `__trie_fallback` method (for an inherent impl of the program type). The inherent impl is emitted inside the generated program's `impl` block (via the new `dispatch_extra` handling in `program_final_gen.rs`).
+
+    **New feature constants** in `mingling/src/features.rs`: `MINGLING_DISPATCH_LINEAR` and `MINGLING_DISPATCH_PHF` (both `false`/`true` gated on their features, alongside the existing `MINGLING_DISPATCH_TREE`).
+
+    **New benchmark harness** (`dev/bench/dispatch/`): a workspace-internal `mingling_bench` crate that measures the three explicit strategies plus auto mode across a matrix of command-table shapes (length 4/8/16/32 × count 128/256 × single-word/multi-word/nested-depth-4/nested-depth-10). A `build.rs` generates the full cell matrix via the new `bench_cell!` proc macro, and `src/main.rs` renders a `prettytable` report with per-cell hit/miss ns/op, geomeans, per-cell strategy wins, and auto-selection quality (exact-match and within-5% counts). A `cargo dispatch-bench` alias was added to `.cargo/config.toml`.
+
+    **Doc updates**: `ProgramCollect::dispatch_args` docs and `register_dispatcher!` docs updated to describe the three strategies and auto mode.
+
+    _No behavioral change for existing code that uses `dispatch_tree` (still the trie) or no dispatch feature (now auto-selected instead of always linear — the auto rules preserve the old linear behavior for the previously-common small/nested command tables). The mutual-exclusion `compile_error!` only fires when multiple dispatch features are enabled, which was previously impossible and remains an error.
 
 #### Features:
 
