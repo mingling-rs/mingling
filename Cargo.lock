@@ -64,6 +64,8 @@ dependencies = [
 [[package]]
 name = "arg-picker"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e326de90a1c279562cc1583470daccfd4defe882661c61607edff75b797e483e"
 dependencies = [
  "arg-picker-macros",
  "just_fmt 0.2.0",
@@ -72,6 +74,8 @@ dependencies = [
 [[package]]
 name = "arg-picker-macros"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5f9bbe04b69744a30def8bee5526268b986616314bd1696804d7f819f03d1f3"
 dependencies = [
  "proc-macro2",
  "quote",

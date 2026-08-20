@@ -6,8 +6,6 @@
         ".run/Cargo.toml",
         "dev/ci/Cargo.toml",
         "mingling_pathf/test/Cargo.toml",
-        "arg_picker/Cargo.toml",
-        "arg_picker/test/Cargo.toml",
         "mingling_cli/Cargo.toml"
     ],
     "rust-analyzer.cargo.features": [],

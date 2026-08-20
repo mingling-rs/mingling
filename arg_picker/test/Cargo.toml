@@ -1,9 +1,0 @@
-[package]
-name = "arg-picker-test"
-version = "0.1.0"
-edition = "2024"
-
-[workspace]
-
-[dependencies]
-arg-picker = { path = "../" }
