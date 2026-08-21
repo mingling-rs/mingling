@@ -22,6 +22,8 @@ STEPS: list[tuple[str, list[str]]] = [
     ("clippy-check", []),
     ("test-all", []),
     ("example-check", []),
+    ("markdown-check-all", []),
+    ("markdown-compare-all", []),
     ("docs-check", []),
     ("example-refresh", []),
     ("docsify-refresh", []),
