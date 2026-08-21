@@ -33,13 +33,10 @@ impl AnalyzePattern for StructuralPattern {
 
         for item in &syntax.items {
             match item {
-                Item::Macro(m) => {
-                    if is_structural_macro(&m.mac.path) {
-                        if let Some(analyze_item) =
-                            extract_structural_item(&m.mac.tokens, &imports, "")
-                        {
-                            items.push(analyze_item);
-                        }
+                Item::Macro(m) if is_structural_macro(&m.mac.path) => {
+                    if let Some(analyze_item) = extract_structural_item(&m.mac.tokens, &imports, "")
+                    {
+                        items.push(analyze_item);
                     }
                 }
                 Item::Mod(item_mod) => {
