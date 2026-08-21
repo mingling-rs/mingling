@@ -3,7 +3,6 @@ use crate::{
     ProgramCollect, RenderResult, config::StructuralRendererSetting,
     renderer::structural::error::StructuralRendererSerializeError,
 };
-use serde::Serialize;
 
 pub mod error;
 pub mod structural_data;
@@ -57,7 +56,7 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "json_serde_fmt")]
-    fn render_to_json<T: Serialize + Send>(
+    fn render_to_json<T: serde::Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
@@ -73,7 +72,7 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "json_serde_fmt")]
-    fn render_to_json_pretty<T: Serialize + Send>(
+    fn render_to_json_pretty<T: serde::Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
@@ -89,7 +88,7 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "ron_serde_fmt")]
-    fn render_to_ron<T: Serialize + Send>(
+    fn render_to_ron<T: serde::Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
@@ -105,7 +104,7 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "ron_serde_fmt")]
-    fn render_to_ron_pretty<T: Serialize + Send>(
+    fn render_to_ron_pretty<T: serde::Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
@@ -123,7 +122,7 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "toml_serde_fmt")]
-    fn render_to_toml<T: Serialize + Send>(
+    fn render_to_toml<T: serde::Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
@@ -139,7 +138,7 @@ impl StructuralRenderer {
     ///
     /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
     #[cfg(feature = "yaml_serde_fmt")]
-    fn render_to_yaml<T: Serialize + Send>(
+    fn render_to_yaml<T: serde::Serialize + Send>(
         data: &T,
         r: &mut RenderResult,
     ) -> Result<(), StructuralRendererSerializeError> {
