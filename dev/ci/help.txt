@@ -18,6 +18,7 @@ COMMANDS:
    show-manifests                  Print all crate paths that need to be checked
 
   TOOLS:
+   refresh                         Run all of the following refresh items
    example-refresh                 Regenerate example docs module and examples index
    docsify-refresh                 Fix docsify code boxes and regenerate sidebars
    features-refresh                Regenerate the features module
