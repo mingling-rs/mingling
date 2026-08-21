@@ -17,9 +17,9 @@ pub(crate) fn derive_structural_data(input: TokenStream) -> TokenStream {
         .unwrap()
         .insert(type_name_str);
 
-    // Generate BOTH the sealed impl AND the StructuralData impl.
+    // Generate the StructuralData impl. The registration above is what
+    // distinguishes derive from a manual impl.
     let expanded = quote! {
-        impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
         impl ::mingling::StructuralData<crate::ThisProgram> for #type_name {}
     };
 

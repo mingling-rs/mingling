@@ -161,7 +161,6 @@ mod tests {
         value: i32,
     }
 
-    impl crate::__private::StructuralDataSealed<MockProgramCollect> for TestData {}
     impl StructuralData<MockProgramCollect> for TestData {}
 
     fn test_data() -> TestData {

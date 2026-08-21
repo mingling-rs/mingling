@@ -576,11 +576,47 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
     - **`mingling::macros::group_structural`** re-export — Removed from `mingling::macros` and the prelude.
     - **Implementation module** — Deleted `func/group_structural.rs` (and its registration in the macro dispatch).
 
-    **Planned replacement (structural_renderer rework):** Since `group!` is the macro used for marking types external to the crate, the planned approach is to use `group!` on the external type to bring it into the program, then manually implement `StructuralData<crate::ThisProgram>` where structural output is needed. The new `StructuralData` trait is expected to be implemented with an explicit `crate::ThisProgram` generic parameter, decoupling it from the old macro-generated impls. The exact final form will be finalized alongside the `structural_renderer` rework.
+    **Migration guide:**
 
-    **Migration guidance:** Downstream code using `group_structural!` should move to the derive-based approach planned for the structural renderer rework — namely, `group!` for registering external types combined with manual `StructuralData<crate::ThisProgram>` implementations (optionally alongside `serde::Serialize` where serialization is needed). The exact replacement will be finalized alongside the `structural_renderer` rework.
+    Since `group!` is the macro used for marking types external to the crate, the replacement approach is to use `group!` on the external type to bring it into the program, then manually implement `StructuralData<crate::ThisProgram>` where structural output is needed:
+
+    ```rust,ignore
+    // Defined in another crate
+    #[derive(Serialize)]
+    struct OutType;
+
+    // In the current crate, bring the type into crate::ThisProgram
+    group!(OutType);
+
+    // Implement StructuralData, marking it as structural data
+    impl StructuralData<ThisProgram> for OutType {}
+    ```
+
+    The `StructuralData` trait is now unsealed (see **BREAKING CHANGE #14** below), so manual implementations directly on external types are fully supported, requiring only `serde::Serialize`. This decouples structural rendering from the old macro-generated impls.
 
     _No behavioral changes to other functionality — `group!` and the non-structural derive-based types are unaffected. This removal is intentional cleanup ahead of the structural renderer redesign._
+
+14. **[`core:structural_renderer`]** **[BREAKING]** Unsealed the `StructuralData` trait — it can now be implemented manually (in addition to via `#[derive(StructuralData)]`), and no longer requires the sealed `StructuralDataSealed` supertrait.
+
+    ### What changed
+
+    Previously, `StructuralData<C>` was sealed: it could only be implemented through `#[derive(StructuralData)]`, which generated both a `StructuralDataSealed<C>` impl (a hidden sealed trait in `mingling_core::__private`) and the `StructuralData<C>` impl itself. The derive macro was the sole path to making a type structurally renderable.
+
+    Now the seal has been removed, so `StructuralData<C>` can be implemented directly by user code (e.g. for external types, or for types that cannot use the derive). The only requirement is `Serialize`.
+
+    Specifically:
+
+    - **`StructuralData<C>` trait** — No longer has the `crate::__private::StructuralDataSealed<C>` supertrait. It is now just `pub trait StructuralData<C>: Serialize where C: ProgramCollect<Enum = C> {}`. Doc comment updated to note that the trait "may also be implemented manually (e.g. for external types), which only requires `Serialize`".
+    - **`mingling_core::__private` module and `mingling_core::private` module** — **Removed entirely.** The hidden `private` module (which contained `StructuralDataSealed` and re-exported `StructuralData`) has been deleted, along with the `__private` public-but-hidden re-export module.
+    - **Derive macro (`derive_structural_data`)** — Now generates only the `StructuralData` impl (plus the `register_type!` registration into the global `STRUCTURED_TYPES` registry). The `StructuralDataSealed` impl line has been removed. Registration is what distinguishes derive-based impls from manual impls.
+    - **`structural_data.rs` test** — Removed the manual `impl crate::__private::StructuralDataSealed<MockProgramCollect> for TestData {}` line (it no longer exists).
+
+    ### Migration guide
+    - **No code changes required for derive-based usage** — `#[derive(StructuralData)]` continues to work identically.
+    - **Manual impls are now allowed** — If you previously worked around the seal (e.g. by writing a wrapper type that derived `StructuralData` and forwarding to an external type), you can now implement `StructuralData<C>` directly on the external type, provided it implements `serde::Serialize`.
+    - **Remove any references to `mingling::__private::StructuralDataSealed`** — The sealed trait and the `__private` module no longer exist.
+
+    _Behavioral note:_ the runtime behavior of structurally rendered output is unchanged — types registered via `#[derive(StructuralData)]` still appear in the `structural_render` match arm, and manual impls (which do not register) are simply not automatically included in that match arm. This is a deliberate loosening of the API to support manual implementations for external types.
 
 ---
 

@@ -91,18 +91,6 @@ pub mod error {
     pub use crate::renderer::structural::error::*;
 }
 
-#[doc(hidden)]
-mod private;
-
-/// Internal API provided by Mingling Core
-///
-/// These are used by macros and are not exposed to users, but are still accessible externally.
-#[doc(hidden)]
-#[allow(unused_imports)]
-pub mod __private {
-    pub use crate::private::*;
-}
-
 /// Mingling's convention metadatas, which can be bound to types using `#[metadata]`, to provide identification for types
 pub mod metadata;
 
