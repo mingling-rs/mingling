@@ -10,6 +10,7 @@ pub use grouped_derive::*;
 pub use help::*;
 pub use metadata::*;
 pub use renderer::*;
+pub use structural::*;
 
 mod chain;
 mod command;
@@ -21,3 +22,4 @@ mod grouped_derive;
 mod help;
 mod metadata;
 mod renderer;
+mod structural;

@@ -1,24 +1,27 @@
 // Doc Not Optimize
 //! The `GroupedDerivePattern` matches structs, enums, and unions annotated with
-//! `#[derive(Grouped)]` or `#[derive(GroupedSerialize)]` (or any combination
-//! with other derives). It also recurses into `mod` items to find nested types.
-//! This is used to track grouped items for code generation or analysis.
+//! `#[derive(Grouped)]`, `#[derive(GroupedSerialize)]`, or `#[derive(StructuralData)]`
+//! (or any combination with other derives). It also recurses into `mod` items to
+//! find nested types. This is used to track grouped items for code generation or
+//! analysis.
 
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Matches `#[derive(Grouped)]` and `#[derive(GroupedSerialize)]`.
+/// Matches `#[derive(Grouped)]`, `#[derive(GroupedSerialize)]`, and
+/// `#[derive(StructuralData)]`.
 ///
 /// Covers the forms:
 /// - `#[derive(Grouped)] struct T { ... }`
 /// - `#[derive(Grouped, Serialize, ...)] struct T { ... }`
 /// - `#[derive(GroupedSerialize)] struct T { ... }`
+/// - `#[derive(StructuralData)] struct T { ... }`
 pub struct GroupedDerivePattern;
 
 impl AnalyzePattern for GroupedDerivePattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("Grouped")
+        content.contains("Grouped") || content.contains("StructuralData")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {
@@ -79,7 +82,7 @@ fn has_grouped_derive(attrs: &[syn::Attribute]) -> bool {
                     )?;
                 Ok(paths.iter().any(|p| {
                     let name = p.segments.last().unwrap().ident.to_string();
-                    name == "Grouped" || name == "GroupedSerialize"
+                    name == "Grouped" || name == "GroupedSerialize" || name == "StructuralData"
                 }))
             })
             .unwrap_or(false)

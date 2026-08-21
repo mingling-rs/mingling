@@ -1,4 +1,3 @@
-// Doc Not Optimize
 #![doc(html_logo_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/icon3.png")]
 #![doc(
     html_favicon_url = "https://github.com/mingling-rs/mingling/raw/main/docs/res/favicon_small.png"
@@ -112,6 +111,9 @@ pub mod macros {
     pub use mingling_macros::renderify;
     pub use mingling_macros::route;
     pub use mingling_macros::routeify;
+    #[cfg(feature = "structural_renderer")]
+    #[doc(hidden)]
+    pub use mingling_macros::structural;
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest;
     #[cfg(feature = "comp")]

@@ -25,6 +25,11 @@ enum EnumDerived2 {
     Y(i32),
 }
 
+#[derive(StructuralData)]
+struct Derived4 {
+    value: String,
+}
+
 pub mod sub {
     #[derive(Grouped)]
     struct Derived1 {
@@ -39,5 +44,10 @@ pub mod sub {
     #[derive(Grouped)]
     enum EnumDerived1 {
         A,
+    }
+
+    #[derive(StructuralData)]
+    struct Derived4 {
+        value: bool,
     }
 }

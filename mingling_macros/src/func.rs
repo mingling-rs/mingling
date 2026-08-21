@@ -1,4 +1,3 @@
-// Doc Not Optimize
 pub(crate) mod dispatcher;
 pub(crate) mod empty_result;
 pub(crate) mod entry;
@@ -21,6 +20,8 @@ pub(crate) mod register_renderer;
 pub(crate) mod register_type;
 pub(crate) mod render_route;
 pub(crate) mod route;
+#[cfg(feature = "structural_renderer")]
+pub(crate) mod structural;
 #[cfg(feature = "comp")]
 pub(crate) mod suggest;
 #[cfg(feature = "comp")]

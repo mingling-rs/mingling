@@ -578,7 +578,7 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
     **Migration guide:**
 
-    Since `group!` is the macro used for marking types external to the crate, the replacement approach is to use `group!` on the external type to bring it into the program, then manually implement `StructuralData<crate::ThisProgram>` where structural output is needed:
+    Since `group!` is the macro used for marking types external to the crate, the replacement approach is to use `group!` on the external type to bring it into the program, then register it as structural data via the new `structural!` macro (see **BREAKING CHANGE #14** below), which both registers the type and generates the `StructuralData` impl:
 
     ```rust,ignore
     // Defined in another crate
@@ -588,35 +588,36 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
     // In the current crate, bring the type into crate::ThisProgram
     group!(OutType);
 
-    // Implement StructuralData, marking it as structural data
-    impl StructuralData<ThisProgram> for OutType {}
+    // Register as structural data — registers for the structural_render
+    // match arm and generates `impl StructuralData<crate::ThisProgram>`
+    structural!(OutType);
     ```
 
-    The `StructuralData` trait is now unsealed (see **BREAKING CHANGE #14** below), so manual implementations directly on external types are fully supported, requiring only `serde::Serialize`. This decouples structural rendering from the old macro-generated impls.
+    The `StructuralData` trait is now unsealed (see **BREAKING CHANGE #14** below), so manual implementations on external types are also supported, requiring only `serde::Serialize` — but only `structural!`-registered types are picked up by the `structural_render` match arm. This decouples structural rendering from the old macro-generated impls.
 
     _No behavioral changes to other functionality — `group!` and the non-structural derive-based types are unaffected. This removal is intentional cleanup ahead of the structural renderer redesign._
 
-14. **[`core:structural_renderer`]** **[BREAKING]** Unsealed the `StructuralData` trait — it can now be implemented manually (in addition to via `#[derive(StructuralData)]`), and no longer requires the sealed `StructuralDataSealed` supertrait.
+14. **[`core:structural_renderer`]** **[BREAKING]** Reworked the `StructuralData` registration path: added the `structural!` macro, unsealed the `StructuralData` trait, and made `#[derive(StructuralData)]` delegate to `structural!`. The pathf analyzer now recognizes both entry points.
 
     ### What changed
 
-    Previously, `StructuralData<C>` was sealed: it could only be implemented through `#[derive(StructuralData)]`, which generated both a `StructuralDataSealed<C>` impl (a hidden sealed trait in `mingling_core::__private`) and the `StructuralData<C>` impl itself. The derive macro was the sole path to making a type structurally renderable.
+    Previously, `StructuralData<C>` was sealed: it could only be implemented through `#[derive(StructuralData)]`, which generated both a `StructuralDataSealed<C>` impl (a hidden sealed trait in `mingling_core::__private`) and the `StructuralData<C>` impl itself, and registered the type name into the proc-macro-side `STRUCTURED_TYPES` registry directly.
 
-    Now the seal has been removed, so `StructuralData<C>` can be implemented directly by user code (e.g. for external types, or for types that cannot use the derive). The only requirement is `Serialize`.
+    Now the seal has been removed and registration is unified behind a single `structural!` macro:
 
-    Specifically:
-
+    - **New `mingling::macros::structural!(TypeName)` macro** — Registers `TypeName` into the `STRUCTURED_TYPES` registry (so a `#[renderer]` whose input type is `TypeName` is recognized as structural and included in the generated `structural_render` match arm) **and** generates `impl StructuralData<crate::ThisProgram> for TypeName`. It works for both local and external types — for external types, call it directly (e.g. after `group!(ExternalType)`); the generated impl is allowed by the orphan rule because `crate::ThisProgram` is a local type. Registration lives in `mingling_macros::func::structural` and is gated behind `structural_renderer`.
+    - **`#[derive(StructuralData)]`** — Now simply expands to `mingling::macros::structural!(TypeName);`. All registration logic moved out of the derive into the `structural!` macro, so both entry points share one code path.
     - **`StructuralData<C>` trait** — No longer has the `crate::__private::StructuralDataSealed<C>` supertrait. It is now just `pub trait StructuralData<C>: Serialize where C: ProgramCollect<Enum = C> {}`. Doc comment updated to note that the trait "may also be implemented manually (e.g. for external types), which only requires `Serialize`".
     - **`mingling_core::__private` module and `mingling_core::private` module** — **Removed entirely.** The hidden `private` module (which contained `StructuralDataSealed` and re-exported `StructuralData`) has been deleted, along with the `__private` public-but-hidden re-export module.
-    - **Derive macro (`derive_structural_data`)** — Now generates only the `StructuralData` impl (plus the `register_type!` registration into the global `STRUCTURED_TYPES` registry). The `StructuralDataSealed` impl line has been removed. Registration is what distinguishes derive-based impls from manual impls.
-    - **`structural_data.rs` test** — Removed the manual `impl crate::__private::StructuralDataSealed<MockProgramCollect> for TestData {}` line (it no longer exists).
+    - **pathf** — The pathf pattern analyzer now recognizes both `#[derive(StructuralData)]` (via `GroupedDerivePattern`) and `structural!(Type)` invocations (new `StructuralPattern` in `mingling_pathf/src/patterns/structural.rs`), so these types are resolved as type uses in the generated `type_using.rs`.
+    - **Feature wiring** — `structural_renderer` and `structural_renderer_empty` now pull in `macros` (the derive and `structural!` both reference `::mingling::macros`).
 
     ### Migration guide
     - **No code changes required for derive-based usage** — `#[derive(StructuralData)]` continues to work identically.
-    - **Manual impls are now allowed** — If you previously worked around the seal (e.g. by writing a wrapper type that derived `StructuralData` and forwarding to an external type), you can now implement `StructuralData<C>` directly on the external type, provided it implements `serde::Serialize`.
+    - **External types** — Replace the previous workaround (wrapper type + derive, or a bare manual `impl StructuralData`) with `group!(ExternalType);` followed by `structural!(ExternalType);`. Manual impls remain supported but are not registered automatically; use `structural!` when the type should appear in the `structural_render` match arm.
     - **Remove any references to `mingling::__private::StructuralDataSealed`** — The sealed trait and the `__private` module no longer exist.
 
-    _Behavioral note:_ the runtime behavior of structurally rendered output is unchanged — types registered via `#[derive(StructuralData)]` still appear in the `structural_render` match arm, and manual impls (which do not register) are simply not automatically included in that match arm. This is a deliberate loosening of the API to support manual implementations for external types.
+    _Behavioral note:_ the runtime behavior of structurally rendered output is unchanged for derive-based types. `structural!(Type)` is the registration equivalent of `register_type!` for the `STRUCTURED_TYPES` registry; manual impls (which do not register) are simply not automatically included in the `structural_render` match arm.
 
 ---
 

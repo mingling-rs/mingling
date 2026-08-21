@@ -208,11 +208,38 @@ fn test_grouped_derive_analyze() {
         "::Derived1",
         "::Derived2",
         "::Derived3",
+        "::Derived4",
         "::EnumDerived1",
         "::EnumDerived2",
         "::sub::Derived1",
         "::sub::Derived3",
+        "::sub::Derived4",
         "::sub::EnumDerived1",
+    ];
+
+    assert_eq!(r.len(), required.len());
+    for entry in &required {
+        assert!(r.contains(*entry), "Result should contain: {}", entry);
+    }
+}
+
+#[test]
+fn test_structural_analyze() {
+    let analyzer = mingling_pathf::pattern_analyzer::init();
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_structural.rs");
+
+    let r = analyzer.analyze_file(file).unwrap();
+    let required: Vec<&str> = vec![
+        // Root: local types registered via structural!
+        "::Struct1",
+        "::Struct2",
+        // Sub: local types registered via structural!
+        "::sub::Struct1",
+        "::sub::Struct2",
+        // Foreign type imported via `use` (deduplicated across modules)
+        "::std::io::Error",
     ];
 
     assert_eq!(r.len(), required.len());

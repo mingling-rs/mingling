@@ -66,6 +66,7 @@ picker = ["mingling_core/picker", "dep:arg-picker", "arg-picker/mingling_support
 pathf = ["mingling_macros/pathf"]
 
 structural_renderer = [
+    "macros",
     "mingling_core/structural_renderer",
     "dep:serde",
     "mingling_macros/structural_renderer",
@@ -73,6 +74,7 @@ structural_renderer = [
 ]
 
 structural_renderer_empty = [
+    "macros",
     "mingling_core/structural_renderer",
     "dep:serde",
     "mingling_macros/structural_renderer",

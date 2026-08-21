@@ -19,6 +19,7 @@ use crate::error::MinglingPathfinderError;
 use crate::patterns::{
     ChainPattern, CommandPattern, CompletionPattern, DispatcherClapPattern, DispatcherPattern,
     GroupPattern, GroupedDerivePattern, HelpPattern, MetadataPattern, RendererPattern,
+    StructuralPattern,
 };
 
 /// Creates a default `PatternAnalyzer` with all built-in patterns pre-registered.
@@ -27,6 +28,7 @@ pub fn init() -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
     analyzer.add_pattern(GroupPattern);
     analyzer.add_pattern(GroupedDerivePattern);
+    analyzer.add_pattern(StructuralPattern);
     analyzer.add_pattern(ChainPattern);
     analyzer.add_pattern(CommandPattern);
     analyzer.add_pattern(RendererPattern);

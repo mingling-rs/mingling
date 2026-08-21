@@ -1547,10 +1547,14 @@ pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
 }
 
 /// Derive macro for `StructuralData`, marking a type as eligible for structured
-/// structured output (JSON / YAML / TOML / RON).
+/// output (JSON / YAML / TOML / RON).
 ///
 /// The type must also implement `serde::Serialize` — the generated
 /// `impl StructuralData` will fail to compile otherwise.
+///
+/// Expands to `mingling::macros::structural!(TypeName)`, which registers the
+/// type for the `structural_render` match arm and generates the
+/// `StructuralData<crate::ThisProgram>` impl.
 ///
 /// # Syntax
 ///
@@ -1754,6 +1758,35 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn register_type(input: TokenStream) -> TokenStream {
     func::register_type::register_type_impl(input)
+}
+
+/// Registers a type as `StructuralData` for the `structural_renderer` feature.
+///
+/// This macro is called internally by `#[derive(StructuralData)]` and can be
+/// used directly for **external types** (which cannot use the derive, e.g.
+/// types from another crate).
+///
+/// Each call:
+///
+/// 1. Registers the type's name into the `STRUCTURED_TYPES` global set, which
+///    is later consumed by `register_renderer!` to generate the
+///    `structural_render` match arm.
+/// 2. Generates an empty `impl StructuralData<crate::ThisProgram>` for the
+///    type (the type must also implement `serde::Serialize`).
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// structural!(ExternalType);
+/// ```
+///
+/// # Panics
+///
+/// Panics if the global `STRUCTURED_TYPES` mutex is poisoned.
+#[cfg(feature = "structural_renderer")]
+#[proc_macro]
+pub fn structural(input: TokenStream) -> TokenStream {
+    func::structural::structural_impl(input)
 }
 
 /// Registers a chain mapping function into the global chain registry.
