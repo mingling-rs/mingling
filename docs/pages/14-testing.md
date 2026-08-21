@@ -73,11 +73,9 @@ What the three test macros do:
 
 ## Constructing Data with the entry! Macro
 
-If `extras` is enabled, you can use `entry!` to quickly construct an Entry:
+You can use `entry!` to quickly construct an Entry:
 
 ```rust
-// Features: ["extras"]
- 
 @@@use mingling::{assert_member_id, unpack_chain_process};
 @@@use mingling::macros::entry;
 @@@dispatcher!("hello", EntryHello);

@@ -115,7 +115,6 @@ Error: name is required
 You can use `#[derive(Grouped, Default)]` to quickly declare an error type with no payload:
 
 ```rust
-// Features: ["extras"]
 #[derive(Grouped, Default)]
 pub struct ErrorNotFound;
 ```

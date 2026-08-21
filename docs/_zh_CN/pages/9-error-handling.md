@@ -115,7 +115,6 @@ Error: name is required
 不需要额外上下文、只起“标记”作用的错误类型，可以直接用 `#[derive(Grouped, Default)]` 声明：
 
 ```rust
-// Features: ["extras"]
 #[derive(Grouped, Default)]
 pub struct ErrorNotFound;
 ```

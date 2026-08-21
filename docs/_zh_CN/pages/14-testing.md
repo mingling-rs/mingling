@@ -73,11 +73,9 @@ fn test_handle_hello_with_name() {
 
 ## 用 entry! 宏构造数据
 
-如果启用了 `extras`，可以用 `entry!` 快速构造 Entry：
+可以用 `entry!` 快速构造 Entry：
 
 ```rust
-// Features: ["extras"]
- 
 @@@use mingling::{assert_member_id, unpack_chain_process};
 @@@use mingling::macros::entry;
 @@@dispatcher!("hello", EntryHello);

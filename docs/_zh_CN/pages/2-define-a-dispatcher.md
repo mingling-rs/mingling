@@ -60,10 +60,9 @@ pub struct EntryGreet(pub Vec<String>);
 
 ## 进阶：隐式声明
 
-以上是标准写法。如果你启用了 `extras` 特性，还可以更简洁：
+以上是标准写法。还可以用更简洁的隐式声明：
 
 ```rust
-// Features: ["extras"]
 // 省略 CMDType 和 EntryType，名字自动推导
    dispatcher!("greet");
 // dispatcher!("greet", EntryGreet);

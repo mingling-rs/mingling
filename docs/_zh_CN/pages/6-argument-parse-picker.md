@@ -152,7 +152,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 先来看一个简单示例
 
 ```rust
-// Features: ["picker", "extras"]
+// Features: ["picker"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", EntryGreet);
@@ -181,10 +181,10 @@ fn render_greet(result: ResultName) {
  
 若使用 `pick_or_route`，`.to_result()` 不再直接返回参数，而是 `Result<Value, Route>`。
 
-不过 **Mingling** 的 `extras` 特性提供了简化展开的宏 `route!`，它不复杂，只是省略了一部分样板代码：
+不过 **Mingling** 提供了简化展开的宏 `route!`，它不复杂，只是省略了一部分样板代码：
 
 ```rust
-// Features: ["picker", "extras"]
+// Features: ["picker"]
 @@@ #[derive(Grouped, Wrap)]
 @@@ pub struct ErrorFail(());
 @@@ use mingling::macros::route;
@@ -199,7 +199,7 @@ let name = route!(args.pick_or_route(&arg![String], || ErrorFail(()).to_chain())
 它展开为：
 
 ```rust
-// Features: ["picker", "extras"]
+// Features: ["picker"]
 @@@ #[derive(Grouped, Wrap)]
 @@@ pub struct ErrorFail(());
 @@@ use mingling::picker::IntoPicker;

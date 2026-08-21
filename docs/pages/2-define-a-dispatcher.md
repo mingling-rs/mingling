@@ -60,10 +60,9 @@ When the user types `greet Alice Bob` on the command line, `EntryGreet`'s `.0` b
 
 ## Advanced: Implicit Declaration
 
-The above is the standard syntax. If you enable the `extras` feature, you can be more concise:
+The above is the standard syntax. You can also use the implicit form, which is more concise:
 
 ```rust
-// Features: ["extras"]
 // Omit CMDType and EntryType, names are auto-derived
    dispatcher!("greet");
 // dispatcher!("greet", EntryGreet);

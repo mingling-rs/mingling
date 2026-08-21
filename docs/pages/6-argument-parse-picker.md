@@ -152,7 +152,7 @@ As the saying goes: "never trust your users." To handle missing required params,
 Here's a simple example:
 
 ```rust
-// Features: ["picker", "extras"]
+// Features: ["picker"]
 @@@use mingling::macros::buffer;
 @@@use mingling::macros::route;
 @@@dispatcher!("greet", EntryGreet);
@@ -181,10 +181,10 @@ fn render_greet(result: ResultName) {
  
 With `pick_or_route`, `.to_result()` no longer returns the value directly, but `Result<Value, Route>`.
 
-However, **Mingling**'s `extras` feature provides the `route!` macro for simplified expansion. It's not complex — it just reduces boilerplate:
+However, **Mingling** provides the `route!` macro for simplified expansion. It's not complex — it just reduces boilerplate:
 
 ```rust
-// Features: ["picker", "extras"]
+// Features: ["picker"]
 @@@ #[derive(Grouped, Wrap)]
 @@@ pub struct ErrorFail(());
 @@@ use mingling::macros::route;
@@ -199,7 +199,7 @@ let name = route!(args.pick_or_route(&arg![String], || ErrorFail(()).to_chain())
 It expands to:
 
 ```rust
-// Features: ["picker", "extras"]
+// Features: ["picker"]
 @@@ #[derive(Grouped, Wrap)]
 @@@ pub struct ErrorFail(());
 @@@ use mingling::picker::IntoPicker;
