@@ -20,3 +20,6 @@ nul
 /.zed/
 /.vscode/
 /.idea/
+
+# Local
+local/
