@@ -56,9 +56,12 @@ pub mod test {
 /// Provided for framework developers
 mod debug;
 
-// NOT re-exported at top level: the `StructuralData` trait is sealed and only
-// accessible through the derive macro. Users who need the trait can access it
-// via `mingling::renderer::structural::StructuralData` (through the inner alias).
+// The `StructuralData` trait is sealed and only implementable through the
+// derive macro, but the trait itself is publicly accessible at the top level
+// (`mingling::StructuralData`), where it coexists with the same-named derive
+// macro (trait in the type namespace, derive in the macro namespace).
+#[cfg(feature = "structural_renderer")]
+pub use crate::renderer::structural::StructuralData;
 #[cfg(feature = "structural_renderer")]
 pub use crate::renderer::structural::StructuralRenderer;
 

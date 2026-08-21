@@ -33,8 +33,6 @@ dispatch_phf = []
 # Workspace-internal: compile all dispatch generators (used by the dev/bench/dispatch harness)
 bench_support = []
 
-extras = []
-
 [dependencies]
 syn.workspace = true
 quote.workspace = true

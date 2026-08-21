@@ -1,4 +1,3 @@
-// Doc Not Optimize
 //! Mingling path matching patterns for command routing and field mapping.
 
 pub use chain::*;

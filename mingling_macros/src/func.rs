@@ -1,14 +1,9 @@
 // Doc Not Optimize
 pub(crate) mod dispatcher;
-#[cfg(feature = "extras")]
 pub(crate) mod empty_result;
-#[cfg(feature = "extras")]
 pub(crate) mod entry;
 pub(crate) mod gen_program;
-#[cfg(feature = "extras")]
 pub(crate) mod group;
-#[cfg(all(feature = "structural_renderer", feature = "extras"))]
-pub(crate) mod group_structural;
 #[cfg(feature = "comp")]
 pub(crate) mod program_comp_gen;
 pub(crate) mod program_fallback_gen;
@@ -24,9 +19,7 @@ pub(crate) mod register_help;
 pub(crate) mod register_metadata;
 pub(crate) mod register_renderer;
 pub(crate) mod register_type;
-#[cfg(feature = "extras")]
 pub(crate) mod render_route;
-#[cfg(feature = "extras")]
 pub(crate) mod route;
 #[cfg(feature = "comp")]
 pub(crate) mod suggest;

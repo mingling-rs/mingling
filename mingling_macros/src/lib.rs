@@ -49,14 +49,10 @@ mod utils;
 use attr::completion;
 #[cfg(feature = "clap")]
 use attr::dispatcher_clap;
-#[cfg(feature = "extras")]
-use attr::program_setup;
-use attr::{chain, help, metadata, renderer};
+use attr::{chain, help, metadata, program_setup, renderer};
 use derive::{enum_tag, grouped, wrap};
 use func::dispatcher;
-#[cfg(feature = "extras")]
 use func::entry;
-#[cfg(feature = "extras")]
 pub(crate) use func::group as group_impl;
 #[cfg(feature = "comp")]
 use func::suggest;
@@ -76,8 +72,7 @@ pub(crate) type Registry = OnceLock<Mutex<BTreeSet<String>>>;
 #[cfg(feature = "structural_renderer")]
 pub(crate) static STRUCTURAL_RENDERERS: Registry = OnceLock::new();
 
-/// Types explicitly marked with `#[derive(StructuralData)]` or created via
-/// `group_structural!`.
+/// Types explicitly marked with `#[derive(StructuralData)]`.
 #[cfg(feature = "structural_renderer")]
 pub(crate) static STRUCTURED_TYPES: Registry = OnceLock::new();
 
@@ -177,27 +172,9 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
 ///
 /// - The type must be accessible at the call site (imported or fully qualified).
 /// - The alias name (if provided) must not conflict with existing types.
-#[cfg(feature = "extras")]
 #[proc_macro]
 pub fn group(input: TokenStream) -> TokenStream {
     group_impl::group_macro(input)
-}
-
-/// Like `group!` but also marks the type as supporting structured output
-/// (JSON / YAML / TOML / RON) via `StructuralData`.
-///
-/// # Syntax
-///
-/// ```rust,ignore
-/// group_structural!(std::io::Error);
-/// group_structural!(IoError = std::io::Error);
-/// ```
-///
-/// Requires the `structural_renderer` and `extras` features.
-#[cfg(all(feature = "structural_renderer", feature = "extras"))]
-#[proc_macro]
-pub fn group_structural(input: TokenStream) -> TokenStream {
-    func::group_structural::group_structural(input)
 }
 
 /// Early-returns the error from a `Result`, converting the `Ok` branch to the
@@ -251,10 +228,9 @@ pub fn group_structural(input: TokenStream) -> TokenStream {
 /// fn process(prev: SomeEntry) -> Next {
 ///     let value = route!(current_dir().map_err(|e| ErrorEntry::new(e.to_string_lossy().to_string())));
 ///     // value is the PathBuf from current_dir()
-///     value.to_chain()
+/// value.to_chain()
 /// }
 /// ```
-#[cfg(feature = "extras")]
 #[proc_macro]
 pub fn route(input: TokenStream) -> TokenStream {
     func::route::route(input)
@@ -297,7 +273,6 @@ pub fn route(input: TokenStream) -> TokenStream {
 ///     Ok(RenderResult::new())
 /// }
 /// ```
-#[cfg(feature = "extras")]
 #[proc_macro]
 pub fn render_route(input: TokenStream) -> TokenStream {
     func::render_route::render_route(input)
@@ -351,7 +326,6 @@ pub fn render_route(input: TokenStream) -> TokenStream {
 ///
 /// [`ResultEmpty`]: https://docs.rs/mingling/latest/mingling/type.ResultEmpty.html
 /// [`ChainProcess`]: https://docs.rs/mingling/latest/mingling/enum.ChainProcess.html
-#[cfg(feature = "extras")]
 #[proc_macro]
 pub fn empty_result(input: TokenStream) -> TokenStream {
     func::empty_result::empty_result(input)
@@ -378,10 +352,10 @@ pub fn empty_result(input: TokenStream) -> TokenStream {
 /// dispatcher!(MyProgram, "command.path", CommandStruct => EntryStruct);
 /// ```
 ///
-/// ## Abbreviated syntax (requires `extras` feature)
+/// ## Abbreviated syntax
 ///
-/// When the `extras` feature is enabled, the `CommandStruct => EntryStruct`
-/// portion can be omitted. Struct names are auto-derived from the command path
+/// The `CommandStruct => EntryStruct` portion can be omitted.
+/// Struct names are auto-derived from the command path
 /// using `PascalCase` conversion:
 ///
 /// ```rust,ignore
@@ -407,7 +381,7 @@ pub fn empty_result(input: TokenStream) -> TokenStream {
 /// // With explicit program:
 /// dispatcher!(MyApp, "status", StatusCommand => StatusEntry);
 ///
-/// // Abbreviated form (extras required):
+/// // Abbreviated form:
 /// // dispatcher!("remote.add");  // → CMDRemoteAdd, EntryRemoteAdd
 /// ```
 ///
@@ -807,7 +781,6 @@ pub fn completion(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - The function must have exactly one parameter of type `&mut Program<G>`.
 /// - The function must return `()`.
 /// - The function cannot be async.
-#[cfg(feature = "extras")]
 #[proc_macro_attribute]
 pub fn program_setup(attr: TokenStream, item: TokenStream) -> TokenStream {
     program_setup::setup_attr(&attr, item)
@@ -815,7 +788,7 @@ pub fn program_setup(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 /// Declares a command from a plain function.
 ///
-/// **This macro is only available with the `extras` feature.**
+/// **This macro is available by default.**
 ///
 /// The `#[command]` attribute converts a function taking `Vec<String>` into a
 /// Mingling command by:
@@ -894,7 +867,6 @@ pub fn program_setup(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// - The function must have at least one parameter (the `Vec<String>` entry argument).
 /// - The function must not have a `self` parameter.
 /// - Visibility (`pub` etc.) and `async` are preserved on the original function.
-#[cfg(feature = "extras")]
 #[proc_macro_attribute]
 pub fn command(attr: TokenStream, item: TokenStream) -> TokenStream {
     attr::command::command_attr(attr, item)
@@ -985,7 +957,6 @@ pub fn dispatcher_clap(attr: TokenStream, item: TokenStream) -> TokenStream {
 /// # See also
 ///
 /// - `dispatcher!` — Which implicitly creates entry types.
-#[cfg(feature = "extras")]
 #[proc_macro]
 pub fn entry(input: TokenStream) -> TokenStream {
     entry::entry(input)
@@ -1229,7 +1200,6 @@ pub fn mlint(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     StateCalculate { number_a: a, operator: op, ... }.to_chain()
 /// }
 /// ```
-#[cfg(feature = "extras")]
 #[proc_macro_attribute]
 pub fn routeify(attr: TokenStream, item: TokenStream) -> TokenStream {
     extensions::routeify::routeify_impl(attr, item)
@@ -1255,7 +1225,6 @@ pub fn routeify(attr: TokenStream, item: TokenStream) -> TokenStream {
 ///     Ok(RenderResult::new())
 /// }
 /// ```
-#[cfg(feature = "extras")]
 #[proc_macro_attribute]
 pub fn renderify(attr: TokenStream, item: TokenStream) -> TokenStream {
     extensions::renderify::renderify_impl(attr, item)

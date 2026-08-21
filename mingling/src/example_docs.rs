@@ -37,7 +37,7 @@
 /// path = "../../mingling"
 ///
 /// # Enable `picker` features
-/// features = ["picker", "extras"]
+/// features = ["picker"]
 ///
 /// [workspace]
 /// ```
@@ -623,7 +623,6 @@ pub mod example_clap_binding {}
 /// [dependencies]
 /// mingling = { path = "../../mingling", features = [
 ///     "dispatch_tree",
-///     "extras",
 ///     "pathf",
 /// ] }
 ///
@@ -674,8 +673,6 @@ pub mod example_combine_pathf_dispatch_tree {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = [
-///     # `extras` is required by the implicit `dispatcher!("hello")` form
-///     "extras",
 ///     # `pathf` resolves types across modules at build time
 ///     "pathf",
 /// ]
@@ -724,9 +721,6 @@ pub mod example_combine_pathf_metadata {}
 /// [dependencies.mingling]
 /// path = "../../mingling"
 /// features = [
-///     # Use `extras` to introduce the `#[command]` macro
-///     "extras",
-///
 ///     # Use `picker` to parse arguments
 ///     "picker",
 /// ]
@@ -1544,7 +1538,6 @@ pub mod example_hook {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["extras"]
 ///
 /// [workspace]
 /// ```
@@ -1846,9 +1839,6 @@ pub mod example_metadata {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = [
-///     "extras",
-/// ]
 ///
 /// [workspace]
 /// ```
@@ -2091,7 +2081,7 @@ pub mod example_pathfinder {}
 ///
 /// [dependencies.mingling]
 /// path = "../../mingling"
-/// features = ["repl", "picker", "extras"]
+/// features = ["repl", "picker"]
 ///
 /// [dependencies]
 /// just_fmt = "0.1.2"
@@ -2375,7 +2365,7 @@ pub mod example_resources {}
 /// edition = "2024"
 ///
 /// [dependencies]
-/// mingling = { path = "../../mingling", features = ["extras"] }
+/// mingling = { path = "../../mingling" }
 ///
 /// [workspace]
 /// ```
@@ -2575,7 +2565,7 @@ pub mod example_structural_renderer {}
 /// edition = "2024"
 ///
 /// [dependencies]
-/// mingling = { path = "../../mingling", features = ["extras"] }
+/// mingling = { path = "../../mingling" }
 ///
 /// [workspace]
 /// ```

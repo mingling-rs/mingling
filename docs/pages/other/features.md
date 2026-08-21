@@ -9,21 +9,21 @@ Mingling provides a set of **preset feature groups** that make it easy to enable
 
 ## `mini`
 
-**Enables features:** `extras`, `picker`
+**Enables features:** `picker`, `comp`
 
-**Positioning:** Minimal mode, suitable for small CLI tools or projects that need to get started quickly. Includes only the most essential convenience macros and argument parsing capabilities.
+**Positioning:** Minimal mode, suitable for small CLI tools or projects that need to get started quickly. Includes only the most essential argument parsing and code completion capabilities.
 
 ## `advanced`
 
-**Enables features:** `extras`, `picker`, `repl`, `comp`, `dispatch_tree`, `structural_renderer`
+**Enables features:** `picker`, `repl`, `comp`, `structural_renderer`, `pathf`
 
-**Positioning:** Advanced mode, builds on `mini` by adding an interactive REPL environment, code completion, dispatch tree acceleration, and basic structured output capabilities. Suitable for medium-sized command-line applications with a fuller feature set.
+**Positioning:** Advanced mode, builds on `mini` by adding an interactive REPL environment, structured output capabilities, and the experimental path analyzer. Suitable for medium-sized command-line applications with a fuller feature set.
 
 ## `full`
 
-**Enables features:** `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`, `pathf`
+**Enables features:** `picker`, `repl`, `clap`, `comp`, `structural_renderer_full`
 
-**Positioning:** Full mode, enables all of Mingling's core functionality. In addition to `advanced`, it includes clap integration, the full structural renderer (with all serialization formats), and the experimental path analyzer. Suitable for large, feature-complete command-line applications.
+**Positioning:** Full mode, enables all of Mingling's core functionality. In addition to `advanced`, it includes clap integration and the full structural renderer (with all serialization formats). Suitable for large, feature-complete command-line applications.
 
 # Feature Details
 
@@ -90,130 +90,6 @@ Enables the dispatch tree mechanism, supporting conditional dispatch and routing
 When enabled, Mingling **at compile time** hard-codes the subcommand structure as a prefix tree (Trie), achieving extremely fast subcommand lookup. Lookup complexity is **O(n)**, where _n_ is the input length, not the number of commands.
 
 See [example](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-dispatch-tree)
-
-## Feature `extras`
-
-**Description:**
-
-Enables an additional set of macros, providing more convenient syntactic sugar and metaprogramming capabilities.
-
-For example, allows the shorthand form `dispatcher!("greet")`, which auto-generates `CMDGreet` / `EntryGreet`.
-
-| Macro                                   | Description                                                     |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `empty_result!()`                       | Shorthand for returning an empty result early in a chain        |
-| `entry!(Type, ["a", "b"])`              | Construct test data for an entry type                           |
-| `group!(Type)`                          | Register external types as group members without modifying them |
-| `#[program_setup]`                      | Declare a program initialization function                       |
-| `dispatcher!("cmd.path")` **shorthand** | Omit `EntryStruct`, the entry name is auto-derived              |
-
-<details>
-<summary> Details </summary>
-
-### `empty_result!()`
-
-```rust
-// Features: ["extras"]
- 
-#[derive(Grouped, Wrap)]
-pub struct StatePrev1(());
-#[derive(Grouped, Wrap)]
-pub struct StatePrev2(());
- 
-#[derive(Grouped, Wrap)]
-pub struct StateNext(());
- 
-#[chain]
-fn handle_state_prev2(_p: StatePrev2) {
-    // A #[chain] with no return type can simply omit the return value
-}
- 
-#[chain]
-fn handle_state_prev1(_p: StatePrev1) -> Next {
-    let foo = 1;
-    let bar = 2;
-    if foo != bar {
-        // When Next is needed but no return value is required, use this
-        empty_result!()
-    } else {
-        StateNext(()).into()
-    }
-}
-```
- 
-### `#[program_setup]`
-
-```rust
-// Features: ["extras"]
-use mingling::{config::ErrorOutput, macros::program_setup, Program};
- 
-fn main() {
-    let mut program = ThisProgram::new();
-    program.with_setup(NoErrorSetup);
-    program.exec_and_exit();
-}
- 
-#[program_setup]
-fn no_error_setup(program: &mut Program<ThisProgram>) {
-    program.global_flag(["--no-error"], |program| {
-        program.stdout_setting.error_output = ErrorOutput::Hide;
-    });
-}
-```
- 
-### `entry!`
-
-```rust
-// Features: ["extras"]
-use mingling::macros::entry;
- 
-#[derive(Grouped, Wrap)]
-pub struct EntryHello(Vec<String>);
- 
-fn main() {
-    let result: Next = handle_hello(entry!("--name", "Bob")).into();
-    // ... assertion logic here
-}
- 
-#[chain]
-fn handle_hello(args: EntryHello) {}
-```
- 
-### `group!`
-
-Registers an external type as a member of the program group without modifying its definition.
-The type's simple name is used as the enum variant, just like `#[derive(Grouped)]`.
-
-```rust
-// Features: ["extras"]
-use mingling::macros::group;
-use std::num::ParseIntError;
- 
-// Register std::num::ParseIntError as a group member.
-// After this, ParseIntError can be used in #[chain] and #[renderer] functions.
-group!(std::num::ParseIntError);
-```
- 
-### Declaring Error Types
-
-Error types are declared with derives — the old `pack_err!` macro was removed in 0.5.0.
-Use `#[derive(Grouped, Default)]` for a unit error (no payload), or
-`#[derive(Grouped, Wrap)]` to wrap an inner type for additional context.
-
-```rust
-// Features: ["extras"]
-use std::path::PathBuf;
- 
-// Unit form — no payload:
-#[derive(Grouped, Default)]
-pub struct ErrorNotFound;
- 
-// Typed form — wraps an inner type:
-#[derive(Grouped, Wrap)]
-pub struct ErrorNotDir(PathBuf);
-```
- 
-</details>
 
 ## Feature `structural_renderer`
 

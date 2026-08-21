@@ -6,8 +6,6 @@ edition = "2024"
 [dependencies.mingling]
 path = "../../mingling"
 features = [
-    # `extras` is required by the implicit `dispatcher!("hello")` form
-    "extras",
     # `pathf` resolves types across modules at build time
     "pathf",
 ]

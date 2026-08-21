@@ -68,8 +68,7 @@
     "desc": "Demonstrates combining the `pathf` and `dispatch_tree` features. Types are defined in submodules and automatically resolved. Requires `dispatch_tree` in both `[dependencies]` and `[build-dependencies]`.\n",
     "tags": [
       "pathf",
-      "dispatch_tree",
-      "extras"
+      "dispatch_tree"
     ],
     "files": [
       "src/main.rs",
@@ -244,8 +243,7 @@
     "desc": "Demonstrates attaching arbitrary, compile-time-typed metadata to an entry via `#[metadata(Entry)]` and retrieving it at runtime with `ProgramCollect::get_metadata`. No `pathf` needed here — everything lives in a single module.\n",
     "tags": [
       "metadata",
-      "get_metadata",
-      "extras"
+      "get_metadata"
     ],
     "files": [
       "src/main.rs",
@@ -259,8 +257,7 @@
     "category": "advanced",
     "desc": "Demonstrates how to use the `group!()` macro to convert an external type into a type recognizable by Mingling\n",
     "tags": [
-      "group!",
-      "extras"
+      "group!"
     ],
     "files": [
       "src/main.rs",
@@ -333,8 +330,7 @@
     "category": "core",
     "desc": "Demonstrates how to build a custom `ProgramSetup` with `#[program_setup]` for modular configuration of program behaviour.\n",
     "tags": [
-      "#[setup]",
-      "extras"
+      "#[setup]"
     ],
     "files": [
       "src/main.rs",
@@ -364,8 +360,7 @@
     "category": "testing",
     "desc": "Shows how to write unit tests for Chain and Renderer functions using the `entry!` macro and assertion helpers.\n",
     "tags": [
-      "testing",
-      "extras"
+      "testing"
     ],
     "files": [
       "src/main.rs",

@@ -530,8 +530,57 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
 11. **[`features`]** Updated the preset feature groups in `mingling/Cargo.toml`:
 
-- **`advanced`** — Changed from `extras`, `picker`, `repl`, `comp`, `dispatch_tree`, `structural_renderer` to `extras`, `picker`, `repl`, `comp`, `structural_renderer`, `pathf`. The `dispatch_tree` feature was removed and `pathf` was added.
-- **`full`** — Changed from `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`, `pathf` to `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`. The `pathf` feature was removed, while `dispatch_tree` remains.
+    - **`mini`** — Changed to `picker`, `comp`. (Previously likely `extras`, `picker`.)
+    - **`advanced`** — Changed from `extras`, `picker`, `repl`, `comp`, `dispatch_tree`, `structural_renderer` to `picker`, `repl`, `comp`, `structural_renderer`, `pathf`. The `extras` and `dispatch_tree` features were removed and `pathf` was added.
+    - **`full`** — Changed from `extras`, `picker`, `repl`, `clap`, `comp`, `dispatch_tree`, `structural_renderer_full`, `pathf` to `picker`, `repl`, `clap`, `comp`, `structural_renderer_full`. The `extras`, `dispatch_tree`, and `pathf` features were removed.
+
+12. **[`features`]** **[BREAKING]** Removed the `extras` feature entirely — all functionality previously gated behind `extra_macros`/`extras` is now enabled unconditionally (available by default). All feature-gated re-exports in `mingling/src/lib.rs` (and throughout the codebase) have been updated from `#[cfg(feature = "extras")]` to unconditional.
+
+    ### What changed
+
+    The `extras` feature (and its earlier alias `extra_macros`) no longer exists. Every macro, derive, and helper previously gated behind it is now compiled in unconditionally — there is no feature flag controlling them anymore.
+
+    **Affected macros & items** (previously gated behind `extras`, now always available):
+    - `#[command]`
+    - `empty_result!`
+    - `entry!`
+    - `group!`
+    - `group_structural!` (previously also required `structural_renderer`; now always available)
+    - `pack_err!`
+    - `pack_err_structural!` (previously also required `structural_renderer`; now always available)
+    - `#[program_setup]`
+    - `render_route!`
+    - `#[renderify]`
+    - `route!`
+    - `#[routeify]`
+
+    **Feature wiring changes:**
+
+    - `mingling/Cargo.toml` — The `extras` (and `extra_macros`) feature entries have been removed from `[features]`. The `mini`, `advanced`, and `full` preset groups no longer list `extras` (their entries were already updated in **BREAKING CHANGE #11** of the 0.4.0 section; the `extras` name itself is now simply absent).
+    - `mingling/src/features.rs` — The `MINGLING_EXTRAS` / `MINGLING_EXTRA_MACROS` feature constants have been removed.
+    - `mingling/src/lib.rs` — Removed all `#[cfg(feature = "extras")]` (and `#[cfg(feature = "extra_macros")]`) gates on the affected re-exports; everything previously behind them is now unconditional.
+    - `mingling_macros` — Feature gates on the `extras`-only macro implementations were removed; they are now always compiled.
+
+    ### Migration guide
+    - **Remove `features = ["extras"]` (or `["extra_macros"]`) from `Cargo.toml`** — the flag no longer exists. If a feature list references only these (e.g., `features = ["extras"]`), delete the whole `[features]` block or remove the entry.
+    - **No code changes needed** — all previously `extras`-gated items are now available unconditionally, so any code that was written against them under the feature flag continues to compile unchanged.
+    - **Preset groups** — any manifest referencing `mingling/mini`, `mingling/advanced`, or `mingling/full` is unaffected; the preset names remain valid (the removed `extras` entry is simply gone).
+
+    _No behavioral changes — the functionality is identical; it is now simply always compiled in, removing one more feature flag from the surface area. All internal examples and docs that declared the `extras` feature in their `Cargo.toml` were updated to drop it._
+
+13. **[`macros`]** **[BREAKING REMOVAL]** Removed the `group_structural!` macro. This macro previously generated a structural-rendering-capable wrapper struct similar to `group!` but tagged for structural rendering output. It has been removed as part of the planned rework of the `structural_renderer` feature.
+
+    **Removed API:**
+
+    - **`mingling::macros::group_structural!`** — Removed entirely (previously gated behind `extras` + `structural_renderer` features).
+    - **`mingling::macros::group_structural`** re-export — Removed from `mingling::macros` and the prelude.
+    - **Implementation module** — Deleted `func/group_structural.rs` (and its registration in the macro dispatch).
+
+    **Planned replacement (structural_renderer rework):** Since `group!` is the macro used for marking types external to the crate, the planned approach is to use `group!` on the external type to bring it into the program, then manually implement `StructuralData<crate::ThisProgram>` where structural output is needed. The new `StructuralData` trait is expected to be implemented with an explicit `crate::ThisProgram` generic parameter, decoupling it from the old macro-generated impls. The exact final form will be finalized alongside the `structural_renderer` rework.
+
+    **Migration guidance:** Downstream code using `group_structural!` should move to the derive-based approach planned for the structural renderer rework — namely, `group!` for registering external types combined with manual `StructuralData<crate::ThisProgram>` implementations (optionally alongside `serde::Serialize` where serialization is needed). The exact replacement will be finalized alongside the `structural_renderer` rework.
+
+    _No behavioral changes to other functionality — `group!` and the non-structural derive-based types are unaffected. This removal is intentional cleanup ahead of the structural renderer redesign._
 
 ---
 

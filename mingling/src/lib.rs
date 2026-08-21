@@ -69,22 +69,16 @@ pub mod macros {
     #[cfg(feature = "pathf")]
     pub use mingling_macros::build_pathf;
     pub use mingling_macros::chain;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::command;
     #[cfg(feature = "comp")]
     pub use mingling_macros::completion;
     pub use mingling_macros::dispatcher;
     #[cfg(feature = "clap")]
     pub use mingling_macros::dispatcher_clap;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::empty_result;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::entry;
     pub use mingling_macros::gen_program;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::group;
-    #[cfg(all(feature = "structural_renderer", feature = "extras"))]
-    pub use mingling_macros::group_structural;
     pub use mingling_macros::help;
     pub use mingling_macros::metadata;
     pub use mingling_macros::mlint;
@@ -95,7 +89,6 @@ pub mod macros {
     pub use mingling_macros::program_fallback_gen;
     #[doc(hidden)]
     pub use mingling_macros::program_final_gen;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::program_setup;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;
@@ -114,14 +107,10 @@ pub mod macros {
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]
     pub use mingling_macros::register_type;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::render_route;
     pub use mingling_macros::renderer;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::renderify;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::route;
-    #[cfg(feature = "extras")]
     pub use mingling_macros::routeify;
     #[cfg(feature = "comp")]
     pub use mingling_macros::suggest;
@@ -200,11 +189,11 @@ pub mod prelude {
     pub use crate::Wrap;
     #[cfg(feature = "macros")]
     pub use crate::macros::chain;
-    #[cfg(all(feature = "extras", feature = "macros"))]
+    #[cfg(feature = "macros")]
     pub use crate::macros::command;
     #[cfg(feature = "macros")]
     pub use crate::macros::dispatcher;
-    #[cfg(all(feature = "extras", feature = "macros"))]
+    #[cfg(feature = "macros")]
     pub use crate::macros::empty_result;
     #[cfg(feature = "macros")]
     pub use crate::macros::gen_program;

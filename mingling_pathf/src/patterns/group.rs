@@ -1,6 +1,6 @@
 // Doc Not Optimize
-//! The `GroupPattern` matches the `group!` and `group_structural!` macros and
-//! extracts the type name or alias defined within them.
+//! The `GroupPattern` matches the `group!` macro and
+//! extracts the type name or alias defined within it.
 //! This is used to track type groups for code generation or analysis.
 
 use std::collections::HashMap;
@@ -10,18 +10,16 @@ use syn::UseTree;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Matches the `group!` and `group_structural!` macros.
+/// Matches the `group!` macro.
 ///
 /// Covered forms:
 /// - `group!(TypeName)`
 /// - `group!(Alias = path::Type)`
-/// - `group_structural!(TypeName)`
-/// - `group_structural!(Alias = path::Type)`
 pub struct GroupPattern;
 
 impl AnalyzePattern for GroupPattern {
     fn contains(&self, content: &str) -> bool {
-        content.contains("group!") || content.contains("group_structural!")
+        content.contains("group!")
     }
 
     fn analyze(&self, content: &str) -> Vec<AnalyzeItem> {
@@ -41,7 +39,7 @@ impl AnalyzePattern for GroupPattern {
                         continue;
                     };
                     let macro_name = last.ident.to_string();
-                    if macro_name != "group" && macro_name != "group_structural" {
+                    if macro_name != "group" {
                         continue;
                     }
                     if let Some(analyze_item) = extract_group_item(&m.mac.tokens, &imports, "") {
@@ -59,7 +57,7 @@ impl AnalyzePattern for GroupPattern {
                                     continue;
                                 };
                                 let macro_name = last.ident.to_string();
-                                if macro_name != "group" && macro_name != "group_structural" {
+                                if macro_name != "group" {
                                     continue;
                                 }
                                 if let Some(analyze_item) = extract_group_item(

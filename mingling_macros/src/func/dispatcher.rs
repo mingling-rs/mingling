@@ -14,7 +14,6 @@ enum DispatcherChainInput {
         pack: Ident,
     },
     /// `dispatcher!("name")` — entry type derived from the command name
-    #[cfg(feature = "extras")]
     Auto {
         cmd_attrs: Vec<Attribute>,
         command_name: syn::LitStr,
@@ -30,20 +29,10 @@ impl Parse for DispatcherChainInput {
 
         if input.is_empty() {
             // Abbreviated form: just "command_name"
-            #[cfg(feature = "extras")]
-            {
-                return Ok(Self::Auto {
-                    cmd_attrs,
-                    command_name,
-                });
-            }
-            #[cfg(not(feature = "extras"))]
-            {
-                return Err(syn::Error::new(
-                    command_name.span(),
-                    "expected `, EntryType` after command name",
-                ));
-            }
+            return Ok(Self::Auto {
+                cmd_attrs,
+                command_name,
+            });
         }
 
         // Explicit form: "command_name", EntryType
@@ -72,17 +61,6 @@ impl Parse for DispatcherChainInput {
 pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
     let dispatcher_input = syn::parse_macro_input!(input as DispatcherChainInput);
 
-    #[cfg(not(feature = "extras"))]
-    let (command_name, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
-        DispatcherChainInput::Default {
-            cmd_attrs,
-            entry_attrs,
-            command_name,
-            pack,
-        } => (command_name, pack, cmd_attrs, entry_attrs),
-    };
-
-    #[cfg(feature = "extras")]
     let (command_name, pack, cmd_attrs, entry_attrs) = match dispatcher_input {
         DispatcherChainInput::Default {
             cmd_attrs,

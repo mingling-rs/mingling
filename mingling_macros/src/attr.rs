@@ -1,6 +1,5 @@
 // Doc Not Optimize
 pub(crate) mod chain;
-#[cfg(feature = "extras")]
 pub(crate) mod command;
 #[cfg(feature = "comp")]
 pub(crate) mod completion;
@@ -9,6 +8,5 @@ pub(crate) mod dispatcher_clap;
 pub(crate) mod help;
 pub(crate) mod metadata;
 pub(crate) mod mlint;
-#[cfg(feature = "extras")]
 pub(crate) mod program_setup;
 pub(crate) mod renderer;

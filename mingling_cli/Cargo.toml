@@ -22,7 +22,6 @@ path = "src/bin/cli.rs"
 [dependencies.mingling]
 path = "../mingling"
 features = [
-    "extras",
     "picker",
     "pathf",
     "dispatch_tree",

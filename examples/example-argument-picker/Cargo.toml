@@ -7,6 +7,6 @@ edition = "2024"
 path = "../../mingling"
 
 # Enable `picker` features
-features = ["picker", "extras"]
+features = ["picker"]
 
 [workspace]

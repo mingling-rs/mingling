@@ -130,17 +130,6 @@ pub const MINGLING_DOCS_RS: bool = false;
 #[cfg(feature = "docs_rs")]
 #[allow(unused)]
 pub const MINGLING_DOCS_RS: bool = true;
-/// Whether the `extras` feature is enabled
-/// Current: `disabled`
-#[cfg(not(feature = "extras"))]
-#[allow(unused)]
-pub const MINGLING_EXTRAS: bool = false;
-
-/// Whether the `extras` feature is enabled
-/// Current: `enabled`
-#[cfg(feature = "extras")]
-#[allow(unused)]
-pub const MINGLING_EXTRAS: bool = true;
 /// Whether the `full` feature is enabled
 /// Current: `disabled`
 #[cfg(not(feature = "full"))]

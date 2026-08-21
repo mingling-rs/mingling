@@ -8,7 +8,7 @@ use serde::Serialize;
 pub mod error;
 pub mod structural_data;
 
-use structural_data::StructuralData;
+pub use structural_data::StructuralData;
 
 /// A structural renderer that supports multiple serialization formats.
 ///

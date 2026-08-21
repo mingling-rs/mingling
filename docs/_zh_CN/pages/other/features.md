@@ -9,21 +9,21 @@ Mingling 提供了一系列**预设特性组**，方便用户按需组合启用�
 
 ## `mini`
 
-**启用特性：** `extras`、`picker`
+**启用特性：** `picker`、`comp`
 
-**定位：** 精简模式，适合小型 CLI 工具或需要快速起步的项目。仅包含最核心的便捷宏和参数解析能力。
+**定位：** 精简模式，适合小型 CLI 工具或需要快速起步的项目。仅包含参数解析和代码补全能力。
 
 ## `advanced`
 
-**启用特性：** `extras`、`picker`、`repl`、`comp`、`dispatch_tree`、`structural_renderer`
+**启用特性：** `picker`、`repl`、`comp`、`structural_renderer`、`pathf`
 
-**定位：** 进阶模式，在 `mini` 的基础上加入了交互式 REPL 环境、代码补全、调度树加速以及基础的结构化输出能力，适合功能较完整的中型命令行应用。
+**定位：** 进阶模式，在 `mini` 的基础上加入了交互式 REPL 环境、基础的结构化输出能力以及实验性的路径分析器，适合功能较完整的中型命令行应用。
 
 ## `full`
 
-**启用特性：** `extras`、`picker`、`repl`、`clap`、`comp`、`dispatch_tree`、`structural_renderer_full`、`pathf`
+**启用特性：** `picker`、`repl`、`clap`、`comp`、`structural_renderer_full`
 
-**定位：** 完整模式，启用 Mingling 的全部核心功能。在 `advanced` 的基础上额外包含 clap 集成、完整的结构化渲染器（含所有序列化格式）以及实验性的路径分析器，适合大型、功能全面的命令行应用。
+**定位：** 完整模式，启用 Mingling 的核心功能。在 `advanced` 的基础上替换为完整的结构化渲染器（含所有序列化格式），并额外包含 clap 集成，适合大型、功能全面的命令行应用。
 
 # 特性详解
 
@@ -90,130 +90,6 @@ async fn handle_state_foo(foo: StateFoo) -> Next {
 开启后，Mingling 在**编译时**将子命令结构硬编码为前缀树（Trie），实现极速的子命令查找。查找复杂度为 **O(n)**，其中 _n_ 是输入长度，而非命令数量。
 
 详见 [示例](https://mingling-rs.github.io/mingling/docs/example-viewer.html?name=example-dispatch-tree)
-
-## 特性 `extras`
-
-**介绍:**
-
-启用额外的宏集合，提供更多便捷的语法糖和元编程能力。
-
-例如，允许 `dispatcher!("greet")` 的缩写形式，自动生成 `CMDGreet` / `EntryGreet`。
-
-| 宏                                     | 说明                                   |
-| -------------------------------------- | -------------------------------------- |
-| `empty_result!()`                      | 链中提前返回空结果的简写               |
-| `entry!(Type, ["a", "b"])`             | 构造入口类型的测试数据                 |
-| `group!(Type)`                         | 将外部类型注册为组成员，无需修改其定义 |
-| `#[program_setup]`                     | 声明程序初始化函数                     |
-| `dispatcher!("cmd.path")` **缩写形式** | 省略 `EntryStruct`，入口类型名自动推导 |
-
-<details>
-<summary> Details </summary>
-
-### `empty_result!()`
-
-```rust
-// Features: ["extras"]
- 
-#[derive(Grouped, Wrap)]
-pub struct StatePrev1(());
-#[derive(Grouped, Wrap)]
-pub struct StatePrev2(());
- 
-#[derive(Grouped, Wrap)]
-pub struct StateNext(());
- 
-#[chain]
-fn handle_state_prev2(_p: StatePrev2) {
-    // 无 Next 的 #[chain] 可以直接不返回值
-}
- 
-#[chain]
-fn handle_state_prev1(_p: StatePrev1) -> Next {
-    let foo = 1;
-    let bar = 2;
-    if foo != bar {
-        // 当需要 Next 且不需要返回值，便可以使用它
-        empty_result!()
-    } else {
-        StateNext(()).into()
-    }
-}
-```
- 
-### `#[program_setup]`
-
-```rust
-// Features: ["extras"]
-use mingling::{config::ErrorOutput, macros::program_setup, Program};
- 
-fn main() {
-    let mut program = ThisProgram::new();
-    program.with_setup(NoErrorSetup);
-    program.exec_and_exit();
-}
- 
-#[program_setup]
-fn no_error_setup(program: &mut Program<ThisProgram>) {
-    program.global_flag(["--no-error"], |program| {
-        program.stdout_setting.error_output = ErrorOutput::Hide;
-    });
-}
-```
- 
-### `entry!`
-
-```rust
-// Features: ["extras"]
-use mingling::macros::entry;
- 
-#[derive(Grouped, Wrap)]
-pub struct EntryHello(Vec<String>);
- 
-fn main() {
-    let result: Next = handle_hello(entry!("--name", "Bob")).into();
-    // ... 此处为断言逻辑
-}
- 
-#[chain]
-fn handle_hello(args: EntryHello) {}
-```
- 
-### `group!`
-
-将外部类型注册为程序组成员，无需修改原始类型的定义。
-类型名会直接作为枚举变体，与 `#[derive(Grouped)]` 一致。
-
-```rust
-// Features: ["extras"]
-use mingling::macros::group;
-use std::num::ParseIntError;
- 
-// 将 std::num::ParseIntError 注册为组成员。
-// 注册后，ParseIntError 可用于 #[chain] 和 #[renderer] 函数中。
-group!(std::num::ParseIntError);
-```
- 
-### 定义错误类型
-
-0.5.0 起 `pack_err!` 已移除，错误类型直接用 derive 声明：
-不携带额外上下文时用 `#[derive(Grouped, Default)]`（仅作标记），或
-用 `#[derive(Grouped, Wrap)]` 包裹一个内部类型以携带上下文。
-
-```rust
-// Features: ["extras"]
-use std::path::PathBuf;
- 
-// 简单形式——只作为标记使用：
-#[derive(Grouped, Default)]
-pub struct ErrorNotFound;
- 
-// 带类型的形式——包裹一个内部类型以携带上下文：
-#[derive(Grouped, Wrap)]
-pub struct ErrorNotDir(PathBuf);
-```
- 
-</details>
 
 ## 特性 `structural_renderer`
 

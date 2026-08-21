@@ -6,5 +6,5 @@ category = "testing"
 desc = """
 Shows how to write unit tests for Chain and Renderer functions using the `entry!` macro and assertion helpers.
 """
-tags = ["testing", "extras"]
+tags = ["testing"]
 files = ["src/main.rs", "Cargo.toml"]

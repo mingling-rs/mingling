@@ -6,5 +6,5 @@ category = "advanced"
 desc = """
 Demonstrates attaching arbitrary, compile-time-typed metadata to an entry via `#[metadata(Entry)]` and retrieving it at runtime with `ProgramCollect::get_metadata`. No `pathf` needed here — everything lives in a single module.
 """
-tags = ["metadata", "get_metadata", "extras"]
+tags = ["metadata", "get_metadata"]
 files = ["src/main.rs", "Cargo.toml"]

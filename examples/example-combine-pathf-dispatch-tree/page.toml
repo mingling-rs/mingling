@@ -6,5 +6,5 @@ category = "advanced"
 desc = """
 Demonstrates combining the `pathf` and `dispatch_tree` features. Types are defined in submodules and automatically resolved. Requires `dispatch_tree` in both `[dependencies]` and `[build-dependencies]`.
 """
-tags = ["pathf", "dispatch_tree", "extras"]
+tags = ["pathf", "dispatch_tree"]
 files = ["src/main.rs", "src/sub/mod.rs", "Cargo.toml"]

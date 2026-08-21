@@ -20,7 +20,7 @@ pub(crate) fn derive_structural_data(input: TokenStream) -> TokenStream {
     // Generate BOTH the sealed impl AND the StructuralData impl.
     let expanded = quote! {
         impl ::mingling::__private::StructuralDataSealed<crate::ThisProgram> for #type_name {}
-        impl ::mingling::__private::StructuralData<crate::ThisProgram> for #type_name {}
+        impl ::mingling::StructuralData<crate::ThisProgram> for #type_name {}
     };
 
     expanded.into()

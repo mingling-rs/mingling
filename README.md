@@ -51,7 +51,7 @@ Mingling aims to organize and manage the architectural concerns of command-line 
 Below is a typical Mingling program that demonstrates how to implement a simple adder:
 
 ```rust
-// Features: ["mini"]
+// Features: ["picker"]
 
 #[derive(Grouped)]
 struct ResultNumber(f32);
@@ -81,7 +81,7 @@ Result is 15
 If we add full error handling, it would look like this:
 
 ```rust
-// Features: ["mini"]
+// Features: ["picker"]
 
 use mingling::macros::routeify;
 use mingling::setup::ExitCodeSetup;
