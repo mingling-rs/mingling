@@ -8,7 +8,32 @@ permissions:
   contents: write
 
 jobs:
+  # Fast gate: refresh the generated docs and fail when that leaves the
+  # working tree dirty (git-unlock exits non-zero on a dirty tree). Runs
+  # before the expensive build/test matrices, so stale docs are caught
+  # immediately on a single runner.
+  Fast-Check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Configure git identity
+        run: |
+          git config --global user.email "foo@bar.sqz"
+          git config --global user.name "foo"
+
+      - name: Lock workspace for CI
+        run: cargo ci git-lock
+
+      - name: Refresh generated docs
+        run: cargo ci refresh
+
+      - name: Unlock workspace (idempotency check)
+        run: cargo ci git-unlock --show-diff
+
   Check:
+    needs: [Fast-Check]
     strategy:
       fail-fast: false
       matrix:
@@ -20,7 +45,6 @@ jobs:
             test,
             markdown-code,
             examples,
-            docs-refresh,
             api-docs,
           ]
     runs-on: ${{ matrix.os }}
@@ -50,11 +74,6 @@ jobs:
             # markdown-code also verifies the translated docs structure.
             markdown-code) cargo ci markdown-check-all && cargo ci markdown-compare-all ;;
             examples) cargo ci example-check ;;
-            docs-refresh)
-              cargo ci example-refresh
-              cargo ci docsify-refresh
-              cargo ci features-refresh
-              ;;
             api-docs) cargo ci docs-check ;;
           esac
         continue-on-error: true
@@ -78,6 +97,7 @@ jobs:
   # Build the distributable packages in parallel with the checks, so that the
   # `unreleased` tag and the Pages deployment always publish fresh artifacts.
   Build:
+    needs: [Fast-Check]
     strategy:
       fail-fast: false
       matrix:
@@ -143,7 +163,8 @@ jobs:
   # are still reported.
   Report:
     needs: [Check]
-    if: always()
+    # No reports exist when the Fast-Check gate stopped the matrices.
+    if: always() && needs.Check.result != 'skipped'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
