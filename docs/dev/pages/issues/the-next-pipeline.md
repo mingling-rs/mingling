@@ -73,6 +73,46 @@ fn handle_state_foo_not_exec(_: StateFoo1, _: StateFoo2, _ot: Other) {}
 
 5. How to redesign ProgramCollect?
 
+## Initial Conception
+
+I have designed pseudocode to illustrate the execution logic of `The New Pipeline`, which will modify the current `#[chain]` collection and execution logic
+
+```rust
+fn main() {
+    // Collect all program return values into a Vec
+    let mut tr: Vec<T> = vec![T::A, T::C];
+ 
+    // Pad or truncate to 6 elements
+    while tr.len() < 6 {
+        tr.push(T::E);
+    }
+    tr.truncate(6);
+ 
+    // Sort at runtime
+    tr.sort();
+ 
+    match (tr[0], tr[1], tr[2], tr[3], tr[4], tr[5]) {
+        // Compile-time ARM, fully following the enum's internal ordering
+        (T::B, T::D, _, _, _, _) => {
+            // Collect and expand all matches satisfying the current pattern, execute them sequentially / in parallel
+        }
+        _ => {
+            // Fallback logic
+        }
+    }
+}
+ 
+// ThisProgram needs to implement Ord + Eq
+#[derive(PartialEq, PartialOrd, Ord, Eq, Clone, Copy)]
+pub enum T {
+    A,
+    B,
+    C,
+    D,
+    E,
+}
+```
+ 
 <p align="center" style="font-size: 0.85em; color: gray;">
     Written by @Weicao-CatilGrass
 </p>
