@@ -1,38 +1,51 @@
-<h1 align="center">Mingling Helpdoc</h1>
+<h1 align="center">Mingling Documentation 🇨🇳</h1>
 
 <p align="center">
-    This is documentation for the <b>Mingling</b> command-line framework, maintained by <a href="https://github.com/Weicao-CatilGrass">Weicao-CatilGrass</a>
+    This page contains the documentation for the <b>Mingling</b> CLI framework, maintained by <a href="https://github.com/Weicao-CatilGrass">Weicao-CatilGrass</a>
 </p>
 
-## Intro
+## Introduction
 
-If you're troubled by these issues —
+If you want to write a monolithic CLI program with many subcommands that requires long-term maintenance,
+and you also need context-aware command-line completion, then Mingling is definitely worth learning!
 
-1. Too many subcommands make `main.rs` bloat rapidly;
-2. Handler logic mixed with side effects;
-3. Logging, auth, and other cross-cutting concerns are hard to inject non-invasively;
-4. Maintaining shell completion scripts for multiple platforms wears you out;
-5. Global resources everywhere, making testing difficult.
+## About Mingling
 
-… then you've come to the right place.
+Mingling's slogan is: "Macro magician in your CLI.",
+It uses a macro system to construct a clear paradigm for describing CLI programs.
 
-Of course, if you're just curious about "how to write maintainable CLIs in Rust," you've also come to the right place — it'll be fun.
+Mingling is free to use forever, and you can use it under either the [MIT](https://github.com/mingling-rs/mingling/blob/main/LICENSE-MIT) or [APACHE 2.0](https://github.com/mingling-rs/mingling/blob/main/LICENSE-APACHE) license.
 
-## What is Mingling?
+Mingling's design goals are:
 
-> **Mìng Lìng** is the pinyin of the Chinese word **命令**,
-> which translates to **Command** in English.
+- Type and state driven: types describe state, functions handle behavior, macros mark them!
+- Compile-time focus: all command lists, states, and types are fully baked in at compile time, keeping runtime lightweight.
+- Side-effect isolation: isolate side effects of behavior handling as much as possible through framework mechanisms, creating a clean context.
+- Testability: all steps are functions, making it easy to assert and inject context.
+- Easy ecosystem composition: capabilities can be integrated through the Rust ecosystem, with the framework providing pure scheduling logic.
 
-Mingling is a CLI framework built with Rust. It's free, open-source, and licensed under the permissive MIT / Apache 2.0 license.
+## Things you must know before using:
 
-Mingling's design goals:
+### Single-Crate Architecture
 
-- **Extensible**: From 3 subcommands to 30, same pattern, no framework swap
-- **Decoupled**: Parse args once, write business logic once, define output format once. Each independent.
-- **Type-driven**: Clear, typed data flows through the pipeline — not `Vec<String>`
-- **Lightweight deps**: Minimal core deps, low cost to pull in; advanced features on demand, no compile-time drag
-- **Efficient**: Dispatch logic generated at compile time, no unnecessary runtime overhead
+You can split crates using external framework-agnostic logic,
+and Mingling also provides extensibility points like Setup, Resource, and Hook that can be split out.
 
----
+However, all the **binding layers** (i.e., the layer connecting commands to actual behavior) of the final CLI are strictly confined to the same crate.
 
-Alright, wanna give it a try?
+If your business requires splitting that binding layer, please consider this carefully.
+
+### About Stability
+
+Mingling is still under active development, and its API changes frequently. If the program you need to develop is **production-grade**,
+it is highly recommended not to use Mingling.
+
+### Parser VS Framework
+
+Mingling is not a CLI Parser, but rather a CLI Framework. It does not have built-in argument parsing capabilities.
+
+However, Mingling provides two features that allow you to integrate the [`clap`](https://github.com/clap-rs/clap) parser or the [`arg-picker`](https://github.com/catilgrass/arg-picker) external parser, which is better suited for Mingling.
+
+## Getting Started
+
+Of course, if your motivation for using Mingling is "Just for fun," then that's the best state to be in!

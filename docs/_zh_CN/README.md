@@ -6,33 +6,45 @@
 
 ## 前言
 
-如果你正被这些问题困扰——
+如果您希望编写出架需要长期维护，子命令很多的单体命令行程序，
+并且同时需要能够上下文感知的命令行补全体验，那 Mingling 一定值得您学习！
 
-1. 子命令一多，`main.rs` 就迅速膨胀；
-2. Handler 中的逻辑与副作用混杂在一起；
-3. 日志、鉴权等横切关注点难以无侵入地插入；
-4. 为多个平台维护 shell 补全脚本令人心力交瘁；
-5. 全局资源到处都是，测试非常困难。
+## 关于 Mingling
 
-…… 那么，你来对地方了。
+Mingling 的 Slogan 是：“Macro magician in your CLI.（您命令行里的宏魔法师）”，
+它通过宏系统，构建了一套清晰的描述命令行程序的范式。
 
-当然，如果只是对「怎么用 Rust 写出好维护的 CLI」这件事感兴趣，那你更来对地方了 —— 它会很有意思的。
+Mingling 永久免费使用，您可以选择 [MIT](https://github.com/mingling-rs/mingling/blob/main/LICENSE-MIT) 或 [APACHE 2.0](https://github.com/mingling-rs/mingling/blob/main/LICENSE-APACHE) 中的任意一个协议使用它。
 
-## 什么是 Mingling？
+Mingling 的设计目标是：
 
-> **Mìng Lìng** 是中文 **命令** 的汉语拼音，
-> 对应的英文单词是 **Command**。
+- 类型和状态驱动：类型描述状态，函数处理行为，宏标记它们！
+- 编译期侧重：编译时完全烧录所有命令列表、状态、类型，保持运行时轻量。
+- 副作用隔离：将行为处理的副作用通过框架机制尽可能隔离，创造干净的上下文。
+- 可测试性：所有步骤都是函数，可轻松断言和注入上下文。
+- 轻松组合生态：能力可通过 Rust 生态接入，框架提供纯粹的调度逻辑。
 
-Mingling 是一个用 Rust 构建的 CLI 框架。它免费、开源，且使用宽松的 MIT / Apache 2.0 开源协议。
+## 使用前，您必须知道的一些事：
 
-Mingling 的设计目标：
+### 单 Crate 架构
 
-- **可扩展**：从 3 个子命令到 30 个，同一套模式，不换框架
-- **解耦**：参数解析写一次，业务逻辑写一次，输出格式写一次。各不相干
-- **类型驱动**：整个流水线上传递的是清晰、类型化的数据，而非 `Vec<String>`
-- **轻量依赖**：核心功能依赖少，引入负担低；按需启用高级特性，不拖慢编译
-- **高效**：编译期生成分发逻辑，运行时没有不必要的开销
+您可以使用外部的框架无关逻辑拆分 Crate，
+同时 Mingling 也提供了 Setup、Resource、Hook 等可拆分的拓展点。
 
----
+但是，最终命令行的所有 **绑定层**（即命令和实际行为之间的关联层）被严格限制在同一个 Crate 中，
+如果您的业务需要拆分该绑定层，请酌情考虑。
 
-好了，想来试试么？
+### 关于稳定性
+
+Mingling 目前仍在积极开发中，且 API 的变化较为频繁，如果您需要开发的程序是 **生产级** 的，
+非常不推荐使用 Mingling。
+
+### Parser VS Framework
+
+Mingling 并非一款 CLI Parser，而是 CLI Framework，它并不内置参数解析的能力。
+
+但是 Mingling 提供了两个特性可以便您接入 [`clap`](https://github.com/clap-rs/clap) 或者更适合 Mingling 的 [`arg-picker`](https://github.com/catilgrass/arg-picker) 外部 Parser
+
+## 开始
+
+当然，如果您使用 Mingling 的动机是 "Just for fun"，那这是最好的状态了！
