@@ -27,6 +27,9 @@ jobs:
       - name: Refresh generated docs
         run: cargo ci refresh
 
+      - name: Compare all markdown docs
+        run: cargo ci markdown-compare-all
+
       - name: Unlock workspace (idempotency check)
         run: cargo ci git-unlock --show-diff
 
@@ -69,15 +72,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        item:
-          [
-            build,
-            clippy,
-            test,
-            markdown-code,
-            examples,
-            api-docs,
-          ]
+        item: [build, clippy, test, markdown-code, examples, api-docs]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
