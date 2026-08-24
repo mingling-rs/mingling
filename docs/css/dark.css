@@ -370,12 +370,12 @@ main.hidden {
     padding-left: 20px;
 }
 .sidebar ul li.active > a {
-    border-right: 2px solid #c43931;
+    border-right: 2px solid rgba(255, 255, 255, 0.35);
     color: #d4a84b;
     font-weight: 600;
     background: linear-gradient(
         to left,
-        rgba(196, 57, 49, 0.15),
+        rgba(255, 255, 255, 0.15),
         transparent 30%
     );
 }
