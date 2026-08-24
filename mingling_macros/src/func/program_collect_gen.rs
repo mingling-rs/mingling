@@ -13,7 +13,9 @@ use crate::PACKED_TYPES;
 use crate::RENDERERS;
 use crate::RENDERERS_EXIST;
 #[cfg(feature = "structural_renderer")]
-use crate::STRUCTURAL_RENDERERS;
+use crate::STRUCTURED_TYPES;
+#[cfg(feature = "structural_renderer")]
+use crate::attr::renderer::{build_renderer_exist_entry, build_structural_renderer_entry};
 use crate::get_global_set;
 #[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
 use crate::systems::dispatch_auto;
@@ -96,10 +98,38 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
     let chain_exist = get_global_set(&CHAINS_EXIST).lock().unwrap().clone();
 
     #[cfg(feature = "structural_renderer")]
-    let structural_renderers = get_global_set(&STRUCTURAL_RENDERERS)
-        .lock()
-        .unwrap()
-        .clone();
+    let structured_types = get_global_set(&STRUCTURED_TYPES).lock().unwrap().clone();
+
+    // A `StructuralData` type enables structural rendering by itself: every
+    // packed (program) type marked with it gets a `structural_render` match
+    // arm, with no `#[renderer]` function required. The intersection with
+    // `PACKED_TYPES` keeps `StructuralData` types that are not program
+    // variants (e.g. plain data rendered only through `StructuralRenderer`)
+    // out of the generated code.
+    #[cfg(feature = "structural_renderer")]
+    let structural_renderer_tokens: Vec<proc_macro2::TokenStream> = structured_types
+        .intersection(&packed_types)
+        .map(|name| {
+            let ident = proc_macro2::Ident::new(name, proc_macro2::Span::call_site());
+            let ty: syn::TypePath = syn::parse_quote!(#ident);
+            build_structural_renderer_entry(&ty)
+        })
+        .collect();
+
+    // Packed `StructuralData` types are renderable, so `has_renderer` must
+    // return `true` for them even without a `#[renderer]` function. Entries
+    // already registered by `#[renderer]` collapse to the same string and are
+    // deduplicated by the set.
+    #[cfg(feature = "structural_renderer")]
+    let renderer_exist = {
+        let mut set = renderer_exist;
+        for name in structured_types.intersection(&packed_types) {
+            let ident = proc_macro2::Ident::new(name, proc_macro2::Span::call_site());
+            let ty: syn::TypePath = syn::parse_quote!(#ident);
+            set.insert(build_renderer_exist_entry(&ty).to_string());
+        }
+        set
+    };
 
     #[cfg(feature = "comp")]
     let completions = get_global_set(&COMPLETIONS).lock().unwrap().clone();
@@ -125,12 +155,6 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
         .collect();
 
     let chain_exist_tokens: Vec<proc_macro2::TokenStream> = chain_exist
-        .iter()
-        .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
-        .collect();
-
-    #[cfg(feature = "structural_renderer")]
-    let structural_renderer_tokens: Vec<proc_macro2::TokenStream> = structural_renderers
         .iter()
         .map(|s| syn::parse_str::<proc_macro2::TokenStream>(s).unwrap())
         .collect();
@@ -503,10 +527,7 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
         .unwrap()
         .clear();
     #[cfg(feature = "structural_renderer")]
-    get_global_set(&STRUCTURAL_RENDERERS)
-        .lock()
-        .unwrap()
-        .clear();
+    get_global_set(&STRUCTURED_TYPES).lock().unwrap().clear();
 
     TokenStream::from(expanded)
 }

@@ -69,9 +69,6 @@ pub(crate) fn get_global_set(lock: &OnceLock<Mutex<BTreeSet<String>>>) -> &Mutex
 pub(crate) type Registry = OnceLock<Mutex<BTreeSet<String>>>;
 
 // Global variables
-#[cfg(feature = "structural_renderer")]
-pub(crate) static STRUCTURAL_RENDERERS: Registry = OnceLock::new();
-
 /// Types explicitly marked with `#[derive(StructuralData)]`.
 #[cfg(feature = "structural_renderer")]
 pub(crate) static STRUCTURED_TYPES: Registry = OnceLock::new();
@@ -1553,8 +1550,10 @@ pub fn derive_enum_tag(input: TokenStream) -> TokenStream {
 /// `impl StructuralData` will fail to compile otherwise.
 ///
 /// Expands to `mingling::macros::structural!(TypeName)`, which registers the
-/// type for the `structural_render` match arm and generates the
-/// `StructuralData<crate::ThisProgram>` impl.
+/// type for the `has_renderer` and `structural_render` match arms and
+/// generates the `StructuralData<crate::ThisProgram>` impl. A `#[renderer]`
+/// function is only needed for a custom plain-text output; structural
+/// rendering works from the derive alone.
 ///
 /// # Syntax
 ///
@@ -1768,11 +1767,16 @@ pub fn register_type(input: TokenStream) -> TokenStream {
 ///
 /// Each call:
 ///
-/// 1. Registers the type's name into the `STRUCTURED_TYPES` global set, which
-///    is later consumed by `register_renderer!` to generate the
-///    `structural_render` match arm.
+/// 1. Registers the type's name into the `STRUCTURED_TYPES` global set.
 /// 2. Generates an empty `impl StructuralData<crate::ThisProgram>` for the
 ///    type (the type must also implement `serde::Serialize`).
+///
+/// `gen_program!` later intersects `STRUCTURED_TYPES` with the packed program
+/// types to generate the `has_renderer` and `structural_render` match arms, so
+/// a type only needs `StructuralData` (no `#[renderer]` function) to be
+/// rendered in structural formats such as JSON / YAML. `StructuralData` types
+/// that are not program types (not registered via `Grouped` / `register_type!`)
+/// only get the trait impl, matching their absence from the program enum.
 ///
 /// # Syntax
 ///

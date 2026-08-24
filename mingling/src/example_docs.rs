@@ -2493,7 +2493,7 @@ pub mod example_setup {}
 /// Source code (./src/main.rs)
 /// ```ignore
 /// use mingling::setup::picker::StructuralRendererSetup;
-/// use mingling::{Grouped, StructuralData, prelude::*};
+/// use mingling::{prelude::*, Grouped, StructuralData};
 /// use serde::Serialize;
 /// use std::io::Write;
 ///
@@ -2538,7 +2538,9 @@ pub mod example_setup {}
 ///     Info { name, age }.to_render()
 /// }
 ///
-/// /// Implement default renderer for when structural_renderer is not specified
+/// /// Optional plain-text renderer. Structural output (`--json` / `--yaml`) works
+/// /// from `#[derive(StructuralData)]` alone; this `#[renderer]` is only used when
+/// /// no structural format flag is given.
 /// #[renderer]
 /// fn render_info(prev: Info) -> RenderResult {
 ///     let mut render_result = RenderResult::new();

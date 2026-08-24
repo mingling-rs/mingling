@@ -81,13 +81,13 @@ pub mod macros {
     pub use mingling_macros::help;
     pub use mingling_macros::metadata;
     pub use mingling_macros::mlint;
+    #[doc(hidden)]
+    pub use mingling_macros::program_collect_gen;
     #[cfg(feature = "comp")]
     #[doc(hidden)]
     pub use mingling_macros::program_comp_gen;
     #[doc(hidden)]
     pub use mingling_macros::program_fallback_gen;
-    #[doc(hidden)]
-    pub use mingling_macros::program_collect_gen;
     pub use mingling_macros::program_setup;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;

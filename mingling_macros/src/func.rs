@@ -3,10 +3,10 @@ pub(crate) mod empty_result;
 pub(crate) mod entry;
 pub(crate) mod gen_program;
 pub(crate) mod group;
+pub(crate) mod program_collect_gen;
 #[cfg(feature = "comp")]
 pub(crate) mod program_comp_gen;
 pub(crate) mod program_fallback_gen;
-pub(crate) mod program_collect_gen;
 pub(crate) mod r_append;
 pub(crate) mod r_eprint;
 pub(crate) mod r_eprintln;

@@ -218,14 +218,9 @@ pub(crate) fn register_renderer(input: TokenStream) -> TokenStream {
     // Register the renderer in the global list
     let renderer_entry = build_renderer_entry(&struct_name, &previous_type);
     let renderer_exist_entry = build_renderer_exist_entry(&previous_type);
-    #[cfg(feature = "structural_renderer")]
-    let structural_renderer_entry = build_structural_renderer_entry(&previous_type);
 
     let renderer_entry_str = renderer_entry.to_string();
     let renderer_exist_entry_str = renderer_exist_entry.to_string();
-
-    #[cfg(feature = "structural_renderer")]
-    let structural_renderer_entry_str = structural_renderer_entry.to_string();
 
     // Check for duplicate variant before acquiring other locks
     let variant_name = previous_type
@@ -258,20 +253,8 @@ pub(crate) fn register_renderer(input: TokenStream) -> TokenStream {
         .unwrap()
         .insert(renderer_exist_entry_str);
 
-    // Only register structural renderer if the type is in STRUCTURED_TYPES
-    #[cfg(feature = "structural_renderer")]
-    {
-        let is_structured = get_global_set(&crate::STRUCTURED_TYPES)
-            .lock()
-            .unwrap()
-            .contains(&variant_name);
-        if is_structured {
-            get_global_set(&crate::STRUCTURAL_RENDERERS)
-                .lock()
-                .unwrap()
-                .insert(structural_renderer_entry_str);
-        }
-    }
+    // Structural rendering is registered by the `StructuralData` derive itself
+    // (see `func::structural`), so no structural entry is emitted here.
 
     quote! {}.into()
 }
