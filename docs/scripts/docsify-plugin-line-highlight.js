@@ -1,14 +1,17 @@
 /*!
  * docsify-plugin-line-highlight
  *
- * Hover line highlight for code blocks, ported from the landing page demo
- * (index.html `attachLineHighlight`): a translucent bar follows the mouse
- * over `pre` blocks and marks the line under the cursor.
+ * Hover line highlight, ported from the landing page demo (index.html
+ * `attachLineHighlight`): a translucent bar follows the mouse and marks the
+ * line under the cursor.
  *
- * - Normal code blocks use the same line-height math as the demo.
- * - shell-simulation terminal blocks resolve their `.shell-sim-line`
+ * - Code blocks: normal blocks use the same line-height math as the demo;
+ *   shell-simulation terminal blocks resolve their `.shell-sim-line`
  *   elements on every move (they grow while the demo plays) and rebuild the
  *   highlight bar if the loop restart cleared it.
+ * - Sidebar navigation: the same bar highlights the nav item under the
+ *   cursor (the sidebar is re-rendered per page, so the bar is rebuilt on
+ *   demand).
  *
  * The overlay colors live in css/light.css and css/dark.css
  * (`.code-line-highlight`), so they follow the theme switch; only the shared
@@ -86,10 +89,52 @@
         });
     }
 
+    function ensureSidebarHighlight(nav) {
+        var hl = nav.querySelector(".code-line-highlight");
+        if (!hl) {
+            hl = document.createElement("div");
+            hl.className = "code-line-highlight";
+            nav.appendChild(hl);
+        }
+        return hl;
+    }
+
+    // Highlights the nav item under the cursor inside the sidebar. The bar
+    // lives in `.sidebar-nav` (relative to its content, so scrolling is
+    // handled) and is rebuilt when docsify re-renders the nav.
+    function attachSidebar(sidebar) {
+        if (sidebar.__lineHighlightAttached) return;
+        sidebar.__lineHighlightAttached = true;
+
+        sidebar.addEventListener("mousemove", function (e) {
+            var nav = sidebar.querySelector(".sidebar-nav");
+            if (!nav) return;
+            var el = document.elementFromPoint(e.clientX, e.clientY);
+            var link = el && el.closest ? el.closest("a") : null;
+            var hl = ensureSidebarHighlight(nav);
+            if (!link || !sidebar.contains(link)) {
+                hl.style.opacity = "0";
+                return;
+            }
+            var rect = link.getBoundingClientRect();
+            var navRect = nav.getBoundingClientRect();
+            hl.style.top = rect.top - navRect.top + "px";
+            hl.style.height = rect.height + "px";
+            hl.style.opacity = "1";
+        });
+
+        sidebar.addEventListener("mouseleave", function () {
+            var nav = sidebar.querySelector(".sidebar-nav");
+            if (!nav) return;
+            ensureSidebarHighlight(nav).style.opacity = "0";
+        });
+    }
+
     // Shared layout only; the background/border colors are provided by the
     // theme stylesheets (css/light.css, css/dark.css).
     var CSS = [
         ".markdown-section pre{position:relative;}",
+        ".sidebar .sidebar-nav{position:relative;}",
         ".code-line-highlight{position:absolute;left:0;right:0;height:28px;",
         "pointer-events:none;opacity:0;",
         "transition:opacity .15s ease,top .08s ease;z-index:3;}",
@@ -108,6 +153,9 @@
         hook.doneEach(function () {
             var blocks = document.querySelectorAll(".markdown-section pre");
             [].forEach.call(blocks, attach);
+
+            var sidebar = document.querySelector(".sidebar");
+            if (sidebar) attachSidebar(sidebar);
         });
     }
 
