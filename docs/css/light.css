@@ -19,6 +19,41 @@
     color: #b8352d;
 }
 
+/* Hover line highlight for code blocks */
+.code-line-highlight {
+    background: rgba(58, 42, 26, 0.08);
+    border-left: 2px solid rgba(58, 42, 26, 0.35);
+}
+
+/* Cursor glow + click ink-drop effects (inverted-color block for light) */
+.cursor-dot {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    /* Chromium loses border-radius in the mix-blend-mode layer, so force the
+       round clip; otherwise the inverted area renders as a square. */
+    clip-path: circle(50%);
+    background: #fff;
+    mix-blend-mode: exclusion;
+}
+.ink-drop {
+    width: 640px;
+    height: 640px;
+    background: #3a2a1a; /* solid ink, hard edge */
+}
+
+/* Ruled-paper horizontal stripes behind the article body. Applied to body
+   (not section.content, which is a fixed viewport-height box) so the pattern
+   covers the full scrollable height. */
+body {
+    background-image:
+        linear-gradient(to bottom, rgba(58, 42, 26, 0.08) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(58, 42, 26, 0.04) 1px, transparent 1px);
+    background-size:
+        100% 40px,
+        100% 20px;
+}
+
 * {
     -webkit-font-smoothing: antialiased;
     -webkit-overflow-scrolling: touch;
