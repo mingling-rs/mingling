@@ -411,7 +411,7 @@ body.sticky .sidebar-toggle {
 /* ── Markdown ── */
 .markdown-section {
     margin: 0 auto;
-    max-width: 80%;
+    max-width: min(700px, 80%);
     padding: 30px 15px 40px 15px;
     position: relative;
 }
@@ -498,6 +498,9 @@ body.sticky .sidebar-toggle {
     background-color: #f0e8d8;
     border: 1px solid #d4c8b8;
     border-radius: 2px;
+    width: 98%;
+    margin-left: auto;
+    margin-right: auto;
     padding: 1rem;
     overflow-x: auto;
     font-family: "JetBrains Mono", "Noto Serif SC", monospace;
