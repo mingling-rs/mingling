@@ -3,24 +3,34 @@ file = "./Cargo.toml"
 pattern = "version = \"{VER}\""
 
 [[file]]
-file = "./mingling_cli/Cargo.toml"
-pattern = "version = \"{VER}\""
-
-[[file]]
 file = "./README.md"
 pattern = "version = \"{VER}\""
 
+# Mingling CLI version follows Mingling
+
 [[file]]
-file = "./docs/_zh_CN/pages/1-getting-started.md"
+file = "./mingling_cli/Cargo.toml"
+pattern = "version = \"{VER}\""
+
+# Version references in helpdoc
+
+[[file]]
+file = "docs/_zh_CN/pages/a-step-by-step/1-configuration.md"
+pattern = "cargo add mingling@{VER}"
+
+[[file]]
+file = "docs/pages/a-step-by-step/1-configuration.md"
+pattern = "cargo add mingling@{VER}"
+
+[[file]]
+file = "docs/_zh_CN/pages/a-step-by-step/1-configuration.md"
 pattern = "version = \"{VER}\""
 
 [[file]]
-file = "./docs/pages/1-getting-started.md"
+file = "docs/pages/a-step-by-step/1-configuration.md"
 pattern = "version = \"{VER}\""
 
-[[file]]
-file = "./docs/res/guide.txt"
-pattern = "mingling = \"{VER}\""
+# Version references in web pages
 
 [[file]]
 file = "./index.html"
@@ -37,3 +47,9 @@ pattern = "mling proj-init {VER}@basic"
 [[file]]
 file = "./dist/index.html"
 pattern = "mling proj-init {VER}@basic"
+
+# Guide files (Legacy)
+
+[[file]]
+file = "./docs/res/guide.txt"
+pattern = "mingling = \"{VER}\""
