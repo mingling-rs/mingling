@@ -87,7 +87,7 @@ pub mod macros {
     #[doc(hidden)]
     pub use mingling_macros::program_fallback_gen;
     #[doc(hidden)]
-    pub use mingling_macros::program_final_gen;
+    pub use mingling_macros::program_collect_gen;
     pub use mingling_macros::program_setup;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;

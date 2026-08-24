@@ -1629,7 +1629,7 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
 ///    for use in chain function return types.
 /// 2. **`program_comp_gen!(...)`** (with `comp` feature) — Generates completion infrastructure.
 /// 3. **`program_fallback_gen!(...)`** — Generates `ErrorRendererNotFound` and `EntryFallback` types.
-/// 4. **`program_final_gen!(...)`** — Generates the program enum with:
+/// 4. **`program_collect_gen!(...)`** — Generates the program enum with:
 ///    - An enum with all packed types as variants
 ///    - `Display` implementation for the enum
 ///    - `ProgramCollect` implementation dispatching to all registered renderers and chains
@@ -1750,7 +1750,7 @@ pub fn program_comp_gen(input: TokenStream) -> TokenStream {
 /// ```
 ///
 /// Each call inserts the type's name into the `PACKED_TYPES` global set, which
-/// is later consumed by `program_final_gen!` to generate enum variants.
+/// is later consumed by `program_collect_gen!` to generate enum variants.
 ///
 /// # Panics
 ///
@@ -1855,7 +1855,7 @@ pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
 /// # Syntax
 ///
 /// ```rust,ignore
-/// program_final_gen!();
+/// program_collect_gen!();
 /// ```
 ///
 /// # Generated code structure
@@ -1885,8 +1885,8 @@ pub fn program_fallback_gen(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro]
-pub fn program_final_gen(input: TokenStream) -> TokenStream {
-    func::program_final_gen::program_final_gen_impl(input)
+pub fn program_collect_gen(input: TokenStream) -> TokenStream {
+    func::program_collect_gen::program_collect_gen_impl(input)
 }
 
 /// Builds a `Suggest` instance with inline suggestion items.

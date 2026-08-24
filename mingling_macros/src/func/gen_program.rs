@@ -6,7 +6,7 @@ use quote::quote;
 ///
 /// Generates the `Next` type alias, `Routable` impl for `ChainProcess`,
 /// and delegates to `program_comp_gen!()`, `program_fallback_gen!()`,
-/// and `program_final_gen!()`.
+/// and `program_collect_gen!()`.
 ///
 /// When the `comp` / `pathf` features are enabled, the expansion begins by
 /// invoking `build_comp!()` / `build_pathf!()`, which run the build steps
@@ -118,7 +118,7 @@ pub(crate) fn gen_program_impl(_input: TokenStream) -> TokenStream {
 
             #comp_gen
             ::mingling::macros::program_fallback_gen!();
-            ::mingling::macros::program_final_gen!();
+            ::mingling::macros::program_collect_gen!();
         }
     })
 }

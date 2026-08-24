@@ -6,7 +6,7 @@ pub(crate) mod group;
 #[cfg(feature = "comp")]
 pub(crate) mod program_comp_gen;
 pub(crate) mod program_fallback_gen;
-pub(crate) mod program_final_gen;
+pub(crate) mod program_collect_gen;
 pub(crate) mod r_append;
 pub(crate) mod r_eprint;
 pub(crate) mod r_eprintln;

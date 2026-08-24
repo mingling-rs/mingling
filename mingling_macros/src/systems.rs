@@ -1,6 +1,6 @@
 // Dispatch-strategy generators. Exactly one of {linear list, char trie,
 // perfect-hash} is wired into `gen_program!` at a time (see
-// `func/program_final_gen.rs`); with no dispatch feature enabled the "auto"
+// `func/program_collect_gen.rs`); with no dispatch feature enabled the "auto"
 // strategy picks one from the table (see `dispatch_auto`). The
 // workspace-internal `bench_support` feature compiles all three so the
 // `bench_cell!` macro can generate the `dev/bench/dispatch` harness cells.

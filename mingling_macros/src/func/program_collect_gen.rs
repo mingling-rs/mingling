@@ -85,7 +85,7 @@ fn ident_tokens(name: &str) -> proc_macro2::TokenStream {
 
 #[allow(clippy::too_many_lines)]
 #[allow(clippy::similar_names)] // You're being quite picky.
-pub(crate) fn program_final_gen_impl(_input: TokenStream) -> TokenStream {
+pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
     let name = syn::Ident::new("ThisProgram", proc_macro2::Span::call_site());
 
     let packed_types = get_global_set(&PACKED_TYPES).lock().unwrap().clone();

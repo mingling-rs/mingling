@@ -619,6 +619,27 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
     _Behavioral note:_ the runtime behavior of structurally rendered output is unchanged for derive-based types. `structural!(Type)` is the registration equivalent of `register_type!` for the `STRUCTURED_TYPES` registry; manual impls (which do not register) are simply not automatically included in the `structural_render` match arm.
 
+15. **[`macros`]** **[BREAKING RENAME]** Renamed the `program_final_gen!` macro to `program_collect_gen!`. All references to the old name — the macro definition, its re-export, its implementation module, and its call sites — have been updated.
+
+    ### What changed
+
+    The `program_final_gen!()` hidden macro (which generates the `ProgramCollect` enum, its `Display` impl, and the `ProgramCollect` trait implementation dispatching to all registered renderers and chains) has been renamed to `program_collect_gen!()`. No functionality changed — only the name.
+
+    **Renamed API:**
+
+    - **`mingling::macros::program_collect_gen!`** — Replaces `mingling::macros::program_final_gen!` (renamed re-export in `mingling/src/lib.rs`).
+    - **`mingling_macros::program_collect_gen!`** — Replaces the `program_final_gen!` proc macro definition in `mingling_macros/src/lib.rs`.
+    - **Implementation module** — `mingling_macros/src/func/program_final_gen.rs` renamed to `mingling_macros/src/func/program_collect_gen.rs`; `program_final_gen_impl` renamed to `program_collect_gen_impl`.
+    - **`gen_program!()` expansion** — The `gen_program!()` macro now invokes `::mingling::macros::program_collect_gen!();` instead of `::mingling::macros::program_final_gen!();` (in `mingling_macros/src/func/gen_program.rs`).
+    - **Doc references** — Updated in `register_metadata.rs` ("later consumed by `program_collect_gen!`"), `lib.rs` macro docs, and `systems.rs` comments to refer to the new name.
+
+    **Migration guide:**
+
+    - This is an internal hidden macro — downstream code should never reference `program_final_gen!()` / `program_collect_gen!()` directly. No user-facing migration is needed.
+    - The `gen_program!()` macro expansion and all generated-code behavior are unchanged; only the internal macro name differs.
+
+    _No behavioral changes — this is a pure internal rename reflecting that the macro's role is generating the `ProgramCollect` implementation (not "finalizing" the program). All function, type, and trait names in the generated output are identical._
+
 ---
 
 ## Contents

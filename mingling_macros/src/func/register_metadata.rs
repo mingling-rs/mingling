@@ -11,7 +11,7 @@ use crate::get_global_set;
 /// `register_metadata!(EntryGreet, Description)`.
 ///
 /// Stores a match-arm-style string entry `Self::EntryGreet => { ... }` that is
-/// later consumed by `program_final_gen!` to generate the `get_metadata`
+/// later consumed by `program_collect_gen!` to generate the `get_metadata`
 /// method of `ProgramCollect`.
 pub(crate) fn register_metadata_impl(input: TokenStream) -> TokenStream {
     // Parse the input as a comma-separated list of type arguments.
