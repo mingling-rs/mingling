@@ -25,6 +25,17 @@
     border-left: 2px solid rgba(58, 42, 26, 0.35);
 }
 
+/* Comment bubble for rust code blocks */
+.code-bubble {
+    background-color: #f5ede0;
+    color: #3a2a1a;
+    border: 1px solid #d4c8b8;
+    box-shadow: 0 2px 10px rgba(58, 42, 26, 0.18);
+}
+.code-bubble code {
+    background-color: rgba(58, 42, 26, 0.08);
+}
+
 /* Cursor glow + click ink-drop effects (inverted-color block for light) */
 .cursor-dot {
     width: 130px;
