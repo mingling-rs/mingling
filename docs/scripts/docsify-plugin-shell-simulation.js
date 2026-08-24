@@ -20,7 +20,7 @@
  *   letters before the next `~#` line or the end of the block.
  * - Command text keeps Prism bash highlighting.
  * - An output line ending with `<<N` (an exit code, e.g. `<<3`) is shown as
- *   `<= N` in red at the end of the line.
+ *   `<-- N` in red at the end of the line.
  * - The demo loops: when the animation finishes it restarts after a pause
  *   (3 seconds by default). The block height is reserved up front, so the
  *   animation never shifts the surrounding layout.
@@ -40,7 +40,7 @@
  *         playOnView: true,      // start the animation when scrolled into view
  *         loop: true,            // restart the demo after it finishes
  *         loopDelay: 3000,       // ms to wait before restarting
- *         exitMark: "<="        // prefix used for the exit-code marker
+ *         exitMark: "<--"        // prefix used for the exit-code marker
  *     };
  */
 (function () {
@@ -66,7 +66,7 @@
             playOnView: cfg.playOnView !== false,
             loop: cfg.loop !== false,
             loopDelay: cfg.loopDelay != null ? cfg.loopDelay : 3000,
-            exitMark: cfg.exitMark != null ? cfg.exitMark : "<=",
+            exitMark: cfg.exitMark != null ? cfg.exitMark : "<--",
         };
     }
 
@@ -155,7 +155,7 @@
     }
 
     // Builds an output line. Returns { el, text }: `el` contains a reveal
-    // span holding the rendered content (exit codes become a red `<= N` mark)
+    // span holding the rendered content (exit codes become a red `<-- N` mark)
     // and `text` is the plain text used for typing/measuring.
     function buildOutputLine(text) {
         var line = document.createElement("div");
