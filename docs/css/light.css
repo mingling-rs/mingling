@@ -3,6 +3,22 @@
  * Cream parchment / gold & vermilion accents
  */
 
+/* Terminal demo (shell-simulation blocks) colors.
+   Plain rules (no custom properties) so the colors follow the theme switch
+   in real time, exactly like the rest of the docs. */
+.shell-sim {
+    color: #3a2a1a;
+}
+.shell-sim-prompt {
+    color: #9a8a7a;
+}
+.shell-sim-cursor {
+    background-color: #3a2a1a;
+}
+.shell-sim-exit {
+    color: #b8352d;
+}
+
 * {
     -webkit-font-smoothing: antialiased;
     -webkit-overflow-scrolling: touch;

@@ -26,7 +26,7 @@ Mingling 的设计目标是：
 
 ## 使用前，您必须知道的一些事：
 
-### 单 Crate 架构
+### 1. 单 Crate 架构
 
 您可以使用外部的框架无关逻辑拆分 Crate，
 同时 Mingling 也提供了 Setup、Resource、Hook 等可拆分的拓展点。
@@ -34,16 +34,18 @@ Mingling 的设计目标是：
 但是，最终命令行的所有 **绑定层**（即命令和实际行为之间的关联层）被严格限制在同一个 Crate 中，
 如果您的业务需要拆分该绑定层，请酌情考虑。
 
-### 关于稳定性
+### 2. 关于稳定性
 
 Mingling 目前仍在积极开发中，且 API 的变化较为频繁，如果您需要开发的程序是 **生产级** 的，
 非常不推荐使用 Mingling。
 
-### Parser VS Framework
+### 3. Parser VS Framework
 
 Mingling 并非一款 CLI Parser，而是 CLI Framework，它并不内置参数解析的能力。
 
 但是 Mingling 提供了两个特性可以便您接入 [`clap`](https://github.com/clap-rs/clap) 或者更适合 Mingling 的 [`arg-picker`](https://github.com/catilgrass/arg-picker) 外部 Parser
+
+---
 
 ## 开始
 
