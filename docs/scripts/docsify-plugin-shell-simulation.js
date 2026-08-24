@@ -1,7 +1,8 @@
 /*!
  * docsify-plugin-shell-simulation
  *
- * Turns fenced code blocks declared with the `shell-simulation` language into
+ * Turns fenced code blocks declared with the `shell-simulation` language (or
+ * `bash,simulation`, which lets editors highlight the fence as bash) into
  * animated terminal demos:
  *
  *     ```shell-simulation
@@ -449,7 +450,8 @@
         injectCSS();
         hook.doneEach(function () {
             var blocks = document.querySelectorAll(
-                'pre[data-lang="shell-simulation"]',
+                'pre[data-lang="shell-simulation"], ' +
+                    'pre[data-lang="bash,simulation"]',
             );
             [].forEach.call(blocks, function (pre) {
                 if (pre.classList.contains("shell-sim")) return;
