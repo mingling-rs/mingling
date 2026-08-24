@@ -2,6 +2,7 @@
 name = "mingling"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 authors = ["Weicao-CatilGrass"]
 license.workspace = true
 readme = "README.md"

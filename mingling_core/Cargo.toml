@@ -2,6 +2,7 @@
 name = "mingling_core"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 authors = ["Weicao-CatilGrass"]
 license.workspace = true
 description = "Core of the mingling library"

@@ -30,6 +30,39 @@ jobs:
       - name: Unlock workspace (idempotency check)
         run: cargo ci git-unlock --show-diff
 
+  # Empirically determines the MSRV with cargo-msrv (using `cargo check
+  # --workspace` so the library crates — core/facade/macros/pathf — are what
+  # get checked) and asserts it never exceeds the pinned toolchain channel
+  # (rust-toolchain.toml), i.e. the minimum supported version stays buildable
+  # by the toolchain CI actually uses.
+  MSRV-Check:
+    needs: [Fast-Check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install cargo-msrv
+        run: cargo install cargo-msrv --locked
+
+      - name: Find MSRV and assert it does not exceed the toolchain channel
+        shell: bash
+        run: |
+          channel="$(sed -n 's/^channel *= *"\(.*\)"/\1/p' rust-toolchain.toml)"
+          if [ -z "$channel" ]; then
+            echo "::error::rust-toolchain.toml does not declare a channel"
+            exit 1
+          fi
+          # --workspace is required: a plain `cargo check` at the workspace
+          # root only checks the root package, not the library crates.
+          msrv="$(cargo msrv find --output-format minimal -- cargo check --workspace)"
+          echo "Found MSRV: $msrv"
+          echo "Toolchain channel: $channel"
+          if [ "$(printf '%s\n' "$msrv" "$channel" | sort -V | tail -n 1)" != "$channel" ]; then
+            echo "::error::MSRV ($msrv) must not exceed the toolchain channel ($channel)"
+            exit 1
+          fi
+          echo "OK: MSRV $msrv <= channel $channel"
+
   Check:
     needs: [Fast-Check]
     strategy:
