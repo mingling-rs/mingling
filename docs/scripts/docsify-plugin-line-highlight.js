@@ -179,9 +179,15 @@
                     prePadTop +
                     codePadTop +
                     index * lineHeight;
-                // Anchored to the code block's right edge.
-                bubble.style.right = window.innerWidth - rect.right + 8 + "px";
                 bubble.style.top = lineTop + lineHeight + 6 + "px";
+                // Follow the mouse horizontally; flip to the left of the
+                // cursor when there is no room on the right.
+                var bubbleWidth = bubble.offsetWidth || 0;
+                var left = e.clientX + 12;
+                if (left + bubbleWidth > window.innerWidth - 8) {
+                    left = e.clientX - bubbleWidth - 12;
+                }
+                bubble.style.left = Math.max(8, left) + "px";
                 bubble.style.opacity = "1";
             } else {
                 bubble.style.opacity = "0";
