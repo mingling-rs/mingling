@@ -36,6 +36,24 @@
     background-color: rgba(255, 255, 255, 0.1);
 }
 
+/* Diff view (any_lang,diff blocks) — theme-tinted: vermilion for removals,
+   gold for additions */
+.diff-del {
+    background-color: rgba(196, 57, 49, 0.14);
+}
+.diff-add {
+    background-color: rgba(212, 168, 75, 0.24);
+}
+/* Diff line symbol tokens (();, ::, -> ...) take the line's bright color */
+.diff-line.diff-del .token.punctuation,
+.diff-line.diff-del .token.operator {
+    color: #ff6b6b;
+}
+.diff-line.diff-add .token.punctuation,
+.diff-line.diff-add .token.operator {
+    color: #e8c46a;
+}
+
 /* Cursor glow + click ink-drop effects (gold glow, like the landing page) */
 .cursor-dot {
     width: 400px;

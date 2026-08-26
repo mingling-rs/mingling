@@ -16,7 +16,7 @@ getting_started = "./GETTING-STARTED.md"
 documents_en_us = "./docs/pages/**"
 documents_zh_cn = "./docs/_zh_CN/pages/**"
 ```
- 
+
 Each key is a label used to name the report items; values are single files, directories, or `**` globs.
 
 Run all configured files:
@@ -24,13 +24,13 @@ Run all configured files:
 ```sh
 cargo ci markdown-check-all
 ```
- 
+
 You can also test a single file via command-line arg (path is joined onto the current directory):
 
 ```sh
 cargo ci markdown-check docs/pages/1-getting-started.md
 ```
- 
+
 ## Default Rules
 
 Every verified ` ```rust ` code block gets the following injected automatically at compile time — no need to write them explicitly in the block:
@@ -80,9 +80,23 @@ After the **default rules** are applied, each block goes through:
 
 ### 1. Block Extraction
 
-- Only ` ```rust ` fenced code blocks are extracted.
+- Any fenced code block whose fence starts with ` ```rust ` is extracted
+  (e.g. ` ```rust `, ` ```rust,diff `, ` ```rust,simulation `) — not just an
+  exact ` ```rust `.
 - Empty blocks (no code lines) are skipped.
 - Blocks with `// NOT VERIFIED` alone are skipped.
+
+### 1.1 Diff Blocks (` ```rust,diff `)
+
+A ` ```rust,diff ` fence is a diff of rust code:
+
+- Lines starting with `+` are added back to the compilation with their `+`
+  prefix stripped (e.g. `+fn foo() {}` compiles as `fn foo() {}`).
+- Lines starting with `-` are removed from the compilation entirely.
+- Other lines (context/metadata) are compiled as-is.
+
+This lets a diff-style snippet still be verified: the final state of the
+changed file is what gets compiled.
 
 ### 2. Temp Project Generation
 
@@ -94,7 +108,7 @@ Each dedup-hash group gets its own Cargo project:
 └── src/
     └── main.rs
 ```
- 
+
 ### 3. Build Verification
 
 Compiled with `cargo check --manifest-path ... --color=always`, stderr inherited to the terminal for real-time progress. Blocks within a group are serial (they share the crate directory); groups run in parallel.
@@ -128,7 +142,7 @@ Marks the block **not to be compiled**. Use for illustrative snippets that can't
 // This block is illustrative only, won't be compiled
 fn placeholder() {}
 ```
- 
+
 ### `// BUILD TIME`
 
 Marks the block as a `build.rs` script instead of `src/main.rs`. The block code is wrapped in `fn main() { }` and written to `build.rs`. A stub `fn main() {}` is generated for `src/main.rs`. The declared features are mirrored into `[build-dependencies]` so `build.rs` sees the same feature set.
@@ -141,7 +155,7 @@ fn main() {
     // build-time work, e.g. writing generated sources into OUT_DIR
 }
 ```
- 
+
 ### `// Features: [...]`
 
 Declares the mingling crate features needed by this block, as a JSON string array. These features are written into `Cargo.toml`'s `[dependencies]`.
@@ -149,7 +163,7 @@ Declares the mingling crate features needed by this block, as a JSON string arra
 ```rust
 // Features: ["full", "serde"]
 ```
- 
+
 ### `// Dependencies:`
 
 Declares external crate deps needed by the block. After `// Dependencies:`, each dep goes on one line: `// crate_name = "version"`.
@@ -159,7 +173,7 @@ Declares external crate deps needed by the block. After `// Dependencies:`, each
 // serde = "1"
 // clap = "4"
 ```
- 
+
 > [!TIP]
 >
 > **Special handling**:
@@ -185,7 +199,7 @@ This is useful when you want to show only the core logic while keeping the block
 @@@// This line is hidden but still compiled
 @@@fn setup() { /* hidden boilerplate */ }
 ```
- 
+
 ### How it works
 
 | Stage                 | Handling                                                                                         |
@@ -234,23 +248,23 @@ Use `@@@` for:
 // Example code ...
 ```
 ````
- 
+
 The above block compiles equivalently to:
 
 ```rust
 #![allow(dead_code)]
 #![allow(unused)]
- 
+
 #[allow(unused_imports)]
 use mingling::prelude::*;
- 
+
 // Example code ...
- 
+
 fn main() {}
- 
+
 mingling::macros::gen_program!();
 ```
- 
+
 `Cargo.toml` will contain:
 
 ```toml

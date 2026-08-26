@@ -115,6 +115,25 @@
         code.textContent = out;
     }
 
+    function showBubble(pre, comment, e, lineBottom) {
+        var bubble = ensureBubble();
+        if (comment) {
+            setBubbleText(bubble, comment);
+            bubble.style.top = lineBottom + 6 + "px";
+            // Follow the mouse horizontally; flip to the left of the cursor
+            // when there is no room on the right.
+            var bubbleWidth = bubble.offsetWidth || 0;
+            var left = e.clientX + 12;
+            if (left + bubbleWidth > window.innerWidth - 8) {
+                left = e.clientX - bubbleWidth - 12;
+            }
+            bubble.style.left = Math.max(8, left) + "px";
+            bubble.style.opacity = "1";
+        } else {
+            bubble.style.opacity = "0";
+        }
+    }
+
     function attach(pre) {
         if (pre.__lineHighlightAttached) return;
         pre.__lineHighlightAttached = true;
@@ -123,21 +142,46 @@
             var rect = pre.getBoundingClientRect();
             var y = e.clientY - rect.top;
 
-            // Terminal blocks: each line is an element, and new lines appear
-            // while the demo plays, so resolve the target line on every move.
-            var lines = pre.querySelectorAll(".shell-sim-line");
+            // Terminal/diff blocks: each line is an element (and new lines
+            // appear while the demo plays), so resolve the target line and
+            // its index from the real rectangles.
+            var lines = pre.querySelectorAll(".shell-sim-line, .diff-line");
             if (lines.length) {
                 var target = lines[0];
+                var targetIndex = 0;
                 for (var i = 0; i < lines.length; i++) {
                     var t = lines[i].getBoundingClientRect().top - rect.top;
-                    if (y >= t) target = lines[i];
-                    else break;
+                    if (y >= t) {
+                        target = lines[i];
+                        targetIndex = i;
+                    } else {
+                        break;
+                    }
                 }
                 var tr = target.getBoundingClientRect();
                 var hlT = ensureHighlight(pre);
-                hlT.style.top = tr.top - rect.top + "px";
+                hlT.style.top = tr.top - rect.top - 1 + "px";
                 hlT.style.height = tr.height + "px";
                 hlT.style.opacity = "1";
+
+                // Tint the bar (and its left accent) with the diff line's
+                // background color.
+                if (
+                    target.classList.contains("diff-del") ||
+                    target.classList.contains("diff-add")
+                ) {
+                    var diffBg = getComputedStyle(target).backgroundColor;
+                    hlT.style.backgroundColor = diffBg;
+                    hlT.style.borderLeftColor = diffBg;
+                } else {
+                    hlT.style.backgroundColor = "";
+                    hlT.style.borderLeftColor = "";
+                }
+
+                var comment = pre.__lineComments
+                    ? pre.__lineComments[targetIndex]
+                    : null;
+                showBubble(pre, comment, e, tr.bottom);
                 return;
             }
 
@@ -164,34 +208,20 @@
             if (index >= lineCount) index = lineCount - 1;
             var hlC = ensureHighlight(pre);
             // The highlight is positioned relative to the pre's padding box.
-            hlC.style.top = prePadTop + codePadTop + index * lineHeight + "px";
+            hlC.style.top =
+                prePadTop + codePadTop + index * lineHeight - 1 + "px";
             hlC.style.height = lineHeight + "px";
             hlC.style.opacity = "1";
 
             // Trailing-comment bubble for rust blocks.
-            var bubble = ensureBubble();
             var comment = pre.__lineComments ? pre.__lineComments[index] : null;
-            if (comment) {
-                setBubbleText(bubble, comment);
-                var lineTop =
-                    rect.top +
-                    (parseFloat(preCs.borderTopWidth) || 0) +
-                    prePadTop +
-                    codePadTop +
-                    index * lineHeight;
-                bubble.style.top = lineTop + lineHeight + 6 + "px";
-                // Follow the mouse horizontally; flip to the left of the
-                // cursor when there is no room on the right.
-                var bubbleWidth = bubble.offsetWidth || 0;
-                var left = e.clientX + 12;
-                if (left + bubbleWidth > window.innerWidth - 8) {
-                    left = e.clientX - bubbleWidth - 12;
-                }
-                bubble.style.left = Math.max(8, left) + "px";
-                bubble.style.opacity = "1";
-            } else {
-                bubble.style.opacity = "0";
-            }
+            var lineTop =
+                rect.top +
+                (parseFloat(preCs.borderTopWidth) || 0) +
+                prePadTop +
+                codePadTop +
+                index * lineHeight;
+            showBubble(pre, comment, e, lineTop + lineHeight);
         });
 
         pre.addEventListener("mouseleave", function () {

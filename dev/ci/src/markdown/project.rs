@@ -58,7 +58,9 @@ pub(crate) fn parse_markdown(content: &str, source_file: &str) -> Vec<MarkdownTe
     let lines: Vec<&str> = content.lines().collect();
     let mut i = 0;
     while i < lines.len() {
-        if lines[i].trim() == "```rust" {
+        // Any fence starting with ```rust counts (e.g. ```rust,diff,
+        // ```rust,simulation), not just an exact ```rust.
+        if lines[i].trim().starts_with("```rust") {
             if let Some(proj) = parse_block(&lines, i, source_file) {
                 projects.push(proj);
             }
@@ -80,6 +82,10 @@ fn parse_block(lines: &[&str], start: usize, source_file: &str) -> Option<Markdo
     let mut has_main = false;
     let mut has_gen_program = false;
     let mut is_build_time = false;
+
+    // Diff blocks (```rust,diff): `+` lines are compiled (prefix stripped),
+    // `-` lines are removed from the compilation.
+    let is_diff = lines[start].trim().contains("diff");
 
     let mut idx = start + 1;
     let mut in_header = true;
@@ -153,6 +159,27 @@ fn parse_block(lines: &[&str], start: usize, source_file: &str) -> Option<Markdo
                         break;
                     }
                 }
+                continue;
+            }
+        }
+
+        // Diff blocks: `+` lines lose their prefix and join the compilation;
+        // `-` lines are excluded.
+        if is_diff {
+            if let Some(rest) = trimmed.strip_prefix('+') {
+                let code = rest.strip_prefix(' ').unwrap_or(rest);
+                if code.contains("fn main") {
+                    has_main = true;
+                }
+                if code.contains("gen_program!") {
+                    has_gen_program = true;
+                }
+                code_lines.push(code.to_string());
+                idx += 1;
+                continue;
+            }
+            if trimmed.starts_with('-') {
+                idx += 1;
                 continue;
             }
         }
