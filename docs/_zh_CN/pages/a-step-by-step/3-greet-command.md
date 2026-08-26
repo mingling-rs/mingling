@@ -3,7 +3,7 @@
     通过 <code>#[command]</code> 定义子命令：<code>greet</code>
 </p>
 
-回顾下上一页的示例：
+回顾上页中的示例：
 
 ```rust
 use mingling::prelude::*;
@@ -23,34 +23,48 @@ gen_program!();
 ~#
 ```
  
-这个程序什么行为都没有，而在本页我们将介绍如何创建一条子命令。
+可以看见，它什么都没输出，这是因为我们还没有为该程序定义任何子命令和行为，mingling 在这种情况下是 **完全静默** 的，而本页我们来创建第一条子命令。
 
-## 关于宏 `#[command]`
+## 如何创建子命令？
 
-> 在 Mingling 中没有 **“命令”**，真正的 **“命令”** 是 **“分发器与链”** 的组合。
-
-`#[command]` 宏是对 Mingling 底层宏 `dispatcher!` 和 `#[chain]` 的一次封装，它将 Mingling 的子命令创建语法压缩到了很小的篇幅中：
+在 Mingling 中，创建一条子命令是非常快速的：
+你只需要在函数上增加一条属性宏 `#[command]`，它就会被识别为一条命令的入口点，并被自动注册到 `crate::ThisProgram` 中
 
 ```rust
+use mingling::macros::command;
+ 
 #[command] // 标记该函数是一条命令
-pub fn greet() { // 函数名即命令名
-    // ... greet 命令的行为
+pub fn command() { // 函数名即命令名
+    // ... command 命令的行为
 }
 ```
  
-它等价为：
+你的函数名将会被映射为命令名，规则如下：
+
+| 函数名        | 节点名         | 实际执行时       |
+| ------------- | -------------- | ---------------- |
+| fn mycommand  | `"mycommand"`  | `cli mycommand`  |
+| fn my_command | `"my.command"` | `cli my command` |
+
+如果你需要命令名称里包含符号（例如 `-`），便需要使用 `#[command(node = "node.name")]` 来精确指定节点名称，例如：
 
 ```rust
-dispatcher!("greet", EntryGreet); // 创建节点为 `greet` 的分发器，并转发参数到 `EntryGreet`
+use mingling::macros::command;
  
-#[chain] // 创建链并绑定函数
-pub fn handle_greet(args: EntryGreet) { // 处理类型 `EntryGreet`
-    // ... greet 命令的行为
+#[command(node = "my-command")]
+pub fn my_command() {
+    // ... my-command 命令的行为
+    println!("My Command!");
 }
 ```
  
-也就是说：**如果不是特殊必要，都建议使用 `#[command]` 宏**
+他执行后就是这样的：
 
+```bash,simulation
+~# cargo run -- my-command
+My Command!
+```
+ 
 ---
 
 好了，让我们开始编写第一条子命令吧！
@@ -74,23 +88,33 @@ Hello, Alice!
 
 那么，我们首先添加子命令 `greet`：
 
-```rust
-#[command]
-pub fn greet() {
+```rust,diff
+use mingling::prelude::*;
  
+fn main() {
+    let mut program = ThisProgram::new();
+    program.exec_and_exit();
 }
+ 
++ #[command]
++ pub fn greet() {
++
++ }
+ 
+gen_program!();
 ```
  
 然后，编写具体的解析行为
 
-```rust
+```rust,diff
 #[command]
-pub fn greet(args: Vec<String>) {
-    let name = args
-        .first() // 获取命令名之后的第一个参数
-        .map(|s| s.as_str()) // 将该参数转换为字符串切片
-        .unwrap_or("Mingling"); // 如果没有参数，则使用默认值 `"Mingling"`
-    println!("Hello, {}!", name); // 输出问候语
+- pub fn greet() {
++ pub fn greet(args: Vec<String>) { // 增加一个参数输入 `Vec<String>`
++     let name = args
++         .first() // 获取命令名之后的第一个参数
++         .map(|s| s.as_str()) // 将该参数转换为字符串切片
++         .unwrap_or("Mingling"); // 如果没有参数，则使用默认值 `"Mingling"`
++     println!("Hello, {}!", name); // 输出问候语
 }
 ```
  
@@ -125,37 +149,34 @@ Hello, Mingling!
 Hello, Alice!
 ```
  
-可以看到，函数名 `greet` 被映射成子命令名称，
-用户参数则被映射成第一个参数 `args: Vec<String>`，
-函数逻辑自然便是命令行为。
+可以看到，执行的效果完全符合我们的预期，不过 ...
 
-<p align="center"><b>但是上文的函数有点问题。</b></p>
-
-具体来说：它不符合 Mingling 的哲学 —— 通过架构分离副作用。
+**它不符合 Mingling 的哲学 —— 通过架构分离副作用。**
 
 ## “通过架构分离副作用”
 
-上述代码虽然能完美满足我们设想的样子，但它并不符合 Mingling 的哲学，下面请将注意力集中在 `#[command]` 绑定函数的实现上：
+上述代码虽能完美满足我们设想的样子，但它并不是 Mingling 的最佳实践，下面请将注意力集中在 `#[command]` 绑定函数的实现上：
 
 ```rust
 #[command]
 pub fn greet(args: Vec<String>) {
     // ...
 @@@let name = args.first().map(|s| s.as_str()).unwrap_or("Mingling");
-    // 在此处，直接调用了 println!，在函数内污染了 stdout
+    // 在此处，greet 函数直接调用了 `println!`
     println!("Hello, {}!", name);
 }
 ```
  
-这意味着，当测试该函数的时候，你必须捕获其中的 stdout 才能断言它的结果，这是 **不可测试** 的。
+`println!` 在 `fn greet` 函数内通过执行标准输出产生了副作用，
+这意味着：当我们需要测试该函数时，你必须捕获其中的 stdout 才能断言它的结果，这是 **难以测试** 的。
 
-Mingling 提供了更好的方法来让其 **更适合测试** —— 增加结构体和渲染器：我们可以通过定义一个结果类型，将运行的结果输出到内部，
-并通过渲染器来处理它呈现的样子，来实现优雅的分层：
+Mingling 提供了更好的方法来让其 **更适合测试** —— 增加结果类型和渲染器：通过定义结果类型，`fn greet` 可以轻松地将结果包装成类型化的信息输出，
+渲染器也能根据类型化的信息决定如何呈现，如此一来：**函数只负责输出，渲染器只负责呈现**。
 
-增加如下代码：
+我们增加如下代码：
 
 ```rust
-#[derive(Grouped)] // 将结构体组合到当前程序中
+#[derive(Grouped)] // 通过 `Grouped` 将结构体添加到当前程序中
 pub struct ResultGreet { // 创建结构体 `ResultGreet`
     name: String // 定义内部值 `name`
 }
@@ -168,16 +189,17 @@ pub fn render_greet(r: ResultGreet) -> String { // 处理 `ResultGreet`，并渲
  
 修改原来的 `fn greet` 函数：
 
-```rust
+```rust,diff
 @@@#[derive(Grouped)] pub struct ResultGreet { name: String }
 #[command]
-pub fn greet(args: Vec<String>) -> ResultGreet { // 输入 `args`，输出结构化数据 `ResultGreet`
+- pub fn greet(args: Vec<String>) {
++ pub fn greet(args: Vec<String>) -> ResultGreet { // 返回数据类型 `ResultGreet`
     let name = args
         .first()
         .map(|s| s.as_str())
-        .unwrap_or("Mingling")
-        .to_string();
-    ResultGreet { name } // 包装为结构化数据 `ResultGreet`，而不是 `println!`
+        .unwrap_or("Mingling");
+-     println!("Hello, {}!", name); // 删除原来的直接 stdout
++     ResultGreet { name: name.to_string() } // 包装为数据类型 `ResultGreet`
 }
 ```
  

@@ -5,8 +5,8 @@
 
 欢迎使用 Mingling！
 
-本页面将带领你快速了解并构建你的第一款 Mingling CLI 程序，
-你可以跟着文章内容一步一步操作，逐步搭建你的 Mingling 程序。
+本页面将带你快速了解 Mingling，并一步步构建你的第一款基于 Mingling 的 CLI 程序，
+你可以跟着文章逐步操作，从零搭建你的 CLI 程序。
 
 ## 1. 检查 `rustc` 版本
 
@@ -41,9 +41,16 @@ version = "0.5.0" # 指定 Mingling 版本
 features = [ "mini" ] # 开启 `mini` 特性组，提供参数解析和补全的能力
 ```
  
+> [!Note]
+> 当然，Mingling 提供了自己的脚手架工具 [`mling`](https://mingling-rs.github.io/mingling/dist/)，你可以使用它快速构建项目
+>
+> 但若是初学，亲手搭建一次最简的 Mingling 会更容易了解它的架构。
+
 ## 3. 添加入口代码
 
-将 Mingling 添加到项目中后，你可以将 `main.rs` 的代码改为如下内容来快速检查框架是否可用：
+将 Mingling 添加到项目中后，你可以直接 **复制** 并 **粘贴** 下列代码到 `main.rs` 中验证 Mingling 是否可用。
+
+(下列代码的每部分的用处将会在下一页讲解)
 
 ```rust
 // src/main.rs
@@ -69,7 +76,7 @@ fn render_hello_world(_: ResultHelloWorld) -> String { // 注册渲染器，接�
 gen_program!(); // 收集前文所有注册的内容，展开为 ThisProgram
 ```
  
-编译成功后，使用 `cargo run -- greet` 你将获得如下输出：
+然后，运行命令：`cargo run -- greet`，你将获得如下输出：
 
 ```bash,simulation
 ~# cargo run -- greet
@@ -78,12 +85,12 @@ Hello, World!
  
 ---
 
-🎉 恭喜！至此你的 `Mingling` 项目就已经构建完成了！
+🎉 恭喜！至此 `mingling` 就已经配置完成了！
 
-回顾你的项目结构，它应该是这样的：
+从下一页开始，我们将会从头搭建一个 Mingling 程序，并逐步学习如何使用 Mingling 来处理：
 
-```file-tree
-/Cargo.toml # Cargo 配置文件
-/Cargo.lock # Cargo 锁文件
-/src/main.rs # 项目主入口
-```
+- 子命令
+- 数据渲染
+- 回退逻辑
+- 退出码控制
+- 错误处理
