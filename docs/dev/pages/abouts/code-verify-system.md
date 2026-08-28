@@ -142,6 +142,14 @@ Marks the block **not to be compiled**. Use for illustrative snippets that can't
 // This block is illustrative only, won't be compiled
 fn placeholder() {}
 ```
+
+> [!NOTE]
+>
+> In the rendered docs, the `// NOT VERIFIED` line is removed and the whole
+> code block is outlined in red. While hovering it, a localized “not verified”
+> warning follows the cursor on its right side. The tooltip text is configured
+> in `docs/index.html` / `docs/_zh_CN/index.html` under
+> `window.$docsify.notVerified.text`.
  
 ### `// BUILD TIME`
 

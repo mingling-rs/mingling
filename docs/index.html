@@ -57,6 +57,9 @@
                     noData: "No matches found.",
                     depth: 2,
                 },
+                notVerified: {
+                    text: "This code block is not verified",
+                },
                 plugins: [
                     function (hook) {
                         hook.beforeEach(function (content) {
@@ -107,6 +110,7 @@
         <script src="scripts/docsify-mermaid.js"></script>
         <script src="scripts/docsify-plugin-shell-simulation.js"></script>
         <script src="scripts/docsify-plugin-file-tree.js"></script>
+        <script src="scripts/docsify-plugin-not-verified.js"></script>
         <script src="scripts/docsify-plugin-diff.js"></script>
         <script src="scripts/docsify-plugin-line-highlight.js"></script>
 
