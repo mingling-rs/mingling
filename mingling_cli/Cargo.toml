@@ -24,7 +24,6 @@ path = "../mingling"
 features = [
     "picker",
     "pathf",
-    "dispatch_tree",
     "async",
     "comp",
 ]
