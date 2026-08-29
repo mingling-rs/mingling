@@ -15,6 +15,8 @@ use just_fmt::snake_case;
 /// - `Zsh` serializes to `"zsh"`
 /// - `Fish` serializes to `"fish"`
 /// - `Powershell` serializes to `"powershell"`
+/// - `Elvish` serializes to `"elvish"`
+/// - `Nushell` serializes to `"nushell"`
 /// - `Other(name)` serializes to the inner string value
 ///
 /// This allows the shell type to be transmitted as a plain string over
@@ -33,6 +35,10 @@ pub enum ShellFlag {
     Fish,
     /// Represents `PowerShell`.
     Powershell,
+    /// Represents the Elvish shell.
+    Elvish,
+    /// Represents Nushell.
+    Nushell,
     /// A custom or unsupported shell type, identified by the provided string.
     Other(String),
 }
@@ -44,6 +50,8 @@ impl From<String> for ShellFlag {
             "bash" => Self::Bash,
             "fish" => Self::Fish,
             "pwsh" | "ps1" | "powershell" => Self::Powershell,
+            "elvish" | "elv" => Self::Elvish,
+            "nushell" | "nu" => Self::Nushell,
             other => Self::Other(snake_case!(other)),
         }
     }
@@ -56,6 +64,8 @@ impl From<ShellFlag> for String {
             ShellFlag::Bash => "bash".to_string(),
             ShellFlag::Fish => "fish".to_string(),
             ShellFlag::Powershell => "powershell".to_string(),
+            ShellFlag::Elvish => "elvish".to_string(),
+            ShellFlag::Nushell => "nushell".to_string(),
             ShellFlag::Other(s) => s,
         }
     }

@@ -4,11 +4,27 @@ use just_template::tmpl;
 
 /// Represents the shell environment for which the output format is intended.
 ///
-/// This is an internal copy of `mingling_core::ShellFlag`, kept private to the
-/// build module because the macros crate must not depend on `mingling_core`.
-/// Which variants are constructed depends on the target OS (`#[cfg]`), so
-/// platform-gated variants may be unused on any given host.
-#[allow(dead_code)]
+/// This enum defines the supported shell types that can be used for
+/// generating shell-specific command syntax, scripts, or completions.
+///
+/// # Behavior under `structural_renderer` feature
+///
+/// When the `structural_renderer` feature is enabled, this enum derives
+/// [`serde::Serialize`](https://docs.rs/serde/latest/serde/trait.Serialize.html).
+/// The serialization produces shell-specific string identifiers:
+///
+/// - `Bash` serializes to `"bash"`
+/// - `Zsh` serializes to `"zsh"`
+/// - `Fish` serializes to `"fish"`
+/// - `Powershell` serializes to `"powershell"`
+/// - `Elvish` serializes to `"elvish"`
+/// - `Nushell` serializes to `"nushell"`
+/// - `Other(name)` serializes to the inner string value
+///
+/// This allows the shell type to be transmitted as a plain string over
+/// serialization boundaries (e.g., JSON, YAML) when using structural
+/// rendering, while deserialization is handled by a separate process
+/// (such as the `From<String>` implementation).
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub(crate) enum ShellFlag {
     /// Represents the Bash shell.
@@ -20,46 +36,42 @@ pub(crate) enum ShellFlag {
     Fish,
     /// Represents `PowerShell`.
     Powershell,
-    /// A custom or unsupported shell type, identified by the provided string.
-    Other(String),
+    /// Represents the Elvish shell. (WIP)
+    #[allow(unused)]
+    Elvish,
+    /// Represents Nushell. (WIP)
+    #[allow(unused)]
+    Nushell,
 }
 
 const TMPL_COMP_BASH: &str = include_str!("../../tmpls/comps/bash.sh");
 const TMPL_COMP_ZSH: &str = include_str!("../../tmpls/comps/zsh.zsh");
 const TMPL_COMP_FISH: &str = include_str!("../../tmpls/comps/fish.fish");
 const TMPL_COMP_PWSH: &str = include_str!("../../tmpls/comps/pwsh.ps1");
+const TMPL_COMP_ELVISH: &str = include_str!("../../tmpls/comps/elvish.elv");
+const TMPL_COMP_NUSH: &str = include_str!("../../tmpls/comps/nush.nu");
 
 /// Generate shell completion scripts for a given binary name.
 ///
-/// On Windows, generates `PowerShell` completion.
-/// On Linux, generates Zsh, Bash, and Fish completions.
+/// Generates completion scripts for all supported shells regardless of the
+/// platform: PowerShell, Zsh, Bash, Fish, Elvish, and Nushell.
 /// Scripts are written to the `OUT_DIR` (or `target/` if `OUT_DIR` is not set).
 ///
 /// # Errors
 ///
 /// Returns an [`std::io::Error`] if a script cannot be written.
 pub(crate) fn build_comp_scripts(name: &str) -> Result<(), std::io::Error> {
-    #[cfg(target_os = "windows")]
-    {
-        build_comp_script(&ShellFlag::Powershell, name)?;
-        Ok(())
-    }
+    build_comp_script(&ShellFlag::Powershell, name)?;
+    build_comp_script(&ShellFlag::Zsh, name)?;
+    build_comp_script(&ShellFlag::Bash, name)?;
+    build_comp_script(&ShellFlag::Fish, name)?;
 
-    #[cfg(target_os = "linux")]
-    {
-        build_comp_script(&ShellFlag::Zsh, name)?;
-        build_comp_script(&ShellFlag::Bash, name)?;
-        build_comp_script(&ShellFlag::Fish, name)?;
-        Ok(())
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        build_comp_script(&ShellFlag::Zsh, name)?;
-        build_comp_script(&ShellFlag::Bash, name)?;
-        build_comp_script(&ShellFlag::Fish, name)?;
-        Ok(())
-    }
+    // The completion logic for these scripts is not yet complete,
+    // so they are temporarily excluded from the generation list.
+    //
+    // build_comp_script(&ShellFlag::Elvish, name)?;
+    // build_comp_script(&ShellFlag::Nushell, name)?;
+    Ok(())
 }
 
 /// Generate a shell completion script for a specific shell.
@@ -110,10 +122,12 @@ pub(crate) fn build_comp_script_to(
 
 const fn get_tmpl(shell_flag: &ShellFlag) -> (&'static str, &'static str) {
     match shell_flag {
-        ShellFlag::Bash | ShellFlag::Other(_) => (TMPL_COMP_BASH, ".sh"),
+        ShellFlag::Bash => (TMPL_COMP_BASH, ".sh"),
         ShellFlag::Zsh => (TMPL_COMP_ZSH, ".zsh"),
         ShellFlag::Fish => (TMPL_COMP_FISH, ".fish"),
         ShellFlag::Powershell => (TMPL_COMP_PWSH, ".ps1"),
+        ShellFlag::Elvish => (TMPL_COMP_ELVISH, ".elv"),
+        ShellFlag::Nushell => (TMPL_COMP_NUSH, ".nu"),
     }
 }
 
@@ -150,9 +164,16 @@ mod tests {
     }
 
     #[test]
-    fn get_tmpl_other() {
-        let (tmpl, ext) = get_tmpl(&ShellFlag::Other("custom".to_string()));
-        assert_eq!(ext, ".sh");
-        assert!(!tmpl.is_empty(), "fallback template should not be empty");
+    fn get_tmpl_elvish() {
+        let (tmpl, ext) = get_tmpl(&ShellFlag::Elvish);
+        assert_eq!(ext, ".elv");
+        assert!(!tmpl.is_empty(), "elvish template should not be empty");
+    }
+
+    #[test]
+    fn get_tmpl_nushell() {
+        let (tmpl, ext) = get_tmpl(&ShellFlag::Nushell);
+        assert_eq!(ext, ".nu");
+        assert!(!tmpl.is_empty(), "nushell template should not be empty");
     }
 }
