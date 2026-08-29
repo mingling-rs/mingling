@@ -3,15 +3,14 @@
 #![allow(unused)]
 use crate::linter::mlint_report::{MlintLevel, MlintReport};
 
+mod direct_exit_invoke;
+pub use direct_exit_invoke::linter as direct_exit_invoke;
 mod direct_stdout_bypass;
 pub use direct_stdout_bypass::linter as direct_stdout_bypass;
-mod non_mingling_naming_style;
-pub use non_mingling_naming_style::linter as non_mingling_naming_style;
 mod template_linter;
 pub use template_linter::linter as template_linter;
 mod unnecessary_render_result_creation;
 pub use unnecessary_render_result_creation::linter as unnecessary_render_result_creation;
-pub use non_mingling_naming_style::check_file as non_mingling_naming_style_file;
 
 /// Run all registered lints on a parsed file with its source text.
 pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
@@ -19,23 +18,22 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
 
     // File-level lints (check types, modules, etc.)
     let mut reports: Vec<MlintReport> = vec![];
-    reports.extend(non_mingling_naming_style::check_file(file, source));
 
     // Item-level lints (check each function)
     for item in &file.items {
         if let syn::Item::Fn(f) = item {
-            let skip = get_mlint_override(&f.attrs, "direct_stdout_bypass") == Some(MlintLevelOverride::Allow);
+            let skip = get_mlint_override(&f.attrs, "direct_exit_invoke") == Some(MlintLevelOverride::Allow);
             if !skip {
-                let mut rs = direct_stdout_bypass::linter(f.clone(), source);
-                if get_mlint_override(&f.attrs, "direct_stdout_bypass") == Some(MlintLevelOverride::Deny) {
+                let mut rs = direct_exit_invoke::linter(f.clone(), source);
+                if get_mlint_override(&f.attrs, "direct_exit_invoke") == Some(MlintLevelOverride::Deny) {
                     for r in &mut rs { r.level = MlintLevel::Error; }
                 }
                 reports.extend(rs);
             }
-            let skip = get_mlint_override(&f.attrs, "non_mingling_naming_style") == Some(MlintLevelOverride::Allow);
+            let skip = get_mlint_override(&f.attrs, "direct_stdout_bypass") == Some(MlintLevelOverride::Allow);
             if !skip {
-                let mut rs = non_mingling_naming_style::linter(f.clone(), source);
-                if get_mlint_override(&f.attrs, "non_mingling_naming_style") == Some(MlintLevelOverride::Deny) {
+                let mut rs = direct_stdout_bypass::linter(f.clone(), source);
+                if get_mlint_override(&f.attrs, "direct_stdout_bypass") == Some(MlintLevelOverride::Deny) {
                     for r in &mut rs { r.level = MlintLevel::Error; }
                 }
                 reports.extend(rs);
