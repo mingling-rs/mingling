@@ -3,6 +3,8 @@
 #![allow(unused)]
 use crate::linter::mlint_report::{MlintLevel, MlintReport};
 
+mod direct_stdout_bypass;
+pub use direct_stdout_bypass::linter as direct_stdout_bypass;
 mod non_mingling_naming_style;
 pub use non_mingling_naming_style::linter as non_mingling_naming_style;
 mod template_linter;
@@ -22,6 +24,14 @@ pub fn run_all_lints(file: &syn::File, source: &str) -> Vec<MlintReport> {
     // Item-level lints (check each function)
     for item in &file.items {
         if let syn::Item::Fn(f) = item {
+            let skip = get_mlint_override(&f.attrs, "direct_stdout_bypass") == Some(MlintLevelOverride::Allow);
+            if !skip {
+                let mut rs = direct_stdout_bypass::linter(f.clone(), source);
+                if get_mlint_override(&f.attrs, "direct_stdout_bypass") == Some(MlintLevelOverride::Deny) {
+                    for r in &mut rs { r.level = MlintLevel::Error; }
+                }
+                reports.extend(rs);
+            }
             let skip = get_mlint_override(&f.attrs, "non_mingling_naming_style") == Some(MlintLevelOverride::Allow);
             if !skip {
                 let mut rs = non_mingling_naming_style::linter(f.clone(), source);
