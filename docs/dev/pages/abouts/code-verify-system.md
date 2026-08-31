@@ -142,7 +142,7 @@ Marks the block **not to be compiled**. Use for illustrative snippets that can't
 // This block is illustrative only, won't be compiled
 fn placeholder() {}
 ```
-
+ 
 > [!NOTE]
 >
 > In the rendered docs, the `// NOT VERIFIED` line is removed and the whole

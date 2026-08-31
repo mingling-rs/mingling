@@ -1,7 +1,6 @@
 //! Docsify maintenance: fix code-box blank lines and regenerate `_sidebar.md`
 //! files under `docs/`.
 
-use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -207,70 +206,82 @@ fn has_markdown_files(dir: &Path) -> bool {
     false
 }
 
-#[derive(Clone)]
 struct SidebarEntry {
     title: String,
     link: String,
 }
 
+enum SidebarNode {
+    File(SidebarEntry),
+    Dir {
+        name: String,
+        display_name: String,
+        path: PathBuf,
+    },
+}
+
+impl SidebarNode {
+    /// Sort key used to interleave files and directories by their real
+    /// file/directory name (not by display name or item type).
+    fn sort_key(&self) -> &str {
+        match self {
+            Self::File(entry) => entry.link.rsplit('/').next().unwrap_or(&entry.link),
+            Self::Dir { name, .. } => name,
+        }
+    }
+}
+
 /// Builds the sidebar content from the markdown files under `pages_dir`.
 fn build_sidebar_content(base_dir: &Path, pages_dir: &Path, sidebar_head: &str) -> String {
     let mut lines = String::from(sidebar_head);
+    append_dir_entries(&mut lines, pages_dir, base_dir, 0);
+    lines
+}
 
-    let mut root_files: Vec<SidebarEntry> = Vec::new();
-    let mut sub_dirs: BTreeMap<String, Vec<SidebarEntry>> = BTreeMap::new();
+/// Recursively appends markdown files and subdirectories under `dir` to the
+/// sidebar, using deeper indentation for each nesting level. Files and
+/// directories are interleaved and sorted together by their real names.
+fn append_dir_entries(lines: &mut String, dir: &Path, base_dir: &Path, depth: usize) {
+    let mut nodes: Vec<SidebarNode> = Vec::new();
 
-    if let Ok(read_dir) = fs::read_dir(pages_dir) {
+    if let Ok(read_dir) = fs::read_dir(dir) {
         for entry in read_dir.flatten() {
             let path = entry.path();
             if path.is_dir() {
                 let dir_name = entry.file_name().to_string_lossy().into_owned();
-                let entries = collect_markdown_files(&path, base_dir);
-                if !entries.is_empty() {
-                    let display_name = get_directory_display_name(&path, &dir_name);
-                    sub_dirs.insert(display_name, entries);
-                }
+                let display_name = get_directory_display_name(&path, &dir_name);
+                nodes.push(SidebarNode::Dir {
+                    name: dir_name,
+                    display_name,
+                    path,
+                });
             } else if path.extension().is_some_and(|ext| ext == "md") {
-                root_files.push(SidebarEntry {
+                nodes.push(SidebarNode::File(SidebarEntry {
                     title: extract_title(&path),
                     link: relative_link(&path, base_dir),
-                });
+                }));
             }
         }
     }
 
-    root_files.sort_by(|a, b| natural_cmp(&a.link, &b.link));
-    for f in &root_files {
-        let _ = writeln!(lines, "* [{}]({})", f.title, f.link);
-    }
-
-    for (dir_name, entries) in &sub_dirs {
-        let mut sorted_entries = entries.clone();
-        sorted_entries.sort_by(|a, b| natural_cmp(&a.link, &b.link));
-        let _ = writeln!(lines, "* {dir_name}");
-        for f in &sorted_entries {
-            let _ = writeln!(lines, "  * [{}]({})", f.title, f.link);
-        }
-    }
-
-    lines
-}
-
-/// All `.md` files directly under `dir`, as sidebar entries.
-fn collect_markdown_files(dir: &Path, base_dir: &Path) -> Vec<SidebarEntry> {
-    let mut entries = Vec::new();
-    if let Ok(read_dir) = fs::read_dir(dir) {
-        for entry in read_dir.flatten() {
-            let path = entry.path();
-            if path.extension().is_some_and(|ext| ext == "md") {
-                entries.push(SidebarEntry {
-                    title: extract_title(&path),
-                    link: relative_link(&path, base_dir),
-                });
+    nodes.sort_by(|a, b| natural_cmp(a.sort_key(), b.sort_key()));
+    let indent = "  ".repeat(depth);
+    for node in &nodes {
+        match node {
+            SidebarNode::File(entry) => {
+                let _ = writeln!(lines, "{indent}* [{}]({})", entry.title, entry.link);
+            }
+            SidebarNode::Dir {
+                display_name, path, ..
+            } => {
+                if !has_markdown_files(path) {
+                    continue;
+                }
+                let _ = writeln!(lines, "{indent}* {display_name}");
+                append_dir_entries(lines, path, base_dir, depth + 1);
             }
         }
     }
-    entries
 }
 
 /// The link of a file relative to `base_dir`, without the `.md` suffix.

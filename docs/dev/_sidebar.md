@@ -1,4 +1,9 @@
 - [Welcome!](README)
+* 💡 Abouts
+  * [AI Translation Rule](pages/abouts/ai-translation-rule)
+  * [About Mingling CI Process](pages/abouts/ci)
+  * [Markdown Code Verification System](pages/abouts/code-verify-system)
+  * [About Nightly Features](pages/abouts/nightly-features)
 * ❓ Issues
   * [[Solved] The Picker2 Arguments Parser](pages/issues/_add-picker2)
   * [[Solved] [T1] Modify the dispatcher! Syntax](pages/issues/_modify-dispatcher-syntax)
@@ -15,11 +20,6 @@
   * [[T1] The pathf_export Attribute Macro](pages/issues/t1_pathf-export-macro)
   * [The Next-Gen Mingling Pipeline](pages/issues/the-next-pipeline)
   * [Some Situations Where You'd Be Like "Shit!"](pages/issues/the-shit-time)
-* 💡 Abouts
-  * [AI Translation Rule](pages/abouts/ai-translation-rule)
-  * [About Mingling CI Process](pages/abouts/ci)
-  * [Markdown Code Verification System](pages/abouts/code-verify-system)
-  * [About Nightly Features](pages/abouts/nightly-features)
 * 📄 Templates
   * [Changelog Template](pages/templates/changelog)
   * [Helpdoc Template](pages/templates/doc)

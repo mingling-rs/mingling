@@ -36,8 +36,35 @@ pub fn render_greet(r: ResultGreet) -> String {
 gen_program!();
 ```
  
-相信你一定发现了几个用户交互上的问题：
+**相信你一定发现了几个开发或者交互上的问题：**
 
-1. 当用户没输入、输错命令的时候，是否可以增加一个提示告知用户？
-2. 参数解析的方式是否 **过于原始** 了？
-3. 我们是否可以给 `greet` 命令添加一个 `--help` 符号？
+1. 解析方式是否过于原始了？
+
+```rust
+#[command]
+pub fn greet(args: Vec<String>) -> ResultGreet {
+    let name = args // 直接操作 Vec<String>
+        .first() // 直接操作 Vec<String>
+        .map(|s| s.as_str()) // 直接操作 Vec<String>
+        .unwrap_or("Mingling") // 直接操作 Vec<String>
+        .to_string(); // 直接操作 Vec<String>
+    ResultGreet { name }
+}
+```
+ 
+2. 对于错误的命令输入，无任何反应？
+
+```bash,simulation
+~# my-cli greet
+Hello, World!
+~# my-cli hello
+~#
+```
+ 
+3. 当用户需要 `--help`，如何绘制？
+
+```bash,simulation
+~# my-cli --help
+~# my-cli greet --help
+~# 
+```
