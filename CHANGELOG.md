@@ -160,6 +160,47 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
     _No behavioral change for existing code that already used the classic `fn(ctx: &ShellContext) -> Suggest` form — the identity `From` and `Into` impls preserve that path exactly.
 
+1. **[`setups:default`]** **[FEATURE]** Added the `DefaultSetup` convenience setup type that composes commonly used setups into a single registration point.
+
+    ### What changed
+
+    A new zero-sized marker struct `DefaultSetup` was added (`mingling/src/setups/default.rs`, re-exported from `mingling::setup`). When registered via `Program::with_setup(DefaultSetup)`, it composes the following setups based on the enabled feature flags:
+
+    - When the `picker` feature is enabled, registers:
+      - The picker-specific `BasicProgramSetup` for flag collection.
+      - The picker-specific `StructuralRendererSetup` when the `structural_renderer` feature is also enabled.
+    - When the `picker` feature is disabled, registers:
+      - The standard `BasicProgramSetup` for flag collection.
+      - The standard `StructuralRendererSetup` when the `structural_renderer` feature is enabled.
+    - Always registers:
+      - `ExitCodeSetup` to manage program exit codes.
+      - `DirectoryEnvironmentSetup` to register common directory resources (current dir, executable dir, home dir, temp dir).
+
+    **New API:**
+
+    - **`mingling::setup::DefaultSetup`** — A unit struct (`pub struct DefaultSetup;`) implementing `ProgramSetup<C>` for all `C: ProgramCollect<Enum = C> + 'static`. It can be registered directly as a value:
+
+        ```rust,ignore
+        use mingling::Program;
+        use mingling::setup::DefaultSetup;
+
+        let mut program = Program::<ThisProgram>::new();
+        program.with_setup(DefaultSetup);
+        ```
+
+    **Registration order** (as composed by `DefaultSetup::setup`):
+    1. `BasicProgramSetup` (picker or standard variant, per feature flags)
+    2. `StructuralRendererSetup` (picker or standard variant, when `structural_renderer` is enabled)
+    3. `ExitCodeSetup`
+    4. `DirectoryEnvironmentSetup`
+
+    **Feature wiring:**
+
+    - `mingling/src/setups.rs` — Added `mod default; pub use default::*;`.
+    - `mingling/src/setups/default.rs` — New file containing the `DefaultSetup` struct and its `ProgramSetup` impl, with `#[cfg(feature = "picker")]` / `#[cfg(not(feature = "picker"))]` and nested `#[cfg(feature = "structural_renderer")]` gates selecting the appropriate composed setups.
+
+    _No behavioral changes to any existing setup — `DefaultSetup` is purely a convenience aggregate that invokes the pre-existing `BasicProgramSetup`, `StructuralRendererSetup`, `ExitCodeSetup`, and `DirectoryEnvironmentSetup` registration logic. Programmers who prefer to register setups individually are unaffected._
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`core:comp`]** **[`macros:dispatch_tree`]** **[BREAKING RENAME]** Renamed the prefix-tree dispatch method `dispatch_args_trie` to `dispatch_args` across the codebase.

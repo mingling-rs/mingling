@@ -11,6 +11,9 @@ pub use basic::*;
 mod confirm;
 pub use confirm::*;
 
+mod default;
+pub use default::*;
+
 mod dirs;
 pub use dirs::*;
 
