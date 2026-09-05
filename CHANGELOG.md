@@ -160,7 +160,7 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
     _No behavioral change for existing code that already used the classic `fn(ctx: &ShellContext) -> Suggest` form — the identity `From` and `Into` impls preserve that path exactly.
 
-1. **[`setups:default`]** **[FEATURE]** Added the `DefaultSetup` convenience setup type that composes commonly used setups into a single registration point.
+3. **[`setups:default`]** **[FEATURE]** Added the `DefaultSetup` convenience setup type that composes commonly used setups into a single registration point.
 
     ### What changed
 
