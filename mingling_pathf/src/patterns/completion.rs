@@ -1,15 +1,15 @@
 // Doc Not Optimize
 //! The `CompletionPattern` matches functions annotated with `#[completion(T)]` and
-//! extracts the generated internal struct name (e.g., `__internal_completion_<fn_name>`).
+//! extracts the generated hidden module name (e.g., `__mingling_completion_<fn_name>`).
 //! This is used to track completion handler functions for code generation or analysis.
 
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Matches `#[completion(T)]` functions, extracts the generated inner struct name.
+/// Matches `#[completion(T)]` functions, extracts the generated hidden module name.
 ///
-/// `#[completion(EntryGreet)] fn complete_greet_entry(...)` → `__internal_completion_complete_greet_entry`
+/// `#[completion(EntryGreet)] fn complete_greet_entry(...)` → `__mingling_completion_complete_greet_entry`
 pub struct CompletionPattern;
 
 impl AnalyzePattern for CompletionPattern {
@@ -31,14 +31,14 @@ impl AnalyzePattern for CompletionPattern {
 }
 
 fn internal_name(fn_name: &str) -> String {
-    format!("__internal_completion_{fn_name}")
+    format!("__mingling_completion_{}", just_fmt::snake_case!(fn_name))
 }
 
 fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem>) {
     match item {
         Item::Fn(f) if has_attr(&f.attrs, "completion") => {
             let fn_name = f.sig.ident.to_string();
-            items.push(AnalyzeItem::local(
+            items.push(AnalyzeItem::local_module(
                 current_mod.to_string(),
                 internal_name(&fn_name),
             ));

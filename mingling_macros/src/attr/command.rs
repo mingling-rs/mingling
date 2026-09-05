@@ -295,7 +295,10 @@ pub(crate) fn command_attr(attr: TokenStream, item: TokenStream) -> TokenStream 
 
     // compute names for the re‑export module and internal structs
     let fn_name_s = fn_name.to_string();
-    let mod_name = Ident::new(&format!("__command_{}_module", &fn_name_s), fn_name.span());
+    let mod_name = Ident::new(
+        &format!("__mingling_command_{}", just_fmt::snake_case!(fn_name_s.clone())),
+        fn_name.span(),
+    );
     let wrapper_full = format!("__command_chain_{}", &fn_name_s);
     let snaked_wrapper = just_fmt::snake_case!(wrapper_full);
     let chain_internal = Ident::new(

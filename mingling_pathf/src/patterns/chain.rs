@@ -1,15 +1,15 @@
 // Doc Not Optimize
 //! The `ChainPattern` matches functions annotated with `#[chain]` and
-//! extracts the generated internal struct name (e.g., `__internal_chain_<fn_name>`).
+//! extracts the generated hidden module name (e.g., `__mingling_chain_<fn_name>`).
 //! This is used to track chained handler functions for code generation or analysis.
 
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Match `#[chain]` functions, extract the generated internal struct name.
+/// Match `#[chain]` functions, extract the generated hidden module name.
 ///
-/// `#[chain] fn handle_greet(...)` → `__internal_chain_handle_greet`
+/// `#[chain] fn handle_greet(...)` → `__mingling_chain_handle_greet`
 ///
 /// Covered forms:
 /// - `#[chain] fn handle(args: EntryType) -> Next { ... }`
@@ -38,14 +38,14 @@ impl AnalyzePattern for ChainPattern {
 }
 
 fn internal_name(fn_name: &str) -> String {
-    format!("__internal_chain_{fn_name}")
+    format!("__mingling_chain_{}", just_fmt::snake_case!(fn_name))
 }
 
 fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem>) {
     match item {
         Item::Fn(f) if has_attr(&f.attrs, "chain") => {
             let fn_name = f.sig.ident.to_string();
-            items.push(AnalyzeItem::local(
+            items.push(AnalyzeItem::local_module(
                 current_mod.to_string(),
                 internal_name(&fn_name),
             ));

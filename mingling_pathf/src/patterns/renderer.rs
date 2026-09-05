@@ -1,15 +1,15 @@
 // Doc Not Optimize
 //! The `RendererPattern` matches functions annotated with `#[renderer]` and
-//! extracts the generated internal struct name (e.g., `__internal_renderer_<fn_name>`).
+//! extracts the generated hidden module name (e.g., `__mingling_renderer_<fn_name>`).
 //! This is used to track rendering functions for code generation or analysis.
 
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Match `#[renderer]` functions, extract the generated internal struct name.
+/// Match `#[renderer]` functions, extract the generated hidden module name.
 ///
-/// `#[renderer] fn render_name(...)` → `__internal_renderer_render_name`
+/// `#[renderer] fn render_name(...)` → `__mingling_renderer_render_name`
 pub struct RendererPattern;
 
 impl AnalyzePattern for RendererPattern {
@@ -31,14 +31,14 @@ impl AnalyzePattern for RendererPattern {
 }
 
 fn internal_name(fn_name: &str) -> String {
-    format!("__internal_renderer_{fn_name}")
+    format!("__mingling_renderer_{}", just_fmt::snake_case!(fn_name))
 }
 
 fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem>) {
     match item {
         Item::Fn(f) if has_attr(&f.attrs, "renderer") => {
             let fn_name = f.sig.ident.to_string();
-            items.push(AnalyzeItem::local(
+            items.push(AnalyzeItem::local_module(
                 current_mod.to_string(),
                 internal_name(&fn_name),
             ));

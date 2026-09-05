@@ -14,6 +14,8 @@ pub(crate) fn derive_grouped(input: TokenStream) -> TokenStream {
         proc_macro2::TokenStream::from(build_any_output_convert_impls(&struct_name, &group_ident));
 
     // Generate the Grouped trait implementation
+    let type_module = type_module_tokens(&input.vis, &struct_name);
+
     let expanded = quote! {
         ::mingling::macros::register_type!(#struct_name);
 
@@ -28,6 +30,8 @@ pub(crate) fn derive_grouped(input: TokenStream) -> TokenStream {
         }
 
         #any_output_convert_impls
+
+        #type_module
     };
 
     expanded.into()
@@ -43,6 +47,8 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
 
     let any_output_convert_impls =
         proc_macro2::TokenStream::from(build_any_output_convert_impls(&struct_name, &group_ident));
+
+    let type_module = type_module_tokens(&input_parsed.vis, &struct_name);
 
     // Generate both Serialize and Grouped implementations
     let expanded = quote! {
@@ -62,9 +68,25 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
         }
 
         #any_output_convert_impls
+
+        #type_module
     };
 
     expanded.into()
+}
+
+fn type_module_tokens(vis: &syn::Visibility, type_ident: &Ident) -> proc_macro2::TokenStream {
+    let mod_name = Ident::new(
+        &format!("__mingling_type_{}", just_fmt::snake_case!(type_ident.to_string())),
+        type_ident.span(),
+    );
+    quote! {
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        #vis mod #mod_name {
+            #vis use super::#type_ident;
+        }
+    }
 }
 
 fn build_any_output_convert_impls(

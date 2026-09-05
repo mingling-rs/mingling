@@ -55,11 +55,18 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
     let original_return_type = user_return_type.unwrap_or_else(|| quote! { () });
 
     // Generate internal name using snake_case
+    let fn_name_str = fn_name.to_string();
     let internal_name = format!(
         "__internal_help_{}",
-        just_fmt::snake_case!(fn_name.to_string())
+        just_fmt::snake_case!(fn_name_str.clone())
     );
     let struct_name = Ident::new(&internal_name, fn_name.span());
+
+    // Hidden module namespace exposed to pathf.
+    let mod_name = Ident::new(
+        &format!("__mingling_help_{}", just_fmt::snake_case!(fn_name_str)),
+        fn_name.span(),
+    );
 
     let program_type = crate::default_program_path();
     let has_resources = !resources.is_empty();
@@ -155,6 +162,13 @@ pub(crate) fn help_attr(item: TokenStream) -> TokenStream {
         }
 
         ::mingling::macros::register_help!(#entry_type, #struct_name);
+
+        // Hidden module that exposes the generated help internals to pathf.
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        #vis mod #mod_name {
+            #vis use super::#struct_name;
+        }
 
     // Keep the original function unchanged
         #(#fn_attrs)*

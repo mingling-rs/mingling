@@ -1,6 +1,6 @@
 // Doc Not Optimize
 //! The `CommandPattern` matches functions annotated with `#[command]` and
-//! extracts the generated hidden module name (`__command_<fn>_module`).
+//! extracts the generated hidden module name (`__mingling_command_<fn>`).
 //!
 //! Supported forms:
 //! ```rust,ignore
@@ -23,10 +23,10 @@ use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
 /// Match `#[command]` functions.
 ///
-/// The `#[command]` macro generates a hidden `__command_<fn>_module` that
-/// re-exports all internal types (`Entry*`, `CMD*`, chain struct, dispatcher
-/// static). This pattern tracks that module; the build system generates a
-/// glob re-export `use path::__command_<fn>_module::*;` to bring everything
+/// The `#[command]` macro generates a hidden `__mingling_command_<fn>` that
+/// contains all internal types (`Entry*`, chain struct, dispatcher static).
+/// This pattern tracks that module; the build system generates a glob
+/// re-export `use path::__mingling_command_<fn>::*;` to bring everything
 /// into scope.
 pub struct CommandPattern;
 
@@ -52,7 +52,7 @@ fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem
     match item {
         Item::Fn(f) if has_command_attr(&f.attrs) => {
             let fn_name = f.sig.ident.to_string();
-            let mod_name = format!("__command_{}_module", &fn_name);
+            let mod_name = format!("__mingling_command_{}", just_fmt::snake_case!(&fn_name));
             items.push(AnalyzeItem::local_module(current_mod.to_string(), mod_name));
         }
         Item::Mod(item_mod) => {

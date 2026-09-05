@@ -1,15 +1,15 @@
 // Doc Not Optimize
 //! The `HelpPattern` matches functions annotated with `#[help]` and
-//! extracts the generated internal struct name (e.g., `__internal_help_<fn_name>`).
+//! extracts the generated hidden module name (e.g., `__mingling_help_<fn_name>`).
 //! This is used to track help functions for code generation or analysis.
 
 use syn::Item;
 
 use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
-/// Matches `#[help]` functions, extracting the generated internal struct name.
+/// Matches `#[help]` functions, extracting the generated hidden module name.
 ///
-/// `#[help] fn help_my_entry(...)` → `__internal_help_help_my_entry`
+/// `#[help] fn help_my_entry(...)` → `__mingling_help_help_my_entry`
 pub struct HelpPattern;
 
 impl AnalyzePattern for HelpPattern {
@@ -31,14 +31,14 @@ impl AnalyzePattern for HelpPattern {
 }
 
 fn internal_name(fn_name: &str) -> String {
-    format!("__internal_help_{fn_name}")
+    format!("__mingling_help_{}", just_fmt::snake_case!(fn_name))
 }
 
 fn collect_from_item(item: &Item, current_mod: &str, items: &mut Vec<AnalyzeItem>) {
     match item {
         Item::Fn(f) if has_attr(&f.attrs, "help") => {
             let fn_name = f.sig.ident.to_string();
-            items.push(AnalyzeItem::local(
+            items.push(AnalyzeItem::local_module(
                 current_mod.to_string(),
                 internal_name(&fn_name),
             ));

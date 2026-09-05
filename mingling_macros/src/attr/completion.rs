@@ -129,11 +129,18 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
     let vis = &input_fn.vis;
     let fn_name = &sig.ident;
 
+    let fn_name_str = fn_name.to_string();
     let internal_name = format!(
         "__internal_completion_{}",
-        just_fmt::snake_case!(fn_name.to_string())
+        just_fmt::snake_case!(fn_name_str.clone())
     );
     let struct_name = Ident::new(&internal_name, fn_name.span());
+
+    // Hidden module namespace exposed to pathf.
+    let mod_name = Ident::new(
+        &format!("__mingling_completion_{}", just_fmt::snake_case!(fn_name_str)),
+        fn_name.span(),
+    );
 
     let program_type = crate::default_program_path();
     let mut_resources: Vec<_> = resources.iter().filter(|r| r.is_mut).collect();
@@ -196,6 +203,13 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
             fn comp(ctx: &::mingling::ShellContext) -> ::mingling::Suggest {
                 #return_stmt
             }
+        }
+
+        // Hidden module that exposes the generated completion internals to pathf.
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        #vis mod #mod_name {
+            #vis use super::#struct_name;
         }
 
         // Keep the original function for internal use

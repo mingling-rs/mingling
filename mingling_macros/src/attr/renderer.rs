@@ -54,12 +54,19 @@ pub(crate) fn renderer_attr(item: TokenStream) -> TokenStream {
     // Get function name
     let fn_name = &input_fn.sig.ident;
 
-    // Generate struct name from function name using pascal_case
+    // Generate struct name from function name using snake_case
+    let fn_name_str = fn_name.to_string();
     let internal_name = format!(
         "__internal_renderer_{}",
-        just_fmt::snake_case!(fn_name.to_string())
+        just_fmt::snake_case!(fn_name_str.clone())
     );
     let struct_name = syn::Ident::new(&internal_name, fn_name.span());
+
+    // Hidden module namespace exposed to pathf.
+    let mod_name = syn::Ident::new(
+        &format!("__mingling_renderer_{}", just_fmt::snake_case!(fn_name_str)),
+        fn_name.span(),
+    );
 
     let has_resources = !resources.is_empty();
     let has_mut_resources = resources.iter().any(|r| r.is_mut);
@@ -137,6 +144,13 @@ pub(crate) fn renderer_attr(item: TokenStream) -> TokenStream {
                 let __renderer_result = { #render_fn_body };
                 ::std::convert::Into::into(__renderer_result)
             }
+        }
+
+        // Hidden module that exposes the generated renderer internals to pathf.
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        #vis mod #mod_name {
+            #vis use super::#struct_name;
         }
 
         // Keep the original function unchanged

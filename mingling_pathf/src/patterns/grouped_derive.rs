@@ -34,28 +34,28 @@ impl AnalyzePattern for GroupedDerivePattern {
         for item in &syntax.items {
             match item {
                 Item::Struct(s) if has_grouped_derive(&s.attrs) => {
-                    items.push(AnalyzeItem::local(String::new(), s.ident.to_string()));
+                    items.push(type_module(String::new(), &s.ident.to_string()));
                 }
                 Item::Enum(e) if has_grouped_derive(&e.attrs) => {
-                    items.push(AnalyzeItem::local(String::new(), e.ident.to_string()));
+                    items.push(type_module(String::new(), &e.ident.to_string()));
                 }
                 Item::Union(u) if has_grouped_derive(&u.attrs) => {
-                    items.push(AnalyzeItem::local(String::new(), u.ident.to_string()));
+                    items.push(type_module(String::new(), &u.ident.to_string()));
                 }
                 Item::Mod(item_mod) => {
                     if let Some((_, nested)) = &item_mod.content {
                         for n in nested {
                             match n {
                                 Item::Struct(s) if has_grouped_derive(&s.attrs) => {
-                                    items.push(AnalyzeItem::local(
+                                    items.push(type_module(
                                         item_mod.ident.to_string(),
-                                        s.ident.to_string(),
+                                        &s.ident.to_string(),
                                     ));
                                 }
                                 Item::Enum(e) if has_grouped_derive(&e.attrs) => {
-                                    items.push(AnalyzeItem::local(
+                                    items.push(type_module(
                                         item_mod.ident.to_string(),
-                                        e.ident.to_string(),
+                                        &e.ident.to_string(),
                                     ));
                                 }
                                 _ => {}
@@ -69,6 +69,13 @@ impl AnalyzePattern for GroupedDerivePattern {
 
         items
     }
+}
+
+fn type_module(module: String, type_name: &str) -> AnalyzeItem {
+    AnalyzeItem::local_module(
+        module,
+        format!("__mingling_type_{}", just_fmt::snake_case!(type_name)),
+    )
 }
 
 fn has_grouped_derive(attrs: &[syn::Attribute]) -> bool {

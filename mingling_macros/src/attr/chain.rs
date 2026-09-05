@@ -143,10 +143,12 @@ fn generate_proc_fn(
 }
 
 /// Assembles the final expanded output: hidden struct, `register_chain!` invocation,
-/// `Chain` impl with the `proc` method, and the preserved original function.
+/// `Chain` impl with the `proc` method, a hidden `__mingling_*` namespace module,
+/// and the preserved original function.
 fn generate_struct_and_impl(
     fn_attrs: &[syn::Attribute],
     vis: &syn::Visibility,
+    mod_name: &Ident,
     struct_name: &Ident,
     previous_type: &TypePath,
     previous_type_str: &proc_macro2::TokenStream,
@@ -166,6 +168,13 @@ fn generate_struct_and_impl(
             type Previous = #previous_type;
 
             #proc_fn
+        }
+
+        // Hidden module that exposes the generated chain internals to pathf.
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        #vis mod #mod_name {
+            #vis use super::#struct_name;
         }
 
         // Keep the original function unchanged
@@ -231,11 +240,18 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let has_resources = !resources.is_empty();
 
     // Generate struct name
+    let fn_name_str = fn_name.to_string();
     let internal_name = format!(
         "__internal_chain_{}",
-        just_fmt::snake_case!(fn_name.to_string())
+        just_fmt::snake_case!(fn_name_str.clone())
     );
     let struct_name = Ident::new(&internal_name, fn_name.span());
+
+    // Hidden module namespace exposed to pathf.
+    let mod_name = Ident::new(
+        &format!("__mingling_chain_{}", just_fmt::snake_case!(fn_name_str)),
+        fn_name.span(),
+    );
 
     // Always use the default crate-defined program path
     let program_type = crate::default_program_path();
@@ -263,6 +279,7 @@ pub(crate) fn chain_attr(attr: TokenStream, item: TokenStream) -> TokenStream {
     let expanded = generate_struct_and_impl(
         &fn_attrs,
         vis,
+        &mod_name,
         &struct_name,
         &previous_type,
         &previous_type_str,

@@ -105,10 +105,20 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     let program_path = crate::default_program_path();
 
     let command_name_str = attr_input.command_name.value();
+    let command_name_lit = syn::LitStr::new(&command_name_str, attr_input.command_name.span());
 
     // The dispatcher struct is now generated internally.
     let dispatcher_struct = Ident::new(
         &format!("__Dispatcher{}", just_fmt::pascal_case!(&command_name_str)),
+        attr_input.command_name.span(),
+    );
+    let command_snake = just_fmt::snake_case!(command_name_str.clone());
+    let mod_name = Ident::new(
+        &format!("__mingling_dispatcher_{command_snake}"),
+        attr_input.command_name.span(),
+    );
+    let static_ident = Ident::new(
+        &format!("__internal_dispatcher_{command_snake}"),
         attr_input.command_name.span(),
     );
     let options = &attr_input.options;
@@ -182,9 +192,6 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         None
     };
 
-    let compile_time_registration =
-        get_compile_time_registration(&command_name_str, &dispatcher_struct, struct_name);
-
     let expanded = quote! {
         // Keep the original struct definition
         #input_struct
@@ -195,43 +202,42 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         // Generate the help block if enabled
         #help_gen
 
-        // Compile-time registration
-        #compile_time_registration
-
-        // Generate the dispatcher struct
+        // Generate the dispatcher module, registration and impl
         #[doc(hidden)]
-        #[derive(Default)]
-        pub(crate) struct #dispatcher_struct;
+        #[allow(non_snake_case)]
+        pub(crate) mod #mod_name {
+            use super::*;
 
-        impl ::mingling::Dispatcher<#program_path> for #dispatcher_struct {
-            fn begin(
-                &self,
-                args: Vec<String>,
-            ) -> ::mingling::ChainProcess<#program_path> {
-                // Prepend a dummy program name for clap's parse_from
-                let clap_args = std::iter::once(String::new())
-                    .chain(args)
-                    .collect::<Vec<_>>();
+            #[doc(hidden)]
+            #[derive(Default)]
+            pub struct #dispatcher_struct;
 
-                #begin_body
+            ::mingling::macros::register_dispatcher!(
+                #command_name_lit,
+                #dispatcher_struct,
+                #struct_name
+            );
+
+            impl ::mingling::Dispatcher<#program_path> for #dispatcher_struct {
+                fn begin(
+                    &self,
+                    args: Vec<String>,
+                ) -> ::mingling::ChainProcess<#program_path> {
+                    // Prepend a dummy program name for clap's parse_from
+                    let clap_args = std::iter::once(String::new())
+                        .chain(args)
+                        .collect::<Vec<_>>();
+
+                    #begin_body
+                }
             }
         }
+
+        #[allow(unused_imports)]
+        pub(crate) use #mod_name::#dispatcher_struct;
+        #[allow(unused_imports)]
+        pub(crate) use #mod_name::#static_ident;
     };
 
     expanded.into()
-}
-
-/// Registers the dispatcher at compile time (collects its node into the
-/// global `COMPILE_TIME_DISPATCHERS` registry and emits the
-/// `__internal_dispatcher_*` static), regardless of the `dispatch_tree`
-/// feature.
-fn get_compile_time_registration(
-    command_name_str: &str,
-    dispatcher_struct: &Ident,
-    entry_name: &Ident,
-) -> proc_macro2::TokenStream {
-    let node_name_lit = syn::LitStr::new(command_name_str, proc_macro2::Span::call_site());
-    quote! {
-        ::mingling::macros::register_dispatcher!(#node_name_lit, #dispatcher_struct, #entry_name);
-    }
 }

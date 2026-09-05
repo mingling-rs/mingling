@@ -2,10 +2,9 @@
 //! The `DispatcherClapPattern` matches structs annotated with `#[dispatcher_clap(...)]` and
 //! extracts key items for code generation or analysis:
 //! - The entry struct name (always)
-//! - The hidden dispatcher struct (`__Dispatcher*`, always)
+//! - The hidden dispatcher module (`__mingling_dispatcher_*`, always)
 //! - The error type, if `error = ErrorType` is specified
-//! - The help internal struct, if `help = true` is specified
-//! - The `__internal_dispatcher_*` compile-time collected static (always)
+//! - The help module (`__mingling_help_*`), if `help = true` is specified
 //!
 //! Supported forms:
 //! - `#[dispatcher_clap("greet")] struct EntryGreet { ... }`
@@ -19,10 +18,9 @@ use crate::pattern_analyzer::{AnalyzeItem, AnalyzePattern};
 
 /// Match structs annotated with `#[dispatcher_clap(...)]`, extracting:
 /// - The entry type (struct name, always)
-/// - The hidden dispatcher struct (`__Dispatcher*`, always)
+/// - The hidden dispatcher module (`__mingling_dispatcher_*`, always)
 /// - The error type, if `error = ErrorType` is specified
-/// - The help internal struct, if `help = true` is specified
-/// - `__internal_dispatcher_*` — compile-time collected static (always)
+/// - The help module (`__mingling_help_*`), if `help = true` is specified
 ///
 /// Covers forms:
 /// - `#[dispatcher_clap("greet")] struct EntryGreet { ... }`
@@ -80,9 +78,10 @@ impl DispatcherClapPattern {
     fn analyze_struct(s: &syn::ItemStruct, module: &str) -> Vec<AnalyzeItem> {
         let mut items = Vec::new();
 
-        // Entry type (struct name) — always
+        // Entry type (struct name) — always exposed through `__mingling_type_*`.
         let entry_name = s.ident.to_string();
-        items.push(AnalyzeItem::local(module.to_string(), entry_name));
+        let entry_module = format!("__mingling_type_{}", just_fmt::snake_case!(entry_name));
+        items.push(AnalyzeItem::local_module(module.to_string(), entry_module));
 
         // Parse the attribute to extract CMD, error, and help info
         if let Some(attr) = s.attrs.iter().find(|a| {
@@ -95,31 +94,27 @@ impl DispatcherClapPattern {
             let args_str = args.map(|l| l.tokens.to_string()).unwrap_or_default();
             let parsed = parse_dispatcher_clap_args(&args_str);
 
-            // Hidden dispatcher struct — always (if the command name is given)
-            if let Some(ref cmd_name) = parsed.cmd_name {
-                let hidden_name = format!("__Dispatcher{}", to_pascal_case(cmd_name));
-                items.push(AnalyzeItem::local(module.to_string(), hidden_name));
-            }
-
-            // Error type — if error = TypeName
+            // Error type — if error = TypeName; it is generated with
+            // `#[derive(Grouped)]`, so expose it via `__mingling_type_*`.
             if let Some(ref err) = parsed.error_type {
-                items.push(AnalyzeItem::local(module.to_string(), err.clone()));
+                let err_module = format!("__mingling_type_{}", just_fmt::snake_case!(err));
+                items.push(AnalyzeItem::local_module(module.to_string(), err_module));
             }
 
-            // Help internal struct — if help = true
+            // Dispatcher module — always (if the command name is given)
+            if let Some(ref cmd_name) = parsed.cmd_name {
+                let module_name =
+                    format!("__mingling_dispatcher_{}", just_fmt::snake_case!(cmd_name));
+                items.push(AnalyzeItem::local_module(module.to_string(), module_name));
+            }
+
+            // Help module — if help = true
             if parsed.help_enabled
                 && let Some(ref cmd_name) = parsed.cmd_name
             {
                 let help_fn = format!("__{}_help", just_fmt::snake_case!(cmd_name));
-                let help_struct = format!("__internal_help_{}", just_fmt::snake_case!(&help_fn));
-                items.push(AnalyzeItem::local(module.to_string(), help_struct));
-            }
-
-            // __internal_dispatcher_* — the compile-time collected static
-            if let Some(ref cmd_name) = parsed.cmd_name {
-                let internal_name =
-                    format!("__internal_dispatcher_{}", just_fmt::snake_case!(cmd_name));
-                items.push(AnalyzeItem::local(module.to_string(), internal_name));
+                let help_module = format!("__mingling_help_{}", just_fmt::snake_case!(&help_fn));
+                items.push(AnalyzeItem::local_module(module.to_string(), help_module));
             }
         }
 
@@ -186,19 +181,6 @@ fn parse_dispatcher_clap_args(args: &str) -> ParsedClapArgs {
         error_type,
         help_enabled,
     }
-}
-
-/// Simple `pascal_case` conversion for deriving the hidden dispatcher name.
-fn to_pascal_case(s: &str) -> String {
-    s.split(['-', '_', '.'])
-        .filter(|s| !s.is_empty())
-        .map(|s| {
-            let mut c = s.chars();
-            c.next().map_or_else(String::new, |f| {
-                f.to_uppercase().collect::<String>() + c.as_str()
-            })
-        })
-        .collect()
 }
 
 fn has_attr(attrs: &[syn::Attribute], name: &str) -> bool {

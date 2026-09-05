@@ -70,18 +70,18 @@ fn test_chain_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required_entries: Vec<&str> = vec![
-        "::sub::__internal_chain_my_chain1",
-        "::sub::__internal_chain_my_chain2",
-        "::sub::__internal_chain_my_chain3",
-        "::sub::__internal_chain_my_chain4",
-        "::sub::__internal_chain_my_chain5",
-        "::sub::__internal_chain_my_chain6",
-        "::__internal_chain_my_chain1",
-        "::__internal_chain_my_chain2",
-        "::__internal_chain_my_chain3",
-        "::__internal_chain_my_chain4",
-        "::__internal_chain_my_chain5",
-        "::__internal_chain_my_chain6",
+        "::sub::__mingling_chain_my_chain1",
+        "::sub::__mingling_chain_my_chain2",
+        "::sub::__mingling_chain_my_chain3",
+        "::sub::__mingling_chain_my_chain4",
+        "::sub::__mingling_chain_my_chain5",
+        "::sub::__mingling_chain_my_chain6",
+        "::__mingling_chain_my_chain1",
+        "::__mingling_chain_my_chain2",
+        "::__mingling_chain_my_chain3",
+        "::__mingling_chain_my_chain4",
+        "::__mingling_chain_my_chain5",
+        "::__mingling_chain_my_chain6",
     ];
 
     assert_eq!(
@@ -109,14 +109,14 @@ fn test_renderer_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
-        "::sub::__internal_renderer_my_renderer1",
-        "::sub::__internal_renderer_my_renderer2",
-        "::sub::__internal_renderer_my_renderer3",
-        "::sub::__internal_renderer_my_renderer4",
-        "::__internal_renderer_my_renderer1",
-        "::__internal_renderer_my_renderer2",
-        "::__internal_renderer_my_renderer3",
-        "::__internal_renderer_my_renderer4",
+        "::sub::__mingling_renderer_my_renderer1",
+        "::sub::__mingling_renderer_my_renderer2",
+        "::sub::__mingling_renderer_my_renderer3",
+        "::sub::__mingling_renderer_my_renderer4",
+        "::__mingling_renderer_my_renderer1",
+        "::__mingling_renderer_my_renderer2",
+        "::__mingling_renderer_my_renderer3",
+        "::__mingling_renderer_my_renderer4",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -132,14 +132,14 @@ fn test_help_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
-        "::sub::__internal_help_my_help1",
-        "::sub::__internal_help_my_help2",
-        "::sub::__internal_help_my_help3",
-        "::sub::__internal_help_my_help4",
-        "::__internal_help_my_help1",
-        "::__internal_help_my_help2",
-        "::__internal_help_my_help3",
-        "::__internal_help_my_help4",
+        "::sub::__mingling_help_my_help1",
+        "::sub::__mingling_help_my_help2",
+        "::sub::__mingling_help_my_help3",
+        "::sub::__mingling_help_my_help4",
+        "::__mingling_help_my_help1",
+        "::__mingling_help_my_help2",
+        "::__mingling_help_my_help3",
+        "::__mingling_help_my_help4",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -157,14 +157,14 @@ fn test_completion_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
-        "::sub::__internal_completion_my_completion1",
-        "::sub::__internal_completion_my_completion2",
-        "::sub::__internal_completion_my_completion3",
-        "::sub::__internal_completion_my_completion4",
-        "::__internal_completion_my_completion1",
-        "::__internal_completion_my_completion2",
-        "::__internal_completion_my_completion3",
-        "::__internal_completion_my_completion4",
+        "::sub::__mingling_completion_my_completion1",
+        "::sub::__mingling_completion_my_completion2",
+        "::sub::__mingling_completion_my_completion3",
+        "::sub::__mingling_completion_my_completion4",
+        "::__mingling_completion_my_completion1",
+        "::__mingling_completion_my_completion2",
+        "::__mingling_completion_my_completion3",
+        "::__mingling_completion_my_completion4",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -205,16 +205,16 @@ fn test_grouped_derive_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
-        "::Derived1",
-        "::Derived2",
-        "::Derived3",
-        "::Derived4",
-        "::EnumDerived1",
-        "::EnumDerived2",
-        "::sub::Derived1",
-        "::sub::Derived3",
-        "::sub::Derived4",
-        "::sub::EnumDerived1",
+        "::__mingling_type_derived1",
+        "::__mingling_type_derived2",
+        "::__mingling_type_derived3",
+        "::__mingling_type_derived4",
+        "::__mingling_type_enum_derived1",
+        "::__mingling_type_enum_derived2",
+        "::sub::__mingling_type_derived1",
+        "::sub::__mingling_type_derived3",
+        "::sub::__mingling_type_derived4",
+        "::sub::__mingling_type_enum_derived1",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -257,25 +257,18 @@ fn test_dispatcher_analyze() {
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
-        "::EntryGreet",
-        "::__DispatcherGreet",
-        "::EntryRemoteAdd",
-        "::__DispatcherRemoteAdd",
-        "::EntryDelete",
-        "::__DispatcherDelete",
-        "::EntryRemoteRm",
-        "::__DispatcherRemoteRm",
-        "::sub::EntryGreet",
-        "::sub::__DispatcherGreet",
-        "::sub::EntryDelete",
-        "::sub::__DispatcherDelete",
-        // Dispatchers are always collected at compile time:
-        "::__internal_dispatcher_greet",
-        "::__internal_dispatcher_remote_add",
-        "::__internal_dispatcher_delete",
-        "::__internal_dispatcher_remote_rm",
-        "::sub::__internal_dispatcher_greet",
-        "::sub::__internal_dispatcher_delete",
+        "::__mingling_type_entry_greet",
+        "::__mingling_dispatcher_greet",
+        "::__mingling_type_entry_remote_add",
+        "::__mingling_dispatcher_remote_add",
+        "::__mingling_type_entry_delete",
+        "::__mingling_dispatcher_delete",
+        "::__mingling_type_entry_remote_rm",
+        "::__mingling_dispatcher_remote_rm",
+        "::sub::__mingling_type_entry_greet",
+        "::sub::__mingling_dispatcher_greet",
+        "::sub::__mingling_type_entry_delete",
+        "::sub::__mingling_dispatcher_delete",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -292,23 +285,19 @@ fn test_dispatcher_dispatch_tree() {
         .unwrap()
         .join("src/test_files/test_dispatcher_dispatch_tree.rs");
 
-    // Dispatchers are always collected at compile time, so the analyzer
-    // always extracts the hidden dispatcher structs and statics too:
-    // 8 (Entry + __Dispatcher, root + sub) + 4 __internal (root + sub) = 12
+    // Dispatchers are always collected at compile time. Each dispatcher now
+    // contributes only its Entry type plus the `__mingling_dispatcher_*`
+    // namespace module.
     let r = pattern_analyzer::init().analyze_file(&file).unwrap();
-    assert_eq!(r.len(), 12);
-    assert!(r.contains("::EntryGreet"));
-    assert!(r.contains("::__DispatcherGreet"));
-    assert!(r.contains("::EntryDelete"));
-    assert!(r.contains("::__DispatcherDelete"));
-    assert!(r.contains("::sub::EntryGreet"));
-    assert!(r.contains("::sub::__DispatcherGreet"));
-    assert!(r.contains("::sub::EntryDelete"));
-    assert!(r.contains("::sub::__DispatcherDelete"));
-    assert!(r.contains("::__internal_dispatcher_greet"));
-    assert!(r.contains("::__internal_dispatcher_delete"));
-    assert!(r.contains("::sub::__internal_dispatcher_greet"));
-    assert!(r.contains("::sub::__internal_dispatcher_delete"));
+    assert_eq!(r.len(), 8);
+    assert!(r.contains("::__mingling_type_entry_greet"));
+    assert!(r.contains("::__mingling_dispatcher_greet"));
+    assert!(r.contains("::__mingling_type_entry_delete"));
+    assert!(r.contains("::__mingling_dispatcher_delete"));
+    assert!(r.contains("::sub::__mingling_type_entry_greet"));
+    assert!(r.contains("::sub::__mingling_dispatcher_greet"));
+    assert!(r.contains("::sub::__mingling_type_entry_delete"));
+    assert!(r.contains("::sub::__mingling_dispatcher_delete"));
 }
 
 #[test]
@@ -321,48 +310,42 @@ fn test_dispatcher_clap_analyze() {
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
         // Root: entry types (bare dispatcher_clap, no params)
-        "::EntryClap1",
-        "::EntryClap2",
-        "::EntryClap3",
-        "::EntryClap4",
+        "::__mingling_type_entry_clap1",
+        "::__mingling_type_entry_clap2",
+        "::__mingling_type_entry_clap3",
+        "::__mingling_type_entry_clap4",
         // Root: with command name only
-        "::EntryWithCmd",
+        "::__mingling_type_entry_with_cmd",
         // Root: with error
-        "::EntryWithError",
-        "::ErrorDelete",
+        "::__mingling_type_entry_with_error",
+        "::__mingling_type_error_delete",
         // Root: with help
-        "::EntryWithHelp",
-        "::__internal_help_helpcmd_help",
+        "::__mingling_type_entry_with_help",
+        "::__mingling_help_helpcmd_help",
         // Root: with error + help
-        "::EntryFull",
-        "::ErrorFull",
-        "::__internal_help_full_help",
+        "::__mingling_type_entry_full",
+        "::__mingling_type_error_full",
+        "::__mingling_help_full_help",
+        // Root dispatcher modules
+        "::__mingling_dispatcher_greet",
+        "::__mingling_dispatcher_delete",
+        "::__mingling_dispatcher_helpcmd",
+        "::__mingling_dispatcher_full",
         // Sub: entry types (bare dispatcher_clap)
-        "::sub::EntryClap1",
-        "::sub::EntryClap3",
+        "::sub::__mingling_type_entry_clap1",
+        "::sub::__mingling_type_entry_clap3",
         // Sub: with command name only
-        "::sub::EntryWithCmd",
+        "::sub::__mingling_type_entry_with_cmd",
         // Sub: with error
-        "::sub::EntryWithError",
-        "::sub::ErrorDelete",
+        "::sub::__mingling_type_entry_with_error",
+        "::sub::__mingling_type_error_delete",
         // Sub: with help
-        "::sub::EntryWithHelp",
-        "::sub::__internal_help_helpcmd_help",
-        // Hidden dispatcher structs + statics are always collected:
-        "::__DispatcherGreet",
-        "::__internal_dispatcher_greet",
-        "::__DispatcherDelete",
-        "::__internal_dispatcher_delete",
-        "::__DispatcherHelpcmd",
-        "::__internal_dispatcher_helpcmd",
-        "::__DispatcherFull",
-        "::__internal_dispatcher_full",
-        "::sub::__DispatcherGreet",
-        "::sub::__internal_dispatcher_greet",
-        "::sub::__DispatcherDelete",
-        "::sub::__internal_dispatcher_delete",
-        "::sub::__DispatcherHelpcmd",
-        "::sub::__internal_dispatcher_helpcmd",
+        "::sub::__mingling_type_entry_with_help",
+        "::sub::__mingling_help_helpcmd_help",
+        // Sub dispatcher modules
+        "::sub::__mingling_dispatcher_greet",
+        "::sub::__mingling_dispatcher_delete",
+        "::sub::__mingling_dispatcher_helpcmd",
     ];
 
     assert_eq!(r.len(), required.len());
@@ -379,24 +362,18 @@ fn test_dispatcher_clap_dispatch_tree() {
         .unwrap()
         .join("src/test_files/test_dispatcher_clap.rs");
 
-    // Dispatchers are always collected at compile time:
-    // 19 (entry/error/help items) + 14 (hidden structs + statics, root + sub) = 33
+    // Dispatchers are always collected at compile time. Each dispatcher now
+    // contributes its `__mingling_dispatcher_*` namespace module instead of
+    // separate `__Dispatcher*` structs and `__internal_dispatcher_*` statics.
     let r = pattern_analyzer::init().analyze_file(&file).unwrap();
-    assert_eq!(r.len(), 33);
-    assert!(r.contains("::__DispatcherGreet"));
-    assert!(r.contains("::__internal_dispatcher_greet"));
-    assert!(r.contains("::__DispatcherDelete"));
-    assert!(r.contains("::__internal_dispatcher_delete"));
-    assert!(r.contains("::__DispatcherHelpcmd"));
-    assert!(r.contains("::__internal_dispatcher_helpcmd"));
-    assert!(r.contains("::__DispatcherFull"));
-    assert!(r.contains("::__internal_dispatcher_full"));
-    assert!(r.contains("::sub::__DispatcherGreet"));
-    assert!(r.contains("::sub::__internal_dispatcher_greet"));
-    assert!(r.contains("::sub::__DispatcherDelete"));
-    assert!(r.contains("::sub::__internal_dispatcher_delete"));
-    assert!(r.contains("::sub::__DispatcherHelpcmd"));
-    assert!(r.contains("::sub::__internal_dispatcher_helpcmd"));
+    assert_eq!(r.len(), 26);
+    assert!(r.contains("::__mingling_dispatcher_greet"));
+    assert!(r.contains("::__mingling_dispatcher_delete"));
+    assert!(r.contains("::__mingling_dispatcher_helpcmd"));
+    assert!(r.contains("::__mingling_dispatcher_full"));
+    assert!(r.contains("::sub::__mingling_dispatcher_greet"));
+    assert!(r.contains("::sub::__mingling_dispatcher_delete"));
+    assert!(r.contains("::sub::__mingling_dispatcher_helpcmd"));
 }
 
 #[test]
@@ -409,20 +386,20 @@ fn test_metadata_analyze() {
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
         // Root: BindType + DataType pairs
-        "::EntryGreet1",
+        "::__mingling_type_entry_greet1",
         "::Description1",
-        "::EntryGreet2",
+        "::__mingling_type_entry_greet2",
         "::Description2",
-        "::EntryGreet3",
+        "::__mingling_type_entry_greet3",
         "::LocalType3",
-        "::EntryGreet4",
+        "::__mingling_type_entry_greet4",
         "::std::collections::HashMap",
-        "::EntryGreet5",
+        "::__mingling_type_entry_greet5",
         "::Qualified5",
         // Sub: BindType + DataType pairs
-        "::sub::EntrySub1",
+        "::sub::__mingling_type_entry_sub1",
         "::sub::SubType1",
-        "::sub::EntrySub2",
+        "::sub::__mingling_type_entry_sub2",
         "::sub::SubType2",
     ];
 

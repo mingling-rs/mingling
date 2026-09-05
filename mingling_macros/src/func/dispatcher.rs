@@ -80,8 +80,17 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
     };
 
     let command_name_str = command_name.value();
+    let command_snake = just_fmt::snake_case!(command_name_str.clone());
     let hidden_dispatcher = Ident::new(
         &format!("__Dispatcher{}", just_fmt::pascal_case!(&command_name_str)),
+        command_name.span(),
+    );
+    let mod_name = Ident::new(
+        &format!("__mingling_dispatcher_{command_snake}"),
+        command_name.span(),
+    );
+    let static_ident = Ident::new(
+        &format!("__internal_dispatcher_{command_snake}"),
         command_name.span(),
     );
 
@@ -99,11 +108,29 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
 
         #(#cmd_attrs)*
         #[doc(hidden)]
-        #[derive(Debug, Default)]
-        #[allow(nonstandard_style)]
-        pub struct #hidden_dispatcher;
+        #[allow(non_snake_case)]
+        pub mod #mod_name {
+            use super::*;
 
-        #compile_time_registration
+            #[doc(hidden)]
+            #[derive(Debug, Default)]
+            #[allow(nonstandard_style)]
+            pub struct #hidden_dispatcher;
+
+            #compile_time_registration
+
+            impl ::mingling::Dispatcher<#program_type> for #hidden_dispatcher {
+                fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
+                    use ::mingling::Grouped;
+                    ::mingling::Routable::to_chain(#pack(args))
+                }
+            }
+        }
+
+        #[allow(unused_imports)]
+        pub use #mod_name::#hidden_dispatcher;
+        #[allow(unused_imports)]
+        pub use #mod_name::#static_ident;
 
         impl From<#pack> for crate::Entry {
             fn from(value: #pack) -> Self {
@@ -112,13 +139,6 @@ pub(crate) fn dispatcher(input: TokenStream) -> TokenStream {
         }
 
         #comp_entry
-
-        impl ::mingling::Dispatcher<#program_type> for #hidden_dispatcher {
-            fn begin(&self, args: Vec<String>) -> ::mingling::ChainProcess<#program_type> {
-                use ::mingling::Grouped;
-                ::mingling::Routable::to_chain(#pack(args))
-            }
-        }
     };
 
     expanded.into()

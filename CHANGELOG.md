@@ -687,6 +687,45 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
 16. [`macros:structural`] **[BREAKING]** Changed `#[derive(StructuralData)]` and `structural!` to register the type for both the `has_renderer` and `structural_render` match arms, so a type only needs `StructuralData` (no `#[renderer]` function) to be rendered in structural formats (JSON / YAML / TOML / RON). `#[renderer]` functions are now only required for custom plain-text output.
 
+17. **[`macros`]** **[BREAKING RENAME]** Renamed and reworked all hidden code-generated module/struct namespaces that are exposed to `pathf`. Code-generated types and statics are now wrapped inside hidden namespace modules prefixed with `__mingling_*`, replacing the previous flat `__internal_chain_*` / `__internal_help_*` / `__internal_renderer_*` / `__internal_completion_*` structs, the `__Dispatcher*` / `__internal_dispatcher_*` structures, and the `__command_<fn>_module` re-export modules.
+
+    ### What changed
+
+    All attribute macros that generate internal types now emit a hidden namespace module (named `__mingling_*`), and the generated items are placed inside it rather than at the definition site. `pathf` tracks these modules (via `AnalyzeItem::local_module`), and the build system emits glob re-exports so downstream code can still name the types.
+
+    **Per-macro naming changes:**
+
+    | Macro / derive | Old generated names | New generated module(s) |
+    | --------------- | ------------------- | ----------------------- |
+    | `#[chain]` | `__internal_chain_<fn>` struct at definition site | `__mingling_chain_<fn_snake>` module re-exporting the same struct |
+    | `#[help]` | `__internal_help_<fn>` struct at definition site | `__mingling_help_<fn_snake>` module re-exporting the same struct |
+    | `#[renderer]` | `__internal_renderer_<fn>` struct at definition site | `__mingling_renderer_<fn_snake>` module re-exporting the same struct |
+    | `#[completion]` | `__internal_completion_<fn>` struct at definition site | `__mingling_completion_<fn_snake>` module re-exporting the same struct |
+    | `#[command]` | `__command_<fn>_module` re-export module | `__mingling_command_<fn_snake>` module containing the generated chain internals |
+    | `dispatcher!` | `__Dispatcher*` + `__internal_dispatcher_<cmd>` static at definition site, with `register_dispatcher!` emitted outside | `__mingling_dispatcher_<cmd_snake>` module containing the `__Dispatcher*` struct, the `register_dispatcher!` invocation, the `Dispatcher` impl, and the `__internal_dispatcher_<cmd>` static; `pub use __mingling_dispatcher_<cmd>::__Dispatcher*` / `::__internal_dispatcher_<cmd>` re-exports |
+    | `#[dispatcher_clap]` | `__Dispatcher*` + `__internal_dispatcher_<cmd>` static at definition site, with `register_dispatcher!` emitted outside | `__mingling_dispatcher_<cmd_snake>` module containing the `__Dispatcher*` struct, the `register_dispatcher!` invocation, and the `Dispatcher` impl + static; `pub(crate) use __mingling_dispatcher_<cmd>::__Dispatcher*` / `::__internal_dispatcher_<cmd>` re-exports |
+    | `#[derive(Grouped)]` / `#[derive(GroupedSerialize)]` | Type visible directly via pathf as `::TypeName` | `__mingling_type_<type_snake>` module (`#[doc(hidden)] #[allow(non_snake_case)] #vis mod`) re-exporting the type via `#vis use super::TypeName;` |
+
+    **`pathf` pattern changes:**
+
+    - **`ChainPattern`**, **`HelpPattern`**, **`RendererPattern`**, **`CompletionPattern`** — Now emit `AnalyzeItem::local_module(...)` for the `__mingling_chain_<fn_snake>` / `__mingling_help_<fn_snake>` / `__mingling_renderer_<fn_snake>` / `__mingling_completion_<fn_snake>` modules instead of `AnalyzeItem::local(...)` for the flat `__internal_*_<fn>` struct.
+    - **`CommandPattern`** — Module name changed from `__command_<fn>_module` to `__mingling_command_<fn_snake>`.
+    - **`DispatcherPattern`** — Now emits `__mingling_type_entry_<cmd_snake>` (via `local_module`) for the `Entry*` type (which is now picked up through `GroupedDerivePattern`'s generated `__mingling_type_*` module) and `__mingling_dispatcher_<cmd_snake>` (via `local_module`) for the hidden dispatcher namespace; no longer emits the separate `__Dispatcher*` struct / `__internal_dispatcher_*` static as locals.
+    - **`DispatcherClapPattern`** — Entry type → `__mingling_type_entry_<name_snake>`; error type → `__mingling_type_error_<name_snake>` (since errors are `Grouped`-derived); the `__*_help` generated help function now points to a `__mingling_help_<help_fn_snake>` module; dispatcher namespace `__mingling_dispatcher_<cmd_snake>` replaces both `__Dispatcher*` and `__internal_dispatcher_*` entries.
+    - **`GroupedDerivePattern`** — Emits `__mingling_type_<type_snake>` modules (via `local_module`) instead of the bare type names (via `local`).
+    - **`MetadataPattern`** — `BindType` (an in-crate entry type) is now referenced through its `__mingling_type_<bind_snake>` module instead of as a bare local name.
+
+    **Test assertions updated** in `mingling_pathf/test/src/lib.rs` (`test_chain_analyze`, `test_renderer_analyze`, `test_help_analyze`, `test_completion_analyze`, `test_grouped_derive_analyze`, `test_dispatcher_analyze`, `test_dispatcher_dispatch_tree`, `test_dispatcher_clap_analyze`, `test_dispatcher_clap_dispatch_tree`, `test_metadata_analyze`) to assert the new `__mingling_*` module names and adjusted item counts (e.g., each `dispatcher!` now contributes 2 items instead of 4, `dispatcher_clap` dispatch-tree test went from 33 to 26 items).
+
+    ### Migration guide
+
+    - **Generated type names inside the new `__mingling_*` modules remain the same** (`__internal_chain_<fn>`, `__Dispatcher*`, `__internal_dispatcher_<cmd>`, etc.), so code that explicitly references those generated types through an old flat path (e.g. `crate::__internal_chain_my_handler`) must instead reference them through the new module path (e.g. `crate::__mingling_chain_my_handler::__internal_chain_my_handler`), or rely on the module-level glob re-exports pathf generates. Since the module also `use super::*`'s, the module content is reachable.
+    - **`dispatcher!` / `#[dispatcher_clap]`** — Code that referenced the generated `__Dispatcher*` struct or `__internal_dispatcher_*` static directly must migrate to the new `pub use` re-exports (`__mingling_dispatcher_<cmd>::__Dispatcher*` and `__mingling_dispatcher_<cmd>::__internal_dispatcher_<cmd>`), which preserve the old names at the definition site (for `dispatcher!`) or at `pub(crate)` scope (for `#[dispatcher_clap]`).
+    - **Downstream crates relying on pathf-generated `use` statements** — the generated glob `use` statements now point at `__mingling_*` modules; because those modules re-export the same type names (and `#[derive(Grouped)]` types are re-exported from `__mingling_type_<name>` modules), trait/type resolution from within the program module is unchanged.
+
+    _No behavioral changes at runtime — the extra `__mingling_*` namespace modules only wrap existing generated items in a cleaner, isolated scope (preventing module-namespace collisions). All register/derive functionality is preserved; only generated-code layout and the `pathf`-visible names changed._
+
+
 ### What changed
 
 Previously, `#[derive(StructuralData)]` (via `structural!`) only registered the type into the `STRUCTURED_TYPES` registry. The `#[renderer]` attribute macro then checked, at macro-expansion time, whether the renderer's input type was in `STRUCTURED_TYPES`; if so, it additionally registered a structural-renderer entry (so the `structural_render` branch was built). This meant a type needed both `StructuralData` **and** a (possibly no-op) `#[renderer]` function to get structural output.
