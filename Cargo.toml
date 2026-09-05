@@ -33,28 +33,28 @@ mingling_pathf = { path = "mingling_pathf", default-features = false }
 arg-picker = { version = "0.2.0", default-features = false }
 arg-picker-macros = { version = "0.2.0", default-features = false }
 
-just_fmt = "0.2.0"
-just_template = "0.2.0"
+just_fmt = "0.2.1"
+just_template = "0.2.1"
 cargo_metadata = "0.23.1"
 
 might_be_async = "0.1.0"
 
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 serde_yaml = "0.9.34"
-toml = "1.1.2"
+toml = "1.1.4"
 ron = "0.12.2"
 
 dirs = "6.0.0"
 
-syn = { version = "2.0.118", features = ["full", "visit-mut"] }
-quote = "1.0.46"
-proc-macro2 = "1.0.106"
+syn = { version = "3.0.5", features = ["full", "visit-mut"] }
+quote = "1.0.47"
+proc-macro2 = "1.0.107"
 
 colored = "3.1.1"
 tokio = { version = "1", features = ["full"] }
 
-log = "0.4.33"
+log = "0.4.34"
 env_logger = "0.11.11"
 
 [workspace.package]

@@ -186,6 +186,7 @@ fn build_wrapper_params(
         let mut params = sig.inputs.clone();
         if let Some(FnArg::Typed(first)) = params.first_mut() {
             *first.ty = Type::Path(syn::TypePath {
+                attrs: Vec::new(),
                 qself: None,
                 path: syn::Path::from(entry_type.clone()),
             });
