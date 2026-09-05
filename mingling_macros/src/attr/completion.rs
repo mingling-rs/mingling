@@ -138,7 +138,10 @@ pub(crate) fn completion_attr(attr: TokenStream, item: TokenStream) -> TokenStre
 
     // Hidden module namespace exposed to pathf.
     let mod_name = Ident::new(
-        &format!("__mingling_completion_{}", just_fmt::snake_case!(fn_name_str)),
+        &format!(
+            "__mingling_completion_{}",
+            just_fmt::snake_case!(fn_name_str)
+        ),
         fn_name.span(),
     );
 

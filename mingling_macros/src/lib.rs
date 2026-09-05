@@ -53,7 +53,7 @@ use attr::{chain, help, metadata, program_setup, renderer};
 use derive::{enum_tag, grouped, wrap};
 use func::dispatcher;
 use func::entry;
-pub(crate) use func::group as group_impl;
+pub(crate) use func::import_type as import_type_impl;
 #[cfg(feature = "comp")]
 use func::suggest;
 use systems::res_injection;
@@ -142,18 +142,21 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
 /// Registers an outside type (from `std` or other crates) as a type recognizable
 /// by the Mingling framework, without modifying the original type definition.
 ///
-/// This macro generates a newtype wrapper around the given type that implements
-/// `Grouped`, `Into<AnyOutput>`, `Into<ChainProcess>`, and the `Routable` trait,
-/// making the outside type usable in `#[chain]` and `#[renderer]` functions.
+/// This macro generates a hidden `__mingling_import_*` module around the given
+/// type and implements `Grouped`, making the outside type usable in `#[chain]`
+/// and `#[renderer]` functions.
 ///
 /// # Syntax
 ///
+/// The type path **must be fully qualified**. Single-segment names that rely on
+/// a local `use` import are not accepted.
+///
 /// ```rust,ignore
-/// // Simple form — creates a wrapper named after the type's last segment:
-/// group!(ParseIntError);
+/// // Full path form — registers under the last path segment:
+/// import_type!(std::num::ParseIntError);
 ///
 /// // Aliased form — creates a wrapper with a custom name:
-/// group!(ErrorIo = std::io::Error);
+/// import_type!(ErrorIo = std::io::Error);
 /// ```
 ///
 /// # Example
@@ -167,11 +170,11 @@ fn entry_has_variant(entry: &str, variant_name: &str) -> bool {
 ///
 /// # Requirements
 ///
-/// - The type must be accessible at the call site (imported or fully qualified).
+/// - The type path must be fully qualified.
 /// - The alias name (if provided) must not conflict with existing types.
 #[proc_macro]
-pub fn group(input: TokenStream) -> TokenStream {
-    group_impl::group_macro(input)
+pub fn import_type(input: TokenStream) -> TokenStream {
+    import_type_impl::import_type_macro(input)
 }
 
 /// Early-returns the error from a `Result`, converting the `Ok` branch to the

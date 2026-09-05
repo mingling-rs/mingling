@@ -18,7 +18,7 @@ use std::path::Path;
 use crate::error::MinglingPathfinderError;
 use crate::patterns::{
     ChainPattern, CommandPattern, CompletionPattern, DispatcherClapPattern, DispatcherPattern,
-    GroupPattern, GroupedDerivePattern, HelpPattern, MetadataPattern, RendererPattern,
+    GroupedDerivePattern, HelpPattern, ImportTypePattern, MetadataPattern, RendererPattern,
     StructuralPattern,
 };
 
@@ -26,7 +26,7 @@ use crate::patterns::{
 #[must_use]
 pub fn init() -> PatternAnalyzer {
     let mut analyzer = PatternAnalyzer::new();
-    analyzer.add_pattern(GroupPattern);
+    analyzer.add_pattern(ImportTypePattern);
     analyzer.add_pattern(GroupedDerivePattern);
     analyzer.add_pattern(StructuralPattern);
     analyzer.add_pattern(ChainPattern);

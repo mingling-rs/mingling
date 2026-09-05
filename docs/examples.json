@@ -255,9 +255,9 @@
     "name": "Outside Type",
     "icon": "🆕",
     "category": "advanced",
-    "desc": "Demonstrates how to use the `group!()` macro to convert an external type into a type recognizable by Mingling\n",
+    "desc": "Demonstrates how to use the `import_type!()` macro to convert an external type into a type recognizable by Mingling\n",
     "tags": [
-      "group!"
+      "import_type!"
     ],
     "files": [
       "src/main.rs",

@@ -1,7 +1,7 @@
 use cargo_metadata::Metadata;
 use mingling::{
     Program,
-    macros::{buffer, group, program_setup, r_println, renderer, renderify},
+    macros::{buffer, import_type, program_setup, r_println, renderer, renderify},
 };
 
 use crate::metadata::setup::CargoMetadataSetup;
@@ -14,7 +14,7 @@ pub fn mingling_metadata_setup(program: &mut Program<crate::ThisProgram>) {
     program.with_setup(CargoMetadataSetup);
 }
 
-group!(Metadata);
+import_type!(cargo_metadata::Metadata);
 
 #[renderer(buffer, renderify)]
 pub fn render_metadata(metadata: Metadata) {

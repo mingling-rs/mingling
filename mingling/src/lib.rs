@@ -77,8 +77,8 @@ pub mod macros {
     pub use mingling_macros::empty_result;
     pub use mingling_macros::entry;
     pub use mingling_macros::gen_program;
-    pub use mingling_macros::group;
     pub use mingling_macros::help;
+    pub use mingling_macros::import_type;
     pub use mingling_macros::metadata;
     pub use mingling_macros::mlint;
     #[doc(hidden)]

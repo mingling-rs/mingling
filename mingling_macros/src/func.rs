@@ -2,7 +2,7 @@ pub(crate) mod dispatcher;
 pub(crate) mod empty_result;
 pub(crate) mod entry;
 pub(crate) mod gen_program;
-pub(crate) mod group;
+pub(crate) mod import_type;
 pub(crate) mod program_collect_gen;
 #[cfg(feature = "comp")]
 pub(crate) mod program_comp_gen;

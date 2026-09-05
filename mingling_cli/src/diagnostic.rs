@@ -1,9 +1,9 @@
 use annotate_snippets::level::{ERROR, HELP, NOTE, WARNING};
 use annotate_snippets::{AnnotationKind, Group, Renderer, Snippet};
 use cargo_metadata::diagnostic::Diagnostic;
-use mingling::macros::{buffer, group, r_println, renderer};
+use mingling::macros::{buffer, import_type, r_println, renderer};
 
-group!(Diagnostic);
+import_type!(cargo_metadata::diagnostic::Diagnostic);
 
 #[renderer(buffer)]
 pub fn render_diagnostic(diagnostic: Diagnostic) {

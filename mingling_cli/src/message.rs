@@ -1,7 +1,7 @@
 use cargo_metadata::Message;
-use mingling::macros::{buffer, group, r_println, renderer, renderify};
+use mingling::macros::{buffer, import_type, r_println, renderer, renderify};
 
-group!(Message);
+import_type!(cargo_metadata::Message);
 
 #[renderer(buffer, renderify)]
 pub fn render_message(msg: Message) {

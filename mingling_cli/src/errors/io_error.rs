@@ -1,9 +1,9 @@
 use mingling::{
-    macros::{buffer, group, r_println, renderer},
+    macros::{buffer, import_type, r_println, renderer},
     res::ResExitCode,
 };
 
-group!(ErrorIo = std::io::Error);
+import_type!(ErrorIo = std::io::Error);
 
 // Error code constants for each std::io::ErrorKind variant
 pub const EC_IO_ERR_NOT_FOUND: i32 = 1000;

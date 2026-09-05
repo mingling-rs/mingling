@@ -174,20 +174,22 @@ fn test_completion_analyze() {
 }
 
 #[test]
-fn test_group_analyze() {
+fn test_import_type_analyze() {
     let analyzer = mingling_pathf::pattern_analyzer::init();
-    let file = current_dir().unwrap().join("src/test_files/test_group.rs");
+    let file = current_dir()
+        .unwrap()
+        .join("src/test_files/test_import_type.rs");
 
     let r = analyzer.analyze_file(file).unwrap();
     let required: Vec<&str> = vec![
-        "::Group1",
-        "::GroupAlias1",
-        "::Group2",
-        "::GroupAlias2",
-        "::sub::Group1",
-        "::sub::GroupAlias1",
-        "::sub::Group2",
-        "::sub::GroupAlias2",
+        "::__mingling_import_std_io_error",
+        "::__mingling_import_std_fmt_error",
+        "::__mingling_import_std_num_parseinterror",
+        "::__mingling_import_serde_json_error",
+        "::sub::__mingling_import_std_io_error",
+        "::sub::__mingling_import_std_fmt_error",
+        "::sub::__mingling_import_std_num_parseinterror",
+        "::sub::__mingling_import_serde_json_error",
     ];
 
     assert_eq!(r.len(), required.len());

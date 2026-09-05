@@ -77,7 +77,10 @@ pub fn derive_grouped_serialize(input: TokenStream) -> TokenStream {
 
 fn type_module_tokens(vis: &syn::Visibility, type_ident: &Ident) -> proc_macro2::TokenStream {
     let mod_name = Ident::new(
-        &format!("__mingling_type_{}", just_fmt::snake_case!(type_ident.to_string())),
+        &format!(
+            "__mingling_type_{}",
+            just_fmt::snake_case!(type_ident.to_string())
+        ),
         type_ident.span(),
     );
     quote! {

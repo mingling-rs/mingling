@@ -1,6 +1,6 @@
-//! Example: Using the `group!()` Macro to Register Outside Types
+//! Example: Using the `import_type!()` Macro to Register Outside Types
 //!
-//! This example demonstrates how to use the `group!()` macro to make outside
+//! This example demonstrates how to use the `import_type!()` macro to make outside
 //! types (from `std` or other crates) recognizable by the Mingling framework,
 //! without modifying the original type definition.
 //!
@@ -18,7 +18,7 @@
 //! IO_ERROR: Error
 //! ```
 
-use mingling::{macros::group, prelude::*};
+use mingling::{macros::import_type, prelude::*};
 use std::io::Write;
 use std::{io::ErrorKind::Other, num::ParseIntError};
 
@@ -31,13 +31,13 @@ fn handle_entry_error(_args: EntryError) -> Next {
 }
 
 // --------- IMPORTANT ---------
-// You can directly use the `group!` macro to define outside types as types
+// You can directly use the `import_type!` macro to define outside types as types
 // recognizable by Mingling
 //      _____________ from std::num::ParseIntError
 //     /
 //     vvvvvvvvvvvvv
-group!(ParseIntError);
-group!(ErrorIo = std::io::Error);
+import_type!(std::num::ParseIntError);
+import_type!(ErrorIo = std::io::Error);
 //     ^^^^^^^^^^^^^^^^^^^^^^^^
 //     \_____________ For types whose names may cause ambiguity,
 //                      you can use this syntax to create an alias simultaneously
@@ -71,7 +71,7 @@ fn render_number(num: ParsedNumber) -> RenderResult {
 
 /// Renderer for parse errors — using the outside `ParseIntError` type.
 ///
-/// The `ParseIntError` type is registered via `group!` above, so it implements
+/// The `ParseIntError` type is registered via `import_type!` above, so it implements
 /// `Grouped<ThisProgram>` and can be used directly in a `#[renderer]` function.
 #[renderer]
 fn render_parse_error(err: ParseIntError) -> RenderResult {
