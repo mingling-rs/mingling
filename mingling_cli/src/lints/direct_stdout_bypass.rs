@@ -173,30 +173,43 @@ fn stdout_macro_name(mac: &syn::Macro) -> Option<String> {
 }
 
 /// Build a suggestion from the macro span when the whole call sits on one line.
+///
+/// proc-macro2 columns (in this CLI's fallback/standalone mode) are counted in
+/// Unicode scalar values, not bytes, so each column is converted to a byte
+/// offset within the line before slicing. Without this, indexing a line that
+/// contains multibyte characters would panic mid-character.
 fn single_line_suggestion(
     mac: &syn::Macro,
     source: &str,
     range_of: impl FnOnce(usize, usize, &str) -> Option<(usize, usize, String)>,
 ) -> Vec<LintSuggestion> {
     let span = mac.span();
-    let start = span.start();
-    let end = span.end();
-    if start.line != end.line {
+    let line_no = span.start().line;
+    if line_no != span.end().line {
         return Vec::new();
     }
-    let Some(line) = source.lines().nth(start.line.saturating_sub(1)) else {
+    let Some(line) = source.lines().nth(line_no.saturating_sub(1)) else {
         return Vec::new();
     };
-    let Some((range_start, range_end, replacement)) = range_of(start.column, end.column, line)
-    else {
+    let start = char_col_to_byte_offset(line, span.start().column);
+    let end = char_col_to_byte_offset(line, span.end().column);
+    let Some((range_start, range_end, replacement)) = range_of(start, end, line) else {
         return Vec::new();
     };
     vec![LintSuggestion {
         source: line.to_string(),
-        line_start: start.line,
+        line_start: line_no,
         byte_range: range_start..range_end,
         replacement,
     }]
+}
+
+/// Convert a proc-macro2 column (0-based Unicode-char index within `line`) to a
+/// byte offset within `line`, so byte slicing stays on char boundaries.
+fn char_col_to_byte_offset(line: &str, col: usize) -> usize {
+    line.char_indices()
+        .nth(col)
+        .map_or(line.len(), |(byte_index, _)| byte_index)
 }
 
 #[cfg(test)]
@@ -370,5 +383,22 @@ fn handle_greet(_: EntryGreet) {
         let reports = super::linter(ast, source);
         assert_eq!(reports.len(), 1);
         assert!(reports[0].suggestions.is_empty());
+    }
+
+    #[test]
+    fn non_ascii_removal_suggestion_does_not_panic() {
+        // Multibyte characters on the same line used to make the suggestion
+        // slice mid-character and panic; it must instead remove the whole line.
+        let source = r#"#[command]
+pub fn okay(args: EntryOkay) {
+    println!("好的！");
+}"#;
+        let ast: syn::ItemFn = syn::parse_str(source).unwrap();
+        let reports = super::linter(ast, source);
+        assert_eq!(reports.len(), 1);
+        let sugg = &reports[0].suggestions[0];
+        // The call is the only thing on the line, so the whole line is blanked.
+        assert_eq!(sugg.replacement, "");
+        assert_eq!(sugg.byte_range, 0..sugg.source.len());
     }
 }
