@@ -3,7 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use just_fmt::{camel_case, kebab_case, pascal_case, snake_case};
+use just_fmt::cases::NamingCase;
+use just_fmt::{camel_case, custom_case, kebab_case, pascal_case, snake_case};
 use just_template::Template;
 use mingling::{
     Grouped, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
@@ -104,6 +105,17 @@ fn deverbatim(path: &Path) -> PathBuf {
     path.to_path_buf()
 }
 
+/// The space-joined word form a user types to invoke a (possibly nested)
+/// subcommand, e.g. `create user` from `create-user`. Mirrors how mingling
+/// joins unknown subcommand tokens when rendering (`arguments.join(" ")`).
+struct SubcommandCase;
+
+impl NamingCase for SubcommandCase {
+    fn build(raw: &[String]) -> String {
+        raw.join(" ")
+    }
+}
+
 /// Read `.mling/classes.toml`, find the class template and render it with the
 /// name-derived parameters into `<output-dir>/<snake_case>.rs`. If the entry
 /// declares `append-file`/`append-content`, the expanded content is also
@@ -152,7 +164,7 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     let camel = camel_case!(name.as_str());
 
     // Render any content string that uses the name-derived placeholders
-    // (`<<<snake_case>>>`, `<<<pascal_case>>>`, ...).
+    // (`<<<snake_case>>>`, `<<<pascal_case>>>`, `<<<subcommand_case>>>`, ...).
     let expand_params = |content: String| {
         let mut tmpl = Template::from(content);
         tmpl.insert_param("snake_case".to_string(), snake.clone());
@@ -160,6 +172,10 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
         tmpl.insert_param("kebab_case".to_string(), kebab.clone());
         tmpl.insert_param("upper_snake_case".to_string(), upper_snake.clone());
         tmpl.insert_param("camel_case".to_string(), camel.clone());
+        tmpl.insert_param(
+            "subcommand_case".to_string(),
+            custom_case!(SubcommandCase, name.as_str()),
+        );
         tmpl.expand()
     };
 
