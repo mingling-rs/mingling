@@ -19,7 +19,9 @@
 //! Author: `Weicao-CatilGrass`
 //! Default: `warn`
 
-use crate::linter::mlint_report::{LintSuggestion, MlintLevel, MlintReport};
+use crate::linter::mlint_report::{
+    LintSuggestion, MlintLevel, MlintReport, proc_macro2_col_to_byte_offset,
+};
 use syn::spanned::Spanned;
 use syn::visit::Visit;
 
@@ -191,8 +193,8 @@ fn single_line_suggestion(
     let Some(line) = source.lines().nth(line_no.saturating_sub(1)) else {
         return Vec::new();
     };
-    let start = char_col_to_byte_offset(line, span.start().column);
-    let end = char_col_to_byte_offset(line, span.end().column);
+    let start = proc_macro2_col_to_byte_offset(line, span.start().column);
+    let end = proc_macro2_col_to_byte_offset(line, span.end().column);
     let Some((range_start, range_end, replacement)) = range_of(start, end, line) else {
         return Vec::new();
     };
@@ -202,14 +204,6 @@ fn single_line_suggestion(
         byte_range: range_start..range_end,
         replacement,
     }]
-}
-
-/// Convert a proc-macro2 column (0-based Unicode-char index within `line`) to a
-/// byte offset within `line`, so byte slicing stays on char boundaries.
-fn char_col_to_byte_offset(line: &str, col: usize) -> usize {
-    line.char_indices()
-        .nth(col)
-        .map_or(line.len(), |(byte_index, _)| byte_index)
 }
 
 #[cfg(test)]

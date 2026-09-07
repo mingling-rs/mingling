@@ -14,7 +14,9 @@
 //! Author: `Weicao-CatilGrass`
 //! Default: `warn`
 
-use crate::linter::mlint_report::{LintSuggestion, MlintLevel, MlintReport};
+use crate::linter::mlint_report::{
+    LintSuggestion, MlintLevel, MlintReport, proc_macro2_col_to_byte_offset,
+};
 use quote::ToTokens;
 use syn::spanned::Spanned;
 
@@ -248,9 +250,10 @@ fn make_return_type_suggestion(ast: &syn::ItemFn, source: &str) -> Option<LintSu
     let sig_line_idx = ast.sig.span().start().line.saturating_sub(1);
     let line = source.lines().nth(sig_line_idx)?;
 
-    // proc-macro2 column is 0-based byte offset from line start
-    let arrow_byte_col = arrow.span().start().column;
-    let ret_end_byte_col = ret_type.span().end().column;
+    // proc-macro2 columns are 0-based character indices; convert to byte offsets
+    // in the line before slicing.
+    let arrow_byte_col = proc_macro2_col_to_byte_offset(line, arrow.span().start().column);
+    let ret_end_byte_col = proc_macro2_col_to_byte_offset(line, ret_type.span().end().column);
 
     // Include the space before `->`
     let range_start = if arrow_byte_col > 0 {

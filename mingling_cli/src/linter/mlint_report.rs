@@ -113,14 +113,15 @@ impl MlintReport {
 
         // Extract line content from source
         let lines: Vec<&str> = source.lines().collect();
+        // proc-macro2 columns are 0-based character indices into the line; the
+        // displayed columns/highlights here are half-open 1-based, i.e. col + 1.
+        let one_based = |col: usize| col + 1;
         let text = if start.line == end.line && start.line <= lines.len() {
             let line_text = lines[start.line.saturating_sub(1)];
-            let hl_start = proc_macro2_byte_col_to_char_1based(line_text, start.column);
-            let hl_end = proc_macro2_byte_col_to_char_1based(line_text, end.column);
             vec![LintSpanLine {
                 text: line_text.to_string(),
-                highlight_start: hl_start,
-                highlight_end: hl_end,
+                highlight_start: one_based(start.column),
+                highlight_end: one_based(end.column),
             }]
         } else {
             // Multi-line: generate line by line
@@ -128,15 +129,9 @@ impl MlintReport {
                 .map(|i| {
                     let line_text = lines[i.saturating_sub(1)];
                     let (hl_start, hl_end) = if i == start.line {
-                        (
-                            proc_macro2_byte_col_to_char_1based(line_text, start.column),
-                            line_text.chars().count(),
-                        )
+                        (one_based(start.column), line_text.chars().count())
                     } else if i == end.line {
-                        (
-                            1,
-                            proc_macro2_byte_col_to_char_1based(line_text, end.column),
-                        )
+                        (1, one_based(end.column))
                     } else {
                         (1, line_text.chars().count())
                     };
@@ -152,14 +147,8 @@ impl MlintReport {
         LintSpan {
             line_start: start.line,
             line_end: end.line,
-            column_start: proc_macro2_byte_col_to_char_1based(
-                lines.get(start.line.saturating_sub(1)).unwrap_or(&""),
-                start.column,
-            ),
-            column_end: proc_macro2_byte_col_to_char_1based(
-                lines.get(end.line.saturating_sub(1)).unwrap_or(&""),
-                end.column,
-            ),
+            column_start: one_based(start.column),
+            column_end: one_based(end.column),
             text,
             label: None,
         }
@@ -179,13 +168,13 @@ impl MlintReport {
     }
 }
 
-/// proc-macro2's LineColumn.column is **0-based byte offset**.
-/// Convert to 1-based char offset.
-fn proc_macro2_byte_col_to_char_1based(line: &str, byte_col: usize) -> usize {
-    line.char_indices()
-        .position(|(i, _)| i >= byte_col)
-        .map(|pos| pos + 1) // → 1-based
-        .unwrap_or(line.chars().count().max(1))
+/// proc-macro2's LineColumn.column (in the fallback spans this CLI produces) is
+/// a 0-based character index into the line, not a byte offset.
+///
+/// Convert it to the byte offset of that character within `line` so that byte
+/// slicing (and `Patch` ranges) stay on char boundaries even for multibyte text.
+pub fn proc_macro2_col_to_byte_offset(line: &str, col: usize) -> usize {
+    line.char_indices().nth(col).map_or(line.len(), |(i, _)| i)
 }
 
 /// 1-based char offset → byte offset within a string
@@ -448,5 +437,42 @@ pub fn render_lint_reports_json(
         let message = report.to_compiler_message();
         let result = message_renderer.invoke(message);
         r_append!(result);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn span_from_syn_handles_multibyte_line() {
+        // proc-macro2 fallback columns are 0-based character indices, not bytes.
+        // `println!("好的！");` on line 3 spans char indices 4..19 of a line whose
+        // byte length is 26, so the half-open 1-based columns are 5..20.
+        let source = "#[command]\npub fn hi(_: EntryGreet) {\n    println!(\"好的！\");\n}\n";
+        let f: syn::ItemFn = syn::parse_str(source).unwrap();
+        let mac = f
+            .block
+            .stmts
+            .iter()
+            .find_map(|s| match s {
+                syn::Stmt::Macro(m) => Some(m.mac.clone()),
+                _ => None,
+            })
+            .unwrap();
+
+        let span = MlintReport::span_from_syn(&mac, source);
+        assert_eq!(span.line_start, 3);
+        assert_eq!(span.column_start, 5);
+        assert_eq!(span.column_end, 20);
+        let line = &span.text[0];
+        assert_eq!(line.highlight_start, 5);
+        assert_eq!(line.highlight_end, 20);
+
+        // Char-index → byte-offset conversion stays on char boundaries.
+        let text = source.lines().nth(2).unwrap();
+        assert_eq!(text.len(), 26);
+        assert_eq!(proc_macro2_col_to_byte_offset(text, 4), 4);
+        assert_eq!(proc_macro2_col_to_byte_offset(text, 19), 25);
     }
 }

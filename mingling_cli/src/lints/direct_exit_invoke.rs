@@ -24,7 +24,9 @@
 //! Author: `Weicao-CatilGrass`
 //! Default: `warn`
 
-use crate::linter::mlint_report::{LintSuggestion, MlintLevel, MlintReport};
+use crate::linter::mlint_report::{
+    LintSuggestion, MlintLevel, MlintReport, proc_macro2_col_to_byte_offset,
+};
 use quote::ToTokens;
 use syn::spanned::Spanned;
 use syn::visit::Visit;
@@ -94,16 +96,17 @@ fn make_amp_mut_suggestion(pat_type: &syn::PatType, source: &str) -> LintSuggest
         unreachable!("caller checked the reference type");
     };
     let span = ref_type.and_token.span();
-    let start = span.start();
-    let end = span.end();
+    let line_no = span.start().line;
     let line = source
         .lines()
-        .nth(start.line.saturating_sub(1))
+        .nth(line_no.saturating_sub(1))
         .unwrap_or_default();
+    let start = proc_macro2_col_to_byte_offset(line, span.start().column);
+    let end = proc_macro2_col_to_byte_offset(line, span.end().column);
     LintSuggestion {
         source: line.to_string(),
-        line_start: start.line,
-        byte_range: start.column..end.column,
+        line_start: line_no,
+        byte_range: start..end,
         replacement: "&mut ".into(),
     }
 }
@@ -115,27 +118,31 @@ fn make_amp_mut_suggestion(pat_type: &syn::PatType, source: &str) -> LintSuggest
 /// "previous type" parameter of `#[chain]`-style macros is left untouched.
 fn make_add_param_suggestion(sig: &syn::Signature, source: &str) -> LintSuggestion {
     if let Some(last_arg) = sig.inputs.last() {
-        let end = last_arg.span().end();
+        let span = last_arg.span().end();
+        let line_no = span.line;
         let line = source
             .lines()
-            .nth(end.line.saturating_sub(1))
+            .nth(line_no.saturating_sub(1))
             .unwrap_or_default();
+        let col = proc_macro2_col_to_byte_offset(line, span.column);
         LintSuggestion {
             source: line.to_string(),
-            line_start: end.line,
-            byte_range: end.column..end.column,
+            line_start: line_no,
+            byte_range: col..col,
             replacement: ", ec: &mut ResExitCode".into(),
         }
     } else {
         let close = sig.paren_token.span.close().start();
+        let line_no = close.line;
         let line = source
             .lines()
-            .nth(close.line.saturating_sub(1))
+            .nth(line_no.saturating_sub(1))
             .unwrap_or_default();
+        let col = proc_macro2_col_to_byte_offset(line, close.column);
         LintSuggestion {
             source: line.to_string(),
-            line_start: close.line,
-            byte_range: close.column..close.column,
+            line_start: line_no,
+            byte_range: col..col,
             replacement: "ec: &mut ResExitCode".into(),
         }
     }
@@ -255,16 +262,17 @@ fn single_line_suggestion(
     range_of: impl FnOnce(usize, usize, &str) -> Option<(usize, usize, String)>,
 ) -> Option<LintSuggestion> {
     let span = call.span();
-    let start = span.start();
-    let end = span.end();
-    if start.line != end.line {
+    let line_no = span.start().line;
+    if line_no != span.end().line {
         return None;
     }
-    let line = source.lines().nth(start.line.saturating_sub(1))?;
-    let (range_start, range_end, replacement) = range_of(start.column, end.column, line)?;
+    let line = source.lines().nth(line_no.saturating_sub(1))?;
+    let start = proc_macro2_col_to_byte_offset(line, span.start().column);
+    let end = proc_macro2_col_to_byte_offset(line, span.end().column);
+    let (range_start, range_end, replacement) = range_of(start, end, line)?;
     Some(LintSuggestion {
         source: line.to_string(),
-        line_start: start.line,
+        line_start: line_no,
         byte_range: range_start..range_end,
         replacement,
     })
