@@ -1,3 +1,7 @@
+use crate::linter::lint_cache::{
+    CacheData, CachedFileInfo, FileCacheEntry, MlintCache, cache_key, content_hash,
+    file_mtime_nanos, fill_source, roots_signature, strip_source,
+};
 use crate::linter::mlint_report::{MlintReport, StateLintReports};
 use cargo_metadata::Metadata;
 use mingling::consts::REMAINS;
@@ -7,7 +11,7 @@ use mingling::picker::parselib::ParserStyle;
 use mingling::picker::{EntryPicker, PickerArg};
 use mingling::{Grouped, Wrap};
 use mingling::{LazyRes, ShellContext, Suggest};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use tokio::task::JoinSet;
 
@@ -27,8 +31,47 @@ pub fn desc_lint() -> Description {
 /// parses them into ASTs, runs lint checks, and enriches each report with metadata
 /// information.
 async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
-    let mut join_set = JoinSet::new();
+    // Crate roots (all `.rs` target source files) that determine the lint input.
+    let mut roots: Vec<String> = Vec::new();
+    for package in &metadata.packages {
+        for target in &package.targets {
+            if target.src_path.as_str().ends_with(".rs") {
+                roots.push(target.src_path.as_str().to_string());
+            }
+        }
+    }
+    let root_sig = roots_signature(&roots);
+    let cache = MlintCache::new(Path::new(metadata.target_directory.as_str()));
 
+    // ---- Fast no-op path ----------------------------------------------------
+    // If the crate roots are unchanged and every previously discovered module
+    // file still has the same mtime, nothing changed: reuse the cached reports
+    // without re-parsing / re-hashing any file. Only files that actually produced
+    // reports are read (to restore their source text for byte-accurate output).
+    let loaded = cache.load();
+    if loaded.roots_signature == root_sig && !loaded.files.is_empty() {
+        let unchanged = loaded
+            .files
+            .iter()
+            .all(|f| file_mtime_nanos(Path::new(&f.path)) == Some(f.mtime));
+        if unchanged {
+            let mut reused = Vec::new();
+            for info in &loaded.files {
+                if let Some(entry) = loaded.entries.get(&cache_key(Path::new(&info.path)))
+                    && !entry.reports.is_empty()
+                    && let Ok(source) = std::fs::read_to_string(&info.path)
+                {
+                    let mut reports = entry.reports.clone();
+                    fill_source(&mut reports, &source);
+                    reused.extend(reports);
+                }
+            }
+            return reused;
+        }
+    }
+    let base = std::sync::Arc::new(loaded);
+
+    // ---- Slow path: discover the module tree and lint ------------------------
     // A single source file to lint, attributed to one compilation target.
     struct FileTask {
         path: String,
@@ -38,14 +81,11 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
         target_src_path: String,
     }
 
-    // Resolve every reachable module file for each target up front, deduplicating
-    // files that belong to more than one target (e.g. a lib shared by two bins).
     let mut tasks: Vec<FileTask> = Vec::new();
     let mut seen = HashSet::new();
     for package in &metadata.packages {
         for target in &package.targets {
             let path = &target.src_path;
-            // Only process Rust source files (with `.rs` extension).
             if !path.as_str().ends_with(".rs") {
                 continue;
             }
@@ -55,8 +95,6 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
             let target_kind = target.kind.first().map(|k| k.to_string());
             let target_src_path = path_str.clone();
 
-            // Walk the module tree declared from this crate root so that module files
-            // (e.g. a `mod foo` living in `foo.rs`) are linted too, not just the root.
             for file in collect_module_files(PathBuf::from(path)) {
                 let file_str = file.to_string_lossy().into_owned();
                 if !seen.insert(file) {
@@ -72,17 +110,45 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
             }
         }
     }
+    let manifest_paths: Vec<String> = tasks.iter().map(|t| t.path.clone()).collect();
 
+    let mut join_set = JoinSet::new();
     for task in tasks {
+        let base = base.clone();
         join_set.spawn_blocking(move || {
-            // Read the source file content.
-            let source = std::fs::read_to_string(&task.path).ok()?;
-            // Parse the source file into an AST.
-            let ast = syn::parse_file(&source).ok()?;
-            // Run all lint checks and collect reports.
-            let reports = crate::lints::run_all_lints(&ast, &source);
+            let path = PathBuf::from(&task.path);
+            let key = cache_key(&path);
+            let mtime = file_mtime_nanos(&path);
 
-            // Enrich each report with metadata information.
+            // Reuse an unchanged file (mtime match) without re-reading or hashing.
+            if let Some(mtime) = mtime
+                && let Some(cached) = base.entries.get(&key)
+                && cached.mtime == mtime
+            {
+                if cached.reports.is_empty() {
+                    return Some(TaskOutcome {
+                        key,
+                        mtime,
+                        content_hash: cached.content_hash,
+                        reports: Vec::new(),
+                    });
+                }
+                if let Ok(source) = std::fs::read_to_string(&path) {
+                    let mut reports = cached.reports.clone();
+                    fill_source(&mut reports, &source);
+                    return Some(TaskOutcome {
+                        key,
+                        mtime,
+                        content_hash: cached.content_hash,
+                        reports,
+                    });
+                }
+            }
+
+            // Cache miss: read, parse, lint and re-enrich.
+            let source = std::fs::read_to_string(&path).ok()?;
+            let ast = syn::parse_file(&source).ok()?;
+            let reports = crate::lints::run_all_lints(&ast, &source);
             let enriched: Vec<MlintReport> = reports
                 .into_iter()
                 .map(|mut r| {
@@ -96,19 +162,58 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
                 })
                 .collect();
 
-            Some(enriched)
+            Some(TaskOutcome {
+                key,
+                mtime: mtime.unwrap_or(0),
+                content_hash: content_hash(source.as_bytes()),
+                reports: enriched,
+            })
         });
     }
 
     let mut all_reports = Vec::new();
+    let mut next_entries = HashMap::new();
     while let Some(res) = join_set.join_next().await {
-        // `spawn_blocking` panics are propagated, `None` means task skipped (read/parse failure).
-        if let Ok(Some(reports)) = res {
-            all_reports.extend(reports);
-        }
+        // `spawn_blocking` panics are propagated, `None` means task skipped.
+        let Ok(Some(outcome)) = res else {
+            continue;
+        };
+        all_reports.extend(outcome.reports.clone());
+        let mut stored = outcome.reports;
+        strip_source(&mut stored);
+        next_entries.insert(
+            outcome.key,
+            FileCacheEntry {
+                mtime: outcome.mtime,
+                content_hash: outcome.content_hash,
+                reports: stored,
+            },
+        );
     }
 
+    // Persist the refreshed manifest + reports so the next no-op run is instant.
+    let files = manifest_paths
+        .into_iter()
+        .map(|path| CachedFileInfo {
+            mtime: file_mtime_nanos(Path::new(&path)).unwrap_or(0),
+            path,
+        })
+        .collect();
+    cache.store(&CacheData {
+        roots_signature: root_sig,
+        files,
+        entries: next_entries,
+    });
+
     all_reports
+}
+
+/// Per-file result returned by a lint task.
+struct TaskOutcome {
+    key: [u8; 32],
+    mtime: u128,
+    content_hash: [u8; 32],
+    reports: Vec<MlintReport>,
 }
 
 /// Recursively collect `file` and every module file reachable from it via

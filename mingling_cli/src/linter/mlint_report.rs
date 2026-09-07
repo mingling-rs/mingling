@@ -11,12 +11,15 @@ use annotate_snippets::level::{ERROR, HELP, NOTE, WARNING};
 use annotate_snippets::{AnnotationKind, Group, Patch, Renderer, Snippet};
 use mingling::macros::{buffer, chain, r_append, r_eprintln, renderer};
 use mingling::{Grouped, RendererInvoker, Routable, Wrap};
+use serde::de::{self, Visitor};
+use serde::ser::SerializeStruct;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::Next;
 use crate::metadata::setup::ResUsingJson;
 
 /// Complete structure of a Lint report, containing inspection results and associated metadata.
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct MlintReport {
     /// Source file name
     pub file_name: String,
@@ -56,7 +59,7 @@ pub struct MlintReport {
 }
 
 /// Report severity level, indicating the seriousness of the Lint result.
-#[derive(Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MlintLevel {
     #[default]
     Note,
@@ -66,6 +69,7 @@ pub enum MlintLevel {
 }
 
 /// Source code location span, representing a range of source code and its associated text information.
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LintSpan {
     /// Starting line number (1-based)
     pub line_start: usize,
@@ -82,6 +86,7 @@ pub struct LintSpan {
 }
 
 /// A single line of text in a source location with highlight range.
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LintSpanLine {
     /// Full source line text (no trailing `\n`)
     pub text: String,
@@ -92,6 +97,9 @@ pub struct LintSpanLine {
 }
 
 /// A suggestion shown as a diff in the output (e.g. `- old code` / `+ new code`).
+///
+/// Serialization is implemented manually because [`Range`] is not `serde`-
+/// supported; the byte range is stored as its start/end bounds.
 #[derive(Clone, Debug, Default)]
 pub struct LintSuggestion {
     /// Source text that the suggestion applies to (a single line or snippet)
@@ -102,6 +110,118 @@ pub struct LintSuggestion {
     pub byte_range: Range<usize>,
     /// Replacement text
     pub replacement: String,
+}
+
+impl Serialize for LintSuggestion {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut state = serializer.serialize_struct("LintSuggestion", 5)?;
+        state.serialize_field("source", &self.source)?;
+        state.serialize_field("line_start", &self.line_start)?;
+        state.serialize_field("range_start", &self.byte_range.start)?;
+        state.serialize_field("range_end", &self.byte_range.end)?;
+        state.serialize_field("replacement", &self.replacement)?;
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for LintSuggestion {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "snake_case")]
+        enum Field {
+            Source,
+            LineStart,
+            RangeStart,
+            RangeEnd,
+            Replacement,
+        }
+
+        struct LintSuggestionVisitor;
+
+        impl<'de> Visitor<'de> for LintSuggestionVisitor {
+            type Value = LintSuggestion;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
+                formatter.write_str("struct LintSuggestion")
+            }
+
+            // bincode and other binary formats feed struct fields as a sequence.
+            fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::SeqAccess<'de>,
+            {
+                let source: String = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &"expected source"))?;
+                let line_start: usize = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &"expected line_start"))?;
+                let range_start: usize = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(2, &"expected range_start"))?;
+                let range_end: usize = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(3, &"expected range_end"))?;
+                let replacement: String = seq
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(4, &"expected replacement"))?;
+                Ok(LintSuggestion {
+                    source,
+                    line_start,
+                    byte_range: range_start..range_end,
+                    replacement,
+                })
+            }
+
+            // JSON feeds struct fields as a map.
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: de::MapAccess<'de>,
+            {
+                let mut source = None;
+                let mut line_start = None;
+                let mut range_start = None;
+                let mut range_end = None;
+                let mut replacement = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Source => source = Some(map.next_value()?),
+                        Field::LineStart => line_start = Some(map.next_value()?),
+                        Field::RangeStart => range_start = Some(map.next_value()?),
+                        Field::RangeEnd => range_end = Some(map.next_value()?),
+                        Field::Replacement => replacement = Some(map.next_value()?),
+                    }
+                }
+                Ok(LintSuggestion {
+                    source: source.ok_or_else(|| de::Error::missing_field("source"))?,
+                    line_start: line_start.ok_or_else(|| de::Error::missing_field("line_start"))?,
+                    byte_range: range_start
+                        .ok_or_else(|| de::Error::missing_field("range_start"))?
+                        ..range_end.ok_or_else(|| de::Error::missing_field("range_end"))?,
+                    replacement: replacement
+                        .ok_or_else(|| de::Error::missing_field("replacement"))?,
+                })
+            }
+        }
+
+        deserializer.deserialize_struct(
+            "LintSuggestion",
+            &[
+                "source",
+                "line_start",
+                "range_start",
+                "range_end",
+                "replacement",
+            ],
+            LintSuggestionVisitor,
+        )
+    }
 }
 
 impl MlintReport {
