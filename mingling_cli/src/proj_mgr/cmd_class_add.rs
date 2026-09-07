@@ -162,25 +162,22 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     let kebab = kebab_case!(name.as_str());
     let upper_snake = snake.to_uppercase();
     let camel = camel_case!(name.as_str());
+    let subcommand = custom_case!(SubcommandCase, name.as_str());
 
-    // Render any content string that uses the name-derived placeholders
-    // (`<<<snake_case>>>`, `<<<pascal_case>>>`, `<<<subcommand_case>>>`, ...).
-    let expand_params = |content: String| {
-        let mut tmpl = Template::from(content);
-        tmpl.insert_param("snake_case".to_string(), snake.clone());
-        tmpl.insert_param("pascal_case".to_string(), pascal.clone());
-        tmpl.insert_param("kebab_case".to_string(), kebab.clone());
-        tmpl.insert_param("upper_snake_case".to_string(), upper_snake.clone());
-        tmpl.insert_param("camel_case".to_string(), camel.clone());
-        tmpl.insert_param(
-            "subcommand_case".to_string(),
-            custom_case!(SubcommandCase, name.as_str()),
-        );
-        tmpl.expand()
-    };
-
-    // Read the class template (relative to `.mling/`) and expand it.
-    let expanded = expand_params(template_content).ok_or_else(|| {
+    // Render the class template (whole file), which may use display blocks and
+    // impl areas in addition to the name placeholders.
+    let mut tmpl = Template::from(template_content);
+    for (key, value) in [
+        ("snake_case", &snake),
+        ("pascal_case", &pascal),
+        ("kebab_case", &kebab),
+        ("upper_snake_case", &upper_snake),
+        ("camel_case", &camel),
+        ("subcommand_case", &subcommand),
+    ] {
+        tmpl.insert_param(key.to_string(), value.clone());
+    }
+    let expanded = tmpl.expand().ok_or_else(|| {
         ErrorClassWriteFailed(format!(
             "failed to expand class template: {}",
             template_path.display()
@@ -201,18 +198,23 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     if let (Some(append_file), Some(append_content)) = (&entry.append_file, &entry.append_content) {
         let target = project_root.join(append_file);
         let existing = fs::read_to_string(&target).unwrap_or_default();
-        let expanded_append = match expand_params(append_content.clone()) {
-            Some(expanded) => expanded,
-            None => {
-                return ErrorClassWriteFailed(format!(
-                    "failed to expand append-content for {}: {}",
-                    target.display(),
-                    append_file
-                ))
-                .to_chain();
-            }
-        };
-        let appended = format!("{existing}{expanded_append}");
+
+        // Append-content is a code fragment whose surrounding whitespace
+        // (e.g. a leading newline) must be preserved. Unlike `Template::expand`
+        // (which trims the result), substitute the placeholders directly.
+        let mut appended = append_content.clone();
+        for (key, value) in [
+            ("snake_case", &snake),
+            ("pascal_case", &pascal),
+            ("kebab_case", &kebab),
+            ("upper_snake_case", &upper_snake),
+            ("camel_case", &camel),
+            ("subcommand_case", &subcommand),
+        ] {
+            appended = appended.replace(&format!("<<<{key}>>>"), value);
+        }
+        let appended = format!("{existing}{appended}");
+
         if let Some(parent) = target.parent() {
             match fs::create_dir_all(parent) {
                 Ok(()) => {}
@@ -296,7 +298,7 @@ fn parse_classes(content: &str) -> Result<Vec<ClassEntry>, String> {
 #[renderer]
 pub fn render_result_class_add(result: ResultClassAdd) -> RenderResult {
     let mut r = RenderResult::new();
-    println_cargo!(r, "Class added: {}", result.output.display());
+    println_cargo!(r, "Added: {}", result.output.display());
     r
 }
 
