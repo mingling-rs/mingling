@@ -7,22 +7,16 @@ use crate::{linter::cmd_lint::EntryLint, metadata::setup::ResUsingJson};
 
 // Aliases
 
-dispatcher!("ra-lint-clippy",
-    EntryLinterSupportRustAnalyzerWithClippy
-);
+dispatcher!("ra-lint-clippy", EntryLinterSupportRustAnalyzerWithClippy);
 
-dispatcher!("ra-lint-check",
-    EntryLinterSupportRustAnalyzerWithCheck
-);
+dispatcher!("ra-lint-check", EntryLinterSupportRustAnalyzerWithCheck);
 
-dispatcher!("ra-lint",
-    EntryLinterSupportRustAnalyzer
-);
+dispatcher!("ra-lint", EntryLinterSupportRustAnalyzer);
 
 #[chain]
 pub fn handle_ra_lint(_: EntryLinterSupportRustAnalyzer, use_json: &mut ResUsingJson) -> EntryLint {
     use_json.using = true;
-    entry!("--message-format=json")
+    entry!("--message-format=json", "--workspace")
 }
 
 #[chain]
@@ -31,7 +25,11 @@ pub fn handle_ra_lint_check(
     use_json: &mut ResUsingJson,
 ) -> EntryLint {
     use_json.using = true;
-    entry!("--message-format=json", "--with-checker=cargo,check")
+    entry!(
+        "--message-format=json",
+        "--workspace",
+        "--with-checker=cargo,check"
+    )
 }
 
 #[chain]
@@ -40,7 +38,11 @@ pub fn handle_ra_lint_clippy(
     use_json: &mut ResUsingJson,
 ) -> EntryLint {
     use_json.using = true;
-    entry!("--message-format=json", "--with-checker=cargo,clippy")
+    entry!(
+        "--message-format=json",
+        "--workspace",
+        "--with-checker=cargo,clippy"
+    )
 }
 
 #[metadata(EntryLinterSupportRustAnalyzer)]

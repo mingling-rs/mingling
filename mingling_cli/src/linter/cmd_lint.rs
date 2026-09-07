@@ -8,6 +8,7 @@ use mingling::consts::REMAINS;
 use mingling::macros::{arg, chain, completion, dispatcher, metadata, suggest};
 use mingling::metadata::Description;
 use mingling::picker::parselib::ParserStyle;
+use mingling::picker::value::Flag;
 use mingling::picker::{EntryPicker, PickerArg};
 use mingling::{Grouped, Wrap};
 use mingling::{LazyRes, ShellContext, Suggest};
@@ -19,21 +20,28 @@ dispatcher!("lint", EntryLint);
 
 const ARG_WITH_CHECKER: PickerArg<Option<String>> = arg![with_checker: Option<String>];
 
+/// `--workspace` lints every workspace member instead of just the current package.
+pub static ARG_WORKSPACE: PickerArg<Flag> = arg![workspace: Flag];
+
 #[metadata(EntryLint)]
 pub fn desc_lint() -> Description {
     "Mingling Linter".to_string().into()
 }
 
-/// Main linting function that processes all packages in the metadata.
+/// Main linting function that processes selected packages in the metadata.
 ///
-/// Iterates through all packages and their targets (e.g., binaries, libraries, tests),
-/// recursively expands each target's module tree into its Rust source files (`.rs`),
-/// parses them into ASTs, runs lint checks, and enriches each report with metadata
-/// information.
-async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
+/// With `workspace == true` it lints every workspace member; otherwise it lints
+/// only the package containing the current directory. For each selected target it
+/// recursively expands the module tree into Rust source files (`.rs`), parses
+/// them, runs lint checks, and enriches each report with metadata information.
+async fn linter_main(metadata: &Metadata, workspace: bool) -> Vec<MlintReport> {
+    // Only lint the workspace members (or just the current package) — never
+    // third-party dependencies pulled into `metadata.packages`.
+    let selected = select_packages(metadata, workspace);
+
     // Crate roots (all `.rs` target source files) that determine the lint input.
     let mut roots: Vec<String> = Vec::new();
-    for package in &metadata.packages {
+    for package in &selected {
         for target in &package.targets {
             if target.src_path.as_str().ends_with(".rs") {
                 roots.push(target.src_path.as_str().to_string());
@@ -83,7 +91,7 @@ async fn linter_main(metadata: &Metadata) -> Vec<MlintReport> {
 
     let mut tasks: Vec<FileTask> = Vec::new();
     let mut seen = HashSet::new();
-    for package in &metadata.packages {
+    for package in &selected {
         for target in &package.targets {
             let path = &target.src_path;
             if !path.as_str().ends_with(".rs") {
@@ -283,28 +291,86 @@ fn resolve_module_file(parent_file: &Path, module_name: &str) -> Option<PathBuf>
     .find(|path| path.is_file())
 }
 
+/// Choose which packages to lint.
+///
+/// With `--workspace`, every workspace member is selected. Otherwise only the
+/// workspace member whose manifest directory contains the current directory is
+/// selected (the package you are running in); if none matches it falls back to
+/// the workspace's default members, then all members.
+fn select_packages(
+    metadata: &cargo_metadata::Metadata,
+    workspace: bool,
+) -> Vec<&cargo_metadata::Package> {
+    let member_ids: HashSet<cargo_metadata::PackageId> =
+        metadata.workspace_members.iter().cloned().collect();
+    let members = metadata
+        .packages
+        .iter()
+        .filter(|p| member_ids.contains(&p.id))
+        .collect::<Vec<_>>();
+
+    if workspace {
+        return members;
+    }
+
+    if let Ok(cwd) = std::env::current_dir() {
+        // Deepest workspace member whose manifest dir is an ancestor of cwd.
+        let mut best: Option<(&cargo_metadata::Package, usize)> = None;
+        for package in &members {
+            let dir = Path::new(&package.manifest_path).parent();
+            if let Some(dir) = dir
+                && cwd.starts_with(dir)
+            {
+                let depth = dir.components().count();
+                if best.as_ref().is_none_or(|(_, d)| depth > *d) {
+                    best = Some((package, depth));
+                }
+            }
+        }
+        if let Some((package, _)) = best {
+            return vec![package];
+        }
+    }
+
+    // Fall back to default members, then all members.
+    let default_ids: HashSet<cargo_metadata::PackageId> =
+        metadata.workspace_default_members.iter().cloned().collect();
+    let defaults = members
+        .iter()
+        .copied()
+        .filter(|p| default_ids.contains(&p.id))
+        .collect::<Vec<_>>();
+    if !defaults.is_empty() {
+        defaults
+    } else {
+        members
+    }
+}
+
 #[derive(Grouped, Wrap)]
-pub struct StateBeginLinter(());
+pub struct StateBeginLinter(pub bool);
 
 #[chain]
 pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
-    let (with_checker, checker_args) = args
+    let (workspace, with_checker, checker_args) = args
+        .pick(&ARG_WORKSPACE)
         .pick_or(&ARG_WITH_CHECKER, || Some("cargo,check".to_string()))
         .pick(&REMAINS)
         .unwrap();
+    let workspace = *workspace;
 
-    // If with_checker is not set, proceed directly to the mingling lint phase
+    // If with_checker is not set, proceed directly to the mingling lint phase.
     let Some(with_checker) = with_checker else {
-        return StateBeginLinter(());
+        return StateBeginLinter(workspace);
     };
 
     let with_checker: Vec<&str> = with_checker.split(',').collect();
     let checker_args: Vec<String> = checker_args.into();
 
-    // Run the outer checker (e.g. cargo check) with output passed through directly
+    // Run the outer checker (e.g. cargo check) with output passed through directly.
     execute_checker(&with_checker, checker_args.as_slice());
 
-    StateBeginLinter(())
+    StateBeginLinter(workspace)
 }
 
 /// Run the outer checker (e.g. cargo check) with output passed through directly.
@@ -337,11 +403,11 @@ fn execute_checker(with_checker: &[&str], checker_args: &[String]) {
 
 #[chain]
 pub async fn handle_state_begin_linter(
-    _: StateBeginLinter,
+    state: StateBeginLinter,
     metadata: &mut LazyRes<crate::metadata::setup::ResMetadata>,
 ) -> StateLintReports {
     let metadata = metadata.get_ref().data();
-    let reports = linter_main(metadata).await;
+    let reports = linter_main(metadata, state.0).await;
     StateLintReports(reports)
 }
 
@@ -359,7 +425,8 @@ pub fn complete_lint(ctx: ShellContext) -> Suggest {
         }
     } else {
         suggest! {
-            ARG_WITH_CHECKER: "Comma-separated Rust Analyzer-compatible checkers to also run, e.g. `cargo,check`"
+            ARG_WORKSPACE: "Lint all workspace members instead of only the current package",
+            ARG_WITH_CHECKER: "Comma-separated Rust Analyzer-compatible checkers to also run, e.g. `cargo,check`",
         }
     }
 }

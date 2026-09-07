@@ -15,6 +15,7 @@ __   metadata                       *Check your workspace metadata using 'cargo 
 
 __  **LINTER:**
 __   lint                           *Mingling Linter*
+__   lint --workspace               *Lint all workspace members instead of only the current package*
 __   ra-lint                        *Run* `mling lint` *and output the results*
 __   ra-lint-check                  *Run* `mling lint` *and* `cargo check`*, and output the combined results*
 __   ra-lint-clippy                 *Run* `mling lint` *and* `cargo clippy`*, and output the combined results*
