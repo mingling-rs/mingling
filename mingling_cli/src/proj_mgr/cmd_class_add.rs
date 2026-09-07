@@ -27,6 +27,13 @@ pub struct ClassEntry {
     pub output_dir: String,
     /// Short description shown in completions, may be empty.
     pub description: String,
+    /// File (relative to the project root) to append `append_content` to after
+    /// generating the class file, e.g. `src/command.rs`. Optional.
+    pub append_file: Option<String>,
+    /// Content to append to `append_file`, expanded with the same name-derived
+    /// parameters as the class template, e.g. `"mod <<<snake_case>>>;\n"`.
+    /// Must be provided together with `append_file`. Optional.
+    pub append_content: Option<String>,
 }
 
 #[derive(Grouped, Wrap)]
@@ -98,7 +105,9 @@ fn deverbatim(path: &Path) -> PathBuf {
 }
 
 /// Read `.mling/classes.toml`, find the class template and render it with the
-/// name-derived parameters into `<output-dir>/<snake_case>.rs`.
+/// name-derived parameters into `<output-dir>/<snake_case>.rs`. If the entry
+/// declares `append-file`/`append-content`, the expanded content is also
+/// appended to the target file.
 #[chain(routeify)]
 pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next {
     let (class_name, name) = state.0;
@@ -142,13 +151,20 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     let upper_snake = snake.to_uppercase();
     let camel = camel_case!(name.as_str());
 
-    let mut tmpl = Template::from(template_content);
-    tmpl.insert_param("snake_case".to_string(), snake.clone());
-    tmpl.insert_param("pascal_case".to_string(), pascal);
-    tmpl.insert_param("kebab_case".to_string(), kebab);
-    tmpl.insert_param("upper_snake_case".to_string(), upper_snake);
-    tmpl.insert_param("camel_case".to_string(), camel);
-    let expanded = tmpl.expand().ok_or_else(|| {
+    // Render any content string that uses the name-derived placeholders
+    // (`<<<snake_case>>>`, `<<<pascal_case>>>`, ...).
+    let expand_params = |content: String| {
+        let mut tmpl = Template::from(content);
+        tmpl.insert_param("snake_case".to_string(), snake.clone());
+        tmpl.insert_param("pascal_case".to_string(), pascal.clone());
+        tmpl.insert_param("kebab_case".to_string(), kebab.clone());
+        tmpl.insert_param("upper_snake_case".to_string(), upper_snake.clone());
+        tmpl.insert_param("camel_case".to_string(), camel.clone());
+        tmpl.expand()
+    };
+
+    // Read the class template (relative to `.mling/`) and expand it.
+    let expanded = expand_params(template_content).ok_or_else(|| {
         ErrorClassWriteFailed(format!(
             "failed to expand class template: {}",
             template_path.display()
@@ -163,6 +179,41 @@ pub fn handle_state_class_add(state: StateClassAdd, cwd: &ResCurrentDir) -> Next
     })?;
     fs::write(&output, expanded)
         .map_err(|e| ErrorClassWriteFailed(format!("failed to write {}: {e}", output.display())))?;
+
+    // Optionally append `append-content` to `append-file` (relative to the
+    // project root). The file is created if it does not exist yet.
+    if let (Some(append_file), Some(append_content)) = (&entry.append_file, &entry.append_content) {
+        let target = project_root.join(append_file);
+        let existing = fs::read_to_string(&target).unwrap_or_default();
+        let expanded_append = match expand_params(append_content.clone()) {
+            Some(expanded) => expanded,
+            None => {
+                return ErrorClassWriteFailed(format!(
+                    "failed to expand append-content for {}: {}",
+                    target.display(),
+                    append_file
+                ))
+                .to_chain();
+            }
+        };
+        let appended = format!("{existing}{expanded_append}");
+        if let Some(parent) = target.parent() {
+            match fs::create_dir_all(parent) {
+                Ok(()) => {}
+                Err(e) => {
+                    return ErrorClassWriteFailed(format!(
+                        "failed to create {}: {e}",
+                        parent.display()
+                    ))
+                    .to_chain();
+                }
+            }
+        }
+        if let Err(e) = fs::write(&target, appended) {
+            return ErrorClassWriteFailed(format!("failed to append to {}: {e}", target.display()))
+                .to_chain();
+        }
+    }
 
     ResultClassAdd { output }.to_chain()
 }
@@ -196,11 +247,30 @@ fn parse_classes(content: &str) -> Result<Vec<ClassEntry>, String> {
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
+            let append_file = table
+                .get("append-file")
+                .and_then(|v| v.as_str())
+                .map(str::to_string);
+            let append_content = table
+                .get("append-content")
+                .and_then(|v| v.as_str())
+                .map(str::to_string);
+            // `append-file` and `append-content` must be provided together.
+            match (&append_file, &append_content) {
+                (Some(_), Some(_)) => {}
+                (None, None) => {}
+                _ => return Err(
+                    "[[classes]] entry must set both `append-file` and `append-content` together"
+                        .to_string(),
+                ),
+            }
             entries.push(ClassEntry {
                 name,
                 template,
                 output_dir,
                 description,
+                append_file,
+                append_content,
             });
         }
     }
@@ -319,6 +389,8 @@ name = "subcommand"
 template = "classes/subcommand.rs"
 output-dir = "src/command/"
 description = "Add a subcommand"
+append-file = "src/command.rs"
+append-content = "mod <<<snake_case>>>;\npub use <<<snake_case>>>::*;\n"
 
 [[classes]]
 name = "resource"
@@ -331,9 +403,38 @@ output-dir = "src/resource/"
         assert_eq!(entries[0].template, "classes/subcommand.rs");
         assert_eq!(entries[0].output_dir, "src/command/");
         assert_eq!(entries[0].description, "Add a subcommand");
+        assert_eq!(entries[0].append_file.as_deref(), Some("src/command.rs"));
+        assert_eq!(
+            entries[0].append_content.as_deref(),
+            Some("mod <<<snake_case>>>;\npub use <<<snake_case>>>::*;\n")
+        );
         assert_eq!(entries[1].name, "resource");
         // Description is optional and defaults to empty.
         assert_eq!(entries[1].description, "");
+        // Append fields are optional and default to `None`.
+        assert_eq!(entries[1].append_file, None);
+        assert_eq!(entries[1].append_content, None);
+    }
+
+    #[test]
+    fn append_fields_require_each_other() {
+        let content = r#"
+[[classes]]
+name = "subcommand"
+template = "classes/subcommand.rs"
+output-dir = "src/command/"
+append-file = "src/command.rs"
+"#;
+        assert!(parse_classes(content).is_err());
+
+        let content = r#"
+[[classes]]
+name = "subcommand"
+template = "classes/subcommand.rs"
+output-dir = "src/command/"
+append-content = "mod x;\n"
+"#;
+        assert!(parse_classes(content).is_err());
     }
 
     #[test]
