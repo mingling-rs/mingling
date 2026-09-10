@@ -7,7 +7,10 @@ use mingling::{
 };
 use sha2::{Digest, Sha256};
 
-use crate::{Next, config::ResMlingConfig, eprintln_cargo, println_cargo};
+use crate::{
+    Next, config::ResMlingConfig, eprintln_cargo, hprintln_cargo, println_cargo,
+    progress::download_bar,
+};
 
 /// Config key holding the base URL that hosts the mling release packages.
 const CONFIG_KEY_UPDATE_URL: &str = "update-url";
@@ -93,7 +96,7 @@ pub async fn handle_state_update_download(state: StateUpdateDownload) -> Next {
 #[renderer]
 pub fn render_result_update_up_to_date(_: ResultUpdateUpToDate) -> RenderResult {
     let mut result = RenderResult::new();
-    println_cargo!(result, "mling is already up to date");
+    println_cargo!(result, "Done: mling is already up to date");
     result
 }
 
@@ -101,7 +104,7 @@ pub fn render_result_update_up_to_date(_: ResultUpdateUpToDate) -> RenderResult 
 pub fn render_result_update_staged(r: ResultUpdateStaged) -> RenderResult {
     let mut result = RenderResult::new();
     println_cargo!(result, "Downloaded: {}", r.update_path.display());
-    println_cargo!(result, "Run `mling` again to apply the update");
+    hprintln_cargo!(result, "run `mling` again to apply the update");
     result
 }
 
@@ -200,8 +203,8 @@ async fn check_and_fetch(base_url: &str, update_path: &Path) -> Result<FetchOutc
         return Ok(FetchOutcome::UpToDate);
     }
 
-    // 3. Download the package.
-    let response =
+    // 3. Download the package, streaming it so the progress bar advances.
+    let mut response =
         client.get(&package_url).send().await.map_err(|e| {
             UpdateError::Network(format!("failed to download `{package_url}`: {e}"))
         })?;
@@ -211,10 +214,38 @@ async fn check_and_fetch(base_url: &str, update_path: &Path) -> Result<FetchOutc
             response.status()
         )));
     }
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|e| UpdateError::Network(format!("failed to read package body: {e}")))?;
+    let total = response.content_length();
+    let pb = download_bar(total, "Downloading");
+
+    let mut body: Vec<u8> = Vec::new();
+    let mut done: u64 = 0;
+    let mut read_error: Option<UpdateError> = None;
+    loop {
+        let chunk = match response.chunk().await {
+            Ok(Some(chunk)) => chunk,
+            Ok(None) => break,
+            Err(e) => {
+                read_error = Some(UpdateError::Network(format!(
+                    "failed to read package body: {e}"
+                )));
+                break;
+            }
+        };
+        done += chunk.len() as u64;
+        body.extend_from_slice(&chunk);
+        match total {
+            Some(len) => pb.set_position(done.min(len)),
+            None => {
+                pb.set_message(format!("downloading · {done} B"));
+                pb.tick();
+            }
+        }
+    }
+    pb.finish_and_clear();
+    if let Some(e) = read_error {
+        return Err(e);
+    }
+    let bytes = body;
 
     // 4. Verify the package before staging it.
     let actual_sha = sha256_hex(&bytes);

@@ -205,9 +205,17 @@ fn shallow_clone(
     run_git(dst, ["init", "-q"])?;
     run_git(dst, ["remote", "add", "origin", source_url])?;
 
-    let fetched_by_ref = run_git(dst, ["fetch", "-q", "--depth", "1", "origin", reference]);
+    // Let `git fetch` print its own progress directly to the terminal instead of
+    // drawing a synthetic bar (git has no byte-level length to report).
+    let fetched_by_ref = run_git(
+        dst,
+        ["fetch", "--depth", "1", "--progress", "origin", reference],
+    );
     if fetched_by_ref.is_err() {
-        run_git(dst, ["fetch", "-q", "--depth", "1", "origin", full_hash])?;
+        run_git(
+            dst,
+            ["fetch", "--depth", "1", "--progress", "origin", full_hash],
+        )?;
     }
 
     // `git fetch` only writes FETCH_HEAD; the fresh repo has no branch yet, so

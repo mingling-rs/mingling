@@ -20,6 +20,7 @@ pub mod lints;
 pub mod message;
 pub mod metadata;
 pub mod pkg_mgr;
+pub mod progress;
 pub mod proj_mgr;
 pub mod updater;
 pub mod utils;
