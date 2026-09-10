@@ -145,6 +145,8 @@ dependencies = [
 [[package]]
 name = "mingling_pathf"
 version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c9f2a0ee060f46720f9889ba6f57f2947c2954ad245d81d8918b29b1ba4a357"
 dependencies = [
  "cargo_metadata",
  "just_fmt 0.2.1",
