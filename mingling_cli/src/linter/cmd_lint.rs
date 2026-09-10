@@ -5,7 +5,7 @@ use crate::linter::lint_cache::{
 use crate::linter::mlint_report::{MlintReport, StateLintReports};
 use cargo_metadata::Metadata;
 use mingling::consts::REMAINS;
-use mingling::macros::{arg, chain, completion, dispatcher, metadata, suggest};
+use mingling::macros::{arg, chain, command, completion, metadata, suggest};
 use mingling::metadata::Description;
 use mingling::picker::parselib::ParserStyle;
 use mingling::picker::value::Flag;
@@ -15,8 +15,6 @@ use mingling::{LazyRes, ShellContext, Suggest};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use tokio::task::JoinSet;
-
-dispatcher!("lint", EntryLint);
 
 const ARG_WITH_CHECKER: PickerArg<Option<String>> = arg![with_checker: Option<String>];
 
@@ -350,8 +348,8 @@ fn select_packages(
 #[derive(Grouped, Wrap)]
 pub struct StateBeginLinter(pub bool);
 
-#[chain]
-pub fn handle_lint(args: EntryLint) -> StateBeginLinter {
+#[command]
+pub fn lint(args: EntryLint) -> StateBeginLinter {
     let (workspace, with_checker, checker_args) = args
         .pick(&ARG_WORKSPACE)
         .pick_or(&ARG_WITH_CHECKER, || Some("cargo,check".to_string()))

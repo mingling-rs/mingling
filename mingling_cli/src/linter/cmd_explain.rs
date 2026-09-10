@@ -1,12 +1,18 @@
 use crate::{Next, eprintln_cargo, linter::registry::ResLintRegistry};
 use mingling::{
     Grouped, LazyRes, RenderResult, Routable, ShellContext, Suggest, SuggestItem, Wrap,
-    macros::{arg, buffer, chain, completion, dispatcher, metadata, r_println, renderer, routeify},
+    macros::{arg, buffer, chain, command, completion, metadata, r_println, renderer, routeify},
     metadata::Description,
     picker::EntryPicker,
 };
 
-dispatcher!("explain");
+#[command(routeify)]
+pub fn explain(args: EntryExplain) -> Next {
+    let lint_name = args
+        .pick_or_route(&arg![String], || ErrorNoExplainLintProvided.to_chain())
+        .to_result()?;
+    StateExplainLint(lint_name).into()
+}
 
 #[metadata(EntryExplain)]
 pub fn desc_explain() -> Description {
@@ -30,14 +36,6 @@ pub struct ResultExplainLint {
     pub active_on: String,
     pub author: String,
     pub default: String,
-}
-
-#[chain(routeify)]
-pub fn handle_explain(args: EntryExplain) -> Next {
-    let lint_name = args
-        .pick_or_route(&arg![String], || ErrorNoExplainLintProvided.to_chain())
-        .to_result()?;
-    StateExplainLint(lint_name).into()
 }
 
 #[chain]
