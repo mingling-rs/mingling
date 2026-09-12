@@ -30,8 +30,7 @@ mingling_core = { path = "mingling_core", default-features = false, version = "0
 mingling_macros = { path = "mingling_macros", default-features = false, version = "0.5.1" }
 mingling_pathf = { path = "mingling_pathf", default-features = false, version = "0.5.1" }
 
-arg-picker = { version = "0.3.0", default-features = false }
-arg-picker-macros = { version = "0.3.0", default-features = false }
+arg-picker = { version = "0.3.0", features = ["derive"] }
 
 just_fmt = "0.2.1"
 just_template = "0.2.1"

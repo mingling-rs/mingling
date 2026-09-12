@@ -11,6 +11,7 @@ Any contributor making changes to the project must record their changes in this 
 **- Milestone.1 "MVP" -**
 
 - [Unreleased](#unreleased)
+- [Release 0.5.1 (Unreleased)](#release-051-unreleased)
 - [Release 0.5.0 (2026-09-10)](#release-050-2026-09-10)
 - [Release 0.4.0 (2026-08-16)](#release-040-2026-08-16)
 - [Release 0.3.0 (2026-07-27)](#release-030-2026-07-27)
@@ -28,9 +29,9 @@ Any contributor making changes to the project must record their changes in this 
 - [Release 0.1.1 (2026-03-29)](#release-011-2026-03-29)
 - [Release 0.1.0 (2026-03-29)](#release-010-2026-03-29)
 
----
-
 ## Contents
+
+---
 
 ### Unreleased
 
@@ -52,7 +53,25 @@ None
 
 ---
 
-## Contents
+### 0.5.1 (Unreleased)
+
+#### Fixes:
+
+None
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+1. **[`deps:arg-picker`]** Consolidated the `arg-picker` dependencies by activating the crate's `derive` feature instead of depending on the separate `arg-picker-macros` crate. The workspace `Cargo.toml` now declares `arg-picker = { version = "0.3.0", features = ["derive"] }` (dropping the standalone `arg-picker-macros = { version = "0.3.0", default-features = false }` entry), and `arg-picker-macros` is no longer pulled in as a direct dependency.
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
 
 ### 0.5.0 (2026-09-10)
 
@@ -750,8 +769,6 @@ _Behavioral note:_ for a type with only `StructuralData` and no `#[renderer]`, c
     Also updated the corresponding doc comments on the `structural!` macro (`mingling_macros/src/func/structural.rs`), the `StructuralData` trait (`mingling_core/src/renderer/structural/structural_data.rs`), and the `#[derive(StructuralData)]` / `structural!` macro docs in `mingling_macros/src/lib.rs`, plus the `#[renderer]` doc comment in `examples/example-structural-renderer/src/main.rs`.
 
 ---
-
-## Contents
 
 ### 0.4.0 (2026-08-16)
 

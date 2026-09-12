@@ -159,7 +159,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "mingling_core",
  "mingling_macros",
@@ -176,7 +176,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "just_fmt",
  "might_be_async",
@@ -184,7 +184,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "just_fmt",
  "proc-macro2",

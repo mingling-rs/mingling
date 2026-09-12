@@ -357,7 +357,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "arg-picker",
  "mingling",
@@ -369,7 +369,7 @@ dependencies = [
 
 [[package]]
 name = "mingling-workspace"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -377,7 +377,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "env_logger",
  "just_fmt 0.2.1",
@@ -393,7 +393,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "just_fmt 0.2.1",
  "just_template",
@@ -405,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_pathf"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "cargo_metadata",
  "just_fmt 0.2.1",
