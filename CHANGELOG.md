@@ -103,6 +103,32 @@ None
 
     _Behavioral note:_ no runtime behavior changes — `mingling_core` and `mingling_macros` were already part of the default feature set. The removal only simplifies the feature surface, dropping ~15 `cfg` gates and two now-meaningless feature constants.
 
+2. **[`core:comp`]** **[BREAKING MOVE]** Moved the `COMPLETION_SUBCOMMAND` constant into a dedicated `constants` module, re-exporting it through `mingling::consts`.
+
+    ### What changed
+
+    `COMPLETION_SUBCOMMAND` was a top-level item of `mingling_core` (declared in `mingling_core/src/comp.rs` and re-exported through `mingling_core::comp::*`). It now lives in a new `mingling_core::constants` module, and the corresponding `mingling` re-export moved from the crate root to the `mingling::consts` module.
+
+    **Moved items:**
+
+    - **`mingling_core::COMPLETION_SUBCOMMAND`** → **`mingling_core::constants::COMPLETION_SUBCOMMAND`** (declaration moved from `mingling_core/src/comp.rs` to the new `mingling_core/src/constants.rs`; the doc-test path in the constant's documentation was updated accordingly).
+    - **`mingling::COMPLETION_SUBCOMMAND`** → **`mingling::consts::COMPLETION_SUBCOMMAND`** (`mingling/src/lib.rs`'s `pub mod consts` block now also re-exports `mingling_core::constants::*`).
+
+    **Other changes:**
+
+    - **`mingling_core/src/lib.rs`** — Added `pub mod constants;` alongside the other module declarations.
+    - **`mingling_core/src/constants.rs`** — New file containing the `COMPLETION_SUBCOMMAND` constant, gated behind `#[cfg(feature = "comp")]`.
+    - **`mingling_core/src/comp/comp_ctx.rs`** — Updated the import to `use crate::constants::COMPLETION_SUBCOMMAND;` (drop `COMPLETION_SUBCOMMAND` from the `crate::{...}` glob import).
+    - **`mingling/src/lib.rs`** — The `pub mod consts` module now re-exports `mingling_core::constants::*` in addition to `crate::constants::*`.
+
+    ### Migration guide
+
+    - **Replace `mingling::COMPLETION_SUBCOMMAND` with `mingling::consts::COMPLETION_SUBCOMMAND`.** The top-level re-export no longer exists.
+    - **Replace `mingling_core::COMPLETION_SUBCOMMAND` with `mingling_core::constants::COMPLETION_SUBCOMMAND`** in any direct `mingling_core` usage.
+    - **Remove any `use mingling::COMPLETION_SUBCOMMAND;` import** and use the `mingling::consts` path instead (or `use mingling::consts::COMPLETION_SUBCOMMAND;`).
+
+    _Behavioral note:_ no runtime behavior changes — the constant's value (`"__comp"`) and `comp` feature gating are unchanged. The move only aligns the constant's location with the framework's other constants under the `consts`/`constants` modules.
+
 ---
 
 ### 0.5.1 (2026-09-13)

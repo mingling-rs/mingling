@@ -1,4 +1,5 @@
-use crate::{COMPLETION_SUBCOMMAND, Program, ProgramCollect};
+use crate::{Program, ProgramCollect};
+use crate::constants::COMPLETION_SUBCOMMAND;
 
 impl<C> Program<C>
 where

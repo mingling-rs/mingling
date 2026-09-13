@@ -56,6 +56,9 @@ pub mod test {
 /// Provided for framework developers
 mod debug;
 
+/// Constants for the core library
+pub mod constants;
+
 // The `StructuralData` trait is sealed and only implementable through the
 // derive macro, but the trait itself is publicly accessible at the top level
 // (`mingling::StructuralData`), where it coexists with the same-named derive
