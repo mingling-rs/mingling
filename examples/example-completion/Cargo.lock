@@ -145,7 +145,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "arg-picker",
  "mingling_core",
@@ -154,7 +154,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "just_fmt 0.2.1",
  "might_be_async",
@@ -162,7 +162,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "just_fmt 0.2.1",
  "just_template",
@@ -174,7 +174,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_pathf"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "cargo_metadata",
  "just_fmt 0.2.1",

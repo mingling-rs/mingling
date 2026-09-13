@@ -96,7 +96,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "mingling_core",
  "mingling_macros",
@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "just_fmt",
  "might_be_async",
@@ -112,7 +112,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "just_fmt",
  "mingling_pathf",
@@ -123,7 +123,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_pathf"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "cargo_metadata",
  "just_fmt",

@@ -87,7 +87,7 @@ dependencies = [
 
 [[package]]
 name = "mingling"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "arg-picker",
  "mingling_core",
@@ -97,7 +97,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_core"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "just_fmt",
  "might_be_async",
@@ -110,7 +110,7 @@ dependencies = [
 
 [[package]]
 name = "mingling_macros"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "just_fmt",
  "proc-macro2",
