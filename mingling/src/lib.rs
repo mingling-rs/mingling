@@ -8,10 +8,10 @@
 #![doc = include_str!("docs/lib.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-#[cfg(all(feature = "core", feature = "docs_rs"))]
+#[cfg(feature = "docs_rs")]
 mod gen_program;
 
-#[cfg(all(feature = "core", feature = "docs_rs"))]
+#[cfg(feature = "docs_rs")]
 #[doc = include_str!("docs/gen_program.md")]
 #[allow(nonstandard_style)]
 pub mod CRATE_ROOT {
@@ -19,20 +19,16 @@ pub mod CRATE_ROOT {
 }
 
 /// Mingling's convention metadatas, which can be bound to types using `#[metadata]`, to provide identification for types
-#[cfg(feature = "core")]
 pub mod metadata;
 
 /// Support for the `OSC 9;4` protocol
 pub mod osc94;
 
-#[cfg(feature = "core")]
 mod example_docs;
 
 // Re-export Core lib
-#[cfg(feature = "core")]
 pub use mingling::*;
 
-#[cfg(feature = "core")]
 pub use mingling_core as mingling;
 
 /// `Mingling` argument parser (Picker2)
@@ -58,7 +54,6 @@ pub mod consts {
 ///
 /// <https://docs.rs/mingling_macros/latest/mingling_macros/>
 #[allow(unused_imports)]
-#[cfg(feature = "macros")]
 pub mod macros {
     #[cfg(feature = "picker")]
     pub use arg_picker::macros::*;
@@ -120,13 +115,8 @@ pub mod macros {
     pub use mingling_macros::suggest_enum;
 }
 
-#[cfg(feature = "macros")]
 pub use mingling_macros::Wrap;
-
-#[cfg(feature = "macros")]
 pub use mingling_macros::EnumTag;
-
-#[cfg(feature = "macros")]
 pub use mingling_macros::Grouped;
 
 #[cfg(feature = "structural_renderer")]
@@ -136,13 +126,12 @@ pub use mingling_macros::StructuralData;
 pub mod confirm;
 
 #[doc = include_str!("docs/docsrs_examples.md")]
-#[cfg(all(feature = "core", feature = "docs_rs"))]
+#[cfg(feature = "docs_rs")]
 #[allow(nonstandard_style)]
 pub mod EXAMPLES {
     pub use crate::example_docs::*;
 }
 
-#[cfg(feature = "core")]
 mod features;
 
 /// Module for checking which features are enabled at compile time.
@@ -150,23 +139,19 @@ mod features;
 /// Each constant re-exported from this module corresponds to a Cargo feature flag.
 /// They can be used for conditional compilation or runtime branching based on
 /// feature availability.
-#[cfg(feature = "core")]
 pub mod feature {
     include!("./features.rs");
 }
 
-#[cfg(feature = "core")]
 mod setups;
 
 /// Setups provided by Mingling, which can extend command-line programs.
-#[cfg(feature = "core")]
 pub mod setup {
     pub use crate::setups::*;
     pub use mingling_core::setup::*;
 }
 
 /// Mutable global resources provided within Mingling
-#[cfg(feature = "core")]
 pub mod res;
 
 /// The prelude module provides convenient re-exports of commonly used macros and traits.
@@ -181,25 +166,15 @@ pub mod res;
 /// use mingling::prelude::*;
 /// ```
 pub mod prelude {
-    #[cfg(feature = "core")]
     pub use crate::Grouped;
-    #[cfg(feature = "core")]
     pub use crate::RenderResult;
-    #[cfg(feature = "core")]
     pub use crate::Routable;
-    #[cfg(feature = "macros")]
     pub use crate::Wrap;
-    #[cfg(feature = "macros")]
     pub use crate::macros::chain;
-    #[cfg(feature = "macros")]
     pub use crate::macros::command;
-    #[cfg(feature = "macros")]
     pub use crate::macros::dispatcher;
-    #[cfg(feature = "macros")]
     pub use crate::macros::empty_result;
-    #[cfg(feature = "macros")]
     pub use crate::macros::gen_program;
-    #[cfg(feature = "macros")]
     pub use crate::macros::renderer;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;
@@ -207,7 +182,6 @@ pub mod prelude {
     pub use mingling_macros::r_print;
     pub use mingling_macros::r_println;
 
-    #[cfg(all(feature = "macros", feature = "comp"))]
     #[cfg(feature = "comp")]
     pub use crate::macros::completion;
 

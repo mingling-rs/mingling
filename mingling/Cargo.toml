@@ -24,8 +24,6 @@ mingling = { path = ".", features = [
 rustdoc-args = ["--generate-link-to-definition", "--html-in-header", "arborium-header.html"]
 features = [
     "docs_rs",
-    "core",
-    "macros",
     "structural_renderer",
     "repl",
     "comp",
@@ -40,15 +38,11 @@ mini = ["picker", "comp"]
 advanced = ["picker", "repl", "comp", "structural_renderer", "pathf"]
 full = ["picker", "repl", "clap", "comp", "structural_renderer_full"]
 
-# Core
-core = ["dep:mingling_core", "mingling_core/default"]
-macros = ["dep:mingling_macros", "mingling_macros/default"]
-
 # Special features
 nightly = ["mingling_core/nightly", "mingling_macros/nightly"]
 debug = ["mingling_core/debug"]
 async = ["mingling_core/async", "mingling_macros/async"]
-default = ["core", "macros"]
+default = []
 
 # - Section only shown in docs.rs
 docs_rs = []
@@ -67,7 +61,6 @@ picker = ["mingling_core/picker", "dep:arg-picker", "arg-picker/mingling_support
 pathf = ["mingling_macros/pathf"]
 
 structural_renderer = [
-    "macros",
     "mingling_core/structural_renderer",
     "dep:serde",
     "mingling_macros/structural_renderer",
@@ -75,7 +68,6 @@ structural_renderer = [
 ]
 
 structural_renderer_empty = [
-    "macros",
     "mingling_core/structural_renderer",
     "dep:serde",
     "mingling_macros/structural_renderer",
@@ -101,7 +93,7 @@ toml_serde_fmt = ["mingling_core/toml_serde_fmt"]
 ron_serde_fmt = ["mingling_core/ron_serde_fmt"]
 
 [dependencies]
-mingling_core = { workspace = true, optional = true }
-mingling_macros = { workspace = true, optional = true }
+mingling_core = { workspace = true, default-features = true }
+mingling_macros = { workspace = true, default-features = true }
 arg-picker = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }

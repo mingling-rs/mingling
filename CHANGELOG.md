@@ -70,7 +70,38 @@ None
 
 #### **BREAKING CHANGES** (API CHANGES):
 
-None
+1. **[`crate:features`]** **[BREAKING REMOVAL]** Removed the `core` and `macros` Cargo features, making `mingling_core` and `mingling_macros` unconditional dependencies.
+
+    ### What changed
+
+    `mingling_core` and `mingling_macros` are now **mandatory dependencies** that are always compiled. The `core` and `macros` features no longer exist, `default` is an empty feature list, and all corresponding `cfg` gates have been removed. `mingling_macros` is re-exported unconditionally, and the `Wrap`, `EnumTag`, and `Grouped` derive macros are now always available.
+
+    **Removed features** (`mingling/Cargo.toml`):
+
+    - **`core`** — Removed; replaced by an unconditional dependency `mingling_core = { workspace = true, default-features = true }` (no longer `optional = true`).
+    - **`macros`** — Removed; replaced by an unconditional dependency `mingling_macros = { workspace = true, default-features = true }` (no longer `optional = true`).
+    - **`default`** — Changed from `default = ["core", "macros"]` to `default = []`.
+    - **Other feature groups** — The `"macros"` entry was removed from `structural_renderer` and `structural_renderer_empty`.
+
+    **Removed feature constants** (`mingling/src/features.rs`): `MINGLING_CORE` and `MINGLING_MACROS` (both their `cfg(feature = ...)` and `cfg(not(feature = ...))` variants).
+
+    **Removed `cfg` gates** (`mingling/src/lib.rs`):
+
+    - `mod gen_program;`, `CRATE_ROOT`, and `EXAMPLES` are now gated only on `docs_rs`.
+    - `pub mod metadata;`, `mod example_docs;`, `pub use mingling::*;`, `pub use mingling_core as mingling;`, `mod features;`, `pub mod feature { ... }`, `mod setups;`, `pub mod setup { ... }`, `pub mod res;`, and `pub mod consts { ... }` are now unconditional.
+    - `pub mod macros { ... }` and the `pub use mingling_macros::{Wrap, EnumTag, Grouped};` re-exports are now unconditional.
+    - In `prelude`, the individual `core`/`macros` gates on the `Grouped`, `RenderResult`, `Routable`, `Wrap`, `chain`, `command`, `dispatcher`, `empty_result`, `gen_program`, `renderer`, and `completion` re-exports were removed (the `completion` re-export now keeps only `#[cfg(feature = "comp")]`).
+
+    **Docs.rs feature list** (`mingling/Cargo.toml`): the `"core"` and `"macros"` entries were removed.
+
+    ### Migration guide
+
+    - **Remove `core` and `macros` from any `features = [...]` lists** (dependencies, dev-dependencies, and example feature lists), including manually expanded preset lists such as `mini`, `advanced`, and `full`.
+    - **If you used `default-features = false`** to opt out of `core` or `macros`, note that these features no longer exist — both crates are now always linked.
+    - **Remove any `#[cfg(feature = "core")]` / `#[cfg(feature = "macros")]` checks** referencing these `mingling` features.
+    - **Remove references to `mingling::feature::MINGLING_CORE` and `mingling::feature::MINGLING_MACROS`** — both constants were deleted.
+
+    _Behavioral note:_ no runtime behavior changes — `mingling_core` and `mingling_macros` were already part of the default feature set. The removal only simplifies the feature surface, dropping ~15 `cfg` gates and two now-meaningless feature constants.
 
 ---
 
