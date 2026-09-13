@@ -35,11 +35,15 @@ pub use mingling_core as mingling;
 #[cfg(feature = "picker")]
 pub mod picker;
 
+#[allow(hidden_glob_reexports)]
 mod constants;
 
 /// Constants used throughout the Mingling framework.
 pub mod consts {
     pub use crate::constants::*;
+
+    #[allow(unused_imports)]
+    pub use mingling_core::constants::*;
 }
 
 /// Re-export of all macros from `mingling_macros`.
