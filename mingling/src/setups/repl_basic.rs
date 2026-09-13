@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use std::io::Write;
 
 use mingling_core::{Program, ProgramCollect, hook::ProgramHook, setup::ProgramSetup};

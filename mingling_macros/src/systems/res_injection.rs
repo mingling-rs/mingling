@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use quote::quote;
 use syn::spanned::Spanned;
 use syn::{FnArg, Ident, Pat, PatType, Signature, Type, TypePath};

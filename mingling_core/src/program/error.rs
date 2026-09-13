@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use std::any::Any;
 use std::fmt;
 

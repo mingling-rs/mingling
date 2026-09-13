@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use crate::{Program, ProgramCollect};
 
 /// A wrapper for a collection of static string slices representing command-line flags or arguments.

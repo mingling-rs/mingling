@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use just_fmt::snake_case;
 use proc_macro::TokenStream;
 use quote::quote;

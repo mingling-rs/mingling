@@ -1,4 +1,3 @@
-// Doc Not Optimize
 #![allow(dead_code)]
 
 //! Program lifecycle hook system.

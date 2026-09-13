@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use serde::Serialize;
 
 use crate::ProgramCollect;

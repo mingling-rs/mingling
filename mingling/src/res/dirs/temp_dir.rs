@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use std::{
     env::temp_dir,
     path::{Path, PathBuf},

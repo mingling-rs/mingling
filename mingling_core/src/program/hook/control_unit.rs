@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use crate::{AnyOutput, ChainProcess, NextProcess, ProgramCollect};
 
 /// Collection variants for program control instructions.

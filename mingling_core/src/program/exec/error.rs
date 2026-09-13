@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use crate::error::{ChainProcessError, ProgramPanic};
 use std::fmt;
 

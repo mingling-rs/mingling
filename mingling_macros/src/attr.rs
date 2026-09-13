@@ -1,4 +1,3 @@
-// Doc Not Optimize
 pub(crate) mod chain;
 pub(crate) mod command;
 #[cfg(feature = "comp")]

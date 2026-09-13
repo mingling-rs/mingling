@@ -1,5 +1,3 @@
-// Doc Not Optimize
-
 //! Config module for program output settings and user context.
 //!
 //! This module provides configuration types and settings for controlling

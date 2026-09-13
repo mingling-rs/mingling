@@ -1,4 +1,3 @@
-// Doc Not Optimize
 /// Represents an error that occurs during serialization of a structural renderer.
 ///
 /// This error stores a human-readable message describing what went wrong

@@ -1,4 +1,3 @@
-// Doc Not Optimize
 #[cfg(not(windows))]
 use std::env;
 

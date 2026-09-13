@@ -40,7 +40,6 @@ mod bench_cell;
 mod build;
 
 mod extensions;
-mod utils;
 
 // Bring all sub-modules into scope at the old paths so that existing
 // references (e.g. `chain::chain_attr`, `renderer::renderer_attr`)

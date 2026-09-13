@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use std::path::{Path, PathBuf};
 
 /// A global resource that provides the current user's home directory path.

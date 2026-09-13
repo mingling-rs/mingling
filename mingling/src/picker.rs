@@ -1,4 +1,3 @@
-// Doc Not Optimize
 /// Provides the specific parsing logic for command-line arguments and common utilities,
 /// as well as customization of command-line argument styles.
 pub mod parselib {

@@ -1,4 +1,3 @@
-// Doc Not Optimize
 /// Exit code indicating successful command execution.
 pub const EXIT_SUCCESS: i32 = 0;
 

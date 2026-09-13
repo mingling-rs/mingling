@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use proc_macro::TokenStream;
 
 use crate::func::r_print::expand_print;

@@ -1,4 +1,3 @@
-// Doc Not Optimize
 //! Extension point mechanism for Mingling attribute macros.
 //!
 //! This module provides a way for attribute macros like `#[chain]`, `#[renderer]`,

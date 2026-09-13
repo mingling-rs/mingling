@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use proc_macro::TokenStream;
 
 use crate::attr::renderer;

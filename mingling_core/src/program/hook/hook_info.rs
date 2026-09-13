@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use crate::{AnyOutput, ProgramCollect, RenderResult};
 
 /// Represents the data passed to `begin` hook.

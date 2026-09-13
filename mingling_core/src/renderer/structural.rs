@@ -1,4 +1,3 @@
-// Doc Not Optimize
 use crate::{
     ProgramCollect, RenderResult, config::StructuralRendererSetting,
     renderer::structural::error::StructuralRendererSerializeError,

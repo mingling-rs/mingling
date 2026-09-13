@@ -1,4 +1,3 @@
-// Doc Not Optimize
 #![allow(unused)]
 
 use mingling_core::ChainProcess;
