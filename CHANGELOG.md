@@ -12,6 +12,7 @@ Any contributor making changes to the project must record their changes in this 
 
 - [Unreleased](#unreleased)
 - [Release 0.6.0 (Unreleased)](#release-060-unreleased)
+- [Release 0.5.2 (2026-09-16)](#release-051-2026-09-16)
 - [Release 0.5.1 (2026-09-13)](#release-051-2026-09-13)
 - [Release 0.5.0 (2026-09-10)](#release-050-2026-09-10)
 - [Release 0.4.0 (2026-08-16)](#release-040-2026-08-16)
@@ -67,6 +68,26 @@ None
 #### Features:
 
 None
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
+
+### 0.5.2 (2026-09-16)
+
+#### Fixes:
+
+None
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+1. **[`deps:arg-picker`]** Bumped the `arg-picker` dependency version from `0.3.0` to `0.3.2`. The workspace `Cargo.toml` now declares `arg-picker = { version = "0.3.2", features = ["derive"] }`.
 
 #### **BREAKING CHANGES** (API CHANGES):
 
