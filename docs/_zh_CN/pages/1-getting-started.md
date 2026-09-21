@@ -13,7 +13,7 @@ cd my-cli
 
 ```toml
 [dependencies.mingling]
-version = "0.5.2"
+version = "0.5.3"
 features = []
 ```
  
@@ -25,7 +25,7 @@ features = []
 
 ```toml
 [dependencies.mingling]
-version = "0.5.2"
+version = "0.5.3"
 features = [
     "parser",
     "comp",
