@@ -150,6 +150,22 @@ where
         self
     }
 
+    /// The controls a set of hooks returned, in the order the hooks were registered.
+    ///
+    /// What every hook said is kept, rather than only what the last one said. A hook says
+    /// "no opinion" by answering with nothing, which is the usual answer, so taking the last
+    /// hook's word for the whole of it lets a hook with no opinion — registered after one that
+    /// does have one — erase it. The exit-code setup is exactly that case: it overrides the
+    /// exit code from a `finish` hook, and any hook registered after it that says nothing
+    /// would take the code away. What a later hook overrides, it overrides by saying so.
+    fn joined_controls(units: Vec<ProgramControlUnit<C>>) -> ProgramControls<C> {
+        match units.len() {
+            0 => ProgramControls::Empty,
+            1 => ProgramControls::Single(units.into_iter().next().expect("one unit counted")),
+            _ => ProgramControls::Multi(units),
+        }
+    }
+
     pub(crate) fn run_hook_on_begin(&self, info: &HookBeginInfo) {
         if !self.user_context.run_hook {
             return;
@@ -170,13 +186,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref pre_dispatch) = hook.pre_dispatch {
-                controls = pre_dispatch(info);
+                units.extend(pre_dispatch(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     pub(crate) fn run_hook_post_dispatch(
@@ -187,13 +203,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref post_dispatch) = hook.post_dispatch {
-                controls = post_dispatch(info);
+                units.extend(post_dispatch(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     pub(crate) fn run_hook_pre_chain(&self, info: &HookPreChainInfo<C>) -> ProgramControls<C> {
@@ -201,13 +217,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref pre_chain) = hook.pre_chain {
-                controls = pre_chain(info);
+                units.extend(pre_chain(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     pub(crate) fn run_hook_post_chain(&self, info: &HookPostChainInfo<C>) -> ProgramControls<C> {
@@ -215,13 +231,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref post_chain) = hook.post_chain {
-                controls = post_chain(info);
+                units.extend(post_chain(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     pub(crate) fn run_hook_pre_render(&self, info: &HookPreRenderInfo<C>) -> ProgramControls<C> {
@@ -229,13 +245,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref pre_render) = hook.pre_render {
-                controls = pre_render(info);
+                units.extend(pre_render(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     pub(crate) fn run_hook_post_render(&self, info: &HookPostRenderInfo) -> ProgramControls<C> {
@@ -243,13 +259,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref post_render) = hook.post_render {
-                controls = post_render(info);
+                units.extend(post_render(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     #[allow(dead_code)]
@@ -271,13 +287,13 @@ where
             return ProgramControls::Empty;
         }
 
-        let mut controls = ProgramControls::Empty;
+        let mut units = Vec::new();
         for hook in &self.hooks {
             if let Some(ref finish) = hook.finish {
-                controls = finish(info);
+                units.extend(finish(info));
             }
         }
-        controls
+        Self::joined_controls(units)
     }
 
     /// Runs the REPL begin hooks (only available with `repl` feature)
@@ -919,6 +935,29 @@ mod tests {
                 .collect();
         assert_eq!(controls.len(), 1);
         match &controls[0] {
+            ProgramControlUnit::OverrideExitCode(code) => assert_eq!(*code, 42),
+            _ => panic!("Unexpected control unit"),
+        }
+    }
+
+    #[test]
+    fn a_hook_with_no_opinion_does_not_erase_what_an_earlier_one_said() {
+        // The exit-code setup overrides the exit code from a `finish` hook, so a hook
+        // registered after it that says nothing must leave that override standing.
+        let mut program = crate::Program::<MockHookEnum>::new_with_args(["mock"]);
+        program.with_hook(
+            ProgramHook::empty()
+                .on_finish(|_: &HookFinishInfo| ProgramControlUnit::OverrideExitCode(42)),
+        );
+        program.with_hook(ProgramHook::empty().on_finish(|_: &HookFinishInfo| ()));
+
+        let units: Vec<ProgramControlUnit<MockHookEnum>> = program
+            .run_hook_finish(&HookFinishInfo {})
+            .into_iter()
+            .collect();
+
+        assert_eq!(units.len(), 1);
+        match &units[0] {
             ProgramControlUnit::OverrideExitCode(code) => assert_eq!(*code, 42),
             _ => panic!("Unexpected control unit"),
         }

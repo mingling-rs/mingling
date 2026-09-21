@@ -12,6 +12,8 @@ Any contributor making changes to the project must record their changes in this 
 
 - [Unreleased](#unreleased)
 - [Release 0.6.0 (Unreleased)](#release-060-unreleased)
+- [Release 0.5.3 (2026-09-21)](#release-053-2026-09-21)
+- [Release 0.5.2 (2026-09-16)](#release-051-2026-09-16)
 - [Release 0.5.1 (2026-09-13)](#release-051-2026-09-13)
 - [Release 0.5.0 (2026-09-10)](#release-050-2026-09-10)
 - [Release 0.4.0 (2026-08-16)](#release-040-2026-08-16)
@@ -128,6 +130,46 @@ None
     - **Remove any `use mingling::COMPLETION_SUBCOMMAND;` import** and use the `mingling::consts` path instead (or `use mingling::consts::COMPLETION_SUBCOMMAND;`).
 
     _Behavioral note:_ no runtime behavior changes — the constant's value (`"__comp"`) and `comp` feature gating are unchanged. The move only aligns the constant's location with the framework's other constants under the `consts`/`constants` modules.
+
+---
+
+### 0.5.3 (2026-09-21)
+
+#### Fixes:
+
+1. **[`core:hooks`]** **[`core:exit-code`]** A hook that answered with no control units no longer erases what the hooks registered before it said. Every `run_hook_*` gathered the hooks' instructions by assigning, so the last hook's answer stood for the whole of it — and a `finish` hook with nothing to say, registered after the one `ExitCodeSetup` installs, took the exit code away from it, which made every run end with `0` whatever it did. The instructions are now collected in registration order, so a hook overrides something by saying so rather than by being asked last.
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+None
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
+
+---
+
+### 0.5.2 (2026-09-16)
+
+#### Fixes:
+
+None
+
+#### Optimizations:
+
+None
+
+#### Features:
+
+1. **[`deps:arg-picker`]** Bumped the `arg-picker` dependency version from `0.3.0` to `0.3.2`. The workspace `Cargo.toml` now declares `arg-picker = { version = "0.3.2", features = ["derive"] }`.
+
+#### **BREAKING CHANGES** (API CHANGES):
+
+None
 
 ---
 
