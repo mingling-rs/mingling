@@ -147,3 +147,222 @@ pub fn desc_thanks() -> Description {
  
 gen_program!();
 ```
+ 
+---
+
+## Why is a lint allowed on a `#[chain]` function reported as defined twice?
+
+(chain) (macro) (attributes)
+
+`#[chain]` re-emits the attributes of the function it is given onto the hidden struct it
+generates, so anything that is not `chain` itself ends up attached to two items at once:
+
+```rust
+#[allow(clippy::trivially_copy_pass_by_ref)]
+#[chain]
+fn handle_thing(state: StateThing, confirm: &ResConfirm) -> Next {
+    // ...
+}
+```
+ 
+That expands to roughly:
+
+```rust
+#[allow(clippy::trivially_copy_pass_by_ref)] // copied onto the generated struct
+#[doc(hidden)]
+#[allow(non_camel_case_types)]
+pub struct __internal_chain_handle_thing;
+ 
+impl Chain<ThisProgram> for __internal_chain_handle_thing {
+    // ...
+}
+ 
+// Keep the original function unchanged
+#[allow(clippy::trivially_copy_pass_by_ref)] // and kept on the function
+fn handle_thing(state: StateThing, confirm: &ResConfirm) -> Next {
+    // ...
+}
+```
+ 
+rustc then reports the *same* attribute twice, at the *same* span:
+
+```
+error: duplicated attribute
+   --> src/tools/cmd_tool_sync_all.rs:105:9
+    |
+105 | #[allow(clippy::trivially_copy_pass_by_ref)]
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+note: first defined here
+   --> src/tools/cmd_tool_sync_all.rs:105:9
+```
+ 
+`#[cfg(...)]`, `#[doc(...)]` and `#[expect(...)]` are in the same boat, and a `#[cfg]` is worse
+than a lint: on the generated struct it decides whether the *chain* exists at all, which is not
+what the author wrote it for.
+
+`#[command]` does not do this — it keeps the attributes only on the original function — so the two
+macros disagree about what an attribute on a handler means.
+
+Workaround:
+
+- Hoist the attribute to an enclosing item — a file-level `#![allow(...)]`, a module, or a `#[cfg]`
+on the module — and leave the handler bare.
+
+Ideal solution:
+
+- `#[chain]` should not copy the function's attributes onto the struct it generates. An attribute
+that genuinely has to reach that struct should be one the macro writes itself.
+
+---
+
+## Why can't an entry use `?` and return its own state type?
+
+(command) (chain) (routeify) (error handling)
+
+The wrapper `#[command]` generates ends in `.into()`:
+
+```rust
+#[::mingling::macros::chain]
+fn __command_chain_init(params) -> crate::Next {
+    init(#(#call_args),*).into()
+}
+```
+ 
+so an entry may return any `Grouped` type, and it reads well:
+
+```rust
+#[command(node = "init")]
+pub fn init(cwd: &ResCurrentDir) -> StateCreatePath {
+    StateCreatePath::at(cwd.to_path_buf())
+}
+```
+ 
+but the moment the same entry wants `?` to leave on a bad argument, it stops compiling:
+
+```rust
+#[command(entry = EntryCreate, routeify)]
+pub fn create(args: EntryCreate) -> StateCreatePath {
+    let path = args
+        .pick_or_route(&ARG_PATH, || ErrorPathNotProvided.into())
+        .to_result()?; // <-- wants to leave with a `Next`
+ 
+    StateCreatePath::at(path)
+}
+```
+ 
+```
+error[E0308]: mismatched types
+   --> src/cmd_create.rs:44:24
+    |
+ 44 |         .to_result()?;
+    |                      ^ expected `StateCreatePath`, found `ChainProcess<ThisProgram>`
+```
+ 
+because `routeify` rewrites `?` into `route!`, and `route!` is:
+
+```rust
+match expr {
+    Ok(r) => r,
+    Err(e) => return ::mingling::Routable::to_chain(e),
+}
+```
+ 
+The `return` is a `Next`, so the function's return type has to *be* `Next` — which gives up the
+nicer signature. An entry therefore has to choose: return its own state, or return `Next` and be
+allowed to use `?`.
+
+Workaround:
+
+- Match instead of `?` when the entry must keep its own return type:
+
+```rust
+let path = match args
+    .pick_or_route(&ARG_PATH, || ErrorPathNotProvided.into())
+    .to_result()
+{
+    Ok(path) => path,
+    Err(next) => return next,
+};
+```
+ 
+Ideal solution:
+
+- Let the early return of `?` reach the surrounding function's return type — e.g. through
+`FromResidual`, so a `Grouped` state can absorb it itself — or offer a `route`-like macro whose
+early return is typed by the entry that uses it.
+
+---
+
+## Why does picking a `PathBuf` rewrite the path I typed?
+
+(picker) (arg-picker) (path)
+
+`SinglePickable for PathBuf` in `arg-picker` normalizes the argument through
+`just_fmt::fmt_path_str` before handing it over:
+
+```rust
+impl SinglePickable for PathBuf {
+    fn pick_single(str: Option<&str>) -> PickerArgResult<Self> {
+        str.map_or(NotFound, |str| {
+            just_fmt::fmt_path_str(str).map_or(NotFound, |formated| Parsed(Self::from(formated)))
+        })
+    }
+}
+```
+ 
+That formatter is *lossy*, and by its own documentation it "resolves simple `..` components",
+drops a leading `./`, collapses slashes, strips the characters Windows forbids
+(`*`, `?`, `"`, `<`, `>`, `|`) and removes ANSI sequences:
+
+```
+"/home/DOCS/Workspace/../Vault/"  ->  "/home/DOCS/Vault/"
+"./home/file.txt"                 ->  "home/file.txt"
+"/path/with/*unfriendly?chars"    ->  "/path/with/unfriendlychars"
+```
+ 
+and the `..` handling is not "resolving" so much as discarding. `just_fmt`'s
+`normalize_path` pops a component per `..`, and when there is nothing left to pop it drops
+the `..` on the floor instead of keeping it:
+
+```rust
+std::path::Component::ParentDir => {
+    if !components.is_empty() {
+        components.pop();
+    }
+    // nothing to pop: the `..` is silently dropped
+}
+```
+ 
+so a leading `..` — the one that means "above where I am" — is the one that disappears:
+
+```
+"../sibling/file"  ->  "sibling/file"   // points somewhere else entirely now
+"../../x"          ->  "x"
+"a/../b"           ->  "b"
+".."               ->  "."
+```
+ 
+An argument of type `PathBuf` is therefore not what the caller typed:
+
+- `..` is a legitimate component, not something to resolve. `../sibling/file` stops meaning the
+sibling once the leading `..` is gone — it now points *inside* the current directory, and the
+caller has no way to tell that it was rewritten.
+- `*` and `?` are legal in a Unix filename, so a literal name is silently turned into a different
+one — or into a pattern.
+- A relative path the caller was going to resolve elsewhere is already resolved here, from the
+wrong base, with no error to show for it.
+
+What deserves escape-prevention — a Vault path, a name that has to stay inside a root — wants this
+treatment, and should ask for it by name. A plain `PathBuf` argument wants the string as typed.
+
+Workaround:
+
+- Take the argument as `String` (or `OsString`) and convert it where the value is used, so that
+nothing rewrites it on the way in.
+
+Ideal solution:
+
+- `SinglePickable for PathBuf` should carry the argument through unchanged. A caller that needs
+normalization, or needs to refuse a path that escapes, can reach for `just_fmt` (or its own check)
+where it knows what the path is relative to.
