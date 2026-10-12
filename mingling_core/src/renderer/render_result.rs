@@ -632,6 +632,121 @@ impl RenderResult {
         }
     }
 
+    /// Returns references to every buffered `Stdout` entry, in insertion order.
+    ///
+    /// Unlike [`take_stdout`](RenderResult::take_stdout), this only borrows the
+    /// buffer — the entries are left untouched.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_to_buffer("Error", RenderResultMode::Stderr);
+    /// result.append_to_buffer("world", RenderResultMode::Stdout);
+    ///
+    /// let stdout = result.read_stdout();
+    /// assert_eq!(stdout, ["Hello", "world"]);
+    /// ```
+    #[must_use]
+    pub fn read_stdout(&self) -> Vec<&String> {
+        self.read_mode(Stdout)
+    }
+
+    /// Returns references to every buffered `Stderr` entry, in insertion order.
+    ///
+    /// Unlike [`take_stderr`](RenderResult::take_stderr), this only borrows the
+    /// buffer — the entries are left untouched.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_to_buffer("Warning", RenderResultMode::Stderr);
+    ///
+    /// let stderr = result.read_stderr();
+    /// assert_eq!(stderr, ["Warning"]);
+    /// ```
+    #[must_use]
+    pub fn read_stderr(&self) -> Vec<&String> {
+        self.read_mode(Stderr)
+    }
+
+    /// Removes and returns every buffered `Stdout` entry, in insertion order.
+    ///
+    /// The `Stderr` entries (and their order relative to each other) are left in
+    /// the buffer. Use [`read_stdout`](RenderResult::read_stdout) to inspect the
+    /// entries without removing them.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_to_buffer("Error", RenderResultMode::Stderr);
+    /// result.append_to_buffer("world", RenderResultMode::Stdout);
+    ///
+    /// assert_eq!(result.take_stdout(), ["Hello", "world"]);
+    /// assert_eq!(result.to_string(), "Error");
+    /// ```
+    pub fn take_stdout(&mut self) -> Vec<String> {
+        self.take_mode(Stdout)
+    }
+
+    /// Removes and returns every buffered `Stderr` entry, in insertion order.
+    ///
+    /// The `Stdout` entries (and their order relative to each other) are left in
+    /// the buffer. Use [`read_stderr`](RenderResult::read_stderr) to inspect the
+    /// entries without removing them.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.append_to_buffer("Hello", RenderResultMode::Stdout);
+    /// result.append_to_buffer("Error", RenderResultMode::Stderr);
+    ///
+    /// assert_eq!(result.take_stderr(), ["Error"]);
+    /// assert_eq!(result.to_string(), "Hello");
+    /// ```
+    pub fn take_stderr(&mut self) -> Vec<String> {
+        self.take_mode(Stderr)
+    }
+
+    /// Returns references to every buffered entry matching `mode`, in insertion order.
+    fn read_mode(&self, mode: RenderResultMode) -> Vec<&String> {
+        self.render_buffer
+            .iter()
+            .filter(|(_, entry_mode)| *entry_mode == mode)
+            .map(|(content, _)| content)
+            .collect()
+    }
+
+    /// Removes and returns every buffered entry matching `mode`, in insertion
+    /// order, while preserving the order of the remaining entries.
+    fn take_mode(&mut self, mode: RenderResultMode) -> Vec<String> {
+        let mut taken = Vec::new();
+        let mut remaining = Vec::with_capacity(self.render_buffer.len());
+        for (content, entry_mode) in std::mem::take(&mut self.render_buffer) {
+            if entry_mode == mode {
+                taken.push(content);
+            } else {
+                remaining.push((content, entry_mode));
+            }
+        }
+        self.render_buffer = remaining;
+        taken
+    }
+
     /// Returns the total number of characters (in terms of `char` count) in the buffered render output.
     ///
     /// This counts the length across all buffered entries, regardless of whether they are
@@ -985,5 +1100,85 @@ mod tests {
 
         IoWrite::write(&mut result, b"Hello").unwrap();
         assert_eq!(result.to_string(), "Hello");
+    }
+
+    #[test]
+    fn read_stdout_returns_only_stdout_entries_in_order() {
+        let mut result = RenderResult::default();
+        result.append_to_buffer("out1", RenderResultMode::Stdout);
+        result.append_to_buffer("err1", RenderResultMode::Stderr);
+        result.append_to_buffer("out2", RenderResultMode::Stdout);
+
+        assert_eq!(result.read_stdout(), ["out1", "out2"]);
+        // Reading does not consume: the buffer is unchanged.
+        assert_eq!(result.to_string(), "out1err1out2");
+    }
+
+    #[test]
+    fn read_stderr_returns_only_stderr_entries_in_order() {
+        let mut result = RenderResult::default();
+        result.append_to_buffer("out1", RenderResultMode::Stdout);
+        result.append_to_buffer("err1", RenderResultMode::Stderr);
+        result.append_to_buffer("err2", RenderResultMode::Stderr);
+
+        assert_eq!(result.read_stderr(), ["err1", "err2"]);
+        assert_eq!(result.to_string(), "out1err1err2");
+    }
+
+    #[test]
+    fn read_methods_return_empty_vec_when_no_matching_mode() {
+        let mut result = RenderResult::default();
+        result.print("only stdout");
+
+        assert!(result.read_stderr().is_empty());
+    }
+
+    #[test]
+    fn take_stdout_removes_and_returns_stdout_entries() {
+        let mut result = RenderResult::default();
+        result.append_to_buffer("out1", RenderResultMode::Stdout);
+        result.append_to_buffer("err1", RenderResultMode::Stderr);
+        result.append_to_buffer("out2", RenderResultMode::Stdout);
+
+        assert_eq!(result.take_stdout(), ["out1", "out2"]);
+        // Stderr entries remain, in their original relative order.
+        assert_eq!(result.to_string(), "err1");
+        assert_eq!(result.read_stderr(), ["err1"]);
+        assert!(result.read_stdout().is_empty());
+    }
+
+    #[test]
+    fn take_stderr_removes_and_returns_stderr_entries() {
+        let mut result = RenderResult::default();
+        result.append_to_buffer("err1", RenderResultMode::Stderr);
+        result.append_to_buffer("out1", RenderResultMode::Stdout);
+        result.append_to_buffer("err2", RenderResultMode::Stderr);
+
+        assert_eq!(result.take_stderr(), ["err1", "err2"]);
+        assert_eq!(result.to_string(), "out1");
+        assert_eq!(result.read_stdout(), ["out1"]);
+        assert!(result.read_stderr().is_empty());
+    }
+
+    #[test]
+    fn take_stdout_on_empty_matching_mode_leaves_buffer_intact() {
+        let mut result = RenderResult::default();
+        result.eprint("error");
+
+        assert!(result.take_stdout().is_empty());
+        assert_eq!(result.to_string(), "error");
+    }
+
+    #[test]
+    fn take_methods_preserve_exit_code() {
+        let mut result = RenderResult::new();
+        result.exit_code = 7;
+        result.print("out");
+        result.eprint("err");
+
+        result.take_stdout();
+        result.take_stderr();
+        assert_eq!(result.exit_code, 7);
+        assert!(result.is_empty());
     }
 }

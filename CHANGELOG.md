@@ -68,7 +68,33 @@ None
 
 #### Features:
 
-None
+1. **[`core:render`]** Added mode-aware accessors to `RenderResult` for inspecting and extracting buffered output by its [`RenderResultMode`] channel, without going through the concatenated `to_string()`/`std_print()` path.
+
+    - **`read_stdout(&self) -> Vec<&String>`** — Borrows every buffered `Stdout` entry, in insertion order, leaving the buffer untouched.
+    - **`read_stderr(&self) -> Vec<&String>`** — Borrows every buffered `Stderr` entry, in insertion order, leaving the buffer untouched.
+    - **`take_stdout(&mut self) -> Vec<String>`** — Removes and returns every buffered `Stdout` entry, in insertion order. `Stderr` entries keep their relative order in the buffer.
+    - **`take_stderr(&mut self) -> Vec<String>`** — Removes and returns every buffered `Stderr` entry, in insertion order. `Stdout` entries keep their relative order in the buffer.
+
+    Each entry retains its own mode, so callers can separate standard output from error output. The `read_*` methods are non-destructive and cheap (they only borrow), while the `take_*` methods move the matching entries out of the buffer and leave the rest intact — `exit_code` is never affected.
+
+    ```rust
+    let mut result = RenderResult::default();
+    result.println("Hello");
+    result.eprintln("Something went wrong");
+
+    // Inspect without consuming
+    assert_eq!(result.read_stdout(), ["Hello", "\n"]);
+    assert_eq!(result.read_stderr(), ["Something went wrong", "\n"]);
+
+    // Or extract the streams
+    let stdout = result.take_stdout();
+    let stderr = result.take_stderr();
+    #[allow(unused)]
+    {
+        assert_eq!(stdout, ["Hello", "\n"]);
+        assert_eq!(stderr, ["Something went wrong", "\n"]);
+    }
+    ```
 
 #### **BREAKING CHANGES** (API CHANGES):
 
