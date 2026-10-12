@@ -59,7 +59,7 @@ fn main() {
 }
 ```
  
-`BasicProgramSetup` includes `HelpFlagSetup`, which simply sets `program.user_context.help` to `true`.
+`BasicProgramSetup` includes `HelpFlagSetup`, which simply sets `program.user_context.query` to `QueryMode::Usage`.
 
 The actual routing to the `#[help]` function is handled by code generated via `gen_program!()` — it checks this flag during dispatch, and if `true`, goes through the help rendering path, bypassing the Chain.
 

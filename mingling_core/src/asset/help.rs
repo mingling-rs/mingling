@@ -2,7 +2,7 @@ use crate::RenderResult;
 
 /// Mingling's program help request.
 ///
-/// It provides help capability to a program by binding an entry type. When [`Program`](https://docs.rs/mingling/latest/mingling/struct.Program.html)'s `user_context.help` is `true`,
+/// It provides help capability to a program by binding an entry type. When [`Program`](https://docs.rs/mingling/latest/mingling/struct.Program.html)'s `user_context.query` is [`QueryMode::Usage`](https://docs.rs/mingling/latest/mingling/config/enum.QueryMode.html),
 /// the first Entry produced by [`Dispatcher`](https://docs.rs/mingling/latest/mingling/trait.Dispatcher.html) will be sent into [`HelpRequest`] and rendered into a [`RenderResult`] for the user.
 ///
 /// # Manual impl

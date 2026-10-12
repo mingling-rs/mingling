@@ -1053,9 +1053,10 @@ pub fn bench_cell(input: TokenStream) -> TokenStream {
 /// functions are invoked when the user passes `--help` / `-h` for a command
 /// and `BasicProgramSetup` is registered on the program.
 ///
-/// When `program.user_context.help` is `true`, the command will **skip** the
-/// normal `#[chain]` and `#[renderer`] pipeline and instead route directly
-/// to the registered `#[help]` function for that entry type.
+/// When `program.user_context.query` is
+/// [`QueryMode::Usage`](https://docs.rs/mingling/latest/mingling/config/enum.QueryMode.html),
+/// the command will **skip** the normal `#[chain]` and `#[renderer`] pipeline and
+/// instead route directly to the registered `#[help]` function for that entry type.
 ///
 /// The macro works by:
 /// 1. Generating a hidden struct implementing the `HelpRequest` trait.

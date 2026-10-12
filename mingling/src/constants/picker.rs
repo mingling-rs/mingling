@@ -31,6 +31,26 @@ pub const CONFIRM_FLAG: PickerArg<Flag> = PickerArg::<Flag> {
     internal_type: PhantomData,
 };
 
+/// Version flag: display version information.
+/// - `full`: `["version"]`
+/// - `short`: `'v'`
+pub const VERSION_FLAG: PickerArg<Flag> = PickerArg::<Flag> {
+    full: &["version"],
+    short: Some('v'),
+    positional: false,
+    internal_type: PhantomData,
+};
+
+/// Verbose flag: enable detailed output.
+/// - `full`: `["verbose"]`
+/// - `short`: `'V'`
+pub const VERBOSE_FLAG: PickerArg<Flag> = PickerArg::<Flag> {
+    full: &["verbose"],
+    short: Some('V'),
+    positional: false,
+    internal_type: PhantomData,
+};
+
 /// Renderer flag: explicitly specify the Structural Renderer argument.
 /// - `full`: `["renderer"]`
 /// - `short`: (none)

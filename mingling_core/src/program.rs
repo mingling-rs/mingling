@@ -6,7 +6,7 @@ use crate::config::StructuralRendererSetting;
 use crate::{
     AnyOutput, GlobalResContainer,
     asset::dispatcher::Dispatcher,
-    config::{ProgramStdoutSetting, ProgramUserContext},
+    config::{ProgramStdoutSetting, ProgramUserContext, QueryMode},
     error::ChainProcessError,
     hook::ProgramHook,
 };
@@ -121,6 +121,24 @@ where
             hooks: Vec::new(),
 
             resources: GlobalResContainer::new(),
+        }
+    }
+
+    /// Returns the effective query mode, honoring the `print_help` and
+    /// `print_version` output settings.
+    ///
+    /// A usage query is downgraded to [`QueryMode::None`] when
+    /// [`ProgramStdoutSetting::print_help`](crate::config::ProgramStdoutSetting::print_help)
+    /// is `false`, and a version query likewise when
+    /// [`ProgramStdoutSetting::print_version`](crate::config::ProgramStdoutSetting::print_version)
+    /// is `false`. This lets a program disable the built-in hijack (for example
+    /// to let a `clap` dispatcher handle `--help`/`--version` itself).
+    #[must_use]
+    pub const fn effective_query(&self) -> QueryMode {
+        match self.user_context.query {
+            QueryMode::Usage if !self.stdout_setting.print_help => QueryMode::None,
+            QueryMode::Version if !self.stdout_setting.print_version => QueryMode::None,
+            query => query,
         }
     }
 

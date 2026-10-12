@@ -126,7 +126,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
     let begin_body = options.error_struct.as_ref().map_or_else(
         || {
             quote! {
-                if ::mingling::this::<#program_path>().user_context.help {
+                if ::mingling::this::<#program_path>().effective_query() != ::mingling::config::QueryMode::None {
                     return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
                 }
                 let parsed = <#struct_name as ::clap::Parser>::try_parse_from(clap_args)
@@ -136,7 +136,7 @@ pub(crate) fn dispatcher_clap_attr(attr: TokenStream, item: TokenStream) -> Toke
         },
         |error_struct| {
             quote! {
-                if ::mingling::this::<#program_path>().user_context.help {
+                if ::mingling::this::<#program_path>().effective_query() != ::mingling::config::QueryMode::None {
                     return ::mingling::Routable::<#program_path>::to_chain(#struct_name::default());
                 }
                 match <#struct_name as ::clap::Parser>::try_parse_from(clap_args) {

@@ -59,7 +59,7 @@ fn main() {
 }
 ```
  
-`BasicProgramSetup` 内置了 `HelpFlagSetup`，它的作用仅仅是把 `program.user_context.help` 设为 `true`。
+`BasicProgramSetup` 内置了 `HelpFlagSetup`，它的作用仅仅是把 `program.user_context.query` 设为 `QueryMode::Usage`。
 
 真正把请求路由到 `#[help]` 函数的是 `gen_program!()` 生成的代码 —— 它在调度时检查这个标记，如果为 `true` 就走帮助渲染路径，不经过 Chain。
 

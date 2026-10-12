@@ -182,7 +182,7 @@ gen_program!();
 The flow is:
 
 - User types `greet --help`
-- `BasicProgramSetup` sets `program.user_context.help = true`
+- `BasicProgramSetup` sets `program.user_context.query = QueryMode::Usage`
 - The dispatcher sees this flag and routes to the `#[help]` function instead of the `#[chain]`
 
 ---

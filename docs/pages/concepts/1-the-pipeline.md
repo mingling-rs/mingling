@@ -12,9 +12,10 @@ graph TD
     A["program.exec_and_exit()"] --> B["Hook: pre_dispatch"]
     B --> C["Dispatch<br/>match cmd → Entry"]
     C --> D["Hook: post_dispatch"]
-    D --> E{"user_context.help?"}
-    E -->|"true"| F["render_help<br/>skip to help rendering"]
-    E -->|"false"| G{"has_chain?"}
+    D --> E{"effective_query()?"}
+    E -->|"Usage"| F["render_help<br/>skip to help rendering"]
+    E -->|"Version"| F2["on_version hook<br/>render version"]
+    E -->|"None"| G{"has_chain?"}
     G -->|"yes"| H["Hook: pre_chain"]
     H --> I["do_chain<br/>run business logic"]
     I --> J{"ChainProcess?"}
@@ -28,6 +29,7 @@ graph TD
     K --> O["Hook: finish → return RenderResult"]
     L --> O
     F --> O
+    F2 --> O
 ```
  
 ## Phase Breakdown
@@ -49,18 +51,18 @@ On a match, `dispatcher.begin(args)` is called, returning `ChainProcess::Ok((Any
 
 If no Dispatcher matches, `EntryFallback` is generated (wrapping the full input), which a Renderer can later handle to display "Command not found".
 
-### 2. Help Shortcut
+### 2. Help / Version Shortcut
 
-Before entering the main loop, `program.user_context.help` is checked. If `true` (set by `HelpFlagSetup` in `BasicProgramSetup` when `--help` is parsed), `render_help` is called directly, skipping the entire pipeline.
+Before entering the main loop, `program.effective_query()` is checked. If it is `QueryMode::Usage` (set by `HelpFlagSetup` in `BasicProgramSetup` when `--help` is parsed), `render_help` is called directly, skipping the entire pipeline. If it is `QueryMode::Version` (set by `VersionSetup` when `--version` is parsed), the `version` hook is run instead. A query is downgraded to `QueryMode::None` when `print_help`/`print_version` is `false`.
 
 ### 3. Chain Main Loop
 
 This is the core scheduling logic. Each iteration checks the current `AnyOutput`:
 
 1. **Has a Chain** → execute `C::do_chain(current)`
-   - Returns `(AnyOutput, Renderer)` → exit loop, go to rendering
-   - Returns `(AnyOutput, Chain)` → continue loop, pass result to next Chain
-   - Returns `Err` → terminate
+    - Returns `(AnyOutput, Renderer)` → exit loop, go to rendering
+    - Returns `(AnyOutput, Chain)` → continue loop, pass result to next Chain
+    - Returns `Err` → terminate
 
 2. **No Chain, but has a Renderer** → render directly
 

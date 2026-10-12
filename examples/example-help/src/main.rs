@@ -18,7 +18,7 @@ use std::io::Write;
 
 dispatcher!("greet", EntryGreet);
 
-// Define help        _________ When `program.user_context.help` is `true`
+// Define help        _________ When `program.user_context.query` is `QueryMode::Usage`
 //                   /            the command will not enter `#[chain]` / `#[renderer]`
 #[help] //           vvvvvvvvvv   but instead enter this `#[help]` function
 fn help_greet(_prev: EntryGreet) -> RenderResult {

@@ -1,0 +1,10 @@
+[example]
+id = "example-version"
+name = "Version"
+icon = "🏷️"
+category = "ux"
+desc = """
+Shows how `--version` hijacks execution to print version information, using the `--version` flag added by `BasicProgramSetup` and an `on_version` hook to produce the output.
+"""
+tags = ["--version", "hook"]
+files = ["src/main.rs", "Cargo.toml"]

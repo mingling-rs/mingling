@@ -1,19 +1,24 @@
 use arg_picker::{PickerArg, value::Flag};
 use mingling_core::{
     Program, ProgramCollect,
-    config::{ConfirmationMode, ErrorOutput, InteractionMode, RenderOutput, YesAssumption},
+    config::{
+        ConfirmationMode, ErrorOutput, InteractionMode, QueryMode, RenderOutput, Verbosity,
+        YesAssumption,
+    },
     setup::ProgramSetup,
 };
 
 use crate::{
-    consts::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG},
+    consts::{CONFIRM_FLAG, HELP_FLAG, QUIET_FLAG, VERBOSE_FLAG, VERSION_FLAG},
     picker::PickerHelper,
 };
 
 /// Performs basic program initialization:
 ///
 /// - Collects `--quiet` flag to control message rendering
-/// - Collects `--help` flag to enable help mode
+/// - Collects `--help` flag to enable usage query mode
+/// - Collects `--version` flag to enable version query mode
+/// - Collects `--verbose` flag to enable verbose output
 /// - Collects `--confirm` flag to skip user confirmation
 pub struct BasicProgramSetup;
 
@@ -24,6 +29,8 @@ where
     fn setup(self, program: &mut Program<C>) {
         program.with_setup(HelpFlagSetup::default());
         program.with_setup(QuietFlagSetup::default());
+        program.with_setup(VersionSetup::default());
+        program.with_setup(VerboseSetup::default());
         program.with_setup(ConfirmFlagSetup::default());
     }
 }
@@ -50,7 +57,7 @@ where
     fn setup(self, program: &mut Program<C>) {
         let help = program.pick_flag(self.flag);
         if help {
-            program.user_context.help = true;
+            program.user_context.query = QueryMode::Usage;
         }
     }
 }
@@ -58,6 +65,76 @@ where
 impl Default for HelpFlagSetup<'_> {
     fn default() -> Self {
         Self { flag: &HELP_FLAG }
+    }
+}
+
+/// Provides setup for parsing the version flag
+///
+/// The default value is `--version / -v`
+pub struct VersionSetup<'a> {
+    flag: &'a PickerArg<'a, Flag>,
+}
+
+impl<'a> VersionSetup<'a> {
+    /// Creates a new `VersionSetup` with the given flag aliases.
+    #[must_use]
+    pub const fn new(flag: &'a PickerArg<Flag>) -> Self {
+        Self { flag }
+    }
+}
+
+impl<C> ProgramSetup<C> for VersionSetup<'_>
+where
+    C: ProgramCollect<Enum = C>,
+{
+    fn setup(self, program: &mut Program<C>) {
+        let version = program.pick_flag(self.flag);
+        if version {
+            program.user_context.query = QueryMode::Version;
+        }
+    }
+}
+
+impl Default for VersionSetup<'_> {
+    fn default() -> Self {
+        Self {
+            flag: &VERSION_FLAG,
+        }
+    }
+}
+
+/// Provides setup for parsing the verbose flag
+///
+/// The default value is `--verbose / -V`
+pub struct VerboseSetup<'a> {
+    flag: &'a PickerArg<'a, Flag>,
+}
+
+impl<'a> VerboseSetup<'a> {
+    /// Creates a new `VerboseSetup` with the given flag aliases.
+    #[must_use]
+    pub const fn new(flag: &'a PickerArg<Flag>) -> Self {
+        Self { flag }
+    }
+}
+
+impl<C> ProgramSetup<C> for VerboseSetup<'_>
+where
+    C: ProgramCollect<Enum = C>,
+{
+    fn setup(self, program: &mut Program<C>) {
+        let verbose = program.pick_flag(self.flag);
+        if verbose {
+            program.stdout_setting.verbosity = Verbosity::Verbose;
+        }
+    }
+}
+
+impl Default for VerboseSetup<'_> {
+    fn default() -> Self {
+        Self {
+            flag: &VERBOSE_FLAG,
+        }
     }
 }
 

@@ -28,6 +28,7 @@
 //!   ├─ post_chain      ← after chain processing completes
 //!   ├─ pre_render      ← before the type enters the renderer
 //!   ├─ post_render     ← after rendering completes
+//!   ├─ version         ← when a version query is requested
 //!   │
 //! finish              ← before program exits
 //! ```
@@ -88,6 +89,10 @@ where
     pub post_render: Option<
         Box<dyn for<'a> Fn(&mut HookPostRenderInfo<'a>) -> ProgramControls<C> + Send + Sync>,
     >,
+
+    /// Executes to render version information when a version query is requested
+    pub version:
+        Option<Box<dyn for<'a> Fn(&mut HookVersionInfo<'a>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes before the program ends
     pub finish: Option<Box<dyn Fn(&HookFinishInfo) -> ProgramControls<C> + Send + Sync>>,
@@ -264,6 +269,20 @@ where
         for hook in &self.hooks {
             if let Some(ref post_render) = hook.post_render {
                 units.extend(post_render(info));
+            }
+        }
+        Self::joined_controls(units)
+    }
+
+    pub(crate) fn run_hook_version(&self, info: &mut HookVersionInfo) -> ProgramControls<C> {
+        if !self.user_context.run_hook {
+            return ProgramControls::Empty;
+        }
+
+        let mut units = Vec::new();
+        for hook in &self.hooks {
+            if let Some(ref version) = hook.version {
+                units.extend(version(info));
             }
         }
         Self::joined_controls(units)
@@ -455,6 +474,7 @@ where
             post_chain: None,
             pre_render: None,
             post_render: None,
+            version: None,
             finish: None,
             #[cfg(not(feature = "async"))]
             exec_panic: None,
@@ -554,6 +574,22 @@ where
         R: Into<ProgramControls<C>>,
     {
         self.post_render = Some(Box::new(move |info| handler(info).into()));
+        self
+    }
+
+    /// Sets the handler for the `version` event.
+    ///
+    /// The handler is invoked when a version query is requested (see
+    /// [`QueryMode::Version`](crate::config::QueryMode::Version)). It receives a
+    /// mutable [`RenderResult`] and should write the program's version output
+    /// into it.
+    #[must_use]
+    pub fn on_version<F, R>(mut self, handler: F) -> Self
+    where
+        F: for<'a> Fn(&mut HookVersionInfo<'a>) -> R + 'static + Send + Sync,
+        R: Into<ProgramControls<C>>,
+    {
+        self.version = Some(Box::new(move |info| handler(info).into()));
         self
     }
 
@@ -929,6 +965,19 @@ mod tests {
     }
 
     #[test]
+    fn test_hook_on_version() {
+        let hook = ProgramHook::<MockHookEnum>::empty().on_version(|info: &mut HookVersionInfo| {
+            info.result.print("mock 1.2.3");
+        });
+        assert!(hook.version.is_some());
+        let mut result = crate::RenderResult::default();
+        (hook.version.as_ref().unwrap())(&mut HookVersionInfo {
+            result: &mut result,
+        });
+        assert_eq!(result.to_string(), "mock 1.2.3");
+    }
+
+    #[test]
     fn test_hook_on_finish() {
         let hook = ProgramHook::<MockHookEnum>::empty()
             .on_finish(|_: &HookFinishInfo| ProgramControlUnit::OverrideExitCode(42));
@@ -977,6 +1026,7 @@ mod tests {
             .on_post_chain(|_: &HookPostChainInfo<MockHookEnum>| ())
             .on_pre_render(|_: &HookPreRenderInfo<MockHookEnum>| ())
             .on_post_render(|_: &mut HookPostRenderInfo| ())
+            .on_version(|_: &mut HookVersionInfo| ())
             .on_finish(|_: &HookFinishInfo| ProgramControlUnit::OverrideExitCode(0));
         assert!(hook.begin.is_some());
         assert!(hook.pre_dispatch.is_some());
@@ -985,6 +1035,7 @@ mod tests {
         assert!(hook.post_chain.is_some());
         assert!(hook.pre_render.is_some());
         assert!(hook.post_render.is_some());
+        assert!(hook.version.is_some());
         assert!(hook.finish.is_some());
     }
 }

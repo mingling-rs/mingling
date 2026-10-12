@@ -62,7 +62,7 @@ None
 
 1. **[`core:hooks`]** The `post_render` hook is now run when a chain routes directly to a renderer. Previously, only the no-chain render path (`C::has_renderer`) and the `RouteToRender` control unit wrapped rendering with `pre_render`/`post_render`; the chain path that reached a renderer via `NextProcess::Renderer` called `C::render` without either hook. As a result, hooks registered with `on_post_render` (and `on_pre_render`) never fired for chain-produced results, even though the same renderer was being invoked. Both hooks now run around that render call, matching the direct-render path (`mingling_core/src/program/exec.rs`).
 
-    _Note:_ help rendering (`render_help`, reached via the `user_context.help` fast path and the `RouteToHelp` control unit) still intentionally does not run the render hooks, as it does not go through the ordinary renderer pipeline.
+    _Note:_ help rendering (`render_help`, reached via the `user_context.query == QueryMode::Usage` fast path and the `RouteToHelp` control unit) still intentionally does not run the render hooks, as it does not go through the ordinary renderer pipeline.
 
 #### Optimizations:
 
@@ -125,7 +125,6 @@ None
     **Docs.rs feature list** (`mingling/Cargo.toml`): the `"core"` and `"macros"` entries were removed.
 
     ### Migration guide
-
     - **Remove `core` and `macros` from any `features = [...]` lists** (dependencies, dev-dependencies, and example feature lists), including manually expanded preset lists such as `mini`, `advanced`, and `full`.
     - **If you used `default-features = false`** to opt out of `core` or `macros`, note that these features no longer exist — both crates are now always linked.
     - **Remove any `#[cfg(feature = "core")]` / `#[cfg(feature = "macros")]` checks** referencing these `mingling` features.
@@ -152,7 +151,6 @@ None
     - **`mingling/src/lib.rs`** — The `pub mod consts` module now re-exports `mingling_core::constants::*` in addition to `crate::constants::*`.
 
     ### Migration guide
-
     - **Replace `mingling::COMPLETION_SUBCOMMAND` with `mingling::consts::COMPLETION_SUBCOMMAND`.** The top-level re-export no longer exists.
     - **Replace `mingling_core::COMPLETION_SUBCOMMAND` with `mingling_core::constants::COMPLETION_SUBCOMMAND`** in any direct `mingling_core` usage.
     - **Remove any `use mingling::COMPLETION_SUBCOMMAND;` import** and use the `mingling::consts` path instead (or `use mingling::consts::COMPLETION_SUBCOMMAND;`).
@@ -177,6 +175,38 @@ None
     - **Change `on_post_render` closures** from `|info: &HookPostRenderInfo| { ... }` to `|info: &mut HookPostRenderInfo| { ... }` (or simply `|info|`, letting inference pick the new type).
     - **Any code that invoked `post_render` directly** must now pass `&mut HookPostRenderInfo { result: &mut result }` and hold the `RenderResult` in a `mut` binding.
     - **Reads remain unaffected** — `info.result` still dereferences to `RenderResult` for inspection (`to_string()`, `len()`, `std_print()`, etc.); only mutation now requires the mutable borrow.
+
+4. **[`core:query`]** **[BREAKING]** Replaced the boolean `help` flag with a general query mode, added `--version`/`--verbose` to `BasicProgramSetup`, and made help/version hijacking configurable.
+
+    ### What changed
+
+    Observing help was previously a single boolean (`ProgramUserContext::help`). It is now one of several query modes, version queries are first-class, and whether a query hijacks execution is controlled by new output settings.
+
+    **Changed / added API:**
+
+    - **`ProgramUserContext::help: bool`** → **`ProgramUserContext::query: QueryMode`** (`mingling_core/src/program/config.rs`). `QueryMode` is `None` (default), `Usage` (equivalent to the old `help = true`), or `Version`.
+    - **`ProgramStdoutSetting::print_help: bool`** and **`ProgramStdoutSetting::print_version: bool`** — new settings (both default `true`) that decide whether a usage/version query is honored at run time.
+    - **`Program::effective_query() -> QueryMode`** — new method returning the requested query, downgraded to `QueryMode::None` when the matching `print_help`/`print_version` setting is `false`.
+    - **`version` lifecycle hook** — new `ProgramHook::on_version` builder and `HookVersionInfo { result: &mut RenderResult }`. It runs when `effective_query() == QueryMode::Version` and is responsible for writing the version output. There is no built-in version renderer.
+    - **`BasicProgramSetup` now mounts `VersionSetup` (`-v` / `--version`) and `VerboseSetup` (`-V` / `--verbose`)** — in both the default and `picker` variants. `HelpFlagSetup` now sets `query = QueryMode::Usage` instead of `help = true`.
+    - **`clap` dispatchers** now skip `clap` parsing when `effective_query() != QueryMode::None`, so both `--help` and `--version` route through Mingling's pipeline.
+    - **New example** — `examples/example-version` demonstrates rendering `--version` via `on_version`.
+
+    ### Migration guide
+    - **Replace `program.user_context.help = true`** with `program.user_context.query = QueryMode::Usage`, and **any `if ctx.help` check** with `program.effective_query() == QueryMode::Usage`.
+    - **To support `--version`**, register a `version` hook; Mingling does not print a version by default:
+
+        ```rust
+        use mingling::{hook::ProgramHook, prelude::*};
+        use std::io::Write;
+
+        program.with_hook(ProgramHook::<ThisProgram>::empty().on_version(|info| {
+            let _ = writeln!(info.result, "{}", env!("CARGO_PKG_VERSION"));
+        }));
+        ```
+
+    - **If you already register your own `--version`/`-v` or `--verbose`/`-V` flags, rename or remove them.** `BasicProgramSetup` now claims all four spellings, so a program that previously defined its own `-v` (typically for _verbose_) or `-V` (typically for _version_) will now conflict — the built-in setups win, and note that the conventional meaning is **swapped**: Mingling binds `-v` to `--version` and `-V` to `--verbose`. Either drop your own flags and use the built-ins, or don't mount `VersionSetup`/`VerboseSetup` (use the individual setups instead of `BasicProgramSetup`, or set `print_help`/`print_version` to `false` to disable the hijack).
+    - **If you relied on `--help` not hijacking** (e.g. letting `clap` handle it), set `program.stdout_setting.print_help = false`.
 
 ---
 
@@ -353,14 +383,14 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
     A new zero-sized marker struct `DefaultSetup` was added (`mingling/src/setups/default.rs`, re-exported from `mingling::setup`). When registered via `Program::with_setup(DefaultSetup)`, it composes the following setups based on the enabled feature flags:
 
     - When the `picker` feature is enabled, registers:
-      - The picker-specific `BasicProgramSetup` for flag collection.
-      - The picker-specific `StructuralRendererSetup` when the `structural_renderer` feature is also enabled.
+        - The picker-specific `BasicProgramSetup` for flag collection.
+        - The picker-specific `StructuralRendererSetup` when the `structural_renderer` feature is also enabled.
     - When the `picker` feature is disabled, registers:
-      - The standard `BasicProgramSetup` for flag collection.
-      - The standard `StructuralRendererSetup` when the `structural_renderer` feature is enabled.
+        - The standard `BasicProgramSetup` for flag collection.
+        - The standard `StructuralRendererSetup` when the `structural_renderer` feature is enabled.
     - Always registers:
-      - `ExitCodeSetup` to manage program exit codes.
-      - `DirectoryEnvironmentSetup` to register common directory resources (current dir, executable dir, home dir, temp dir).
+        - `ExitCodeSetup` to manage program exit codes.
+        - `DirectoryEnvironmentSetup` to register common directory resources (current dir, executable dir, home dir, temp dir).
 
     **New API:**
 
@@ -881,16 +911,16 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
 
     **Per-macro naming changes:**
 
-    | Macro / derive | Old generated names | New generated module(s) |
-    | --------------- | ------------------- | ----------------------- |
-    | `#[chain]` | `__internal_chain_<fn>` struct at definition site | `__mingling_chain_<fn_snake>` module re-exporting the same struct |
-    | `#[help]` | `__internal_help_<fn>` struct at definition site | `__mingling_help_<fn_snake>` module re-exporting the same struct |
-    | `#[renderer]` | `__internal_renderer_<fn>` struct at definition site | `__mingling_renderer_<fn_snake>` module re-exporting the same struct |
-    | `#[completion]` | `__internal_completion_<fn>` struct at definition site | `__mingling_completion_<fn_snake>` module re-exporting the same struct |
-    | `#[command]` | `__command_<fn>_module` re-export module | `__mingling_command_<fn_snake>` module containing the generated chain internals |
-    | `dispatcher!` | `__Dispatcher*` + `__internal_dispatcher_<cmd>` static at definition site, with `register_dispatcher!` emitted outside | `__mingling_dispatcher_<cmd_snake>` module containing the `__Dispatcher*` struct, the `register_dispatcher!` invocation, the `Dispatcher` impl, and the `__internal_dispatcher_<cmd>` static; `pub use __mingling_dispatcher_<cmd>::__Dispatcher*` / `::__internal_dispatcher_<cmd>` re-exports |
-    | `#[dispatcher_clap]` | `__Dispatcher*` + `__internal_dispatcher_<cmd>` static at definition site, with `register_dispatcher!` emitted outside | `__mingling_dispatcher_<cmd_snake>` module containing the `__Dispatcher*` struct, the `register_dispatcher!` invocation, and the `Dispatcher` impl + static; `pub(crate) use __mingling_dispatcher_<cmd>::__Dispatcher*` / `::__internal_dispatcher_<cmd>` re-exports |
-    | `#[derive(Grouped)]` / `#[derive(GroupedSerialize)]` | Type visible directly via pathf as `::TypeName` | `__mingling_type_<type_snake>` module (`#[doc(hidden)] #[allow(non_snake_case)] #vis mod`) re-exporting the type via `#vis use super::TypeName;` |
+    | Macro / derive                                       | Old generated names                                                                                                    | New generated module(s)                                                                                                                                                                                                                                                                         |
+    | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | `#[chain]`                                           | `__internal_chain_<fn>` struct at definition site                                                                      | `__mingling_chain_<fn_snake>` module re-exporting the same struct                                                                                                                                                                                                                               |
+    | `#[help]`                                            | `__internal_help_<fn>` struct at definition site                                                                       | `__mingling_help_<fn_snake>` module re-exporting the same struct                                                                                                                                                                                                                                |
+    | `#[renderer]`                                        | `__internal_renderer_<fn>` struct at definition site                                                                   | `__mingling_renderer_<fn_snake>` module re-exporting the same struct                                                                                                                                                                                                                            |
+    | `#[completion]`                                      | `__internal_completion_<fn>` struct at definition site                                                                 | `__mingling_completion_<fn_snake>` module re-exporting the same struct                                                                                                                                                                                                                          |
+    | `#[command]`                                         | `__command_<fn>_module` re-export module                                                                               | `__mingling_command_<fn_snake>` module containing the generated chain internals                                                                                                                                                                                                                 |
+    | `dispatcher!`                                        | `__Dispatcher*` + `__internal_dispatcher_<cmd>` static at definition site, with `register_dispatcher!` emitted outside | `__mingling_dispatcher_<cmd_snake>` module containing the `__Dispatcher*` struct, the `register_dispatcher!` invocation, the `Dispatcher` impl, and the `__internal_dispatcher_<cmd>` static; `pub use __mingling_dispatcher_<cmd>::__Dispatcher*` / `::__internal_dispatcher_<cmd>` re-exports |
+    | `#[dispatcher_clap]`                                 | `__Dispatcher*` + `__internal_dispatcher_<cmd>` static at definition site, with `register_dispatcher!` emitted outside | `__mingling_dispatcher_<cmd_snake>` module containing the `__Dispatcher*` struct, the `register_dispatcher!` invocation, and the `Dispatcher` impl + static; `pub(crate) use __mingling_dispatcher_<cmd>::__Dispatcher*` / `::__internal_dispatcher_<cmd>` re-exports                           |
+    | `#[derive(Grouped)]` / `#[derive(GroupedSerialize)]` | Type visible directly via pathf as `::TypeName`                                                                        | `__mingling_type_<type_snake>` module (`#[doc(hidden)] #[allow(non_snake_case)] #vis mod`) re-exporting the type via `#vis use super::TypeName;`                                                                                                                                                |
 
     **`pathf` pattern changes:**
 
@@ -904,13 +934,11 @@ Additionally, the `arg-picker` crate has been extracted from the mingling reposi
     **Test assertions updated** in `mingling_pathf/test/src/lib.rs` (`test_chain_analyze`, `test_renderer_analyze`, `test_help_analyze`, `test_completion_analyze`, `test_grouped_derive_analyze`, `test_dispatcher_analyze`, `test_dispatcher_dispatch_tree`, `test_dispatcher_clap_analyze`, `test_dispatcher_clap_dispatch_tree`, `test_metadata_analyze`) to assert the new `__mingling_*` module names and adjusted item counts (e.g., each `dispatcher!` now contributes 2 items instead of 4, `dispatcher_clap` dispatch-tree test went from 33 to 26 items).
 
     ### Migration guide
-
     - **Generated type names inside the new `__mingling_*` modules remain the same** (`__internal_chain_<fn>`, `__Dispatcher*`, `__internal_dispatcher_<cmd>`, etc.), so code that explicitly references those generated types through an old flat path (e.g. `crate::__internal_chain_my_handler`) must instead reference them through the new module path (e.g. `crate::__mingling_chain_my_handler::__internal_chain_my_handler`), or rely on the module-level glob re-exports pathf generates. Since the module also `use super::*`'s, the module content is reachable.
     - **`dispatcher!` / `#[dispatcher_clap]`** — Code that referenced the generated `__Dispatcher*` struct or `__internal_dispatcher_*` static directly must migrate to the new `pub use` re-exports (`__mingling_dispatcher_<cmd>::__Dispatcher*` and `__mingling_dispatcher_<cmd>::__internal_dispatcher_<cmd>`), which preserve the old names at the definition site (for `dispatcher!`) or at `pub(crate)` scope (for `#[dispatcher_clap]`).
     - **Downstream crates relying on pathf-generated `use` statements** — the generated glob `use` statements now point at `__mingling_*` modules; because those modules re-export the same type names (and `#[derive(Grouped)]` types are re-exported from `__mingling_type_<name>` modules), trait/type resolution from within the program module is unchanged.
 
     _No behavioral changes at runtime — the extra `__mingling_*` namespace modules only wrap existing generated items in a cleaner, isolated scope (preventing module-namespace collisions). All register/derive functionality is preserved; only generated-code layout and the `pathf`-visible names changed._
-
 
 ### What changed
 

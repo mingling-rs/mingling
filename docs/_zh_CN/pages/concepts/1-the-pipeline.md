@@ -12,9 +12,10 @@ graph TD
     A["program.exec_and_exit()"] --> B["Hook: pre_dispatch"]
     B --> C["Dispatch<br/>匹配命令 → Entry"]
     C --> D["Hook: post_dispatch"]
-    D --> E{"user_context.help?"}
-    E -->|"true"| F["render_help<br/>直接跳帮助渲染"]
-    E -->|"false"| G{"has_chain?"}
+    D --> E{"effective_query()?"}
+    E -->|"Usage"| F["render_help<br/>直接跳帮助渲染"]
+    E -->|"Version"| F2["on_version hook<br/>渲染版本"]
+    E -->|"None"| G{"has_chain?"}
     G -->|"有"| H["Hook: pre_chain"]
     H --> I["do_chain<br/>执行业务逻辑"]
     I --> J{"ChainProcess?"}
@@ -28,6 +29,7 @@ graph TD
     K --> O["Hook: finish → 返回 RenderResult"]
     L --> O
     F --> O
+    F2 --> O
 ```
  
 ## 阶段详解
@@ -49,18 +51,18 @@ graph LR
 
 如果没有匹配到任何 Dispatcher，则生成 `EntryFallback`（包裹完整的输入参数），后续可以被 Renderer 处理显示 "Command not found"。
 
-### 2. Help 短路
+### 2. Help / Version 短路
 
-在进入主循环前，检查 `program.user_context.help`。如果为 `true`（由 `BasicProgramSetup` 中的 `HelpFlagSetup` 在解析到 `--help` 时设置），直接调用 `render_help` 跳过整个管线。
+在进入主循环前，检查 `program.effective_query()`。如果为 `QueryMode::Usage`（由 `BasicProgramSetup` 中的 `HelpFlagSetup` 在解析到 `--help` 时设置），直接调用 `render_help` 跳过整个管线；如果为 `QueryMode::Version`（由 `VersionSetup` 在解析到 `--version` 时设置），则改为执行 `version` hook。当 `print_help`/`print_version` 为 `false` 时，查询会降级为 `QueryMode::None`。
 
 ### 3. Chain 主循环
 
 这是核心调度逻辑。每次循环检查当前的 `AnyOutput`：
 
 1. **有 Chain 能处理** → 执行 `C::do_chain(current)`
-   - 返回 `(AnyOutput, Renderer)` → 退出循环，进入渲染
-   - 返回 `(AnyOutput, Chain)` → 继续循环，把结果交给下一个 Chain
-   - 返回 `Err` → 终止程序
+    - 返回 `(AnyOutput, Renderer)` → 退出循环，进入渲染
+    - 返回 `(AnyOutput, Chain)` → 继续循环，把结果交给下一个 Chain
+    - 返回 `Err` → 终止程序
 
 2. **没有 Chain，但有 Renderer** → 直接渲染
 

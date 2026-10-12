@@ -2,7 +2,7 @@
 #![allow(clippy::too_many_lines)]
 
 use crate::{
-    AnyOutput, ChainProcess, NextProcess, Program, ProgramCollect, RenderResult,
+    AnyOutput, ChainProcess, NextProcess, Program, ProgramCollect, RenderResult, config::QueryMode,
     error::ProgramInternalExecuteError, hook::ProgramControls,
 };
 
@@ -70,15 +70,32 @@ where
 
     let mut stop_next = false;
 
-    // If the program has Help enabled, skip actual logic and jump to Help
-    if program.user_context.help {
-        let mut render_result = render_help::<C>(program, current);
+    // If a query (usage/version) was requested and hijacking is enabled, skip
+    // the command logic and render the requested information directly.
+    match program.effective_query() {
+        QueryMode::Usage => {
+            let mut render_result = render_help::<C>(program, current);
 
-        // Run hook
-        control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
-        render_result.exit_code = exit_code;
+            // Run hook
+            control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
+            render_result.exit_code = exit_code;
 
-        return Ok(render_result);
+            return Ok(render_result);
+        }
+        QueryMode::Version => {
+            let mut render_result = RenderResult::default();
+
+            // Run hook
+            control!(program.run_hook_version(&mut crate::hook::HookVersionInfo {
+                result: &mut render_result,
+            }));
+
+            control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
+            render_result.exit_code = exit_code;
+
+            return Ok(render_result);
+        }
+        QueryMode::None => {}
     }
 
     loop {

@@ -63,6 +63,17 @@ pub struct HookPostRenderInfo<'a> {
     pub result: &'a mut RenderResult,
 }
 
+/// Represents the data passed to `version` hook.
+///
+pub struct HookVersionInfo<'a> {
+    /// The rendering result to fill with version information
+    ///
+    /// The hook is expected to write the program's version output into this
+    /// result. When no hook is registered (or it writes nothing), the program
+    /// simply emits an empty result for the version query.
+    pub result: &'a mut RenderResult,
+}
+
 /// Represents the data passed to `finish` hook.
 pub struct HookFinishInfo {}
 

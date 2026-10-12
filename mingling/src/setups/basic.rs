@@ -2,14 +2,19 @@
 
 use mingling_core::{
     Flag, Program, ProgramCollect,
-    config::{ConfirmationMode, ErrorOutput, InteractionMode, RenderOutput, YesAssumption},
+    config::{
+        ConfirmationMode, ErrorOutput, InteractionMode, QueryMode, RenderOutput, Verbosity,
+        YesAssumption,
+    },
     setup::ProgramSetup,
 };
 
 /// Performs basic program initialization:
 ///
 /// - Collects `--quiet` flag to control message rendering
-/// - Collects `--help` flag to enable help mode
+/// - Collects `--help` flag to enable usage query mode
+/// - Collects `--version` flag to enable version query mode
+/// - Collects `--verbose` flag to enable verbose output
 /// - Collects `--confirm` flag to skip user confirmation
 #[cfg_attr(
     feature = "picker",
@@ -26,6 +31,8 @@ where
     fn setup(self, program: &mut Program<C>) {
         program.with_setup(HelpFlagSetup::new(["-h", "--help"]));
         program.with_setup(QuietFlagSetup::new(["-q", "--quiet"]));
+        program.with_setup(VersionSetup::new(["-v", "--version"]));
+        program.with_setup(VerboseSetup::new(["-V", "--verbose"]));
         program.with_setup(ConfirmFlagSetup::new(["-C", "--confirm"]));
     }
 }
@@ -56,7 +63,7 @@ where
 {
     fn setup(self, program: &mut Program<C>) {
         program.global_flag(self.flag, |p| {
-            p.user_context.help = true;
+            p.user_context.query = QueryMode::Usage;
         });
     }
 }
@@ -65,6 +72,84 @@ impl Default for HelpFlagSetup {
     fn default() -> Self {
         Self {
             flag: ["-h", "--help"].into(),
+        }
+    }
+}
+
+/// Provides setup for parsing the version flag
+///
+/// The default value is `--version / -v`
+#[cfg_attr(
+    feature = "picker",
+    deprecated(
+        note = "When the `picker` feature is enabled, you can use `mingling::setup::picker::VersionSetup` instead"
+    )
+)]
+pub struct VersionSetup {
+    flag: Flag,
+}
+
+impl VersionSetup {
+    /// Creates a new `VersionSetup` with the given flag aliases.
+    pub fn new(flag: impl Into<Flag>) -> Self {
+        Self { flag: flag.into() }
+    }
+}
+
+impl<C> ProgramSetup<C> for VersionSetup
+where
+    C: ProgramCollect<Enum = C>,
+{
+    fn setup(self, program: &mut Program<C>) {
+        program.global_flag(self.flag, |p| {
+            p.user_context.query = QueryMode::Version;
+        });
+    }
+}
+
+impl Default for VersionSetup {
+    fn default() -> Self {
+        Self {
+            flag: ["-v", "--version"].into(),
+        }
+    }
+}
+
+/// Provides setup for parsing the verbose flag
+///
+/// The default value is `--verbose / -V`
+#[cfg_attr(
+    feature = "picker",
+    deprecated(
+        note = "When the `picker` feature is enabled, you can use `mingling::setup::picker::VerboseSetup` instead"
+    )
+)]
+pub struct VerboseSetup {
+    flag: Flag,
+}
+
+impl VerboseSetup {
+    /// Creates a new `VerboseSetup` with the given flag aliases.
+    pub fn new(flag: impl Into<Flag>) -> Self {
+        Self { flag: flag.into() }
+    }
+}
+
+impl<C> ProgramSetup<C> for VerboseSetup
+where
+    C: ProgramCollect<Enum = C>,
+{
+    fn setup(self, program: &mut Program<C>) {
+        program.global_flag(self.flag, |p| {
+            p.stdout_setting.verbosity = Verbosity::Verbose;
+        });
+    }
+}
+
+impl Default for VerboseSetup {
+    fn default() -> Self {
+        Self {
+            flag: ["-V", "--verbose"].into(),
         }
     }
 }

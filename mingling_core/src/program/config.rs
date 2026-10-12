@@ -18,6 +18,7 @@
 //! - [`ExecutionMode`]: Execution mode.
 //! - [`InteractionMode`]: Interaction mode.
 //! - [`YesAssumption`]: Yes assumption mode for prompts.
+//! - [`QueryMode`]: Query mode for usage/version information.
 //! - [`ProgramUserContext`]: Program user context.
 //! - [`StructuralRendererSetting`]: Settings for the structural renderer output format.
 
@@ -114,6 +115,14 @@ pub struct ProgramStdoutSetting {
     /// **NOTE**: Convention only, not a configuration
     pub progress: ProgressOutput,
 
+    /// Whether to hijack execution to render help information when a usage
+    /// query is requested (e.g. `--help`)
+    pub print_help: bool,
+
+    /// Whether to hijack execution to render version information when a version
+    /// query is requested (e.g. `--version`)
+    pub print_version: bool,
+
     #[cfg(feature = "clap")]
     /// Behavior when Clap Dispatcher outputs help information
     pub clap_help_print_behaviour: ClapHelpPrintBehaviour,
@@ -147,6 +156,8 @@ impl Default for ProgramStdoutSetting {
             verbosity: Verbosity::Normal,
             color: ColorOutput::Enabled,
             progress: ProgressOutput::Enabled,
+            print_help: true,
+            print_version: true,
             #[cfg(feature = "clap")]
             clap_help_print_behaviour: ClapHelpPrintBehaviour::default(),
         }
@@ -199,11 +210,28 @@ pub enum YesAssumption {
     AssumeYes,
 }
 
+/// Query mode for the program.
+///
+/// Determines whether the program short-circuits normal execution to display
+/// usage or version information instead of running the dispatched command.
+///
+/// **NOTE**: Convention only, not a configuration
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum QueryMode {
+    /// Run the command normally (no query).
+    #[default]
+    None,
+    /// Display usage (help) information instead of running the command.
+    Usage,
+    /// Display version information instead of running the command.
+    Version,
+}
+
 /// Program user context
 #[derive(Debug, Clone)]
 pub struct ProgramUserContext {
-    /// View help information instead of running the command
-    pub help: bool,
+    /// Query mode: display usage/version information instead of running the command
+    pub query: QueryMode,
 
     /// Execute hooks during the program lifecycle
     pub run_hook: bool,
@@ -232,7 +260,7 @@ pub struct ProgramUserContext {
 impl Default for ProgramUserContext {
     fn default() -> Self {
         Self {
-            help: false,
+            query: QueryMode::None,
             run_hook: true,
             confirmation: ConfirmationMode::Confirm,
             execution: ExecutionMode::Normal,
@@ -343,12 +371,19 @@ mod tests {
         assert_eq!(s.verbosity, Verbosity::Normal);
         assert_eq!(s.color, ColorOutput::Enabled);
         assert_eq!(s.progress, ProgressOutput::Enabled);
+        assert!(s.print_help);
+        assert!(s.print_version);
+    }
+
+    #[test]
+    fn query_mode_default_is_none() {
+        assert_eq!(QueryMode::default(), QueryMode::None);
     }
 
     #[test]
     fn program_user_context_default() {
         let ctx = ProgramUserContext::default();
-        assert!(!ctx.help);
+        assert_eq!(ctx.query, QueryMode::None);
         assert!(ctx.run_hook);
         assert_eq!(ctx.confirmation, ConfirmationMode::Confirm);
         assert_eq!(ctx.execution, ExecutionMode::Normal);
