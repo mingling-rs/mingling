@@ -97,11 +97,26 @@ where
                 );
 
                 match might_be_async::invoke!(C::do_chain(current)) {
-                    ChainProcess::Ok((any, NextProcess::Renderer)) => {
+                    ChainProcess::Ok((mut any, NextProcess::Renderer)) => {
                         {
+                            // Run hook
+                            control!(
+                                program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
+                                    input: &any.member_id,
+                                    raw: any.inner.as_ref(),
+                                }),
+                                any
+                            );
+
                             let mut render_result = render::<C>(program, any);
 
-                            // Run hook
+                            // Run hooks
+                            control!(program.run_hook_post_render(
+                                &mut crate::hook::HookPostRenderInfo {
+                                    result: &mut render_result,
+                                }
+                            ));
+
                             control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
                             render_result.exit_code = exit_code;
 

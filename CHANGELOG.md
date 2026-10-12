@@ -60,7 +60,9 @@ None
 
 #### Fixes:
 
-None
+1. **[`core:hooks`]** The `post_render` hook is now run when a chain routes directly to a renderer. Previously, only the no-chain render path (`C::has_renderer`) and the `RouteToRender` control unit wrapped rendering with `pre_render`/`post_render`; the chain path that reached a renderer via `NextProcess::Renderer` called `C::render` without either hook. As a result, hooks registered with `on_post_render` (and `on_pre_render`) never fired for chain-produced results, even though the same renderer was being invoked. Both hooks now run around that render call, matching the direct-render path (`mingling_core/src/program/exec.rs`).
+
+    _Note:_ help rendering (`render_help`, reached via the `user_context.help` fast path and the `RouteToHelp` control unit) still intentionally does not run the render hooks, as it does not go through the ordinary renderer pipeline.
 
 #### Optimizations:
 
