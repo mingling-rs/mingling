@@ -57,7 +57,10 @@ where
 /// Represents the data passed to `post_render` hook.
 pub struct HookPostRenderInfo<'a> {
     /// The rendering result
-    pub result: &'a RenderResult,
+    ///
+    /// The reference is mutable so the hook can modify the result (for example
+    /// rewriting or dropping buffered output) before it is returned to the caller.
+    pub result: &'a mut RenderResult,
 }
 
 /// Represents the data passed to `finish` hook.

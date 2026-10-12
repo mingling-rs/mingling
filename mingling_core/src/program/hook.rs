@@ -85,8 +85,9 @@ where
         Option<Box<dyn for<'a> Fn(&HookPreRenderInfo<'a, C>) -> ProgramControls<C> + Send + Sync>>,
 
     /// Executes after the type enters the renderer
-    pub post_render:
-        Option<Box<dyn for<'a> Fn(&HookPostRenderInfo<'a>) -> ProgramControls<C> + Send + Sync>>,
+    pub post_render: Option<
+        Box<dyn for<'a> Fn(&mut HookPostRenderInfo<'a>) -> ProgramControls<C> + Send + Sync>,
+    >,
 
     /// Executes before the program ends
     pub finish: Option<Box<dyn Fn(&HookFinishInfo) -> ProgramControls<C> + Send + Sync>>,
@@ -254,7 +255,7 @@ where
         Self::joined_controls(units)
     }
 
-    pub(crate) fn run_hook_post_render(&self, info: &HookPostRenderInfo) -> ProgramControls<C> {
+    pub(crate) fn run_hook_post_render(&self, info: &mut HookPostRenderInfo) -> ProgramControls<C> {
         if !self.user_context.run_hook {
             return ProgramControls::Empty;
         }
@@ -549,7 +550,7 @@ where
     #[must_use]
     pub fn on_post_render<F, R>(mut self, handler: F) -> Self
     where
-        F: for<'a> Fn(&HookPostRenderInfo<'a>) -> R + 'static + Send + Sync,
+        F: for<'a> Fn(&mut HookPostRenderInfo<'a>) -> R + 'static + Send + Sync,
         R: Into<ProgramControls<C>>,
     {
         self.post_render = Some(Box::new(move |info| handler(info).into()));
@@ -914,13 +915,16 @@ mod tests {
     #[test]
     fn test_hook_on_post_render() {
         static CALLED: AtomicBool = AtomicBool::new(false);
-        let hook =
-            ProgramHook::<MockHookEnum>::empty().on_post_render(|_info: &HookPostRenderInfo| {
+        let hook = ProgramHook::<MockHookEnum>::empty().on_post_render(
+            |_info: &mut HookPostRenderInfo| {
                 CALLED.store(true, Ordering::SeqCst);
-            });
+            },
+        );
         assert!(hook.post_render.is_some());
-        let result = crate::RenderResult::default();
-        (hook.post_render.as_ref().unwrap())(&HookPostRenderInfo { result: &result });
+        let mut result = crate::RenderResult::default();
+        (hook.post_render.as_ref().unwrap())(&mut HookPostRenderInfo {
+            result: &mut result,
+        });
         assert!(CALLED.load(Ordering::SeqCst));
     }
 
@@ -972,7 +976,7 @@ mod tests {
             .on_pre_chain(|_: &HookPreChainInfo<MockHookEnum>| ())
             .on_post_chain(|_: &HookPostChainInfo<MockHookEnum>| ())
             .on_pre_render(|_: &HookPreRenderInfo<MockHookEnum>| ())
-            .on_post_render(|_: &HookPostRenderInfo| ())
+            .on_post_render(|_: &mut HookPostRenderInfo| ())
             .on_finish(|_: &HookFinishInfo| ProgramControlUnit::OverrideExitCode(0));
         assert!(hook.begin.is_some());
         assert!(hook.pre_dispatch.is_some());

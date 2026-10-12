@@ -143,8 +143,8 @@ where
 
                 // Run hooks
                 control!(
-                    program.run_hook_post_render(&crate::hook::HookPostRenderInfo {
-                        result: &render_result,
+                    program.run_hook_post_render(&mut crate::hook::HookPostRenderInfo {
+                        result: &mut render_result,
                     })
                 );
 
@@ -203,7 +203,8 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
                 r.exit_code = *exit_code;
 
                 // Post render
-                program.run_hook_post_render(&crate::hook::HookPostRenderInfo { result: &r });
+                program
+                    .run_hook_post_render(&mut crate::hook::HookPostRenderInfo { result: &mut r });
 
                 return Some(r);
             }

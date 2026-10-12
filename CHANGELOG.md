@@ -157,6 +157,25 @@ None
 
     _Behavioral note:_ no runtime behavior changes — the constant's value (`"__comp"`) and `comp` feature gating are unchanged. The move only aligns the constant's location with the framework's other constants under the `consts`/`constants` modules.
 
+3. **[`core:hooks`]** **[BREAKING]** `HookPostRenderInfo::result` is now a mutable reference (`&mut RenderResult`), and the `post_render` hook receives the info struct through a mutable reference (`Fn(&mut HookPostRenderInfo<'_>)`), so hooks can modify the rendered result in place before it is returned to the caller.
+
+    ### What changed
+
+    Previously, the `post_render` hook could only observe the render result through `HookPostRenderInfo { result: &'a RenderResult }`. It is now given mutable access, mirroring the existing `pre_dispatch` hook (which already exposes `&mut` through `HookPreDispatchInfo::arguments`).
+
+    **Changed API:**
+
+    - **`HookPostRenderInfo<'a>::result`** — `&'a RenderResult` → **`&'a mut RenderResult`** (`mingling_core/src/program/hook/hook_info.rs`).
+    - **`ProgramHook::post_render`** — field type changed from `Box<dyn for<'a> Fn(&HookPostRenderInfo<'a>) -> ProgramControls<C> + Send + Sync>` to `Box<dyn for<'a> Fn(&mut HookPostRenderInfo<'a>) -> ProgramControls<C> + Send + Sync>` (`mingling_core/src/program/hook.rs`).
+    - **`ProgramHook::on_post_render`** — its `F` bound changed from `for<'a> Fn(&HookPostRenderInfo<'a>) -> R` to `for<'a> Fn(&mut HookPostRenderInfo<'a>) -> R`.
+    - **`Program::run_hook_post_render`** — the `info` parameter is now `&mut HookPostRenderInfo`.
+    - Call sites in `mingling_core/src/program/exec.rs` and the `hook.rs` tests now build/pass the info struct through `&mut`.
+
+    ### Migration guide
+    - **Change `on_post_render` closures** from `|info: &HookPostRenderInfo| { ... }` to `|info: &mut HookPostRenderInfo| { ... }` (or simply `|info|`, letting inference pick the new type).
+    - **Any code that invoked `post_render` directly** must now pass `&mut HookPostRenderInfo { result: &mut result }` and hold the `RenderResult` in a `mut` binding.
+    - **Reads remain unaffected** — `info.result` still dereferences to `RenderResult` for inspection (`to_string()`, `len()`, `std_print()`, etc.); only mutation now requires the mutable borrow.
+
 ---
 
 ### 0.5.3 (2026-09-21)
