@@ -1,4 +1,4 @@
-use crate::{AnyOutput, ProgramCollect, RenderResult};
+use crate::{AnyOutput, ProgramCollect, RenderResult, config::QueryMode};
 
 /// Represents the data passed to `begin` hook.
 pub struct HookBeginInfo {}
@@ -52,6 +52,12 @@ where
 
     /// The raw data to be rendered
     pub raw: &'a dyn std::any::Any,
+
+    /// The query that triggered this render.
+    ///
+    /// [`QueryMode::Usage`] when the render is producing usage/help output, or
+    /// [`QueryMode::None`] for an ordinary render.
+    pub mode: QueryMode,
 }
 
 /// Represents the data passed to `post_render` hook.
@@ -61,6 +67,12 @@ pub struct HookPostRenderInfo<'a> {
     /// The reference is mutable so the hook can modify the result (for example
     /// rewriting or dropping buffered output) before it is returned to the caller.
     pub result: &'a mut RenderResult,
+
+    /// The query that triggered this render.
+    ///
+    /// [`QueryMode::Usage`] when the render produced usage/help output, or
+    /// [`QueryMode::None`] for an ordinary render.
+    pub mode: QueryMode,
 }
 
 /// Represents the data passed to `version` hook.

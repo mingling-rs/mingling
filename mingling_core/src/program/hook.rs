@@ -944,6 +944,7 @@ mod tests {
         (hook.pre_render.as_ref().unwrap())(&HookPreRenderInfo {
             input: &MockHookEnum::A,
             raw: &42,
+            mode: crate::config::QueryMode::None,
         });
         assert!(CALLED.load(Ordering::SeqCst));
     }
@@ -960,6 +961,7 @@ mod tests {
         let mut result = crate::RenderResult::default();
         (hook.post_render.as_ref().unwrap())(&mut HookPostRenderInfo {
             result: &mut result,
+            mode: crate::config::QueryMode::None,
         });
         assert!(CALLED.load(Ordering::SeqCst));
     }

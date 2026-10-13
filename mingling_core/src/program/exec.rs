@@ -74,9 +74,26 @@ where
     // the command logic and render the requested information directly.
     match program.effective_query() {
         QueryMode::Usage => {
+            // Run hook
+            control!(
+                program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
+                    input: &current.member_id,
+                    raw: current.inner.as_ref(),
+                    mode: QueryMode::Usage,
+                }),
+                current
+            );
+
             let mut render_result = render_help::<C>(program, current);
 
-            // Run hook
+            // Run hooks
+            control!(program.run_hook_post_render(
+                &mut crate::hook::HookPostRenderInfo {
+                    result: &mut render_result,
+                    mode: QueryMode::Usage,
+                }
+            ));
+
             control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
             render_result.exit_code = exit_code;
 
@@ -121,6 +138,7 @@ where
                                 program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
                                     input: &any.member_id,
                                     raw: any.inner.as_ref(),
+                                    mode: QueryMode::None,
                                 }),
                                 any
                             );
@@ -131,6 +149,7 @@ where
                             control!(program.run_hook_post_render(
                                 &mut crate::hook::HookPostRenderInfo {
                                     result: &mut render_result,
+                                    mode: QueryMode::None,
                                 }
                             ));
 
@@ -167,6 +186,7 @@ where
                     program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
                         input: &current.member_id,
                         raw: current.inner.as_ref(),
+                        mode: QueryMode::None,
                     }),
                     current
                 );
@@ -177,6 +197,7 @@ where
                 control!(
                     program.run_hook_post_render(&mut crate::hook::HookPostRenderInfo {
                         result: &mut render_result,
+                        mode: QueryMode::None,
                     })
                 );
 
@@ -234,20 +255,39 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
                 let _ = program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
                     input: &any_output.member_id,
                     raw: any_output.inner.as_ref(),
+                    mode: QueryMode::None,
                 });
 
                 let mut r = render::<C>(program, any_output);
                 r.exit_code = *exit_code;
 
                 // Post render
-                program
-                    .run_hook_post_render(&mut crate::hook::HookPostRenderInfo { result: &mut r });
+                program.run_hook_post_render(&mut crate::hook::HookPostRenderInfo {
+                    result: &mut r,
+                    mode: QueryMode::None,
+                });
 
                 return Some(r);
             }
             super::hook::ProgramControlUnit::RouteToHelp(any_output) => {
+                // Note: Hooks triggered by ProgramControl will not trigger ProgramControl again
+
+                // Pre render
+                let _ = program.run_hook_pre_render(&crate::hook::HookPreRenderInfo {
+                    input: &any_output.member_id,
+                    raw: any_output.inner.as_ref(),
+                    mode: QueryMode::Usage,
+                });
+
                 let mut r = render_help::<C>(program, any_output);
                 r.exit_code = *exit_code;
+
+                // Post render
+                program.run_hook_post_render(&mut crate::hook::HookPostRenderInfo {
+                    result: &mut r,
+                    mode: QueryMode::Usage,
+                });
+
                 return Some(r);
             }
         }
