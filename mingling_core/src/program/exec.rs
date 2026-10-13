@@ -217,6 +217,11 @@ pub(crate) fn handle_program_control<C: ProgramCollect<Enum = C>>(
     for unit in controls {
         match unit {
             super::hook::ProgramControlUnit::OverrideExitCode(c) => *exit_code = c,
+            super::hook::ProgramControlUnit::Exit => {
+                let mut r = RenderResult::default();
+                r.exit_code = *exit_code;
+                return Some(r);
+            }
             super::hook::ProgramControlUnit::RouteToChain(any_output) => {
                 if let Some(ref mut current) = current {
                     **current = any_output;
@@ -284,5 +289,61 @@ fn render_help<C: ProgramCollect<Enum = C>>(
             super::StructuralRendererSetting::Disable => C::render_help(entry),
             _ => RenderResult::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::hook::{ProgramControlUnit, ProgramControls};
+    use crate::MockProgramCollect;
+
+    #[test]
+    fn exit_unit_ends_exec_with_current_exit_code() {
+        let program: Program<MockProgramCollect> = Program::new_with_args(["app"]);
+        let mut exit_code = 7;
+
+        let result = handle_program_control(
+            &program,
+            ProgramControls::Single(ProgramControlUnit::Exit),
+            None,
+            &mut exit_code,
+        );
+
+        assert_eq!(result.map(|r| r.exit_code), Some(7));
+    }
+
+    #[test]
+    fn exit_unit_uses_exit_code_set_by_an_earlier_unit() {
+        let program: Program<MockProgramCollect> = Program::new_with_args(["app"]);
+        let mut exit_code = 0;
+
+        let result = handle_program_control(
+            &program,
+            ProgramControls::Multi(vec![
+                ProgramControlUnit::OverrideExitCode(3),
+                ProgramControlUnit::Exit,
+            ]),
+            None,
+            &mut exit_code,
+        );
+
+        assert_eq!(result.map(|r| r.exit_code), Some(3));
+    }
+
+    #[test]
+    fn without_exit_unit_execution_continues() {
+        let program: Program<MockProgramCollect> = Program::new_with_args(["app"]);
+        let mut exit_code = 0;
+
+        let result = handle_program_control(
+            &program,
+            ProgramControls::Single(ProgramControlUnit::OverrideExitCode(5)),
+            None,
+            &mut exit_code,
+        );
+
+        assert!(result.is_none());
+        assert_eq!(exit_code, 5);
     }
 }

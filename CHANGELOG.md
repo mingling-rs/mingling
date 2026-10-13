@@ -98,6 +98,16 @@ None
     }
     ```
 
+2. **[`core:hooks`]** Added an `Exit` control unit to `ProgramControlUnit`, allowing a hook to end the running `exec` immediately.
+
+    When a hook returns `ProgramControlUnit::Exit`, `exec` stops as soon as the unit is handled and returns a `RenderResult` carrying the exit code accumulated so far. This differs from `OverrideExitCode`, which only sets the exit code and lets execution continue: `Exit` short-circuits the whole flow. A preceding `OverrideExitCode` in the same control set is still honored, so returning `[OverrideExitCode(code), Exit]` both sets the exit code and stops execution.
+
+    ```rust
+    use mingling::hook::{ProgramControlUnit, ProgramHook};
+
+    ProgramHook::empty().on_post_dispatch(|_| ProgramControlUnit::Exit)
+    ```
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`crate:features`]** **[BREAKING REMOVAL]** Removed the `core` and `macros` Cargo features, making `mingling_core` and `mingling_macros` unconditional dependencies.

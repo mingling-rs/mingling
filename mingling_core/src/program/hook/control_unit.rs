@@ -120,6 +120,14 @@ where
     /// The contained `i32` value is the exit code to be set.
     OverrideExitCode(i32),
 
+    /// Exit the program execution immediately.
+    ///
+    /// Ends the currently running `exec` as soon as this unit is handled,
+    /// returning a result that carries the exit code accumulated so far. Unlike
+    /// [`OverrideExitCode`](Self::OverrideExitCode), which only sets the exit
+    /// code and lets execution continue, `Exit` stops the flow right away.
+    Exit,
+
     /// Route to the render flow.
     ///
     /// Transfers control to the rendering (output) stage,
