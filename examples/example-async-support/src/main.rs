@@ -48,7 +48,7 @@ pub struct ResultDownloaded(String);
 #[chain]
 //  vvvvv_ `async` keyword can be used directly here
 pub async fn handle_download(args: EntryDownload) -> Next {
-    let file_name = args.pick_or_default(&arg![String]).unwrap();
+    let file_name = args.pick_or_default(arg![String]).unwrap();
     fake_download(file_name).await.into()
 }
 

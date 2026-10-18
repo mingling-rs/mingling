@@ -92,8 +92,8 @@ pub struct ResultName((u8, String));
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let result: ResultName = args
-        .pick_or(&arg![repeat: u8, 'r'], || 1)
-        .pick_or(&arg![String], || "World".to_string())
+        .pick_or(arg![repeat: u8, 'r'], || 1)
+        .pick_or(arg![String], || "World".to_string())
         .unwrap()
         .into();
     result.into()

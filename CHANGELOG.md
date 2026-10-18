@@ -128,6 +128,8 @@ None
     })
     ```
 
+4. **[`picker`]** Upgraded to `arg-picker` 0.4.0. `EntryPicker::pick`/`pick_or`/`pick_or_default`/`pick_or_route` now take the argument by value (`impl Into<PickerArg>`). `pick_or` takes its fallback as `impl Fallback<Next>`, so the closure may return any type that converts into the picked type; `pick_or_route` keeps `FnMut() -> ChainProcess<This>` so the route type stays inferable, which also keeps `|| Error::new().to_chain()` working without an annotation. `REMAINS` is picked by value, and the argument constants in `consts` use `PickerArg::new`.
+
 #### **BREAKING CHANGES** (API CHANGES):
 
 1. **[`crate:features`]** **[BREAKING REMOVAL]** Removed the `core` and `macros` Cargo features, making `mingling_core` and `mingling_macros` unconditional dependencies.

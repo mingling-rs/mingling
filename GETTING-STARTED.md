@@ -139,8 +139,8 @@ pub struct ResultGreeting(String);
 #[chain]
 fn handle_greet(args: EntryGreet) -> Next {
     let (name, count) = args
-        .pick(&arg![String])                   // positional argument: first string
-        .pick_or(&arg![repeat: u8, 'r'], || 1) // optional flag with default value
+        .pick(arg![String])                   // positional argument: first string
+        .pick_or(arg![repeat: u8, 'r'], || 1) // optional flag with default value
         .unwrap();
     ResultGreeting(format!("{} x{}", name, count)).into()
 }
@@ -353,7 +353,7 @@ fn show_current(_prev: EntryCurrent, current_dir: &ResCurrentDir) -> Next {
 // Mutable access:
 #[chain]
 fn change_dir(prev: EntryCd, current_dir: &mut ResCurrentDir) -> Next {
-    let path = prev.pick_or_default(&arg![String]).unwrap();
+    let path = prev.pick_or_default(arg![String]).unwrap();
     current_dir.current_dir = current_dir.current_dir.join(path);
     empty_result!()
 }
@@ -589,8 +589,8 @@ struct ResultInfo {
 #[chain]
 fn render_info(args: EntryRender) -> Next {
     let (name, age) = args
-        .pick_or_default(&arg![String])
-        .pick_or_default(&arg![i32])
+        .pick_or_default(arg![String])
+        .pick_or_default(arg![i32])
         .unwrap();
     ResultInfo { name, age }.to_chain()
 }
@@ -642,7 +642,7 @@ pub struct ResultDownloaded(String);
 
 #[chain]
 pub async fn handle_download(args: EntryDownload) -> Next {
-    let file = args.pick_or_default(&arg![String]).unwrap();
+    let file = args.pick_or_default(arg![String]).unwrap();
     download_file(file).await.into()
 }
 

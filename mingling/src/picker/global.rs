@@ -32,7 +32,7 @@ where
     /// boolean value of the flag.
     fn pick_flag(&mut self, flag: &PickerArg<Flag>) -> bool {
         let args = self.take_args();
-        let (flag, args) = args.pick(flag).pick(&REMAINS).unwrap();
+        let (flag, args) = args.pick(flag).pick(REMAINS).unwrap();
         self.replace_args(args.into());
         *flag
     }
@@ -47,7 +47,7 @@ where
         A: for<'a> Pickable<'a> + Default,
     {
         let args = self.take_args();
-        let (arg, remains) = args.pick(arg).pick(&REMAINS).unpack();
+        let (arg, remains) = args.pick(arg).pick(REMAINS).unpack();
         self.replace_args(remains.unwrap().into());
         arg
     }

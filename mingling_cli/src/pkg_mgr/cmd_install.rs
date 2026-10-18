@@ -82,7 +82,7 @@ pub fn install(
     packages_dir: &ResPackagesDir,
     metadata: &mut LazyRes<ResMetadata>,
 ) -> Next {
-    let enable = args.pick(&ARG_ENABLE).to_result()?;
+    let enable = args.pick(ARG_ENABLE).to_result()?;
     let metadata = metadata.get_ref().data();
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {

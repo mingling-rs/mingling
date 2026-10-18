@@ -351,9 +351,9 @@ pub struct StateBeginLinter(pub bool);
 #[command]
 pub fn lint(args: EntryLint) -> StateBeginLinter {
     let (workspace, with_checker, checker_args) = args
-        .pick(&ARG_WORKSPACE)
-        .pick_or(&ARG_WITH_CHECKER, || Some("cargo,check".to_string()))
-        .pick(&REMAINS)
+        .pick(ARG_WORKSPACE)
+        .pick_or(ARG_WITH_CHECKER, || Some("cargo,check".to_string()))
+        .pick(REMAINS)
         .unwrap();
     let workspace = *workspace;
 

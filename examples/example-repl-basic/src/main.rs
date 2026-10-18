@@ -90,7 +90,7 @@ pub struct ResultList(Vec<String>);
 // Parse cd command arguments
 #[chain]
 fn parse_cd_args(prev: EntryCd) -> Next {
-    let join = prev.pick_or_default(&arg![String]).unwrap();
+    let join = prev.pick_or_default(arg![String]).unwrap();
     StateChangeDirectory(join).into()
 }
 

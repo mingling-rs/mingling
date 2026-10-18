@@ -147,11 +147,11 @@
 ///         //     Use arg![round: Flag] to indicate the `--round` | `-R` flag
 ///         //     |
 ///         //     vvvvvvvvvvvvvvvv
-///         .pick(&arg![round: Flag, 'R'])
+///         .pick(arg![round: Flag, 'R'])
 ///         //    Use REMAINS to extract remaining arguments
 ///         //    |
 ///         //    vvvvvvvv
-///         .pick(&REMAINS)
+///         .pick(REMAINS)
 ///         // Since Flag and REMAINS will not fail to parse,
 ///         //   we can safely unwrap here
 ///         .unwrap();
@@ -170,13 +170,13 @@
 ///         //                 Use the arg! macro to define a positional argument of type f32
 ///         //                 |
 ///         //                 vvvvvvvvvv
-///         args.pick_or_route(&arg![f32], || ErrorNumberANotProvided.to_chain())
-///             .pick_or_route(&arg![Operator], || {
+///         args.pick_or_route(arg![f32], || ErrorNumberANotProvided.to_chain())
+///             .pick_or_route(arg![Operator], || {
 ///                 ErrorNumberOperatorNotProvided.to_chain()
 ///             }) //                         Returns a routable type when not found or fails to parse
 ///             //                            |
 ///             //                            vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-///             .pick_or_route(&arg![f32], || ErrorNumberBNotProvided.to_chain())
+///             .pick_or_route(arg![f32], || ErrorNumberBNotProvided.to_chain())
 ///             // Use `to_result` to parse arguments
 ///             //   and convert to Result<(Tuple, ...), Route> type
 ///             .to_result()
@@ -332,7 +332,7 @@ pub mod example_argument_picker {}
 /// #[chain]
 /// //  vvvvv_ `async` keyword can be used directly here
 /// pub async fn handle_download(args: EntryDownload) -> Next {
-///     let file_name = args.pick_or_default(&arg![String]).unwrap();
+///     let file_name = args.pick_or_default(arg![String]).unwrap();
 ///     fake_download(file_name).await.into()
 /// }
 ///
@@ -752,7 +752,7 @@ pub mod example_combine_pathf_metadata {}
 /// // Auto-generates dispatcher!("hello-world", EntryGreetSomeone);
 /// #[command(node = "greet-someone")]
 /// fn greet_someone(args: Vec<String>) -> ResultGreeting {
-///     let name = args.pick_or(&arg![String], || "World".to_string()).unwrap();
+///     let name = args.pick_or(arg![String], || "World".to_string()).unwrap();
 ///     ResultGreeting(name)
 /// }
 ///
@@ -891,8 +891,8 @@ pub mod example_command_macro {}
 /// #[chain]
 /// fn handle_greet(args: EntryGreet) -> Next {
 ///     let result: ResultName = args
-///         .pick_or(&arg![repeat: u8, 'r'], || 1)
-///         .pick_or(&arg![String], || "World".to_string())
+///         .pick_or(arg![repeat: u8, 'r'], || 1)
+///         .pick_or(arg![String], || "World".to_string())
 ///         .unwrap()
 ///         .into();
 ///     result.into()
@@ -1111,7 +1111,7 @@ pub mod example_dispatch_tree {}
 /// #[chain]
 /// fn handle_language_selection(args: EntryLanguageSelection) -> Next {
 ///     // You can use Picker to directly parse ProgrammingLanguages
-///     let lang: ProgrammingLanguages = args.pick_or_default(&arg![ProgrammingLanguages]).unwrap();
+///     let lang: ProgrammingLanguages = args.pick_or_default(arg![ProgrammingLanguages]).unwrap();
 ///     lang.into()
 /// }
 ///
@@ -1993,7 +1993,7 @@ pub mod example_outside_type {}
 ///
 /// #[chain]
 /// fn handle_panic(prev: EntryPanic) -> Next {
-///     let panic_info = prev.pick_or_default(&arg![Option<String>]).unwrap();
+///     let panic_info = prev.pick_or_default(arg![Option<String>]).unwrap();
 ///     match panic_info {
 ///         Some(s) => {
 ///             // Panic happens here, will be caught
@@ -2174,7 +2174,7 @@ pub mod example_pathfinder {}
 /// // Parse cd command arguments
 /// #[chain]
 /// fn parse_cd_args(prev: EntryCd) -> Next {
-///     let join = prev.pick_or_default(&arg![String]).unwrap();
+///     let join = prev.pick_or_default(arg![String]).unwrap();
 ///     StateChangeDirectory(join).into()
 /// }
 ///
@@ -2330,7 +2330,7 @@ pub mod example_repl_basic {}
 /// fn render_modify_current(args: EntryModifyCurrent, current_dir: &mut ResCurrentDir) -> Next {
 ///     current_dir.current_dir = current_dir
 ///         .current_dir
-///         .join(args.pick_or_default(&arg![String]).unwrap());
+///         .join(args.pick_or_default(arg![String]).unwrap());
 ///     EntryCurrent::default().into()
 /// }
 ///
@@ -2532,8 +2532,8 @@ pub mod example_setup {}
 /// #[chain]
 /// fn parse_render(prev: EntryRender) -> Next {
 ///     let (name, age) = prev
-///         .pick_or_default(&arg![String])
-///         .pick_or_default(&arg![i32])
+///         .pick_or_default(arg![String])
+///         .pick_or_default(arg![i32])
 ///         .unwrap();
 ///     Info { name, age }.to_render()
 /// }

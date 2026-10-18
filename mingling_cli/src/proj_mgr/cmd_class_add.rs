@@ -64,8 +64,8 @@ pub struct ErrorClassWriteFailed(String);
 #[command(node = "class-add", routeify)]
 pub fn class_add(args: EntryClassAdd) -> Next {
     let (class_name, name) = args
-        .pick_or_route(&arg![String], || ErrorClassNameRequired.to_chain())
-        .pick_or_route(&arg![String], || ErrorClassNameRequired.to_chain())
+        .pick_or_route(arg![String], || ErrorClassNameRequired.to_chain())
+        .pick_or_route(arg![String], || ErrorClassNameRequired.to_chain())
         .to_result()?;
     StateClassAdd((class_name, name)).to_chain()
 }

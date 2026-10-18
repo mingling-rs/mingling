@@ -38,7 +38,7 @@ fn hello_world() -> ResultGreeting {
 // Auto-generates dispatcher!("hello-world", EntryGreetSomeone);
 #[command(node = "greet-someone")]
 fn greet_someone(args: Vec<String>) -> ResultGreeting {
-    let name = args.pick_or(&arg![String], || "World".to_string()).unwrap();
+    let name = args.pick_or(arg![String], || "World".to_string()).unwrap();
     ResultGreeting(name)
 }
 

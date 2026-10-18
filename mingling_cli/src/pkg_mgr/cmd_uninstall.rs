@@ -47,7 +47,7 @@ pub fn uninstall(
     packages_dir: &ResPackagesDir,
     metadata: &mut LazyRes<ResMetadata>,
 ) -> Next {
-    let spec = args.pick(&ARG_PACKAGE).to_result()?;
+    let spec = args.pick(ARG_PACKAGE.clone()).to_result()?;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {
         return ErrorNoDataDirectory.to_chain();

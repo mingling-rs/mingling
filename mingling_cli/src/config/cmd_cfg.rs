@@ -24,9 +24,9 @@ pub struct ResultConfig;
 #[command]
 pub fn cfg(args: Entry) -> Next {
     let (key, value, show_pair) = args
-        .pick(&arg![Option<String>])
-        .pick(&arg![Option<String>])
-        .pick(&FLAG_PAIR)
+        .pick(arg![Option<String>])
+        .pick(arg![Option<String>])
+        .pick(FLAG_PAIR)
         .unwrap();
 
     match (key, value) {

@@ -39,7 +39,7 @@ pub fn desc_pkg_disable() -> Description {
 #[command(node = "pkg-disable", routeify)]
 pub fn package_disable(args: EntryPkgDisable, packages_dir: &ResPackagesDir) -> Next {
     let name = args
-        .pick_or_route(&ARG_NAME, || ErrorPackageNameRequired.to_chain())
+        .pick_or_route(ARG_NAME.clone(), || ErrorPackageNameRequired.to_chain())
         .to_result()?;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {

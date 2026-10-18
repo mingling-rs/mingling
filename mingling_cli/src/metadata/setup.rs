@@ -82,12 +82,12 @@ pub fn cargo_metadata_setup(program: &mut Program<crate::ThisProgram>) {
         no_default_features,
         no_deps,
     ) = args
-        .pick(&ARG_FEATURES)
-        .pick(&ARG_MANIFEST_PATH)
-        .pick_or(&ARG_MESSAGE_FORMAT, || "disable".to_string())
-        .pick(&ARG_ALL_FEATURES)
-        .pick(&ARG_NO_DEFAULT_FEATURES)
-        .pick(&ARG_NO_DEPS)
+        .pick(ARG_FEATURES.clone())
+        .pick(ARG_MANIFEST_PATH.clone())
+        .pick_or(ARG_MESSAGE_FORMAT.clone(), || "disable".to_string())
+        .pick(ARG_ALL_FEATURES)
+        .pick(ARG_NO_DEFAULT_FEATURES)
+        .pick(ARG_NO_DEPS)
         .unwrap();
 
     // Is Using Json

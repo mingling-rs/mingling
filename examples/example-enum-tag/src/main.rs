@@ -100,7 +100,7 @@ dispatcher!("lang-select", EntryLanguageSelection);
 #[chain]
 fn handle_language_selection(args: EntryLanguageSelection) -> Next {
     // You can use Picker to directly parse ProgrammingLanguages
-    let lang: ProgrammingLanguages = args.pick_or_default(&arg![ProgrammingLanguages]).unwrap();
+    let lang: ProgrammingLanguages = args.pick_or_default(arg![ProgrammingLanguages]).unwrap();
     lang.into()
 }
 

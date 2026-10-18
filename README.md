@@ -59,8 +59,8 @@ struct ResultNumber(f32);
 #[command]
 fn sum(args: Entry) -> ResultNumber {
     let (a, b) = args
-        .pick(&arg![f32])
-        .pick(&arg![f32])
+        .pick(arg![f32])
+        .pick(arg![f32])
         .unwrap();
     ResultNumber(a + b)
 }
@@ -102,8 +102,8 @@ struct ErrorNoNumber;
 #[command(routeify)]
 fn sum(args: Entry) -> Next {
     let (a, b) = args
-        .pick_or_route(&arg![f32], || ErrorNoNumber.into())
-        .pick_or_route(&arg![f32], || ErrorNoNumber.into())
+        .pick_or_route(arg![f32], || -> mingling::ChainProcess<ThisProgram> { ErrorNoNumber.into() })
+        .pick_or_route(arg![f32], || -> mingling::ChainProcess<ThisProgram> { ErrorNoNumber.into() })
         .to_result()?;
     ResultNumber(a + b).into()
 }

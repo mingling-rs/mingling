@@ -9,7 +9,7 @@ use mingling::{
 #[command(routeify)]
 pub fn explain(args: EntryExplain) -> Next {
     let lint_name = args
-        .pick_or_route(&arg![String], || ErrorNoExplainLintProvided.to_chain())
+        .pick_or_route(arg![String], || ErrorNoExplainLintProvided.to_chain())
         .to_result()?;
     StateExplainLint(lint_name).into()
 }

@@ -86,7 +86,7 @@ pub fn handle_state_proj_checklist_ready(
     config: &mut LazyRes<ResMlingConfig>,
 ) -> Next {
     let source: TemplateSource = args
-        .pick_or_route(&arg![TemplateSource], || {
+        .pick_or_route(arg![TemplateSource], || {
             ErrorTemplateNotProvided.to_chain()
         })
         .to_result()?;

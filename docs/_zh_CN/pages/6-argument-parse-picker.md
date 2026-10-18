@@ -33,7 +33,7 @@ features = ["picker"]
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
-        .pick_or(&arg![String], || "World".to_string())
+        .pick_or(arg![String], || "World".to_string())
         .unwrap();
     ResultName(name).into()
 }
@@ -51,7 +51,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) -> Next {
 let name = prev
-    .pick_or(&arg![String], || "World".to_string())
+    .pick_or(arg![String], || "World".to_string())
     .unwrap();
 @@@ResultName(name).into()
 @@@}
@@ -67,7 +67,7 @@ let name = prev
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
 @@@let name: String =
-   prev.pick_or(&arg![String], || "World".to_string()).unwrap();
+   prev.pick_or(arg![String], || "World".to_string()).unwrap();
 // ~~~~ ~~~~~~~ ~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~
 // |    |       |             |                        |_ 解包为 String
 // |    |       |             |__________________________ 默认值为 "World"
@@ -90,7 +90,7 @@ let name = prev
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
-        .pick_or(&arg![name: String, 'n'], || "World".to_string())
+        .pick_or(arg![name: String, 'n'], || "World".to_string())
         .unwrap();
     ResultName(name).into()
 }
@@ -108,7 +108,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 @@@#[chain]
 @@@fn handle_greet_entry(prev: EntryGreet) {
 @@@let name: String =
-   prev.pick_or(&arg![name: String, 'n'], || "World".to_string()).unwrap();
+   prev.pick_or(arg![name: String, 'n'], || "World".to_string()).unwrap();
 // ~~~~ ~~~~~~~ ~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~~~~~~~~~~~  ~~~~~~
 // |    |       |                          |                      |_ 解包为 String
 // |    |       |                          |________________________ 默认值为 "World"
@@ -133,9 +133,9 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 #[chain]
 fn handle_test_entry(prev: EntryTest) -> Next {
     let (name, age, id) = prev
-        .pick_or_default(&arg![name: String, 'n'])
-        .pick_or_default(&arg![age: u8, 'a'])
-        .pick_or_default(&arg![id: u32, 'I'])
+        .pick_or_default(arg![name: String, 'n'])
+        .pick_or_default(arg![age: u8, 'a'])
+        .pick_or_default(arg![id: u32, 'I'])
         .unwrap();
  
     ResultInfo((name, age, id)).into()
@@ -165,7 +165,7 @@ fn handle_test_entry(prev: EntryTest) -> Next {
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     // 使用 route! 宏展开 Result<Value, Route>
     let name = route!(
-        prev.pick_or_route(&arg![name: String, 'n'], || {
+        prev.pick_or_route(arg![name: String, 'n'], || {
             ErrorNoName::default().to_chain()
         })
         .to_result()
@@ -191,7 +191,7 @@ fn render_greet(result: ResultName) {
 @@@ use mingling::picker::IntoPicker;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
-let name = route!(args.pick_or_route(&arg![String], || ErrorFail(()).to_chain()).to_result());
+let name = route!(args.pick_or_route::<String, mingling::ChainProcess<ThisProgram>>(arg![String], || -> mingling::ChainProcess<ThisProgram> { ErrorFail(()).to_chain() }).to_result());
 @@@ mingling::macros::empty_result!()
 @@@ }
 ```
@@ -205,7 +205,7 @@ let name = route!(args.pick_or_route(&arg![String], || ErrorFail(()).to_chain())
 @@@ use mingling::picker::IntoPicker;
 @@@ fn func() -> mingling::ChainProcess<ThisProgram> {
 @@@ let args: Vec<String> = vec![];
-let name = match args.pick_or_route(&arg![String], || ErrorFail(()).to_chain()).to_result() {
+let name = match args.pick_or_route::<String, mingling::ChainProcess<ThisProgram>>(arg![String], || -> mingling::ChainProcess<ThisProgram> { ErrorFail(()).to_chain() }).to_result() {
     Ok(r) => r,
     Err(e) => return e,
 };
@@ -226,7 +226,7 @@ let name = match args.pick_or_route(&arg![String], || ErrorFail(()).to_chain()).
 #[chain]
 fn handle_greet_entry(prev: EntryGreet) -> Next {
     let name = prev
-        .pick_or(&arg![name: String, 'n'], || "World".to_string())
+        .pick_or(arg![name: String, 'n'], || "World".to_string())
         // 在提取出 --name 后，立刻格式化
         .post(|name: String| {
             name.replace(['-', '_', '.'], " ")
@@ -254,7 +254,7 @@ fn handle_greet_entry(prev: EntryGreet) -> Next {
 #[chain]
 fn handle_entry(prev: EntryTest) -> Next {
     // `--confirm` / `-C` 存在 → true
-    let _confirm: bool = *prev.pick(&arg![confirm: Flag, 'C']).unwrap();
+    let _confirm: bool = *prev.pick(arg![confirm: Flag, 'C']).unwrap();
     ResultDone::default().to_render()
 }
 ```
@@ -297,7 +297,7 @@ impl SinglePickable for Address {
  
 #[chain]
 fn handle_connect_entry(prev: EntryConnect) -> Next {
-    let address: Address = prev.pick_or_default(&arg![Address]).unwrap();
+    let address: Address = prev.pick_or_default(arg![Address]).unwrap();
     ResultConnected(address).into()
 }
  
@@ -351,7 +351,7 @@ impl SinglePickable for Fruits {
  
 #[chain]
 fn handle_eat_entry(prev: EntryEat) -> Next {
-    let fruit: Fruits = prev.pick_or_default(&arg![Fruits]).unwrap();
+    let fruit: Fruits = prev.pick_or_default(arg![Fruits]).unwrap();
     ResultFruit(fruit).into()
 }
  

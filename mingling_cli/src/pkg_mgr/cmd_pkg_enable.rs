@@ -38,7 +38,7 @@ pub fn desc_pkg_enable() -> Description {
 #[command(node = "pkg-enable", routeify)]
 pub fn package_enable(args: EntryPkgEnable, packages_dir: &ResPackagesDir) -> Next {
     let spec = args
-        .pick_or_route(&ARG_SPEC, || ErrorPackageNameRequired.to_chain())
+        .pick_or_route(ARG_SPEC.clone(), || ErrorPackageNameRequired.to_chain())
         .to_result()?;
     let packages_dir = &packages_dir.path;
     if packages_dir.as_os_str().is_empty() {

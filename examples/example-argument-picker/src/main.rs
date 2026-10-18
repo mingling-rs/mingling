@@ -127,11 +127,11 @@ fn main() {
         //     Use arg![round: Flag] to indicate the `--round` | `-R` flag
         //     |
         //     vvvvvvvvvvvvvvvv
-        .pick(&arg![round: Flag, 'R'])
+        .pick(arg![round: Flag, 'R'])
         //    Use REMAINS to extract remaining arguments
         //    |
         //    vvvvvvvv
-        .pick(&REMAINS)
+        .pick(REMAINS)
         // Since Flag and REMAINS will not fail to parse,
         //   we can safely unwrap here
         .unwrap();
@@ -150,13 +150,13 @@ fn handle_calc(args: EntryCalculate) -> Next {
         //                 Use the arg! macro to define a positional argument of type f32
         //                 |
         //                 vvvvvvvvvv
-        args.pick_or_route(&arg![f32], || ErrorNumberANotProvided.to_chain())
-            .pick_or_route(&arg![Operator], || {
+        args.pick_or_route(arg![f32], || ErrorNumberANotProvided.to_chain())
+            .pick_or_route(arg![Operator], || {
                 ErrorNumberOperatorNotProvided.to_chain()
             }) //                         Returns a routable type when not found or fails to parse
             //                            |
             //                            vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-            .pick_or_route(&arg![f32], || ErrorNumberBNotProvided.to_chain())
+            .pick_or_route(arg![f32], || ErrorNumberBNotProvided.to_chain())
             // Use `to_result` to parse arguments
             //   and convert to Result<(Tuple, ...), Route> type
             .to_result()

@@ -85,7 +85,7 @@ fn main() {
 #[chain]
 fn handle_add(args: EntryAdd) -> Next {
     let task: String = route! {
-        args.pick_or_route(&arg![String], || {
+        args.pick_or_route(arg![String], || {
             ErrorNoTaskDescriptionProvided.to_chain()
         })
         .to_result()
@@ -127,7 +127,7 @@ fn handle_list(_args: EntryList, todolist: &mut LazyRes<ResTodoList>) -> Next {
 #[chain]
 fn handle_complete(args: EntryComplete) -> Next {
     let index: i32 = route! {
-        args.pick_or_route(&arg![i32], || ErrorNoIndexProvided.to_chain())
+        args.pick_or_route(arg![i32], || ErrorNoIndexProvided.to_chain())
             .to_result()
     };
     StateCompleteTodo(index).to_chain()

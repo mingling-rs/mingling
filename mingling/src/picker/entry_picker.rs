@@ -1,6 +1,6 @@
 use mingling_core::{ChainProcess, Grouped, ProgramCollect};
 
-use crate::{picker::Pickable, picker::Picker, picker::PickerArg, picker::PickerPattern1};
+use crate::picker::{Fallback, Pickable, Picker, PickerArg, PickerPattern1};
 
 /// Trait for converting Mingling entry types (types that implement `Grouped<R>` and `Into<Vec<String>>`)
 /// into [`Picker`] instances for a given route type `R`.
@@ -31,14 +31,14 @@ pub trait EntryPicker<'a, This> {
     /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     fn pick<Next>(
         self,
-        arg: impl Into<&'a PickerArg<'a, Next>>,
+        arg: impl Into<PickerArg<'a, Next>>,
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
         Next: Pickable<'a> + Sized,
     {
         let picker = Self::to_picker(self);
-        Picker::build_pattern1(picker.into_args(), arg.into(), None)
+        Picker::build_pattern1(picker.into_args(), arg, None)
     }
 
     /// Starts building a picker pattern with the first argument, using a default value provider.
@@ -52,16 +52,16 @@ pub trait EntryPicker<'a, This> {
     /// # Parameters
     ///
     /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
-    /// * `func` — A closure that provides a default value if the arg is not provided by the user.
-    fn pick_or<Next, F>(
+    /// * `func` — A closure that provides a default value if the arg is not provided by the user;
+    ///   it may return any type that converts into `Next`.
+    fn pick_or<Next>(
         self,
-        arg: impl Into<&'a PickerArg<'a, Next>>,
-        func: F,
+        arg: impl Into<PickerArg<'a, Next>>,
+        func: impl Fallback<Next> + 'static,
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
         Next: Pickable<'a> + Sized,
-        F: FnMut() -> Next + 'static,
     {
         self.pick(arg).or(func)
     }
@@ -79,7 +79,7 @@ pub trait EntryPicker<'a, This> {
     /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     fn pick_or_default<Next>(
         self,
-        arg: impl Into<&'a PickerArg<'a, Next>>,
+        arg: impl Into<PickerArg<'a, Next>>,
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
@@ -100,15 +100,14 @@ pub trait EntryPicker<'a, This> {
     ///
     /// * `arg` — The argument definition, typically obtained from [`crate::macros::arg`].
     /// * `func` — A closure that produces a route value if the arg is not provided by the user.
-    fn pick_or_route<Next, F>(
+    fn pick_or_route<Next>(
         self,
-        arg: impl Into<&'a PickerArg<'a, Next>>,
-        func: F,
+        arg: impl Into<PickerArg<'a, Next>>,
+        func: impl FnMut() -> ChainProcess<This> + 'static,
     ) -> PickerPattern1<'a, Next, ChainProcess<This>>
     where
         Self: Sized,
         Next: Pickable<'a> + Sized,
-        F: FnMut() -> ChainProcess<This> + 'static,
     {
         self.pick(arg).or_route(func)
     }
