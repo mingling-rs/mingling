@@ -87,12 +87,12 @@ where
             let mut render_result = render_help::<C>(program, current);
 
             // Run hooks
-            control!(program.run_hook_post_render(
-                &mut crate::hook::HookPostRenderInfo {
+            control!(
+                program.run_hook_post_render(&mut crate::hook::HookPostRenderInfo {
                     result: &mut render_result,
                     mode: QueryMode::Usage,
-                }
-            ));
+                })
+            );
 
             control!(program.run_hook_finish(&crate::hook::HookFinishInfo {}));
             render_result.exit_code = exit_code;
@@ -307,7 +307,13 @@ fn render<C: ProgramCollect<Enum = C>>(program: &Program<C>, any: AnyOutput<C>) 
         #[allow(unreachable_patterns)]
         match program.structural_renderer_name {
             super::StructuralRendererSetting::Disable => C::render(any),
-            _ => C::structural_render(any, &program.structural_renderer_name).unwrap(),
+            _ => {
+                let rendered = C::structural_render(&any, &program.structural_renderer_name);
+                // The plain renderer still runs for its side effects, but its
+                // content is superseded by the structured rendering.
+                let _ = C::render(any);
+                rendered.unwrap()
+            }
         }
     }
 }
@@ -335,8 +341,8 @@ fn render_help<C: ProgramCollect<Enum = C>>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::hook::{ProgramControlUnit, ProgramControls};
     use crate::MockProgramCollect;
+    use crate::hook::{ProgramControlUnit, ProgramControls};
 
     #[test]
     fn exit_unit_ends_exec_with_current_exit_code() {

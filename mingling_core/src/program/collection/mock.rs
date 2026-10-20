@@ -130,7 +130,7 @@ impl ProgramCollect for MockProgramCollect {
 
     #[cfg(feature = "structural_renderer")]
     fn structural_render(
-        _any: AnyOutput<Self::Enum>,
+        _any: &AnyOutput<Self::Enum>,
         _setting: &StructuralRendererSetting,
     ) -> Result<RenderResult, StructuralRendererSerializeError> {
         unreachable!()

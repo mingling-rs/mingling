@@ -191,9 +191,9 @@ pub(crate) fn build_structural_renderer_entry(
         Self::#enum_variant => {
             // SAFETY: Only types that match will enter this branch for forced conversion,
             // and `AnyOutput::new` ensures the type implements serde::Serialize
-            let raw = unsafe { any.restore::<#previous_type>().unwrap_unchecked() };
+            let raw = unsafe { any.downcast_ref::<#previous_type>().unwrap_unchecked() };
             let mut __renderer_inner_result = ::mingling::RenderResult::default();
-            ::mingling::StructuralRenderer::render(&raw, setting, &mut __renderer_inner_result)?;
+            ::mingling::StructuralRenderer::render(raw, setting, &mut __renderer_inner_result)?;
             Ok(__renderer_inner_result)
         }
     }

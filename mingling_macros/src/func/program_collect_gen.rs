@@ -161,7 +161,7 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
     #[cfg(feature = "structural_renderer")]
     let structural_render = quote! {
         fn structural_render(
-            any: ::mingling::AnyOutput<Self::Enum>,
+            any: &::mingling::AnyOutput<Self::Enum>,
             setting: &::mingling::config::StructuralRendererSetting,
         ) -> Result<::mingling::RenderResult, ::mingling::error::StructuralRendererSerializeError> {
             match any.member_id() {

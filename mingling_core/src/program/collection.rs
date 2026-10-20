@@ -103,7 +103,7 @@ pub trait ProgramCollect {
     /// output value fails.
     #[cfg(feature = "structural_renderer")]
     fn structural_render(
-        any: AnyOutput<Self::Enum>,
+        any: &AnyOutput<Self::Enum>,
         setting: &StructuralRendererSetting,
     ) -> Result<RenderResult, StructuralRendererSerializeError>;
 }

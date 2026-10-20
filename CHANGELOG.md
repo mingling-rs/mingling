@@ -64,6 +64,14 @@ None
 
     _Note:_ help rendering (`render_help`, reached via the `user_context.query == QueryMode::Usage` fast path and the `RouteToHelp` control unit) now also runs the `pre_render`/`post_render` hooks, with `mode` set to `QueryMode::Usage` (see Features below).
 
+2. **[`core:render`]** `ProgramCollect::structural_render` now takes the output by reference (`&AnyOutput<Self::Enum>`) instead of by value, and the structural-render path also runs the plain renderer.
+
+    Previously `structural_render` consumed the `AnyOutput`, forcing the render pipeline to move the value into it, and the structural path replaced the plain render entirely. The trait method now borrows the output, and `render` in `mingling_core/src/program/exec.rs` calls `C::render(any)` for its side effects before returning the structural result — whose content supersedes the plain renderer's output.
+
+    - **`ProgramCollect::structural_render`** — parameter changed from `any: AnyOutput<Self::Enum>` to `any: &AnyOutput<Self::Enum>` (`mingling_core/src/program/collection.rs`).
+    - **`MockProgramCollect`** — its `structural_render` impl updated to the borrowed parameter (`mingling_core/src/program/collection/mock.rs`), as did the test impl in `mingling_core/src/program/hook.rs`.
+    - **Generated impls** — `mingling/src/gen_program.rs` and `program_collect_gen` in `mingling_macros/src/func/program_collect_gen.rs` emit the borrowed signature; `mingling_macros/src/attr/renderer.rs` now downcasts with `any.downcast_ref::<#previous_type>()` and passes the borrowed value to `StructuralRenderer::render`.
+
 #### Optimizations:
 
 None
