@@ -14,7 +14,10 @@ use crate::RENDERERS_EXIST;
 #[cfg(feature = "structural_renderer")]
 use crate::STRUCTURED_TYPES;
 #[cfg(feature = "structural_renderer")]
-use crate::attr::renderer::{build_renderer_exist_entry, build_structural_renderer_entry};
+use crate::attr::renderer::{
+    build_renderer_exist_entry, build_structural_has_entry, build_structural_renderer_entry,
+    build_structural_stream_renderer_entry,
+};
 use crate::get_global_set;
 #[cfg(all(not(feature = "dispatch_phf"), not(feature = "dispatch_tree")))]
 use crate::systems::dispatch_auto;
@@ -115,6 +118,26 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
         })
         .collect();
 
+    #[cfg(feature = "structural_renderer")]
+    let structural_has_tokens: Vec<proc_macro2::TokenStream> = structured_types
+        .intersection(&packed_types)
+        .map(|name| {
+            let ident = proc_macro2::Ident::new(name, proc_macro2::Span::call_site());
+            let ty: syn::TypePath = syn::parse_quote!(#ident);
+            build_structural_has_entry(&ty)
+        })
+        .collect();
+
+    #[cfg(feature = "structural_renderer")]
+    let structural_stream_tokens: Vec<proc_macro2::TokenStream> = structured_types
+        .intersection(&packed_types)
+        .map(|name| {
+            let ident = proc_macro2::Ident::new(name, proc_macro2::Span::call_site());
+            let ty: syn::TypePath = syn::parse_quote!(#ident);
+            build_structural_stream_renderer_entry(&ty)
+        })
+        .collect();
+
     // Packed `StructuralData` types are renderable, so `has_renderer` must
     // return `true` for them even without a `#[renderer]` function. Entries
     // already registered by `#[renderer]` collapse to the same string and are
@@ -177,6 +200,29 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
 
     #[cfg(not(feature = "structural_renderer"))]
     let structural_render = quote! {};
+
+    #[cfg(feature = "structural_renderer")]
+    let structural_stream = quote! {
+        fn has_structural(any: &::mingling::AnyOutput<Self::Enum>) -> bool {
+            match any.member_id() {
+                #(#structural_has_tokens)*
+                _ => false,
+            }
+        }
+
+        fn structural_render_stream(
+            any: &::mingling::AnyOutput<Self::Enum>,
+            setting: &::mingling::config::StructuralRendererSetting,
+        ) -> Result<::mingling::RenderResult, ::mingling::error::StructuralRendererSerializeError> {
+            match any.member_id() {
+                #(#structural_stream_tokens)*
+                _ => Ok(::mingling::RenderResult::default()),
+            }
+        }
+    };
+
+    #[cfg(not(feature = "structural_renderer"))]
+    let structural_stream = quote! {};
 
     let compile_time_dispatchers: Vec<String> = get_global_set(&COMPILE_TIME_DISPATCHERS)
         .lock()
@@ -494,6 +540,7 @@ pub(crate) fn program_collect_gen_impl(_input: TokenStream) -> TokenStream {
             }
             #dispatch_gen
             #structural_render
+            #structural_stream
             #comp
         }
 

@@ -1,5 +1,37 @@
 use crate::THIS_PROGRAM;
+use crate::renderer::stream::{RenderStreamState, RenderedRecord};
 use crate::{Program, ProgramCollect, RenderResult, error::ProgramExecuteError};
+
+/// Merges inline records captured during execution in front of the final
+/// renderer result.
+fn merge_captured_records<C>(
+    result: Result<RenderResult, ProgramExecuteError>,
+) -> Result<RenderResult, ProgramExecuteError>
+where
+    C: ProgramCollect<Enum = C> + 'static,
+{
+    let final_result = result?;
+    let captured = crate::this::<C>().take_captured_records();
+
+    if captured.is_empty() {
+        return Ok(final_result);
+    }
+
+    Ok(prepend_records(captured, final_result))
+}
+
+fn prepend_records(records: Vec<RenderedRecord>, final_result: RenderResult) -> RenderResult {
+    let exit_code = final_result.exit_code;
+    let mut merged = RenderResult::default();
+
+    for record in records {
+        merged.append_to_buffer(record.content, record.mode);
+    }
+    merged.append_other(final_result);
+    merged.exit_code = exit_code;
+
+    merged
+}
 
 impl<C> Program<C>
 where
@@ -29,59 +61,67 @@ where
         #[cfg(not(feature = "async"))]
         {
             #[cfg(panic = "abort")]
-            return self
-                .exec_wrapper(|p| crate::exec::exec_with_args(p, &mut args).map_err(|e| e.into()));
+            return merge_captured_records::<C>(self.exec_wrapper(|p| {
+                crate::exec::exec_with_args(p, &mut args).map_err(|e| e.into())
+            }));
 
             #[cfg(not(panic = "abort"))]
-            match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                self.exec_wrapper(|p| {
-                    crate::exec::exec_with_args(p, &mut args).map_err(std::convert::Into::into)
-                })
-            })) {
-                Ok(result) => result,
-                Err(panic_info) => {
-                    let panic_payload = crate::error::ProgramPanic {
-                        payload: panic_info,
-                    };
+            return merge_captured_records::<C>(
+                match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    self.exec_wrapper(|p| {
+                        crate::exec::exec_with_args(p, &mut args).map_err(std::convert::Into::into)
+                    })
+                })) {
+                    Ok(result) => result,
+                    Err(panic_info) => {
+                        let panic_payload = crate::error::ProgramPanic {
+                            payload: panic_info,
+                        };
 
-                    let program = THIS_PROGRAM
-                        .get_raw()
-                        .unwrap()
-                        .downcast_ref::<Self>()
-                        .unwrap();
+                        let program = THIS_PROGRAM
+                            .get_raw()
+                            .unwrap()
+                            .downcast_ref::<Self>()
+                            .unwrap();
 
-                    #[cfg(not(feature = "async"))]
-                    program.run_hook_exec_panic(&crate::hook::HookPanicInfo {
-                        panic: &panic_payload,
-                    });
+                        #[cfg(not(feature = "async"))]
+                        program.run_hook_exec_panic(&crate::hook::HookPanicInfo {
+                            panic: &panic_payload,
+                        });
 
-                    Err(ProgramExecuteError::Panic(panic_payload))
-                }
-            }
+                        Err(ProgramExecuteError::Panic(panic_payload))
+                    }
+                },
+            );
         }
 
         #[cfg(feature = "async")]
         {
-            return self
-                .exec_wrapper(|p| async move {
+            return merge_captured_records::<C>(
+                self.exec_wrapper(|p| async move {
                     crate::exec::exec_with_args(p, &mut args)
                         .await
                         .map_err(Into::into)
                 })
-                .await;
+                .await,
+            );
         }
     }
 
     /// Run the command line program
     #[must_use]
     #[might_be_async::func]
-    pub fn exec(self) -> i32
+    pub fn exec(mut self) -> i32
     where
         C: 'static + Send + Sync,
     {
         use crate::error::ProgramExecuteError;
 
         let stdout_setting = self.stdout_setting.clone();
+        self.render_stream = std::sync::Mutex::new(RenderStreamState::Direct {
+            enabled: stdout_setting.render_output == crate::config::RenderOutput::Show,
+        });
+
         let result = match might_be_async::invoke!(self.exec_without_render()) {
             Ok(r) => r,
             Err(e) => match e {

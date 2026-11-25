@@ -9,7 +9,11 @@ use crate::{
     config::{ProgramStdoutSetting, ProgramUserContext, QueryMode},
     error::ChainProcessError,
     hook::ProgramHook,
+    renderer::stream::{RenderStreamState, RenderedRecord},
 };
+
+#[cfg(feature = "structural_renderer")]
+use std::sync::atomic::{AtomicBool, Ordering};
 
 pub mod config;
 
@@ -81,6 +85,13 @@ where
     pub(crate) hooks: Vec<ProgramHook<C>>,
 
     pub(crate) resources: GlobalResContainer,
+
+    /// Current inline render stream state.
+    pub(crate) render_stream: std::sync::Mutex<RenderStreamState>,
+
+    /// Whether any inline render record has been emitted during this run.
+    #[cfg(feature = "structural_renderer")]
+    pub(crate) render_stream_used: AtomicBool,
 }
 
 impl<C> Program<C>
@@ -121,6 +132,10 @@ where
             hooks: Vec::new(),
 
             resources: GlobalResContainer::new(),
+
+            render_stream: std::sync::Mutex::new(RenderStreamState::default()),
+            #[cfg(feature = "structural_renderer")]
+            render_stream_used: AtomicBool::new(false),
         }
     }
 
@@ -139,6 +154,47 @@ where
             QueryMode::Usage if !self.stdout_setting.print_help => QueryMode::None,
             QueryMode::Version if !self.stdout_setting.print_version => QueryMode::None,
             query => query,
+        }
+    }
+
+    /// Emits one inline render record according to the current stream state.
+    ///
+    /// In `Direct` mode the record is written and flushed immediately. In
+    /// `Capture` mode it is stored for [`take_captured_records`](Self::take_captured_records).
+    pub(crate) fn emit_rendered_record(&self, record: RenderedRecord) {
+        #[cfg(feature = "structural_renderer")]
+        self.render_stream_used.store(true, Ordering::Relaxed);
+
+        let mut state = self
+            .render_stream
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+        match &mut *state {
+            RenderStreamState::Direct { enabled: true } => {
+                crate::renderer::stream::write_rendered_record(&record);
+            }
+            RenderStreamState::Direct { enabled: false } => {}
+            RenderStreamState::Capture(records) => records.push(record),
+        }
+    }
+
+    /// Returns whether any inline render record was emitted during this run.
+    #[cfg(feature = "structural_renderer")]
+    pub(crate) fn has_inline_render_output(&self) -> bool {
+        self.render_stream_used.load(Ordering::Relaxed)
+    }
+
+    /// Takes all records captured in `Capture` mode, leaving the capture list empty.
+    pub(crate) fn take_captured_records(&self) -> Vec<RenderedRecord> {
+        let mut state = self
+            .render_stream
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+
+        match &mut *state {
+            RenderStreamState::Capture(records) => std::mem::take(records),
+            RenderStreamState::Direct { .. } => Vec::new(),
         }
     }
 

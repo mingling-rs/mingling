@@ -605,6 +605,43 @@ impl RenderResult {
         self.render_buffer.clear();
     }
 
+    /// Consumes the result and forces every buffered entry to use `mode`.
+    ///
+    /// This is used by the `render_stdout!` / `render_stderr!` macros to
+    /// flatten all output to one stream while preserving the original entry
+    /// order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use mingling_core::{RenderResult, RenderResultMode};
+    ///
+    /// let mut result = RenderResult::default();
+    /// result.print("out");
+    /// result.eprint("err");
+    ///
+    /// let flattened = result.flattened(RenderResultMode::Stdout);
+    /// assert_eq!(flattened.read_stderr(), Vec::<&String>::new());
+    /// ```
+    #[must_use]
+    pub fn flattened(mut self, mode: RenderResultMode) -> Self {
+        for (_, entry_mode) in &mut self.render_buffer {
+            *entry_mode = mode;
+        }
+        self
+    }
+
+    /// Consumes the result and returns all buffered `(content, mode)` entries
+    /// in insertion order.
+    ///
+    /// Unlike [`read_stdout`](Self::read_stdout) / [`read_stderr`](Self::read_stderr),
+    /// this preserves the interleaving of both streams and transfers ownership
+    /// of the strings.
+    #[must_use]
+    pub fn into_entries(self) -> Vec<(String, RenderResultMode)> {
+        self.render_buffer
+    }
+
     /// Outputs all buffered content to stdout and stderr according to their respective modes.
     ///
     /// Iterates through the render buffer and prints each buffered string to the appropriate
@@ -1180,5 +1217,33 @@ mod tests {
         result.take_stderr();
         assert_eq!(result.exit_code, 7);
         assert!(result.is_empty());
+    }
+
+    #[test]
+    fn flattened_forces_every_entry_to_the_target_mode() {
+        let mut result = RenderResult::default();
+        result.print("out1");
+        result.eprint("err1");
+        result.print("out2");
+
+        let flattened = result.flattened(RenderResultMode::Stderr);
+
+        assert!(flattened.read_stdout().is_empty());
+        assert_eq!(flattened.read_stderr(), ["out1", "err1", "out2"]);
+    }
+
+    #[test]
+    fn into_entries_preserves_interleaved_order() {
+        let mut result = RenderResult::default();
+        result.print("out");
+        result.eprint("err");
+
+        assert_eq!(
+            result.into_entries(),
+            vec![
+                ("out".to_string(), RenderResultMode::Stdout),
+                ("err".to_string(), RenderResultMode::Stderr),
+            ]
+        );
     }
 }

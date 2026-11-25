@@ -106,4 +106,34 @@ pub trait ProgramCollect {
         any: &AnyOutput<Self::Enum>,
         setting: &StructuralRendererSetting,
     ) -> Result<RenderResult, StructuralRendererSerializeError>;
+
+    /// Returns whether the given value's type is registered for structural
+    /// rendering.
+    ///
+    /// The default implementation returns `false`; `gen_program!` overrides it
+    /// based on the types registered by `#[derive(StructuralData)]`.
+    #[cfg(feature = "structural_renderer")]
+    fn has_structural(any: &AnyOutput<Self::Enum>) -> bool {
+        let _ = any;
+        false
+    }
+
+    /// Renders one value as a single structural stream record.
+    ///
+    /// This is the streaming counterpart of
+    /// [`structural_render`](Self::structural_render): it appends one framed
+    /// record (JSONL, pretty JSON record, YAML document, etc.) instead of a
+    /// complete single document.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
+    #[cfg(feature = "structural_renderer")]
+    fn structural_render_stream(
+        any: &AnyOutput<Self::Enum>,
+        setting: &StructuralRendererSetting,
+    ) -> Result<RenderResult, StructuralRendererSerializeError> {
+        let _ = (any, setting);
+        Ok(RenderResult::default())
+    }
 }

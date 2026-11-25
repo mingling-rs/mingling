@@ -18,6 +18,7 @@ pub(crate) mod register_help;
 pub(crate) mod register_metadata;
 pub(crate) mod register_renderer;
 pub(crate) mod register_type;
+pub(crate) mod render;
 pub(crate) mod render_route;
 pub(crate) mod route;
 #[cfg(feature = "structural_renderer")]

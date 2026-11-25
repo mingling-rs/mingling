@@ -295,6 +295,24 @@
     ]
   },
   {
+    "id": "example-render-stream",
+    "name": "render stream",
+    "icon": "🌊",
+    "category": "output",
+    "desc": "Demonstrates inline streaming with `render!`, `render_owned!`, and `render_each!`,\nincluding JSONL / pretty JSON / YAML structural records and stdout/stderr flattening.\n",
+    "tags": [
+      "render!",
+      "render_owned!",
+      "render_each!",
+      "JSONL",
+      "structural_renderer"
+    ],
+    "files": [
+      "src/main.rs",
+      "Cargo.toml"
+    ]
+  },
+  {
     "id": "example-repl-basic",
     "name": "REPL Basic",
     "icon": "🔁",

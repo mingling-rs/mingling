@@ -105,7 +105,12 @@ pub mod macros {
     pub use mingling_macros::register_renderer;
     #[doc(hidden)]
     pub use mingling_macros::register_type;
+    pub use mingling_macros::render;
+    pub use mingling_macros::render_each;
+    pub use mingling_macros::render_owned;
     pub use mingling_macros::render_route;
+    pub use mingling_macros::render_stderr;
+    pub use mingling_macros::render_stdout;
     pub use mingling_macros::renderer;
     pub use mingling_macros::renderify;
     pub use mingling_macros::route;
@@ -179,6 +184,11 @@ pub mod prelude {
     pub use crate::macros::dispatcher;
     pub use crate::macros::empty_result;
     pub use crate::macros::gen_program;
+    pub use crate::macros::render;
+    pub use crate::macros::render_each;
+    pub use crate::macros::render_owned;
+    pub use crate::macros::render_stderr;
+    pub use crate::macros::render_stdout;
     pub use crate::macros::renderer;
     pub use mingling_macros::r_append;
     pub use mingling_macros::r_eprint;

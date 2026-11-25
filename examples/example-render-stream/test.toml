@@ -1,0 +1,29 @@
+[[runs]]
+input = [ "stream", "1" ]
+
+expect.exit-code = 0
+expect.result = """task-0: 100%
+finished: 100%
+warning: 0%
+owned: 42%"""
+
+[[runs]]
+input = [ "stream", "1", "--json" ]
+
+expect.exit-code = 0
+expect.result = """{"name":"task-0","progress":100}
+{"name":"finished","progress":100}
+{"name":"warning","progress":0}
+{"name":"owned","progress":42}"""
+
+[[runs]]
+input = [ "stream", "1", "--json-pretty" ]
+
+expect.exit-code = 0
+expect.result = "\"name\": \"task-0\""
+
+[[runs]]
+input = [ "stream", "1", "--yaml" ]
+
+expect.exit-code = 0
+expect.result = "name: task-0"

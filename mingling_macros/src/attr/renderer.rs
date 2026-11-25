@@ -199,6 +199,33 @@ pub(crate) fn build_structural_renderer_entry(
     }
 }
 
+/// Builds the `has_structural` match arm for a registered structural type.
+#[cfg(feature = "structural_renderer")]
+pub(crate) fn build_structural_has_entry(previous_type: &TypePath) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
+    quote! {
+        Self::#enum_variant => true,
+    }
+}
+
+/// Builds the `structural_render_stream` match arm for a registered structural type.
+#[cfg(feature = "structural_renderer")]
+pub(crate) fn build_structural_stream_renderer_entry(
+    previous_type: &TypePath,
+) -> proc_macro2::TokenStream {
+    let enum_variant = &previous_type.path.segments.last().unwrap().ident;
+    quote! {
+        Self::#enum_variant => {
+            // SAFETY: Only types that match will enter this branch for forced conversion,
+            // and `AnyOutput::new` ensures the type implements serde::Serialize
+            let raw = unsafe { any.downcast_ref::<#previous_type>().unwrap_unchecked() };
+            let mut __stream_result = ::mingling::RenderResult::default();
+            ::mingling::StructuralStreamRenderer::render_record(raw, setting, &mut __stream_result)?;
+            Ok(__stream_result)
+        }
+    }
+}
+
 pub(crate) fn register_renderer(input: TokenStream) -> TokenStream {
     // Parse the input as a comma-separated list of arguments
     let input_parsed = syn::parse_macro_input!(input with syn::punctuated::Punctuated<syn::Expr, syn::Token![,]>::parse_terminated);

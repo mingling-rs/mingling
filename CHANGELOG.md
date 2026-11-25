@@ -248,6 +248,38 @@ None
     - **If you already register your own `--version`/`-v` or `--verbose`/`-V` flags, rename or remove them.** `BasicProgramSetup` now claims all four spellings, so a program that previously defined its own `-v` (typically for _verbose_) or `-V` (typically for _version_) will now conflict — the built-in setups win, and note that the conventional meaning is **swapped**: Mingling binds `-v` to `--version` and `-V` to `--verbose`. Either drop your own flags and use the built-ins, or don't mount `VersionSetup`/`VerboseSetup` (use the individual setups instead of `BasicProgramSetup`, or set `print_help`/`print_version` to `false` to disable the hijack).
     - **If you relied on `--help` not hijacking** (e.g. letting `clap` handle it), set `program.stdout_setting.print_help = false`.
 
+5. **[`core:render`]** **[`macros`]** Added inline streaming rendering with `render!`, `render_stdout!`, `render_stderr!`, `render_owned!`, and `render_each!`.
+
+    `render!(&value)` dispatches any `Grouped<ThisProgram>` through the registered renderer and emits the result immediately. In structural mode (`--json`, `--json-pretty`, `--yaml`, ...) it emits one structural stream record instead of a full document. The plain renderer still runs so its side effects are preserved, but its text output is discarded when structural rendering succeeds.
+
+    - **`render!(&value)`** — emit with each entry's original `Stdout`/`Stderr` mode.
+    - **`render_stdout!(&value)`** / **`render_stderr!(&value)`** — flatten every emitted entry to stdout/stderr.
+    - **`render_owned!(value)`** — a wrapper around `render!` that binds the value and calls `render!(&value)`; it still requires `Clone` and consumes the input value.
+    - **`render_each!(&iterable)`** — emit one record per item.
+
+    Streaming destination:
+
+    - `exec()` streams directly: every record is written and flushed immediately (respecting `RenderOutput::Hide`).
+    - `exec_without_render()` captures inline records into the returned `RenderResult` instead of printing them, so the behavior is testable.
+
+    Structural record framing:
+
+    - `Json` → compact JSON + `\n` (JSONL).
+    - `JsonPretty` → one pretty JSON record per emission (a pretty record stream, not strict JSONL).
+    - `Yaml` → `---` document stream.
+    - `Toml` → repeated `[[record]]` tables.
+    - `Ron` / `RonPretty` → newline-terminated RON values.
+
+    No new CLI flag was added: inline `--json` naturally produces JSONL, while `--json-pretty` produces a pretty record stream. Final `to_render()` output remains a single document.
+
+    Supporting API changes:
+
+    - `ProgramCollect` gained `has_structural` and `structural_render_stream`, both with default implementations; `gen_program!` generates them from `StructuralData` registrations.
+    - `RenderResult` gained `flattened(mode)` and `into_entries()`.
+    - New `examples/example-render-stream` demonstrates JSONL / pretty JSON / YAML streaming and stdout/stderr flattening.
+
+    _Compatibility:_ programs that never call `render!` keep their previous output behavior. Only when inline output was actually produced is a trailing `ResultEmpty` suppressed instead of emitting a final `null` under structural formats.
+
 ---
 
 ### 0.5.3 (2026-09-21)

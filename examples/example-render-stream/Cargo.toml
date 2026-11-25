@@ -1,0 +1,17 @@
+[package]
+name = "example-render-stream"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0.228", features = ["derive"] }
+
+[dependencies.mingling]
+path = "../../mingling"
+features = [
+    "structural_renderer",
+    "yaml_serde_fmt",
+    "picker",
+]
+
+[workspace]

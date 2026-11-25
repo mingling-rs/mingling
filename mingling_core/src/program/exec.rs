@@ -307,6 +307,12 @@ fn render<C: ProgramCollect<Enum = C>>(program: &Program<C>, any: AnyOutput<C>) 
         #[allow(unreachable_patterns)]
         match program.structural_renderer_name {
             super::StructuralRendererSetting::Disable => C::render(any),
+            // Only skip the empty final result when inline streaming actually
+            // produced output; programs not using `render!` keep the previous
+            // single-document behavior.
+            _ if any.is::<C::ResultEmpty>() && program.has_inline_render_output() => {
+                RenderResult::default()
+            }
             _ => {
                 let rendered = C::structural_render(&any, &program.structural_renderer_name);
                 // The plain renderer still runs for its side effects, but its

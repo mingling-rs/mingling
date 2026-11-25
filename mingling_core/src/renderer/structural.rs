@@ -148,6 +148,129 @@ impl StructuralRenderer {
     }
 }
 
+/// Renders structural data as a stream of individually framed records.
+///
+/// Unlike [`StructuralRenderer`], which produces one complete document, this
+/// renderer emits one record per call. The framing depends on the selected
+/// format:
+/// - JSON: compact object followed by `\n` (JSONL).
+/// - Pretty JSON: pretty object followed by `\n`.
+/// - YAML: `---\n` document separator followed by the document.
+/// - TOML: a `[[record]]` table entry.
+/// - RON: one RON value followed by `\n`.
+pub struct StructuralStreamRenderer;
+
+impl StructuralStreamRenderer {
+    /// Appends one framed record for `data` to `out`.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err(StructuralRendererSerializeError)` if serialization fails.
+    #[allow(unused_variables)]
+    pub fn render_record<T, C>(
+        data: &T,
+        setting: &StructuralRendererSetting,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError>
+    where
+        T: StructuralData<C> + Send,
+        C: ProgramCollect<Enum = C>,
+    {
+        match setting {
+            StructuralRendererSetting::Disable => Ok(()),
+            #[cfg(feature = "json_serde_fmt")]
+            StructuralRendererSetting::Json => Self::record_json(data, out),
+            #[cfg(feature = "json_serde_fmt")]
+            StructuralRendererSetting::JsonPretty => Self::record_json_pretty(data, out),
+            #[cfg(feature = "yaml_serde_fmt")]
+            StructuralRendererSetting::Yaml => Self::record_yaml(data, out),
+            #[cfg(feature = "toml_serde_fmt")]
+            StructuralRendererSetting::Toml => Self::record_toml(data, out),
+            #[cfg(feature = "ron_serde_fmt")]
+            StructuralRendererSetting::Ron => Self::record_ron(data, out),
+            #[cfg(feature = "ron_serde_fmt")]
+            StructuralRendererSetting::RonPretty => Self::record_ron_pretty(data, out),
+        }
+    }
+
+    #[cfg(feature = "json_serde_fmt")]
+    fn record_json<T: serde::Serialize + Send>(
+        data: &T,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError> {
+        let json = serde_json::to_string(data)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        out.print(format!("{json}\n"));
+        Ok(())
+    }
+
+    #[cfg(feature = "json_serde_fmt")]
+    fn record_json_pretty<T: serde::Serialize + Send>(
+        data: &T,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError> {
+        let json = serde_json::to_string_pretty(data)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        out.print(format!("{json}\n"));
+        Ok(())
+    }
+
+    #[cfg(feature = "yaml_serde_fmt")]
+    fn record_yaml<T: serde::Serialize + Send>(
+        data: &T,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError> {
+        let yaml = serde_yaml::to_string(data)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        let mut record = String::from("---\n");
+        record.push_str(&yaml);
+        if !record.ends_with('\n') {
+            record.push('\n');
+        }
+        out.print(record);
+        Ok(())
+    }
+
+    #[cfg(feature = "toml_serde_fmt")]
+    fn record_toml<T: serde::Serialize + Send>(
+        data: &T,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError> {
+        let body = toml::to_string(data)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        let mut record = String::from("[[record]]\n");
+        record.push_str(&body);
+        if !record.ends_with('\n') {
+            record.push('\n');
+        }
+        out.print(record);
+        Ok(())
+    }
+
+    #[cfg(feature = "ron_serde_fmt")]
+    fn record_ron<T: serde::Serialize + Send>(
+        data: &T,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError> {
+        let ron = ron::ser::to_string(data)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        out.print(format!("{ron}\n"));
+        Ok(())
+    }
+
+    #[cfg(feature = "ron_serde_fmt")]
+    fn record_ron_pretty<T: serde::Serialize + Send>(
+        data: &T,
+        out: &mut RenderResult,
+    ) -> Result<(), StructuralRendererSerializeError> {
+        let pretty_config = ron::ser::PrettyConfig::new().new_line("\n").indentor("  ");
+        let ron = ron::ser::to_string_pretty(data, pretty_config)
+            .map_err(|e| StructuralRendererSerializeError::new(e.to_string()))?;
+        out.print(format!("{ron}\n"));
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -269,5 +392,85 @@ mod tests {
             StructuralRenderer::render(&test_data(), &StructuralRendererSetting::Json, &mut r);
         assert!(result.is_ok());
         assert!(!r.is_empty());
+    }
+
+    #[cfg(feature = "json_serde_fmt")]
+    #[test]
+    fn test_stream_json_is_one_line() {
+        let mut r = RenderResult::default();
+        StructuralStreamRenderer::render_record(
+            &test_data(),
+            &StructuralRendererSetting::Json,
+            &mut r,
+        )
+        .unwrap();
+
+        let output: String = r.into();
+        assert!(output.starts_with('{'));
+        assert!(output.ends_with('\n'));
+        assert!(!output.trim_end_matches('\n').contains('\n'));
+    }
+
+    #[cfg(feature = "json_serde_fmt")]
+    #[test]
+    fn test_stream_json_pretty_is_multiline() {
+        let mut r = RenderResult::default();
+        StructuralStreamRenderer::render_record(
+            &test_data(),
+            &StructuralRendererSetting::JsonPretty,
+            &mut r,
+        )
+        .unwrap();
+
+        let output: String = r.into();
+        assert!(output.ends_with('\n'));
+        assert!(output.trim_end_matches('\n').contains('\n'));
+    }
+
+    #[cfg(feature = "yaml_serde_fmt")]
+    #[test]
+    fn test_stream_yaml_starts_with_document_marker() {
+        let mut r = RenderResult::default();
+        StructuralStreamRenderer::render_record(
+            &test_data(),
+            &StructuralRendererSetting::Yaml,
+            &mut r,
+        )
+        .unwrap();
+
+        let output: String = r.into();
+        assert!(output.starts_with("---\n"));
+        assert!(output.ends_with('\n'));
+    }
+
+    #[cfg(feature = "toml_serde_fmt")]
+    #[test]
+    fn test_stream_toml_uses_record_table() {
+        let mut r = RenderResult::default();
+        StructuralStreamRenderer::render_record(
+            &test_data(),
+            &StructuralRendererSetting::Toml,
+            &mut r,
+        )
+        .unwrap();
+
+        let output: String = r.into();
+        assert!(output.starts_with("[[record]]\n"));
+        assert!(output.ends_with('\n'));
+    }
+
+    #[cfg(feature = "ron_serde_fmt")]
+    #[test]
+    fn test_stream_ron_ends_with_newline() {
+        let mut r = RenderResult::default();
+        StructuralStreamRenderer::render_record(
+            &test_data(),
+            &StructuralRendererSetting::Ron,
+            &mut r,
+        )
+        .unwrap();
+
+        let output: String = r.into();
+        assert!(output.ends_with('\n'));
     }
 }

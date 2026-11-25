@@ -277,6 +277,91 @@ pub fn render_route(input: TokenStream) -> TokenStream {
     func::render_route::render_route(input)
 }
 
+/// Renders a value inline and emits the result immediately.
+///
+/// The expression must already be a reference (`&value`). The value's type must
+/// implement `Grouped<ThisProgram>`, `Clone`, `Send`, and `'static`.
+///
+/// In ordinary mode this dispatches to the registered renderer for the value's
+/// type. When the program has a structural renderer enabled and the type is
+/// registered with `#[derive(StructuralData)]`, the value is emitted as one
+/// structural stream record (for example one JSONL line). The registered plain
+/// renderer still runs so its side effects are preserved.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::prelude::*;
+///
+/// #[chain]
+/// fn handle(prev: EntrySomething) {
+///     let message = StreamMessage { name: "task".into(), progress: 50 };
+///     render!(&message);
+/// }
+/// ```
+#[proc_macro]
+pub fn render(input: TokenStream) -> TokenStream {
+    func::render::expand_render(input, "Auto")
+}
+
+/// Renders a value inline, flattening every output entry to stdout.
+///
+/// The expression must already be a reference (`&value`).
+#[proc_macro]
+pub fn render_stdout(input: TokenStream) -> TokenStream {
+    func::render::expand_render(input, "Stdout")
+}
+
+/// Renders a value inline, flattening every output entry to stderr.
+///
+/// The expression must already be a reference (`&value`).
+#[proc_macro]
+pub fn render_stderr(input: TokenStream) -> TokenStream {
+    func::render::expand_render(input, "Stderr")
+}
+
+/// Renders an owned value inline.
+///
+/// This is a wrapper around [`render!`]: it binds the value to a local, then
+/// calls `render!(&value)`. It therefore still requires `Clone` and moves the
+/// input value.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::prelude::*;
+///
+/// #[chain]
+/// fn handle(prev: EntrySomething) {
+///     render_owned!(StreamMessage { name: "task".into(), progress: 50 });
+/// }
+/// ```
+#[proc_macro]
+pub fn render_owned(input: TokenStream) -> TokenStream {
+    func::render::expand_render_owned(input)
+}
+
+/// Renders each item of an iterable inline.
+///
+/// The expression should yield references, for example `&Vec<T>` or `&[T]`.
+/// Each item is emitted as its own record.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use mingling::prelude::*;
+///
+/// #[chain]
+/// fn handle(prev: EntrySomething) {
+///     let messages = vec![StreamMessage { name: "a".into(), progress: 1 }];
+///     render_each!(&messages);
+/// }
+/// ```
+#[proc_macro]
+pub fn render_each(input: TokenStream) -> TokenStream {
+    func::render::expand_render_each(input)
+}
+
 /// Creates an empty result value wrapped in `ChainProcess` for early return
 /// from a chain function.
 ///

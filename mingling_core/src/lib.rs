@@ -67,6 +67,8 @@ pub mod constants;
 pub use crate::renderer::structural::StructuralData;
 #[cfg(feature = "structural_renderer")]
 pub use crate::renderer::structural::StructuralRenderer;
+#[cfg(feature = "structural_renderer")]
+pub use crate::renderer::structural::StructuralStreamRenderer;
 
 pub use crate::any::*;
 pub use crate::asset::chain::*;
@@ -83,6 +85,7 @@ pub use crate::asset::routable::*;
 pub use crate::comp::*;
 pub use crate::program::*;
 pub use crate::renderer::render_result::*;
+pub use crate::renderer::stream::{RenderEmit, RenderedRecord, render_stream};
 
 /// All error types of `Mingling`
 pub mod error {
