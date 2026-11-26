@@ -139,6 +139,9 @@ where
 /// # Panics
 ///
 /// Panics if the program has not been initialized, the same condition as [`render_stream`].
+// With `structural_renderer` enabled the body calls the non-const `this`, so the function cannot
+// be const in every configuration.
+#[allow(clippy::missing_const_for_fn)]
 pub fn begin_stream<C>()
 where
     C: ProgramCollect<Enum = C> + 'static,
