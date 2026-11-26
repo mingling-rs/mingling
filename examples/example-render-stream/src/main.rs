@@ -37,6 +37,7 @@ use mingling::setup::picker::StructuralRendererSetup;
 use serde::Serialize;
 
 dispatcher!("stream", EntryStream);
+dispatcher!("empty", EntryEmpty);
 
 fn main() {
     let mut program = ThisProgram::new();
@@ -114,6 +115,13 @@ fn handle_stream(entry: EntryStream) {
         name: "owned".to_string(),
         progress: 42,
     });
+}
+
+/// Emits no record at all, which is how an empty listing reaches the framework.
+#[chain]
+fn handle_empty(_entry: EntryEmpty) {
+    let messages: Vec<StreamMessage> = Vec::new();
+    render_each!(&messages);
 }
 
 gen_program!();

@@ -185,6 +185,15 @@ where
         self.render_stream_used.load(Ordering::Relaxed)
     }
 
+    /// Marks this run as rendering inline, even before any record is emitted.
+    ///
+    /// The final empty result is suppressed for a run that streams, so a listing with no
+    /// records writes nothing rather than one `null`.
+    #[cfg(feature = "structural_renderer")]
+    pub(crate) fn mark_render_stream_used(&self) {
+        self.render_stream_used.store(true, Ordering::Relaxed);
+    }
+
     /// Takes all records captured in `Capture` mode, leaving the capture list empty.
     pub(crate) fn take_captured_records(&self) -> Vec<RenderedRecord> {
         let mut state = self

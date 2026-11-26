@@ -280,6 +280,8 @@ None
 
     _Compatibility:_ programs that never call `render!` keep their previous output behavior. Only when inline output was actually produced is a trailing `ResultEmpty` suppressed instead of emitting a final `null` under structural formats.
 
+    An empty inline listing writes nothing: `render_each!` marks the run as streaming before the loop, through the new `begin_stream`, so a trailing `ResultEmpty` is suppressed even when no record was emitted.
+
 ---
 
 ### 0.5.3 (2026-09-21)

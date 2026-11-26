@@ -34,6 +34,7 @@ pub(crate) fn expand_render_each(input: TokenStream) -> TokenStream {
     let values = parse_macro_input!(input as syn::Expr);
 
     quote! {{
+        ::mingling::begin_stream::<crate::ThisProgram>();
         for __mingling_render_item in (#values).into_iter() {
             ::mingling::render_stream::<crate::ThisProgram, _>(
                 __mingling_render_item,

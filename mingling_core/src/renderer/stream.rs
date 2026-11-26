@@ -131,6 +131,22 @@ where
     }
 }
 
+/// Marks this run as rendering inline, even when it emits no record.
+///
+/// The final empty result is suppressed for a run that streams, so a listing with no records
+/// writes nothing rather than one `null` document.
+///
+/// # Panics
+///
+/// Panics if the program has not been initialized, the same condition as [`render_stream`].
+pub fn begin_stream<C>()
+where
+    C: ProgramCollect<Enum = C> + 'static,
+{
+    #[cfg(feature = "structural_renderer")]
+    crate::this::<C>().mark_render_stream_used();
+}
+
 fn emit_result<C>(mut result: RenderResult, emit: RenderEmit, program: &Program<C>)
 where
     C: ProgramCollect<Enum = C> + 'static,

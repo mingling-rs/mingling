@@ -85,7 +85,7 @@ pub use crate::asset::routable::*;
 pub use crate::comp::*;
 pub use crate::program::*;
 pub use crate::renderer::render_result::*;
-pub use crate::renderer::stream::{RenderEmit, RenderedRecord, render_stream};
+pub use crate::renderer::stream::{RenderEmit, RenderedRecord, begin_stream, render_stream};
 
 /// All error types of `Mingling`
 pub mod error {

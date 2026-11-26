@@ -27,3 +27,9 @@ input = [ "stream", "1", "--yaml" ]
 
 expect.exit-code = 0
 expect.result = "name: task-0"
+
+[[runs]]
+input = [ "empty", "--json" ]
+
+expect.exit-code = 0
+expect.result = ""
