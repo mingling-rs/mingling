@@ -11,7 +11,7 @@ Any contributor making changes to the project must record their changes in this 
 **- Milestone.1 "MVP" -**
 
 - [Unreleased](#unreleased)
-- [Release 0.6.0 (Unreleased)](#release-060-unreleased)
+- [Release 0.6.0 (2026-11-26)](#release-060-2026-11-26)
 - [Release 0.5.3 (2026-09-21)](#release-053-2026-09-21)
 - [Release 0.5.2 (2026-09-16)](#release-051-2026-09-16)
 - [Release 0.5.1 (2026-09-13)](#release-051-2026-09-13)
@@ -56,7 +56,7 @@ None
 
 ---
 
-### 0.6.0 (Unreleased)
+### 0.6.0 (2026-11-26)
 
 #### Fixes:
 
